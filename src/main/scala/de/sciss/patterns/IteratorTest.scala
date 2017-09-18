@@ -3,7 +3,7 @@ package de.sciss.patterns
 import org.coroutines._
 
 object IteratorTest {
-  def main(args: Array[String]): Unit = {
+  def main(/* args: Array[String] */): Unit = {
     val co = coroutine { () =>
       yieldval(3)
       yieldval(8)
