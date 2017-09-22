@@ -82,6 +82,20 @@ object Translation {
     }
   }
 
+  object Pseq {
+    def apply[A](seq: IndexedSeq[A], repeats: => Int = 1, offset: => Int = 0): Pseq[A] =
+      new Pseq[A](seq, repeats, offset)
+  }
+  final class Pseq[A] private(seq: IndexedSeq[A], repeats: => Int, offset: => Int) extends Pattern[A] {
+    def iterator: Iterator[A] = {
+      val sz        = seq.size
+      val offsetVal = offset
+      Iterator.range(0, repeats).flatMap { _ =>
+        Iterator.range(0, sz).map(i => seq((i + offsetVal) % sz))
+      }
+    }
+  }
+
   // ---- runner ----
 
   // run with example name as single argument, e.g. `Pfunc`
@@ -157,5 +171,32 @@ object Translation {
     val b = a.filterNot(item => item.isOdd)
     val c = b.asStream
     6.iterate(_ => c.nextPrintln())
+  }
+
+  def exPseq1(): Unit = {
+    val a = Pseq(1 to 3, 2)
+    val b = a.asStream
+    7.iterate(_ => b.nextPrintln())
+  }
+
+  def exPseq2(): Unit = {
+    val a = Pseq(1 to 4, 3, 2)
+    val b = a.asStream
+    13.iterate(_ => b.nextPrintln())
+  }
+
+  def exPseq3(): Unit = {
+    val a = Pseq(1 to 2, rrand(1, 3))
+    3.iterate { _ =>
+      val b = a.asStream
+      7.iterate(_ => b.nextPrintln())
+      println("--")
+    }
+  }
+
+  def exPseq4(): Unit = {
+    val a = Pseq(1 to 3, Int.MaxValue)
+    val b = a.asStream
+    10.iterate(_ => b.nextPrintln())
   }
 }

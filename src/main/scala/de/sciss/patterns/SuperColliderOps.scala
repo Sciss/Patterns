@@ -3,6 +3,9 @@ package de.sciss.patterns
 import scala.util.Random
 
 object SuperColliderOps {
+  def rrand(lo: Int, hi: Int)(implicit rnd: Random): Int =
+    rnd.nextInt(hi - lo + 1) + lo
+
   implicit final class IntRandOps(private val i: Int) extends AnyVal {
     def rand(implicit rnd: Random): Int = rnd.nextInt(i)
     def iterate(fun: Int => Any): Unit = {
