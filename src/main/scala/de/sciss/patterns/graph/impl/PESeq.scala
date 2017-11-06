@@ -17,9 +17,11 @@ package impl
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
-final case class PESeq(elems: Vec[PE]) extends PE {
-  private[patterns] def expand(implicit b: StreamGraph.Builder): StreamInLike =
-    StreamInGroup(elems.map(_.expand))
+final case class PESeq[A](elems: Vec[PE[A]]) extends PE[A] {
+  private[patterns] def expand(implicit b: StreamGraph.Builder): Stream[A] =
+    ??? // StreamInGroup(elems.map(_.expand))
+
+  def toStream(implicit b: StreamGraph.Builder): Stream[A] = ???
 
   override def toString: String = elems.mkString("PESeq(", ",", ")")
 }

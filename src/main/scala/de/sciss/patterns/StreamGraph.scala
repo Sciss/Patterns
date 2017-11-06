@@ -13,14 +13,14 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.graph.{Constant, StreamProxy}
+import de.sciss.patterns.graph.Constant
 
 import scala.collection.breakOut
 import scala.collection.immutable.{IndexedSeq => Vec}
 
 object StreamGraph {
   trait Builder {
-    def addUGen(ugen: Stream): Unit
+    def addStream(stream: Stream[_]): Unit
     def visit[U](ref: AnyRef, init: => U): U
   }
   
@@ -38,19 +38,19 @@ object StreamGraph {
   }
 
   // ---- IndexedUGen ----
-  final class IndexedUGenBuilder(val ugen: Stream, var effective: Boolean) {
-    var children    : Array[List[IndexedUGenBuilder]]   = Array.fill(ugen.numOutputs)(Nil)
+  final class IndexedUGenBuilder(val stream: Stream[_], var effective: Boolean) {
+    var children    : Array[List[IndexedUGenBuilder]]   = ??? // Array.fill(stream.numOutputs)(Nil)
     var inputIndices: List[UGenInIndex]                 = Nil
     var index       : Int                               = -1
 
-    override def toString = s"Idx($ugen, $effective) : richInputs = $inputIndices"
+    override def toString = s"Idx($stream, $effective) : richInputs = $inputIndices"
   }
 
   private[patterns] sealed trait UGenInIndex {
     def makeEffective(): Int
   }
 
-  private[patterns] final class ConstantIndex(val peer: Constant) extends UGenInIndex {
+  private[patterns] final class ConstantIndex(val peer: Constant[_]) extends UGenInIndex {
     def makeEffective() = 0
 
     override def toString: String = peer.toString
@@ -73,7 +73,7 @@ object StreamGraph {
 
   // - converts to StreamIn objects that automatically insert stream broadcasters
   //   and dummy sinks
-  def buildStream(ugens: Vec[IndexedUGenBuilder])(implicit ctrl: stream.Control): Any /* RunnableGraph[NotUsed] */ = {
+  def buildStream(streams: Vec[IndexedUGenBuilder])(implicit ctrl: stream.Control): Any /* RunnableGraph[NotUsed] */ = {
     // empty graphs are not supported by Akka
     ???
 
@@ -121,24 +121,24 @@ object StreamGraph {
 
   // - builds parent-child graph of UGens
   // - deletes no-op sub-trees
-  def indexUGens(ugens: Vec[Stream]): Vec[IndexedUGenBuilder] = {
-    var numIneffective  = ugens.size
-    val indexedUGens    = ugens.map { ugen =>
-      val eff = ugen.hasSideEffect
+  def indexStreams(streams: Vec[Stream[_]]): Vec[IndexedUGenBuilder] = {
+    var numIneffective  = streams.size
+    val indexedUGens    = streams.map { ugen =>
+      val eff = true // ugen.hasSideEffect
       if (eff) numIneffective -= 1
       new IndexedUGenBuilder(ugen, eff)
     }
 
-    val ugenMap: Map[AnyRef, IndexedUGenBuilder] = indexedUGens.map(iu => (iu.ugen, iu))(breakOut)
+    val ugenMap: Map[AnyRef, IndexedUGenBuilder] = indexedUGens.map(iu => (iu.stream, iu))(breakOut)
     indexedUGens.foreach { iu =>
-      iu.inputIndices = iu.ugen.inputs.map {
-        case c: Constant =>
+      iu.inputIndices = iu.stream.inputs.map {
+        case c: Constant[_] =>
           new ConstantIndex(c)
 
-        case up: StreamProxy =>
-          val iui = ugenMap(up.stream)
-          iui.children(up.outputIndex) ::= iu
-          new UGenProxyIndex(iui, up.outputIndex)
+//        case up: StreamProxy =>
+//          val iui = ugenMap(up.stream)
+//          iui.children(up.outputIndex) ::= iu
+//          new UGenProxyIndex(iui, up.outputIndex)
       } (breakOut)
       if (iu.effective) iu.inputIndices.foreach(numIneffective -= _.makeEffective())
     }
@@ -164,20 +164,20 @@ object StreamGraph {
 
     // ---- impl ----
 
-    private[this] var _ugens    = Vector.empty[Stream]
+    private[this] var _streams = Vector.empty[Stream[_]]
     // private[this] val ugenSet   = mutable.Set.empty[UGen]
     private[this] var sourceMap = Map.empty[AnyRef, Any]
 
-    protected final def ugens: Vec[Stream] = _ugens
+    protected final def streams: Vec[Stream[_]] = _streams
 
     def build(implicit ctrl: stream.Control): StreamGraph = {
-      val iUGens  = indexUGens(_ugens)
+      val iUGens  = indexStreams(_streams)
       val rg      = buildStream(iUGens)
       StreamGraph(rg)
     }
 
     private def printSmart(x: Any): String = x match {
-      case u: Stream     => u.name
+      case u: Stream[_]     => u.name
       // case p: ChannelProxy  => s"${printSmart(p.elem)}.\\(${p.index})"
       case _                => x.toString
     }
@@ -203,7 +203,7 @@ object StreamGraph {
       }).asInstanceOf[U] // not so pretty...
     }
 
-    def addUGen(ugen: Stream): Unit = {
+    def addStream(stream: Stream[_]): Unit = {
       // Where is this check in ScalaCollider? Have we removed it (why)?
       // N.B.: We do not use UGen equality any longer in FScape because
       // we might need to feed the same structure into different sinks
@@ -211,8 +211,8 @@ object StreamGraph {
       // (Imagine a `DC(0.0)` going into two entirely different places!)
 
       // if (ugenSet.add(ugen)) {
-      _ugens :+= ugen
-      logGraph(s"addUGen ${ugen.name} @ ${ugen.hashCode.toHexString} ${if (ugen.isIndividual) "indiv" else ""}")
+      _streams :+= stream
+      logGraph(s"addUGen ${stream.name} @ ${stream.hashCode.toHexString}")
       // } else {
       //  logGraph(s"addUGen ${ugen.name} @ ${ugen.hashCode.toHexString} - duplicate")
       // }

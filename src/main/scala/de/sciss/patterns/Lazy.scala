@@ -45,7 +45,7 @@ object Lazy {
       * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
       *          or a single stream, or a group of streams)
       */
-    final private[patterns] def expand(implicit b: StreamGraph.Builder): U = b.visit(ref, makeStreams)
+    final private[patterns] def expand(implicit b: StreamGraph.Builder): U = b.visit(ref, toStream)
 
     /** Abstract method which must be implemented by creating the actual `UGen`s
       * during expansion. This method is at most called once during graph
@@ -53,7 +53,7 @@ object Lazy {
       *
       * @return  the expanded object (depending on the type parameter `U`)
       */
-    protected def makeStreams(implicit b: StreamGraph.Builder): U
+    protected def toStream(implicit b: StreamGraph.Builder): U
   }
 }
 

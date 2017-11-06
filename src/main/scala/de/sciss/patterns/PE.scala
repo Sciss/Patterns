@@ -20,17 +20,19 @@ import scala.language.implicitConversions
 
 /** Pattern element */
 object PE {
-  trait Lazy extends Lazy.Expander[StreamInLike] with PE
+  trait Lazy[+A] extends Lazy.Expander[Stream[A]] with PE[A]
 
   implicit def fromInt   (x: Int   ): ConstantI = new ConstantI(x)
   implicit def fromDouble(x: Double): ConstantD = new ConstantD(x)
   implicit def fromLong  (x: Long  ): ConstantL = new ConstantL(x)
 
-  implicit def fromSeq(xs: scala.Seq[PE]): PE = xs match {
+  implicit def fromSeq[A](xs: scala.Seq[PE[A]]): PE[A] = xs match {
     case scala.Seq(x) => x
     case _            => PESeq(xs.toIndexedSeq)
   }
 }
-trait PE extends Product {
-  private[patterns] def expand(implicit b: StreamGraph.Builder): StreamInLike
+trait PE[+A] extends Product {
+  private[patterns] def expand(implicit b: StreamGraph.Builder): Stream[A] // StreamInLike
+
+  def toStream(implicit b: StreamGraph.Builder): Stream[A] // InLike
 }

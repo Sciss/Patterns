@@ -14,11 +14,10 @@
 package de.sciss.patterns
 package graph
 
-import scala.collection.immutable.{IndexedSeq => Vec}
-
 /** aka Pseries */
-final case class ArithmSeq(start: PE = 0, step: PE = 1, length: PE = Long.MaxValue) extends Pattern.SingleOut {
-  protected def makeStream(args: Vec[StreamIn])(implicit b: StreamGraph.Builder) = ???
+final case class ArithmSeq[A](start: PE[A], step: PE[A], length: PE[Int] = Int.MaxValue)(implicit num: Numeric[A])
+  extends Pattern[A] {
 
-  protected def makeStreams(implicit b: StreamGraph.Builder) = ???
+  def toStream(implicit b: StreamGraph.Builder): Stream[A] =
+    new stream.ArithmSeq(start = start.expand, step = step.expand, length = length.expand)
 }
