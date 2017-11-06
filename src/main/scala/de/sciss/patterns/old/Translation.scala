@@ -1,4 +1,4 @@
-package de.sciss.patterns
+package de.sciss.patterns.old
 
 import java.lang.reflect.InvocationTargetException
 

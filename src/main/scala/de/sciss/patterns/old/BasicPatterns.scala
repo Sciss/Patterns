@@ -1,7 +1,7 @@
-package de.sciss.patterns
+package de.sciss.patterns.old
 
-import scala.util.Try
 import scala.collection.{Iterator => It}
+import scala.util.Try
 
 object BasicPatterns {
   def main(args: Array[String]): Unit = {
