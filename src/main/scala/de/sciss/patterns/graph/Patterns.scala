@@ -1,5 +1,5 @@
 /*
- *  PESeq.scala
+ *  Patterns.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
@@ -13,13 +13,12 @@
 
 package de.sciss.patterns
 package graph
-package impl
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
-final case class PESeq(elems: Vec[PE]) extends PE {
-  private[patterns] def expand(implicit b: StreamGraph.Builder): StreamInLike =
-    StreamInGroup(elems.map(_.expand))
+/** aka Pseries */
+final case class ArithmSeq(start: PE = 0, step: PE = 1, length: PE = Long.MaxValue) extends Pattern.SingleOut {
+  protected def makeStream(args: Vec[StreamIn])(implicit b: StreamGraph.Builder) = ???
 
-  override def toString: String = elems.mkString("PESeq(", ",", ")")
+  protected def makeStreams(implicit b: StreamGraph.Builder) = ???
 }

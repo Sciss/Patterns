@@ -1,9 +1,22 @@
+/*
+ *  Lazy.scala
+ *  (Patterns)
+ *
+ *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
+ *
+ *  This software is published under the GNU General Public License v2+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
 package de.sciss.patterns
 
 object Lazy {
   /** A convenient implementation of the `Lazy` trait for elements which typically expand
-    * to ugens. This will be typically used for elements which do not directly need to
-    * generate ugens but rather spawn more graph elements. For the direct generation of
+    * to streams. This will be typically used for elements which do not directly need to
+    * generate streams but rather spawn more graph elements. For the direct generation of
     * `UGen`s, use a subtype of `UGenSource`.
     *
     * The constructor body of this trait will call `Graph.builder.addLazy` to automatically
@@ -21,18 +34,18 @@ object Lazy {
     /** A final implementation of this method which calls `visit` on the builder,
       * checking if this element has already been visited, and if not, will invoke
       * the `expand` method. Therefore it is guaranteed, that the expansion to
-      * ugens is performed no more than once in the graph expansion.
+      * streams is performed no more than once in the graph expansion.
       */
     final private[patterns] def force(b: StreamGraph.Builder): Unit = expand(b)
 
-    /** A final implementation of this method which looks up the current ugen graph
+    /** A final implementation of this method which looks up the current stream graph
       * builder and then performs the expansion just as `force`, returning the
       * expanded object
       *
-      * @return  the expanded object (e.g. `Unit` for a ugen with no outputs,
-      *          or a single ugen, or a group of ugens)
+      * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
+      *          or a single stream, or a group of streams)
       */
-    final private[patterns] def expand(implicit b: StreamGraph.Builder): U = b.visit(ref, makeUGens)
+    final private[patterns] def expand(implicit b: StreamGraph.Builder): U = b.visit(ref, makeStreams)
 
     /** Abstract method which must be implemented by creating the actual `UGen`s
       * during expansion. This method is at most called once during graph
@@ -40,7 +53,7 @@ object Lazy {
       *
       * @return  the expanded object (depending on the type parameter `U`)
       */
-    protected def makeUGens(implicit b: StreamGraph.Builder): U
+    protected def makeStreams(implicit b: StreamGraph.Builder): U
   }
 }
 
@@ -49,9 +62,9 @@ object Lazy {
   * `Graph.builder.addLazy`. Then, when the graph is expanded, the
   * `force` method is called on those registered elements, allowing them
   * to either spawn new graph elements or actually expand to `UGen`s which
-  * can be added to the ugen graph builder argument.
+  * can be added to the stream graph builder argument.
   *
-  * In most cases, lazy elements will expanded to ugens, and thus the subtype
+  * In most cases, lazy elements will expanded to streams, and thus the subtype
   * `Lazy.Expander` is the most convenient way to implement this trait, as it already
   * does most of the logic, and provides for `GE`s `expand` method.
   */
@@ -59,7 +72,7 @@ trait Lazy extends Product {
   /** This method is invoked by the `StreamGraph.Builder` instance when a `Graph`
     * is expanded.
     *
-    * @param b    the ugen graph builder to which expanded `UGen`s or control proxies
+    * @param b    the stream graph builder to which expanded `UGen`s or control proxies
     *             may be added.
     */
   private[patterns] def force(b: StreamGraph.Builder): Unit

@@ -1,3 +1,16 @@
+/*
+ *  Stream.scala
+ *  (Patterns)
+ *
+ *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
+ *
+ *  This software is published under the GNU General Public License v2+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
 package de.sciss.patterns
 
 import de.sciss.patterns.graph.{StreamInGroup, StreamOutProxy, StreamProxy}
@@ -59,7 +72,7 @@ sealed trait Stream extends Product {
 
 object Stream {
   object SingleOut {
-    def apply(source: StreamSource.SingleOut, inputs: Vec[StreamIn], aux: List[Aux] = Nil, isIndividual: Boolean = false,
+    def apply(source: Pattern.SingleOut, inputs: Vec[StreamIn], aux: List[Aux] = Nil, isIndividual: Boolean = false,
               hasSideEffect: Boolean = false)(implicit b: StreamGraph.Builder): SingleOut = {
       val res = ??? //
 //        new SingleOutImpl(source = source, inputs = inputs, aux = aux,
@@ -76,11 +89,11 @@ object Stream {
     final def outputIndex   = 0
     final def stream: Stream  = this
 
-    def source: StreamSource.SingleOut
+    def source: Pattern.SingleOut
   }
 
   object ZeroOut {
-    def apply(source: StreamSource.ZeroOut, inputs: Vec[StreamIn], aux: List[Aux] = Nil, isIndividual: Boolean = false)
+    def apply(source: Pattern.ZeroOut, inputs: Vec[StreamIn], aux: List[Aux] = Nil, isIndividual: Boolean = false)
              (implicit b: StreamGraph.Builder): ZeroOut = {
       val res = ??? // new ZeroOutImpl(source = source, inputs = inputs, aux = aux, isIndividual = isIndividual)
       b.addUGen(res)
@@ -91,11 +104,11 @@ object Stream {
     final def numOutputs    = 0
     final def hasSideEffect = true  // implied by having no outputs
 
-    def source: StreamSource.ZeroOut
+    def source: Pattern.ZeroOut
   }
 
   object MultiOut {
-    def apply(source: StreamSource.MultiOut, inputs: Vec[StreamIn], numOutputs: Int,
+    def apply(source: Pattern.MultiOut, inputs: Vec[StreamIn], numOutputs: Int,
               aux: List[Aux] = Nil, isIndividual: Boolean = false, hasSideEffect: Boolean = false)
              (implicit b: StreamGraph.Builder): MultiOut = {
       val res = ??? //
@@ -113,7 +126,7 @@ object Stream {
 
     def outputs: Vec[StreamIn] = Vector.tabulate(numOutputs)(ch => StreamOutProxy(this, ch))
 
-    def source: StreamSource.MultiOut
+    def source: Pattern.MultiOut
 
     private[patterns] final def unbubble: StreamInLike = if (numOutputs == 1) outputs(0) else this
   }
