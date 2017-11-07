@@ -35,14 +35,14 @@ object Types {
 //    def num: Numeric[Out] = ???
 //    def plus(x: Out, y: Out): Out = (x, y).zipped.map(_ + _)
   }
-//  implicit object IntSeqTop extends IntSeqTop
+  implicit object IntSeqTop extends IntSeqTop
 
   sealed trait IntTop extends IntSeqTop /* IntLikeTop */ {
     //    def num: Numeric[Out] = ???
 //    final type Out = Int
     //    def plus(x: Out, y: Out): Out = x + y
   }
-  implicit object IntTop extends IntTop
+//  implicit object IntTop extends IntTop
 
   final case class Foo[T <: NumTop](a: Elem[T], b: Elem[T])(implicit val tpe: T) extends Elem[T] {
     def mkIter: Iterator[_] = {
@@ -62,8 +62,8 @@ object Types {
     }
   }
 
-  implicit def intElem    (i: Int     ): Elem[IntTop   ] = ???
-  implicit def intSeqElem (i: Seq[Int]): Elem[IntSeqTop] = ???
+  implicit def intElem   (i: Int     ): Elem[IntTop   ] = ???
+  implicit def intSeqElem(i: Seq[Int]): Elem[IntSeqTop] = ???
 
   def example(): Unit = {
     Foo(Seq(1, 2), 3)
