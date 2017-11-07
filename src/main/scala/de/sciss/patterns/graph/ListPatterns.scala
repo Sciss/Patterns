@@ -1,24 +1,24 @@
-/*
- *  ListPatterns.scala
- *  (Patterns)
- *
- *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
- *
- *  This software is published under the GNU General Public License v2+
- *
- *
- *  For further information, please contact Hanns Holger Rutz at
- *  contact@sciss.de
- */
-
-package de.sciss.patterns
-package graph
-
-import de.sciss.patterns.PE.Value
-
-final case class Index[A <: Value](list: PE[A], index: PE.Int, repeats: PE.Int = 1) extends Pattern[A] {
-  def toStream(implicit b: StreamGraph.Builder): Stream[A] = ???
-}
+///*
+// *  ListPatterns.scala
+// *  (Patterns)
+// *
+// *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
+// *
+// *  This software is published under the GNU General Public License v2+
+// *
+// *
+// *  For further information, please contact Hanns Holger Rutz at
+// *  contact@sciss.de
+// */
+//
+//package de.sciss.patterns
+//package graph
+//
+//import de.sciss.patterns.PE.Value
+//
+//final case class Index[A <: Value](list: PE[A], index: PE.Int, repeats: PE.Int = 1) extends Pattern[A] {
+//  def iterator(implicit b: StreamGraph.Builder): Stream[A] = ???
+//}
 //
 //final case class Pseq(list: PE, repeats: PE = 1, offset: PE = 0) extends Pattern {
 //  protected def makeStream(args: Vec[StreamIn])(implicit b: StreamGraph.Builder) = ???

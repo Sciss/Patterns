@@ -22,10 +22,36 @@ object Types {
     def times(a: tpe.Out, b: tpe.Out): tpe.Out
   }
 
+  object Pat {
+    trait Lazy[T <: Top] extends Pat[T] {
+      // this acts now as a fast unique reference
+      @transient final private[this] lazy val ref = new AnyRef
+
+      /** A final implementation of this method which calls `visit` on the builder,
+        * checking if this element has already been visited, and if not, will invoke
+        * the `expand` method. Therefore it is guaranteed, that the expansion to
+        * streams is performed no more than once in the graph expansion.
+        */
+      final private[patterns] def force(ctx: Context): Unit = expand(ctx)
+
+      /** A final implementation of this method which looks up the current stream graph
+        * builder and then performs the expansion just as `force`, returning the
+        * expanded object
+        *
+        * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
+        *          or a single stream, or a group of streams)
+        */
+      final private[patterns] def expand(implicit ctx: Context): Iterator[tpe.Out] = ctx.visit(ref, iterator)
+    }
+  }
   trait Pat[T <: Top] {
     val tpe: T
 
-    def iterator: Iterator[tpe.Out]
+    def iterator(implicit ctx: Context): Iterator[tpe.Out]
+  }
+
+  trait Pattern[T <: Top] extends Pat.Lazy[T] {
+
   }
 
   trait IntLikeNum {
@@ -95,11 +121,11 @@ object Types {
 
   final case class Add[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
                                                       (implicit protected val br: Num[T1, T2, T])
-    extends Pat[T] {
+    extends Pattern[T] {
 
     val tpe: br.tpe.type = br.tpe
 
-    def iterator: Iterator[tpe.Out] = {
+    def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
       val ai = a.iterator
       val bi = b.iterator
 
@@ -116,7 +142,7 @@ object Types {
     }
   }
 
-  trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pat[T] {
+  trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pattern[T] {
     // ---- abstract ----
 
     def start: Pat[T1]
@@ -131,7 +157,7 @@ object Types {
 
     final val tpe: br.tpe.type = br.tpe
 
-    final def iterator: Iterator[tpe.Out] = {
+    final def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
       val ai = start.iterator.map(br.lift1)
       val bi = step .iterator.map(br.lift2)
 
@@ -168,30 +194,50 @@ object Types {
 
   final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
                                                       (implicit protected val br: Bridge[T1, T2, T])
-    extends Pat[T] {
+    extends Pattern[T] {
 
     val tpe: br.tpe.type = br.tpe
 
-    def iterator: Iterator[tpe.Out] = {
+    def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
       val ai = a.iterator.map(br.lift1)
       val bi = b.iterator.map(br.lift2)
       ai ++ bi
     }
   }
 
-  final case class Take[T <: Top](a: Pat[T], length: Pat[IntTop])
-    extends Pat[T] {
+  trait Truncate[T <: Top] extends Pattern[T] {
+    // ---- abstract ----
 
-    val tpe: a.tpe.type = a.tpe
+    protected val in: Pat[T]
+    protected def length: Pat[IntTop]
 
-    def iterator: Iterator[tpe.Out] = {
+    protected def truncate(it: Iterator[tpe.Out], n: Int): Iterator[tpe.Out]
+
+    // ---- impl ----
+
+    final val tpe: in.tpe.type = in.tpe
+
+    def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
       val lenIt = length.iterator
       if (lenIt.isEmpty) Iterator.empty
       else {
-        val lenVal = lenIt.next()
-        a.iterator.take(lenVal)
+        val lenVal  = lenIt.next()
+        val inIt    = in.iterator
+        truncate(inIt, lenVal)
       }
     }
+  }
+
+  final case class Take[T <: Top](in: Pat[T], length: Pat[IntTop])
+    extends Truncate[T] {
+
+    protected def truncate(it: Iterator[tpe.Out], n: Int): Iterator[tpe.Out] = it.take(n)
+  }
+
+  final case class Drop[T <: Top](in: Pat[T], length: Pat[IntTop])
+    extends Truncate[T] {
+
+    protected def truncate(it: Iterator[tpe.Out], n: Int): Iterator[tpe.Out] = it.drop(n)
   }
 
   sealed trait StringTop extends Top {
@@ -205,11 +251,12 @@ object Types {
   }
 
   final case class Const[A, T <: Top](x: A)(implicit val tpe: T { type Out = A }) extends Pat[T] {
-    def iterator: Iterator[A] = Iterator.continually(x)
+    def iterator(implicit ctx: Context): Iterator[A] = Iterator.continually(x)
   }
 
   implicit class ElemOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     def take(length: Pat[IntTop]): Take[T] = Take(x, length)
+    def drop(length: Pat[IntTop]): Drop[T] = Drop(x, length)
 
     def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2]): Cat[T, T1, T2] = Cat(x, that)
   }
@@ -223,6 +270,8 @@ object Types {
   implicit def stringElem   (x: String      ): Pat[StringTop   ] = Const(x)
 
   def example(): Unit = {
+    implicit val ctx: Context = Context()
+
     // ok
     val a = Add[IntSeqTop, IntTop, IntSeqTop](Seq(1, 2), 3)
     println(a.iterator.take(1).mkString("a: ", ", ", ""))
