@@ -5,7 +5,7 @@ import scala.language.implicitConversions
 
 object Types {
   trait Top {
-//    type Out
+    type Out
   }
 
   trait Bridge[In1, In2, Out] {
@@ -15,13 +15,14 @@ object Types {
   trait Elem[+T <: Top] {
     val tpe: T
 
-    def mkIter: Iterator[_]
+    def mkIter: Iterator[tpe.Out]
   }
 
   sealed trait NumTop extends Top {
 //    def num: Numeric[A]
 
 //    def bridge[In1 <: A, In2 <: A](a: Top[In1], b: Top[In2]): Bridge[In1, In2, A]
+    def bridge(a: Top, b: Top): Bridge[a.Out, b.Out, Out]
 
 //    def plus(x: A, y: A): A
   }
@@ -34,6 +35,7 @@ object Types {
 //    final type Out = Seq[Int]
 //    def num: Numeric[Out] = ???
 //    def plus(x: Out, y: Out): Out = (x, y).zipped.map(_ + _)
+    def bridge(a: Top, b: Top): Bridge[a.Out, b.Out, Out] = ???
   }
   implicit object IntSeqTop extends IntSeqTop
 
@@ -45,18 +47,18 @@ object Types {
 //  implicit object IntTop extends IntTop
 
   final case class Foo[T <: NumTop](a: Elem[T], b: Elem[T])(implicit val tpe: T) extends Elem[T] {
-    def mkIter: Iterator[_] = {
+    def mkIter: Iterator[tpe.Out] = {
       val ai = a.mkIter
       val bi = b.mkIter
-//      val br = tpe.bridge(a.tpe, b.tpe)
+      val br = tpe.bridge(a.tpe, b.tpe)
 
-      new AbstractIterator[Any] {
+      new AbstractIterator[tpe.Out] {
         def hasNext: Boolean = ai.hasNext && bi.hasNext
 
-        def next(): Any = {
+        def next(): tpe.Out = {
           val an = ai.next()
           val bn = bi.next()
-          ??? // br.plus(an, bn)
+          br.plus(an, bn)
         }
       }
     }
