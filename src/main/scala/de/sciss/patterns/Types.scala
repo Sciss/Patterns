@@ -4,7 +4,7 @@ import scala.collection.AbstractIterator
 import scala.language.implicitConversions
 
 object Types {
-  trait Top[A] {
+  trait Top {
 //    type Out
   }
 
@@ -12,60 +12,60 @@ object Types {
     def plus(a: In1, b: In2): Out
   }
 
-  trait Elem[A, +T <: Top[A]] {
+  trait Elem[+T <: Top] {
     val tpe: T
 
-    def mkIter: Iterator[A]
+    def mkIter: Iterator[_]
   }
 
-  sealed trait NumTop[A] extends Top[A] {
+  sealed trait NumTop extends Top {
 //    def num: Numeric[A]
 
-    def bridge[In1 <: A, In2 <: A](a: Top[In1], b: Top[In2]): Bridge[In1, In2, A]
+//    def bridge[In1 <: A, In2 <: A](a: Top[In1], b: Top[In2]): Bridge[In1, In2, A]
 
 //    def plus(x: A, y: A): A
   }
 
-  sealed trait IntLikeTop[A] extends NumTop[A] {
-    def bridge[In1 <: A, In2 <: A](a: Top[In1], b: Top[In2]): Bridge[In1, In2, A] = ???
-  }
+//  sealed trait IntLikeTop extends NumTop {
+////    def bridge[In1 <: A, In2 <: A](a: Top[In1], b: Top[In2]): Bridge[In1, In2, A] = ???
+//  }
 
-  sealed trait IntTop extends IntLikeTop[Int] {
-//    def num: Numeric[Out] = ???
-    final type Out = Int
-//    def plus(x: Out, y: Out): Out = x + y
-  }
-  implicit object IntTop extends IntTop
-
-  sealed trait IntSeqTop extends IntLikeTop[Seq[Int]] {
-    final type Out = Seq[Int]
+  sealed trait IntSeqTop extends NumTop /* IntLikeTop */ {
+//    final type Out = Seq[Int]
 //    def num: Numeric[Out] = ???
 //    def plus(x: Out, y: Out): Out = (x, y).zipped.map(_ + _)
   }
-  implicit object IntSeqTop extends IntSeqTop
+//  implicit object IntSeqTop extends IntSeqTop
 
-  final case class Foo[A, T <: NumTop[A]](a: Elem[A, T], b: Elem[A, T])(implicit val tpe: T) extends Elem[A, T] {
-    def mkIter: Iterator[A] = {
+  sealed trait IntTop extends IntSeqTop /* IntLikeTop */ {
+    //    def num: Numeric[Out] = ???
+//    final type Out = Int
+    //    def plus(x: Out, y: Out): Out = x + y
+  }
+  implicit object IntTop extends IntTop
+
+  final case class Foo[T <: NumTop](a: Elem[T], b: Elem[T])(implicit val tpe: T) extends Elem[T] {
+    def mkIter: Iterator[_] = {
       val ai = a.mkIter
       val bi = b.mkIter
-      val br = tpe.bridge(a.tpe, b.tpe)
+//      val br = tpe.bridge(a.tpe, b.tpe)
 
-      new AbstractIterator[A] {
+      new AbstractIterator[Any] {
         def hasNext: Boolean = ai.hasNext && bi.hasNext
 
-        def next(): A = {
+        def next(): Any = {
           val an = ai.next()
           val bn = bi.next()
-          br.plus(an, bn)
+          ??? // br.plus(an, bn)
         }
       }
     }
   }
 
-  implicit def intElem    (i: Int     ): Elem[Int     , IntTop   ] = ???
-  implicit def intSeqElem (i: Seq[Int]): Elem[Seq[Int], IntSeqTop] = ???
+  implicit def intElem    (i: Int     ): Elem[IntTop   ] = ???
+  implicit def intSeqElem (i: Seq[Int]): Elem[IntSeqTop] = ???
 
   def example(): Unit = {
-    // Foo(Seq(1, 2), 3)
+    Foo(Seq(1, 2), 3)
   }
 }
