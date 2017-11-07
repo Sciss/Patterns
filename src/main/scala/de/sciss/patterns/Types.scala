@@ -17,19 +17,12 @@ object Types {
     def lift2(a: T2#Out): tpe.Out
   }
 
-//  implicit def idBridge[T <: Top](implicit tpe: T): Bridge[T, T, T] = new IdBridge[T](tpe)
-//
-//  final class IdBridge[T <: Top](val tpe: T) extends Bridge[T, T, T] {
-  // doesn't work:
-//    def lift1(a: T#Out): tpe.Out = a
-//    def lift2(a: T#Out): tpe.Out = a
-//  }
-
   trait Num[T1 <: Top, T2 <: Top, T <: Top] extends Bridge[T1, T2, T] {
-    def plus(a: tpe.Out, b: tpe.Out): tpe.Out
+    def plus (a: tpe.Out, b: tpe.Out): tpe.Out
+    def times(a: tpe.Out, b: tpe.Out): tpe.Out
   }
 
-  trait Elem[T <: Top] {
+  trait PE[T <: Top] {
     val tpe: T
 
     def iterator: Iterator[tpe.Out]
@@ -38,12 +31,15 @@ object Types {
   trait IntLikeNum {
     final val tpe: IntSeqTop = IntSeqTop
 
-    final def plus(a: Seq[Int], b: Seq[Int]): Seq[Int] = {
+    final def plus (a: Seq[Int], b: Seq[Int]): Seq[Int] = combine(a, b)(_ + _)
+    final def times(a: Seq[Int], b: Seq[Int]): Seq[Int] = combine(a, b)(_ * _)
+
+    private def combine(a: Seq[Int], b: Seq[Int])(op: (Int, Int) => Int): Seq[Int] = {
       val as = a.size
       val bs = b.size
       val sz = math.max(as, bs)
       Seq.tabulate(sz) { i =>
-        a(i % as) + b(i % bs)
+        op(a(i % as), b(i % bs))
       }
     }
   }
@@ -73,7 +69,8 @@ object Types {
     def lift1(a: Int): Int = a
     def lift2(a: Int): Int = a
 
-    def plus(a: Int, b: Int): Int = a + b
+    def plus (a: Int, b: Int): Int = a + b
+    def times(a: Int, b: Int): Int = a * b
   }
 
 //  sealed trait DoubleSeqTop extends NumTop /* DoubleLikeTop */ {
@@ -96,9 +93,9 @@ object Types {
 
   ////////////////////////////
 
-  final case class Add[T1 <: Top, T2 <: Top, T <: Top](a: Elem[T1], b: Elem[T2])
+  final case class Add[T1 <: Top, T2 <: Top, T <: Top](a: PE[T1], b: PE[T2])
                                                       (implicit val br: Num[T1, T2, T])
-    extends Elem[T] {
+    extends PE[T] {
 
     val tpe: br.tpe.type = br.tpe
 
@@ -119,26 +116,35 @@ object Types {
     }
   }
 
-  final case class Series[T1 <: Top, T2 <: Top, T <: Top](list: Elem[T1], step: Elem[T2])
-                                                         (implicit val br: Num[T1, T2, T])
-    extends Elem[T] {
+  trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends PE[T] {
+    // ---- abstract ----
 
-    val tpe: br.tpe.type = br.tpe
+    def start: PE[T1]
 
-    def iterator: Iterator[tpe.Out] = {
-      val ai = list.iterator
-      val bi = step.iterator
+    protected val br: Bridge[T1, T2, T]
+
+    protected def step: PE[T2]
+
+    protected def op(a: tpe.Out, b: tpe.Out): tpe.Out
+
+    // ---- impl ----
+
+    final val tpe: br.tpe.type = br.tpe
+
+    final def iterator: Iterator[tpe.Out] = {
+      val ai = start.iterator.map(br.lift1)
+      val bi = step .iterator.map(br.lift2)
 
       if (ai.isEmpty) Iterator.empty
       else new AbstractIterator[tpe.Out] {
-        private var state: tpe.Out = br.lift1(ai.next)
+        private var state: tpe.Out = ai.next
         var hasNext = true
 
         def next(): tpe.Out = {
           val res = state
           hasNext = ai.hasNext && bi.hasNext
           if (hasNext) {
-            state = br.plus(state, br.lift2(bi.next()))
+            state = op(state, bi.next())
           }
           res
         }
@@ -146,8 +152,22 @@ object Types {
     }
   }
 
-  final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: Elem[T1], b: Elem[T2])
-                                                      (implicit val br: Bridge[T1, T2, T]) extends Elem[T] {
+  final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: PE[T1], step: PE[T2])
+                                                         (implicit val br: Num[T1, T2, T])
+    extends SeriesLike[T1, T2, T] {
+
+    protected def op(a: tpe.Out, b: tpe.Out): tpe.Out = br.plus(a, b)
+  }
+
+  final case class Geom[T1 <: Top, T2 <: Top, T <: Top](start: PE[T1], step: PE[T2])
+                                                         (implicit val br: Num[T1, T2, T])
+    extends SeriesLike[T1, T2, T] {
+
+    protected def op(a: tpe.Out, b: tpe.Out): tpe.Out = br.plus(a, b)
+  }
+
+  final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: PE[T1], b: PE[T2])
+                                                      (implicit val br: Bridge[T1, T2, T]) extends PE[T] {
     val tpe: br.tpe.type = br.tpe
 
     def iterator: Iterator[tpe.Out] = {
@@ -157,8 +177,8 @@ object Types {
     }
   }
 
-  final case class Take[T <: Top](a: Elem[T], length: Elem[IntTop])
-    extends Elem[T] {
+  final case class Take[T <: Top](a: PE[T], length: PE[IntTop])
+    extends PE[T] {
 
     val tpe: a.tpe.type = a.tpe
 
@@ -182,29 +202,21 @@ object Types {
     def lift2(a: String): String = a
   }
 
-  final case class ConstInt(x: Int) extends Elem[IntTop] {
-    val tpe: IntTop = IntTop
-
-    def iterator: Iterator[tpe.Out] = Iterator.continually(x)
+  final case class Const[A, T <: Top](x: A)(implicit val tpe: T { type Out = A }) extends PE[T] {
+    def iterator: Iterator[A] = Iterator.continually(x)
   }
 
-  final case class ConstIntSeq(xs: Seq[Int]) extends Elem[IntSeqTop] {
-    val tpe: IntSeqTop = IntSeqTop
-
-    def iterator: Iterator[tpe.Out] = Iterator.continually(xs)
+  implicit class ElemOps[T <: Top](private val x: PE[T]) extends AnyVal {
+    def take(length: PE[IntTop]): Take[T] = Take(x, length)
   }
 
-  final case class ConstString(x: String) extends Elem[StringTop] {
-    val tpe: StringTop = StringTop
+//  implicit def const[A, T <: Top](x: A)(implicit tpe: T { type Out = A }): Elem[T] = Const(x)
 
-    def iterator: Iterator[tpe.Out] = Iterator.continually(x)
-  }
-
-  implicit def intElem      (x: Int         ): Elem[IntTop      ] = ConstInt(x)
-  implicit def intSeqElem   (xs: Seq[Int]   ): Elem[IntSeqTop   ] = ConstIntSeq(xs)
+  implicit def intElem      (x: Int         ): PE[IntTop      ] = Const(x)
+  implicit def intSeqElem   (xs: Seq[Int]   ): PE[IntSeqTop   ] = Const(xs)
 //  implicit def doubleElem   (i: Double      ): Elem[DoubleTop   ] = ...
 //  implicit def doubleSeqElem(i: Seq[Double] ): Elem[DoubleSeqTop] = ...
-  implicit def stringElem   (x: String      ): Elem[StringTop   ] = ConstString(x)
+  implicit def stringElem   (x: String      ): PE[StringTop   ] = Const(x)
 
   def example(): Unit = {
     // ok
@@ -233,11 +245,11 @@ object Types {
     println(f.iterator.take(3).mkString("f: ", ", ", ""))
 
     // ok
-    val g = Cat(Take("foo", 2), "bar")
+    val g = Cat(Take("foo", 2), "bar").take(5)
     g.iterator: Iterator[String]  // right
-    println(g.iterator.take(5).mkString("g: ", ", ", ""))
+    println(g.iterator.take(7).mkString("g: ", ", ", ""))
 
-//    // ambiguous implicits
+    //    // ambiguous implicits
 //    Foo(Seq(1, 2), 3.0)
 
     //    // compiles not
