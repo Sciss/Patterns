@@ -234,6 +234,7 @@ object Types {
 
     // ok
     val g = Cat(Take("foo", 2), "bar")
+    g.iterator: Iterator[String]  // right
     println(g.iterator.take(5).mkString("g: ", ", ", ""))
 
 //    // ambiguous implicits
