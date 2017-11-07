@@ -1,11 +1,24 @@
+/*
+ *  Types.scala
+ *  (Patterns)
+ *
+ *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
+ *
+ *	This software is published under the GNU Lesser General Public License v2.1+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
 package de.sciss.patterns
+
+import de.sciss.patterns.graph.impl.Truncate
 
 import scala.collection.AbstractIterator
 import scala.language.implicitConversions
 
 object Types {
-  def main(args: Array[String]): Unit = example()
-
   trait Top {
     type Out
   }
@@ -142,56 +155,6 @@ object Types {
     }
   }
 
-  trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pattern[T] {
-    // ---- abstract ----
-
-    def start: Pat[T1]
-
-    protected val br: Bridge[T1, T2, T]
-
-    protected def step: Pat[T2]
-
-    protected def op(a: tpe.Out, b: tpe.Out): tpe.Out
-
-    // ---- impl ----
-
-    final val tpe: br.tpe.type = br.tpe
-
-    final def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
-      val ai = start.iterator.map(br.lift1)
-      val bi = step .iterator.map(br.lift2)
-
-      if (ai.isEmpty) Iterator.empty
-      else new AbstractIterator[tpe.Out] {
-        private var state: tpe.Out = ai.next
-        var hasNext = true
-
-        def next(): tpe.Out = {
-          val res = state
-          hasNext = ai.hasNext && bi.hasNext
-          if (hasNext) {
-            state = op(state, bi.next())
-          }
-          res
-        }
-      }
-    }
-  }
-
-  final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
-                                                         (implicit protected val br: Num[T1, T2, T])
-    extends SeriesLike[T1, T2, T] {
-
-    protected def op(a: tpe.Out, b: tpe.Out): tpe.Out = br.plus(a, b)
-  }
-
-  final case class Geom[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
-                                                         (implicit protected val br: Num[T1, T2, T])
-    extends SeriesLike[T1, T2, T] {
-
-    protected def op(a: tpe.Out, b: tpe.Out): tpe.Out = br.plus(a, b)
-  }
-
   final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
                                                       (implicit protected val br: Bridge[T1, T2, T])
     extends Pattern[T] {
@@ -202,29 +165,6 @@ object Types {
       val ai = a.iterator.map(br.lift1)
       val bi = b.iterator.map(br.lift2)
       ai ++ bi
-    }
-  }
-
-  trait Truncate[T <: Top] extends Pattern[T] {
-    // ---- abstract ----
-
-    protected val in: Pat[T]
-    protected def length: Pat[IntTop]
-
-    protected def truncate(it: Iterator[tpe.Out], n: Int): Iterator[tpe.Out]
-
-    // ---- impl ----
-
-    final val tpe: in.tpe.type = in.tpe
-
-    def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
-      val lenIt = length.iterator
-      if (lenIt.isEmpty) Iterator.empty
-      else {
-        val lenVal  = lenIt.next()
-        val inIt    = in.iterator
-        truncate(inIt, lenVal)
-      }
     }
   }
 
@@ -268,44 +208,4 @@ object Types {
 //  implicit def doubleElem   (i: Double      ): Elem[DoubleTop   ] = ...
 //  implicit def doubleSeqElem(i: Seq[Double] ): Elem[DoubleSeqTop] = ...
   implicit def stringElem   (x: String      ): Pat[StringTop   ] = Const(x)
-
-  def example(): Unit = {
-    implicit val ctx: Context = Context()
-
-    // ok
-    val a = Add[IntSeqTop, IntTop, IntSeqTop](Seq(1, 2), 3)
-    println(a.iterator.take(1).mkString("a: ", ", ", ""))
-
-    // ok
-    val b = Add(Seq(1, 2), 3)
-    println(b.iterator.take(1).mkString("b: ", ", ", ""))
-
-    // ok
-    val c = Add(1, 3)
-    c.iterator: Iterator[Int] // right
-    println(c.iterator.take(1).mkString("c: ", ", ", ""))
-
-    // ok
-    val d = Add(1, Seq(2, 3))
-    println(d.iterator.take(1).mkString("d: ", ", ", ""))
-
-    // ok
-    val e = Add(Seq(1, 2), Seq(3, 4))
-    println(e.iterator.take(1).mkString("e: ", ", ", ""))
-
-    // ok
-    val f = Series(Seq(2, 3), 4)
-    println(f.iterator.take(3).mkString("f: ", ", ", ""))
-
-    // ok
-    val g = (Take("foo", 2) ++ "bar").take(5)
-    g.iterator: Iterator[String]  // right
-    println(g.iterator.take(7).mkString("g: ", ", ", ""))
-
-    //    // ambiguous implicits
-//    Foo(Seq(1, 2), 3.0)
-
-    //    // compiles not
-//    Foo(Seq(1, 2), "foo")
-  }
 }

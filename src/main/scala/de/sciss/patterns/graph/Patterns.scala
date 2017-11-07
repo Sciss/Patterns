@@ -1,34 +1,32 @@
-///*
-// *  Patterns.scala
-// *  (Patterns)
-// *
-// *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
-// *
-// *  This software is published under the GNU General Public License v2+
-// *
-// *
-// *  For further information, please contact Hanns Holger Rutz at
-// *  contact@sciss.de
-// */
-//
-//package de.sciss.patterns
-//package graph
-//
-//import de.sciss.patterns.PE.Value
-//
-///** aka Pseries */
-//final case class ArithmSeq[A <: PE.Numeric](start: PE[A], step: PE[A], length: PE.Int = Int.MaxValue)
-//                                           (implicit num: scala.Numeric[A#Out])
-//  extends Pattern[A] {
-//
-//  def iterator(implicit b: StreamGraph.Builder): Stream[A] =
-//    new stream.ArithmSeq(start = start.expand, step = step.expand, length = length.expand)
-//}
-//
-///** aka Pgeom */
-//final case class GeomSeq[A <: PE.Numeric](start: PE[A], grow: PE[A], length: PE.Int = Int.MaxValue)
-//  extends Pattern[A] {
-//
-//  def iterator(implicit b: StreamGraph.Builder): Stream[A] =
-//    new stream.GeomSeq(start = start.expand, grow = grow.expand, length = length.expand)
-//}
+/*
+ *  Patterns.scala
+ *  (Patterns)
+ *
+ *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
+ *
+ *	This software is published under the GNU Lesser General Public License v2.1+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
+package de.sciss.patterns
+package graph
+
+import de.sciss.patterns.Types.{Num, Pat, Top}
+import de.sciss.patterns.graph.impl.SeriesLike
+
+final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
+                                                       (implicit protected val br: Num[T1, T2, T])
+  extends SeriesLike[T1, T2, T] {
+
+  protected def op(a: tpe.Out, b: tpe.Out): tpe.Out = br.plus(a, b)
+}
+
+final case class Geom[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
+                                                     (implicit protected val br: Num[T1, T2, T])
+  extends SeriesLike[T1, T2, T] {
+
+  protected def op(a: tpe.Out, b: tpe.Out): tpe.Out = br.plus(a, b)
+}
