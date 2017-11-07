@@ -129,7 +129,7 @@ object StreamGraph {
       new IndexedUGenBuilder(ugen, eff)
     }
 
-    val ugenMap: Map[AnyRef, IndexedUGenBuilder] = indexedUGens.map(iu => (iu.stream, iu))(breakOut)
+//    val ugenMap: Map[AnyRef, IndexedUGenBuilder] = indexedUGens.map(iu => (iu.stream, iu))(breakOut)
     indexedUGens.foreach { iu =>
       iu.inputIndices = iu.stream.inputs.map {
         case c: Constant[_] =>

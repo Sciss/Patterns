@@ -15,9 +15,11 @@ package de.sciss.patterns
 package graph
 package impl
 
+import de.sciss.patterns.PE.Value
+
 import scala.collection.immutable.{IndexedSeq => Vec}
 
-final case class PESeq[A](elems: Vec[PE[A]]) extends PE[A] {
+final case class PESeq[A <: Value](elems: Vec[PE[A]]) extends PE[A] {
   private[patterns] def expand(implicit b: StreamGraph.Builder): Stream[A] =
     ??? // StreamInGroup(elems.map(_.expand))
 

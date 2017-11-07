@@ -14,7 +14,9 @@
 package de.sciss.patterns
 package graph
 
-final case class Index[A](list: PE[A], index: PE[Int], repeats: PE[Int] = 1) extends Pattern[A] {
+import de.sciss.patterns.PE.Value
+
+final case class Index[A <: Value](list: PE[A], index: PE.Int, repeats: PE.Int = 1) extends Pattern[A] {
   def toStream(implicit b: StreamGraph.Builder): Stream[A] = ???
 }
 //

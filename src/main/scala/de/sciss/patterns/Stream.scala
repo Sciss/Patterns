@@ -13,6 +13,8 @@
 
 package de.sciss.patterns
 
+import de.sciss.patterns.PE.Value
+
 import scala.annotation.switch
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.language.implicitConversions
@@ -22,7 +24,7 @@ import scala.language.implicitConversions
   * based on `isIndividual` status and may be omitted
   * from the final graph based on `hasSideEffect` status.
   */
-trait Stream[+A] extends Product {
+trait Stream[+A <: Value] extends Product {
   // !!! WE CURRENTLY DISABLE STRUCTURAL EQUALITY
   //  // initialize this first, so that debug printing in `addUGen` can use the hash code
   //  override val hashCode: Int = if (isIndividual) super.hashCode() else scala.runtime.ScalaRunTime._hashCode(this)
@@ -33,7 +35,9 @@ trait Stream[+A] extends Product {
 
   def inputs    : Vec[Stream[_]]
 
-  private[patterns] def iterator: Iterator[A]
+  val tpe: A
+
+  private[patterns] def iterator: Iterator[tpe.Out]
 
   /** Additional UGen arguments that are not of type `UGenIn`.
     * These are included to achieve correct equality
@@ -239,16 +243,16 @@ package graph {
 //    def outputIndex: Int
 //  }
 
-  object Constant {
-    def unapply(c: Constant[_]): Option[Double] = Some(c.doubleValue)
-  }
+//  object Constant {
+//    def unapply(c: Constant[_]): Option[Double] = Some(c.doubleValue)
+//  }
   /** A scalar constant used as an input to a UGen. */
-  sealed trait Constant[+A] extends PE[A] with Stream[A] /* StreamIn */ {
-    def doubleValue : Double
-    def intValue    : Int
-    def longValue   : Long
+  sealed trait Constant[A <: Value] extends PE[A] with Stream[A] /* StreamIn */ {
+//    def doubleValue : Double
+//    def intValue    : Int
+//    def longValue   : Long
 
-    def value: Any
+//    def value: Any
 
     final def aux: List[Stream.Aux] = Nil
 
@@ -272,12 +276,14 @@ package graph {
     final val C1  = new ConstantI(1)
     final val Cm1 = new ConstantI(-1)
   }
-  final case class ConstantI(value: Int) extends Constant[Int] /* with StreamIn.IntLike */ {
+  final case class ConstantI(value: Int) extends Constant[Value.Int] /* with StreamIn.IntLike */ {
     def doubleValue: Double = value.toDouble
     def intValue   : Int    = value
     def longValue  : Long   = value.toLong
 
     override def toString: String = value.toString
+
+    val tpe: Value.Int = Value.Int
 
     private[patterns] def iterator: Iterator[Int] = Iterator.continually(value)
   }
@@ -286,7 +292,7 @@ package graph {
     final val C1  = new ConstantD(1)
     final val Cm1 = new ConstantD(-1)
   }
-  final case class ConstantD(value: Double) extends Constant[Double] /* with StreamIn.DoubleLike */ {
+  final case class ConstantD(value: Double) extends Constant[Value.Double] /* with StreamIn.DoubleLike */ {
     def doubleValue: Double = value
     def intValue   : Int    = {
       if (value.isNaN) throw new ArithmeticException("NaN cannot be translated to Int")
@@ -303,26 +309,43 @@ package graph {
 
     override def toString: String = value.toString
 
+    val tpe: Value.Double = Value.Double
+
     private[patterns] def iterator: Iterator[Double] = Iterator.continually(value)
   }
-  object ConstantL {
-    final val C0  = new ConstantI(0)
-    final val C1  = new ConstantI(1)
-    final val Cm1 = new ConstantI(-1)
-  }
-  final case class ConstantL(value: Long) extends Constant[Long] /* with StreamIn.LongLike */ {
-    def doubleValue: Double = value.toDouble
-    def intValue   : Int    = {
-      val res = value.toInt
-      if (res != value) throw new ArithmeticException(s"Long $value exceeds Int range")
-      res
-    }
-    def longValue: Long = value
+
+  ///////
+
+  final case class ConstantIs(value: Vec[Int]) extends Constant[Value.IntSeq] {
+//    def doubleValue: Double = value.toDouble
+//    def intValue   : Int    = value
+//    def longValue  : Long   = value.toLong
 
     override def toString: String = value.toString
 
-    private[patterns] def iterator: Iterator[Long] = Iterator.continually(value)
+    val tpe: Value.IntSeq = Value.IntSeq
+
+    private[patterns] def iterator: Iterator[Vec[Int]] = Iterator.continually(value)
   }
+
+  //  object ConstantL {
+//    final val C0  = new ConstantI(0)
+//    final val C1  = new ConstantI(1)
+//    final val Cm1 = new ConstantI(-1)
+//  }
+//  final case class ConstantL(value: Long) extends Constant[Long] /* with StreamIn.LongLike */ {
+//    def doubleValue: Double = value.toDouble
+//    def intValue   : Int    = {
+//      val res = value.toInt
+//      if (res != value) throw new ArithmeticException(s"Long $value exceeds Int range")
+//      res
+//    }
+//    def longValue: Long = value
+//
+//    override def toString: String = value.toString
+//
+//    private[patterns] def iterator: Iterator[Long] = Iterator.continually(value)
+//  }
 
 //  /** A UGenOutProxy refers to a particular output of a multi-channel UGen.
 //    * A sequence of these form the representation of a multi-channel-expanded

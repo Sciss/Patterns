@@ -14,10 +14,20 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.PE.Value
+
 /** aka Pseries */
-final case class ArithmSeq[A](start: PE[A], step: PE[A], length: PE[Int] = Int.MaxValue)(implicit num: Numeric[A])
+final case class ArithmSeq[A <: PE.Numeric](start: PE[A], step: PE[A], length: PE.Int = Int.MaxValue)
   extends Pattern[A] {
 
   def toStream(implicit b: StreamGraph.Builder): Stream[A] =
     new stream.ArithmSeq(start = start.expand, step = step.expand, length = length.expand)
+}
+
+/** aka Pgeom */
+final case class GeomSeq[A <: PE.Numeric](start: PE[A], grow: PE[A], length: PE.Int = Int.MaxValue)
+  extends Pattern[A] {
+
+  def toStream(implicit b: StreamGraph.Builder): Stream[A] =
+    new stream.GeomSeq(start = start.expand, grow = grow.expand, length = length.expand)
 }

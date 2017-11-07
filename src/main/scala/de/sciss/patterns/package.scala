@@ -1,5 +1,5 @@
 /*
- *  package.scala
+ *  Lazy.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
@@ -18,7 +18,6 @@ import java.util.{Date, Locale}
 
 import scala.annotation.elidable
 import scala.annotation.elidable.CONFIG
-import scala.language.implicitConversions
 
 package object patterns {
 //  implicit def geOps1      (g: PE    ): PEOps1 = new PEOps1(g)
