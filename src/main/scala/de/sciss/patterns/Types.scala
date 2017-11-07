@@ -48,12 +48,16 @@ object Types {
     }
   }
 
-  sealed trait IntLikeTop extends Top
+  sealed trait IntLikeTop extends Top {
+    def lift(in: Out): Seq[Int]
+  }
 
   sealed trait IntSeqTop extends IntLikeTop {
     type Out = Seq[Int]
   }
   implicit object IntSeqTop extends IntSeqTop with IntLikeNum with Num[IntSeqTop, IntSeqTop, IntSeqTop] {
+    def lift(in: Seq[Int]): Seq[Int] = in
+
     def lift1(a: Seq[Int]): Seq[Int] = a
     def lift2(a: Seq[Int]): Seq[Int] = a
   }
@@ -63,6 +67,8 @@ object Types {
   }
   implicit object IntTop extends IntTop with Num[IntTop, IntTop, IntTop] {
     val tpe: IntTop = this
+
+    def lift(in: Int): Seq[Int] = in :: Nil
 
     def lift1(a: Int): Int = a
     def lift2(a: Int): Int = a
@@ -144,7 +150,26 @@ object Types {
                                                       (implicit val br: Bridge[T1, T2, T]) extends Elem[T] {
     val tpe: br.tpe.type = br.tpe
 
-    def iterator: Iterator[tpe.Out] = ??? // a.mkIter ++ b.mkIter
+    def iterator: Iterator[tpe.Out] = {
+      val ai = a.iterator.map(br.lift1)
+      val bi = b.iterator.map(br.lift2)
+      ai ++ bi
+    }
+  }
+
+  final case class Take[T <: Top](a: Elem[T], length: Elem[IntTop])
+    extends Elem[T] {
+
+    val tpe: a.tpe.type = a.tpe
+
+    def iterator: Iterator[tpe.Out] = {
+      val lenIt = length.iterator
+      if (lenIt.isEmpty) Iterator.empty
+      else {
+        val lenVal = lenIt.next()
+        a.iterator.take(lenVal)
+      }
+    }
   }
 
   sealed trait StringTop extends Top {
@@ -208,8 +233,8 @@ object Types {
     println(f.iterator.take(3).mkString("f: ", ", ", ""))
 
     // ok
-    val g = Cat("foo", "bar")
-    println(g.iterator.take(3).mkString("g: ", ", ", ""))
+    val g = Cat(Take("foo", 2), "bar")
+    println(g.iterator.take(5).mkString("g: ", ", ", ""))
 
 //    // ambiguous implicits
 //    Foo(Seq(1, 2), 3.0)
