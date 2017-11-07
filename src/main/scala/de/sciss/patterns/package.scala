@@ -16,14 +16,22 @@ package de.sciss
 import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
+import de.sciss.patterns.Types.{IntSeqTop, IntTop, StringTop, Top}
+import de.sciss.patterns.graph.Constant
+
 import scala.annotation.elidable
 import scala.annotation.elidable.CONFIG
+import scala.language.implicitConversions
 
 package object patterns {
-//  implicit def geOps1      (g: PE    ): PEOps1 = new PEOps1(g)
-//  implicit def geOps2      (g: PE    ): PEOps2 = new PEOps2(g)
-//  implicit def intGeOps2   (i: Int   ): PEOps2 = new PEOps2(i)
-//  implicit def doubleGeOps2(d: Double): PEOps2 = new PEOps2(d)
+  implicit def patOps[T <: Top](p: Pat[T]): PatOps[T] = new PatOps(p)
+
+
+  //  implicit def const[A, T <: Top](x: A)(implicit tpe: T { type Out = A }): Elem[T] = Const(x)
+
+  implicit def constIntPat   (x: Int         ): Pat[IntTop      ] = Constant(x)
+  implicit def constIntSeqPat(xs: Seq[Int]   ): Pat[IntSeqTop   ] = Constant(xs)
+  implicit def constStringPat(x: String      ): Pat[StringTop   ] = Constant(x)
 
   private lazy val logHeader = new SimpleDateFormat("[d MMM yyyy, HH:mm''ss.SSS] 'pattern' - ", Locale.US)
 

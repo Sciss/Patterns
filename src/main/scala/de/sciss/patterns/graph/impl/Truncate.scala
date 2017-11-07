@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 package impl
 
-import de.sciss.patterns.Types.{IntTop, Pat, Pattern, Top}
+import de.sciss.patterns.Types.{IntTop, Top}
 
 trait Truncate[T <: Top] extends Pattern[T] {
   // ---- abstract ----
@@ -30,11 +30,11 @@ trait Truncate[T <: Top] extends Pattern[T] {
   final val tpe: in.tpe.type = in.tpe
 
   def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
-    val lenIt = length.iterator
+    val lenIt = length.expand
     if (lenIt.isEmpty) Iterator.empty
     else {
       val lenVal  = lenIt.next()
-      val inIt    = in.iterator
+      val inIt    = in.expand
       truncate(inIt, lenVal)
     }
   }

@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 package impl
 
-import de.sciss.patterns.Types.{Bridge, Pat, Pattern, Top}
+import de.sciss.patterns.Types.{Bridge, Top}
 
 import scala.collection.AbstractIterator
 
@@ -35,8 +35,8 @@ trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pattern[T] {
   final val tpe: br.tpe.type = br.tpe
 
   final def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
-    val ai = start.iterator.map(br.lift1)
-    val bi = step .iterator.map(br.lift2)
+    val ai = start.expand.map(br.lift1)
+    val bi = step .expand.map(br.lift2)
 
     if (ai.isEmpty) Iterator.empty
     else new AbstractIterator[tpe.Out] {

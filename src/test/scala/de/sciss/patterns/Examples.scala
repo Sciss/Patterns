@@ -1,8 +1,9 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Add, IntSeqTop, IntTop, Series, Take}
-
 object Examples {
+  import Types._
+  import graph._
+
   def main(args: Array[String]): Unit = run()
 
   def run(): Unit = {

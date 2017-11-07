@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Num, Pat, Top}
+import de.sciss.patterns.Types.{Num, Top}
 import de.sciss.patterns.graph.impl.SeriesLike
 
 final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
