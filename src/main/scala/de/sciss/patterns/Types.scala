@@ -48,7 +48,7 @@ object Types {
 //
 //  sealed trait DoubleTop extends DoubleSeqTop
 
-  final case class Foo[T <: NumTop](a: Elem[T], b: Elem[T])(implicit val tpe: T) extends Elem[T] {
+  final case class Add[T <: NumTop](a: Elem[T], b: Elem[T])(implicit val tpe: T) extends Elem[T] {
     def mkIter: Iterator[tpe.Out] = {
       val ai = a.mkIter
       val bi = b.mkIter
@@ -66,7 +66,14 @@ object Types {
     }
   }
 
-  sealed trait StringTop extends Top
+  final case class Cat[T <: Top, T1 <: T, T2 <: T](a: Elem[T1], b: Elem[T2])(implicit val tpe: T) extends Elem[T] {
+    def mkIter: Iterator[tpe.Out] = ??? // a.mkIter ++ b.mkIter
+  }
+
+  sealed trait StringTop extends Top {
+    type Out = String
+  }
+  implicit object StringTop extends StringTop
 
   final case class ConstInt(x: Int) extends Elem[IntTop] {
     val tpe: IntTop = IntTop
@@ -80,15 +87,23 @@ object Types {
     def mkIter: Iterator[tpe.Out] = Iterator.continually(xs)
   }
 
+  final case class ConstString(x: String) extends Elem[StringTop] {
+    val tpe: StringTop = StringTop
+
+    def mkIter: Iterator[tpe.Out] = Iterator.continually(x)
+  }
+
   implicit def intElem      (x: Int         ): Elem[IntTop      ] = ConstInt(x)
   implicit def intSeqElem   (xs: Seq[Int]   ): Elem[IntSeqTop   ] = ConstIntSeq(xs)
 //  implicit def doubleElem   (i: Double      ): Elem[DoubleTop   ] = ...
 //  implicit def doubleSeqElem(i: Seq[Double] ): Elem[DoubleSeqTop] = ...
-//  implicit def stringElem   (s: String      ): Elem[StringTop   ] = ...
+  implicit def stringElem   (x: String      ): Elem[StringTop   ] = ConstString(x)
 
   def example(): Unit = {
     // compiles
-    Foo(Seq(1, 2), 3)
+    Add(Seq(1, 2), 3)
+
+    Cat("foo", "bar")
 
 //    // ambiguous implicits
 //    Foo(Seq(1, 2), 3.0)
