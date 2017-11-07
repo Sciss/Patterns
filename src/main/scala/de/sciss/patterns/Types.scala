@@ -10,12 +10,22 @@ object Types {
     type Out
   }
 
-  trait Num[T1 <: Top, T2 <: Top, T <: Top] {
+  trait Bridge[T1 <: Top, T2 <: Top, T <: Top] {
     val tpe: T
 
     def lift1(a: T1#Out): tpe.Out
     def lift2(a: T2#Out): tpe.Out
+  }
 
+//  implicit def idBridge[T <: Top](implicit tpe: T): Bridge[T, T, T] = new IdBridge[T](tpe)
+//
+//  final class IdBridge[T <: Top](val tpe: T) extends Bridge[T, T, T] {
+  // doesn't work:
+//    def lift1(a: T#Out): tpe.Out = a
+//    def lift2(a: T#Out): tpe.Out = a
+//  }
+
+  trait Num[T1 <: Top, T2 <: Top, T <: Top] extends Bridge[T1, T2, T] {
     def plus(a: tpe.Out, b: tpe.Out): tpe.Out
   }
 
@@ -23,34 +33,6 @@ object Types {
     val tpe: T
 
     def iterator: Iterator[tpe.Out]
-  }
-
-  sealed trait IntLikeTop extends Top
-
-  sealed trait IntSeqTop extends IntLikeTop {
-    type Out = Seq[Int]
-  }
-  implicit object IntSeqTop extends IntSeqTop
-
-  sealed trait IntTop extends IntLikeTop {
-    override type Out = Int
-  }
-  object IntTop extends IntTop
-
-//  sealed trait DoubleSeqTop extends NumTop /* DoubleLikeTop */ {
-//    def bridge(a: NumTop, b: NumTop): Bridge[a.Out, b.Out, Out] = ...
-//  }
-//  implicit object DoubleSeqTop extends DoubleSeqTop
-//
-//  sealed trait DoubleTop extends DoubleSeqTop
-
-  implicit object intNum extends Num[IntTop, IntTop, IntTop] {
-    val tpe: IntTop = IntTop
-
-    def lift1(a: Int): Int = a
-    def lift2(a: Int): Int = a
-
-    def plus(a: Int, b: Int): Int = a + b
   }
 
   trait IntLikeNum {
@@ -66,6 +48,36 @@ object Types {
     }
   }
 
+  sealed trait IntLikeTop extends Top
+
+  sealed trait IntSeqTop extends IntLikeTop {
+    type Out = Seq[Int]
+  }
+  implicit object IntSeqTop extends IntSeqTop with IntLikeNum with Num[IntSeqTop, IntSeqTop, IntSeqTop] {
+    def lift1(a: Seq[Int]): Seq[Int] = a
+    def lift2(a: Seq[Int]): Seq[Int] = a
+  }
+
+  sealed trait IntTop extends IntLikeTop {
+    override type Out = Int
+  }
+  implicit object IntTop extends IntTop with Num[IntTop, IntTop, IntTop] {
+    val tpe: IntTop = this
+
+    def lift1(a: Int): Int = a
+    def lift2(a: Int): Int = a
+
+    def plus(a: Int, b: Int): Int = a + b
+  }
+
+//  sealed trait DoubleSeqTop extends NumTop /* DoubleLikeTop */ {
+//    def bridge(a: NumTop, b: NumTop): Bridge[a.Out, b.Out, Out] = ...
+//  }
+//  implicit object DoubleSeqTop extends DoubleSeqTop
+//
+//  sealed trait DoubleTop extends DoubleSeqTop
+
+
   implicit object intSeqNum1 extends IntLikeNum with Num[IntTop, IntSeqTop, IntSeqTop] {
     def lift1(a: Int     ): Seq[Int] = a :: Nil
     def lift2(a: Seq[Int]): Seq[Int] = a
@@ -76,10 +88,7 @@ object Types {
     def lift2(a: Int     ): Seq[Int] = a :: Nil
   }
 
-  implicit object intSeqNum3 extends IntLikeNum with Num[IntSeqTop, IntSeqTop, IntSeqTop] {
-    def lift1(a: Seq[Int]): Seq[Int] = a
-    def lift2(a: Seq[Int]): Seq[Int] = a
-  }
+  ////////////////////////////
 
   final case class Add[T1 <: Top, T2 <: Top, T <: Top](a: Elem[T1], b: Elem[T2])
                                                       (implicit val br: Num[T1, T2, T])
@@ -131,14 +140,22 @@ object Types {
     }
   }
 
-  final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: Elem[T1], b: Elem[T2])(implicit val tpe: T) extends Elem[T] {
+  final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: Elem[T1], b: Elem[T2])
+                                                      (implicit val br: Bridge[T1, T2, T]) extends Elem[T] {
+    val tpe: br.tpe.type = br.tpe
+
     def iterator: Iterator[tpe.Out] = ??? // a.mkIter ++ b.mkIter
   }
 
   sealed trait StringTop extends Top {
     type Out = String
   }
-  implicit object StringTop extends StringTop
+  implicit object StringTop extends StringTop with Bridge[StringTop, StringTop, StringTop] {
+    val tpe: StringTop = this
+
+    def lift1(a: String): String = a
+    def lift2(a: String): String = a
+  }
 
   final case class ConstInt(x: Int) extends Elem[IntTop] {
     val tpe: IntTop = IntTop
@@ -165,32 +182,34 @@ object Types {
   implicit def stringElem   (x: String      ): Elem[StringTop   ] = ConstString(x)
 
   def example(): Unit = {
-    // compiles
+    // ok
     val a = Add[IntSeqTop, IntTop, IntSeqTop](Seq(1, 2), 3)
     println(a.iterator.take(1).mkString("a: ", ", ", ""))
 
-    // compiles
+    // ok
     val b = Add(Seq(1, 2), 3)
     println(b.iterator.take(1).mkString("b: ", ", ", ""))
 
-    // compiles
+    // ok
     val c = Add(1, 3)
     c.iterator: Iterator[Int] // right
     println(c.iterator.take(1).mkString("c: ", ", ", ""))
 
-    // compiles
+    // ok
     val d = Add(1, Seq(2, 3))
     println(d.iterator.take(1).mkString("d: ", ", ", ""))
 
-    // compiles
+    // ok
     val e = Add(Seq(1, 2), Seq(3, 4))
     println(e.iterator.take(1).mkString("e: ", ", ", ""))
 
-    // compiles
+    // ok
     val f = Series(Seq(2, 3), 4)
     println(f.iterator.take(3).mkString("f: ", ", ", ""))
 
-    //    Cat("foo", "bar")
+    // ok
+    val g = Cat("foo", "bar")
+    println(g.iterator.take(3).mkString("g: ", ", ", ""))
 
 //    // ambiguous implicits
 //    Foo(Seq(1, 2), 3.0)
