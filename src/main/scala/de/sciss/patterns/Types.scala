@@ -22,7 +22,7 @@ object Types {
     def times(a: tpe.Out, b: tpe.Out): tpe.Out
   }
 
-  trait PE[T <: Top] {
+  trait Pat[T <: Top] {
     val tpe: T
 
     def iterator: Iterator[tpe.Out]
@@ -93,9 +93,9 @@ object Types {
 
   ////////////////////////////
 
-  final case class Add[T1 <: Top, T2 <: Top, T <: Top](a: PE[T1], b: PE[T2])
-                                                      (implicit val br: Num[T1, T2, T])
-    extends PE[T] {
+  final case class Add[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
+                                                      (implicit protected val br: Num[T1, T2, T])
+    extends Pat[T] {
 
     val tpe: br.tpe.type = br.tpe
 
@@ -116,14 +116,14 @@ object Types {
     }
   }
 
-  trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends PE[T] {
+  trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pat[T] {
     // ---- abstract ----
 
-    def start: PE[T1]
+    def start: Pat[T1]
 
     protected val br: Bridge[T1, T2, T]
 
-    protected def step: PE[T2]
+    protected def step: Pat[T2]
 
     protected def op(a: tpe.Out, b: tpe.Out): tpe.Out
 
@@ -152,22 +152,24 @@ object Types {
     }
   }
 
-  final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: PE[T1], step: PE[T2])
-                                                         (implicit val br: Num[T1, T2, T])
+  final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
+                                                         (implicit protected val br: Num[T1, T2, T])
     extends SeriesLike[T1, T2, T] {
 
     protected def op(a: tpe.Out, b: tpe.Out): tpe.Out = br.plus(a, b)
   }
 
-  final case class Geom[T1 <: Top, T2 <: Top, T <: Top](start: PE[T1], step: PE[T2])
-                                                         (implicit val br: Num[T1, T2, T])
+  final case class Geom[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
+                                                         (implicit protected val br: Num[T1, T2, T])
     extends SeriesLike[T1, T2, T] {
 
     protected def op(a: tpe.Out, b: tpe.Out): tpe.Out = br.plus(a, b)
   }
 
-  final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: PE[T1], b: PE[T2])
-                                                      (implicit val br: Bridge[T1, T2, T]) extends PE[T] {
+  final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
+                                                      (implicit protected val br: Bridge[T1, T2, T])
+    extends Pat[T] {
+
     val tpe: br.tpe.type = br.tpe
 
     def iterator: Iterator[tpe.Out] = {
@@ -177,8 +179,8 @@ object Types {
     }
   }
 
-  final case class Take[T <: Top](a: PE[T], length: PE[IntTop])
-    extends PE[T] {
+  final case class Take[T <: Top](a: Pat[T], length: Pat[IntTop])
+    extends Pat[T] {
 
     val tpe: a.tpe.type = a.tpe
 
@@ -202,21 +204,23 @@ object Types {
     def lift2(a: String): String = a
   }
 
-  final case class Const[A, T <: Top](x: A)(implicit val tpe: T { type Out = A }) extends PE[T] {
+  final case class Const[A, T <: Top](x: A)(implicit val tpe: T { type Out = A }) extends Pat[T] {
     def iterator: Iterator[A] = Iterator.continually(x)
   }
 
-  implicit class ElemOps[T <: Top](private val x: PE[T]) extends AnyVal {
-    def take(length: PE[IntTop]): Take[T] = Take(x, length)
+  implicit class ElemOps[T <: Top](private val x: Pat[T]) extends AnyVal {
+    def take(length: Pat[IntTop]): Take[T] = Take(x, length)
+
+    def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2]): Cat[T, T1, T2] = Cat(x, that)
   }
 
 //  implicit def const[A, T <: Top](x: A)(implicit tpe: T { type Out = A }): Elem[T] = Const(x)
 
-  implicit def intElem      (x: Int         ): PE[IntTop      ] = Const(x)
-  implicit def intSeqElem   (xs: Seq[Int]   ): PE[IntSeqTop   ] = Const(xs)
+  implicit def intElem      (x: Int         ): Pat[IntTop      ] = Const(x)
+  implicit def intSeqElem   (xs: Seq[Int]   ): Pat[IntSeqTop   ] = Const(xs)
 //  implicit def doubleElem   (i: Double      ): Elem[DoubleTop   ] = ...
 //  implicit def doubleSeqElem(i: Seq[Double] ): Elem[DoubleSeqTop] = ...
-  implicit def stringElem   (x: String      ): PE[StringTop   ] = Const(x)
+  implicit def stringElem   (x: String      ): Pat[StringTop   ] = Const(x)
 
   def example(): Unit = {
     // ok
@@ -245,7 +249,7 @@ object Types {
     println(f.iterator.take(3).mkString("f: ", ", ", ""))
 
     // ok
-    val g = Cat(Take("foo", 2), "bar").take(5)
+    val g = (Take("foo", 2) ++ "bar").take(5)
     g.iterator: Iterator[String]  // right
     println(g.iterator.take(7).mkString("g: ", ", ", ""))
 

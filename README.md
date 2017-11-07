@@ -1,5 +1,7 @@
 # Patterns
 
+[![Build Status](https://travis-ci.org/Sciss/Patterns.svg?branch=master)](https://travis-ci.org/Sciss/Patterns)
+
 ## statement
 
 Patterns is an ongoing experiment to see how SuperCollider's patterns system could be translated to Scala (and ultimately, [SoundProcesses](https://github.com/Sciss/SoundProcesses)).
@@ -7,7 +9,7 @@ It is (C)opyright 2017 by Hanns Holger Rutz. All rights reserved. This project i
 
 ## requirements / installation
 
-This project currently builds against Scala 2.12, 2.11 using sbt 0.13.
+This project currently builds against Scala 2.12, 2.11 using sbt.
 
 To link to it:
 

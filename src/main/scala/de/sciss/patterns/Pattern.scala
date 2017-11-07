@@ -92,7 +92,7 @@ object Pattern {
 //  def unwrapAt(in: StreamInLike, index: Int): StreamInLike = in.unwrap(index)
 }
 
-/* sealed */ trait Pattern[+A <: Value] /* [U, S] */ extends PE.Lazy[A] {
+/* sealed */ trait Pattern[A <: Value] /* [U, S] */ extends PE.Lazy[A] {
   final def name: String = productPrefix
 
   // private[patterns] def makeStream(args: Vec[StreamIn])/* (implicit b: stream.Builder) */: S
