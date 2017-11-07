@@ -35,7 +35,7 @@ final class GeomSeq[A <: PE.Numeric](start: Stream[A], grow: Stream[A], length: 
           if (counter >= lenVal) throw new NoSuchElementException("next on empty iterator")
           val res  = state
           growVal  = growIt.next().asInstanceOf[tpe.Out]
-          state    = tpe.num.times(res, growVal)
+          state    = ??? // tpe.num.times(res, growVal)
           counter += 1
           res
         }

@@ -24,7 +24,7 @@ import scala.language.implicitConversions
 
 /** Pattern element */
 object PE {
-  trait Lazy[+A <: Value] extends Lazy.Expander[Stream[A]] with PE[A]
+  trait Lazy[A <: Value] extends Lazy.Expander[Stream[A]] with PE[A]
 
   implicit def fromInt   (x: scala.Int   ): ConstantI = new ConstantI(x)
   implicit def fromDouble(x: scala.Double): ConstantD = new ConstantD(x)
@@ -41,9 +41,12 @@ object PE {
     type Out
   }
   sealed trait Numeric extends Value {
-    val num: scala.Numeric[Out]
+//    def num: scala.Numeric[Out]
   }
   object Value {
+    object Int_* {
+      final implicit val num: scala.Numeric[Value.Int_*] = ???
+    }
     sealed trait Int_* extends Numeric
     object Int extends Int
     sealed abstract class Int extends Int_* {
@@ -74,7 +77,7 @@ object PE {
   type Double   = PE[Value.Double  ]
   type Double_* = PE[Value.Double_*]
 }
-trait PE[+A <: Value] extends Product {
+trait PE[A <: Value] extends Product {
   private[patterns] def expand(implicit b: StreamGraph.Builder): Stream[A] // StreamInLike
 
   def toStream(implicit b: StreamGraph.Builder): Stream[A] // InLike

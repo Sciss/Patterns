@@ -1,5 +1,6 @@
 package de.sciss.patterns
 
+import de.sciss.patterns.PE.Value
 import de.sciss.patterns.graph.{ArithmSeq, GeomSeq}
 
 object ArithmSeqTest extends App {
@@ -13,8 +14,8 @@ object ArithmSeqTest extends App {
 //  val b = GeomSeq(1.0, 1.1).toStream
 //  b.iterator.take(100).foreach(println)
 
-  val c = ArithmSeq(Seq(300, 301), 20, 70).toStream
-  c.iterator.foreach { value =>
-    println(value)
-  }
+//  val c = ArithmSeq[Value.Int_*](Seq(300, 301), 20, 70).toStream
+//  c.iterator.foreach { value =>
+//    println(value)
+//  }
 }

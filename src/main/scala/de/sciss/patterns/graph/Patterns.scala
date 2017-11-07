@@ -18,6 +18,7 @@ import de.sciss.patterns.PE.Value
 
 /** aka Pseries */
 final case class ArithmSeq[A <: PE.Numeric](start: PE[A], step: PE[A], length: PE.Int = Int.MaxValue)
+                                           (implicit num: scala.Numeric[A#Out])
   extends Pattern[A] {
 
   def toStream(implicit b: StreamGraph.Builder): Stream[A] =

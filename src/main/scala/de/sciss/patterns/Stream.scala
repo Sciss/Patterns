@@ -24,7 +24,7 @@ import scala.language.implicitConversions
   * based on `isIndividual` status and may be omitted
   * from the final graph based on `hasSideEffect` status.
   */
-trait Stream[+A <: Value] extends Product {
+trait Stream[A <: Value] extends Product {
   // !!! WE CURRENTLY DISABLE STRUCTURAL EQUALITY
   //  // initialize this first, so that debug printing in `addUGen` can use the hash code
   //  override val hashCode: Int = if (isIndividual) super.hashCode() else scala.runtime.ScalaRunTime._hashCode(this)
@@ -37,7 +37,7 @@ trait Stream[+A <: Value] extends Product {
 
   val tpe: A
 
-  private[patterns] def iterator: Iterator[tpe.Out]
+  private[patterns] def iterator: Iterator[A#Out]
 
   /** Additional UGen arguments that are not of type `UGenIn`.
     * These are included to achieve correct equality
