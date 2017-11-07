@@ -31,16 +31,16 @@ object Types {
   }
 
   sealed trait IntTop extends IntLikeTop[Int] {
-    def num: Numeric[Out] = ???
+//    def num: Numeric[Out] = ???
     final type Out = Int
-    def plus(x: Out, y: Out): Out = x + y
+//    def plus(x: Out, y: Out): Out = x + y
   }
   implicit object IntTop extends IntTop
 
   sealed trait IntSeqTop extends IntLikeTop[Seq[Int]] {
     final type Out = Seq[Int]
-    def num: Numeric[Out] = ???
-    def plus(x: Out, y: Out): Out = (x, y).zipped.map(_ + _)
+//    def num: Numeric[Out] = ???
+//    def plus(x: Out, y: Out): Out = (x, y).zipped.map(_ + _)
   }
   implicit object IntSeqTop extends IntSeqTop
 
@@ -62,8 +62,8 @@ object Types {
     }
   }
 
-  implicit def intElem    (i: Int     ): Elem[Int     , IntTop   ]  = ???
-  implicit def intSeqElem (i: Seq[Int]): Elem[Seq[Int], IntSeqTop]  = ???
+  implicit def intElem    (i: Int     ): Elem[Int     , IntTop   ] = ???
+  implicit def intSeqElem (i: Seq[Int]): Elem[Seq[Int], IntSeqTop] = ???
 
   def example(): Unit = {
     // Foo(Seq(1, 2), 3)
