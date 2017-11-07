@@ -8,6 +8,10 @@ object Types {
 //    type Out
   }
 
+  trait Bridge[In1, In2, Out] {
+    def plus(a: In1, b: In2): Out
+  }
+
   trait Elem[A, +T <: Top[A]] {
     val tpe: T
 
@@ -15,12 +19,16 @@ object Types {
   }
 
   sealed trait NumTop[A] extends Top[A] {
-    def num: Numeric[A]
+//    def num: Numeric[A]
+
+    def bridge[In1 <: A, In2 <: A](a: Top[In1], b: Top[In2]): Bridge[In1, In2, A]
 
 //    def plus(x: A, y: A): A
   }
 
-  sealed trait IntLikeTop[A] extends NumTop[A]
+  sealed trait IntLikeTop[A] extends NumTop[A] {
+    def bridge[In1 <: A, In2 <: A](a: Top[In1], b: Top[In2]): Bridge[In1, In2, A] = ???
+  }
 
   sealed trait IntTop extends IntLikeTop[Int] {
     def num: Numeric[Out] = ???
@@ -40,6 +48,7 @@ object Types {
     def mkIter: Iterator[A] = {
       val ai = a.mkIter
       val bi = b.mkIter
+      val br = tpe.bridge(a.tpe, b.tpe)
 
       new AbstractIterator[A] {
         def hasNext: Boolean = ai.hasNext && bi.hasNext
@@ -47,16 +56,16 @@ object Types {
         def next(): A = {
           val an = ai.next()
           val bn = bi.next()
-          tpe.num.plus(an, bn)
+          br.plus(an, bn)
         }
       }
     }
   }
 
-  implicit def intElem    (i: Int     ): Elem[Int, IntTop]     = ???
+  implicit def intElem    (i: Int     ): Elem[Int     , IntTop   ]  = ???
   implicit def intSeqElem (i: Seq[Int]): Elem[Seq[Int], IntSeqTop]  = ???
 
   def example(): Unit = {
-//    Foo[IntLikeTop[_]](Seq(1, 2), 3)
+    // Foo(Seq(1, 2), 3)
   }
 }
