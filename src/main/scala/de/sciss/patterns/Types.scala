@@ -22,29 +22,31 @@ object Types {
 //    def num: Numeric[A]
 
 //    def bridge[In1 <: A, In2 <: A](a: Top[In1], b: Top[In2]): Bridge[In1, In2, A]
-    def bridge(a: Top, b: Top): Bridge[a.Out, b.Out, Out]
+    def bridge(a: NumTop, b: NumTop): Bridge[a.Out, b.Out, Out]
 
 //    def plus(x: A, y: A): A
   }
 
-//  sealed trait IntLikeTop extends NumTop {
-////    def bridge[In1 <: A, In2 <: A](a: Top[In1], b: Top[In2]): Bridge[In1, In2, A] = ???
-//  }
+  sealed trait IntLikeTop extends NumTop {
+    def bridge(a: NumTop, b: NumTop): Bridge[a.Out, b.Out, Out] = ???
+  }
 
-  sealed trait IntSeqTop extends NumTop /* IntLikeTop */ {
-//    final type Out = Seq[Int]
-//    def num: Numeric[Out] = ???
-//    def plus(x: Out, y: Out): Out = (x, y).zipped.map(_ + _)
-    def bridge(a: Top, b: Top): Bridge[a.Out, b.Out, Out] = ???
+  sealed trait IntSeqTop extends IntLikeTop {
+    type Out = Seq[Int]
   }
   implicit object IntSeqTop extends IntSeqTop
 
-  sealed trait IntTop extends IntSeqTop /* IntLikeTop */ {
-    //    def num: Numeric[Out] = ???
-//    final type Out = Int
-    //    def plus(x: Out, y: Out): Out = x + y
+  sealed trait IntTop extends IntLikeTop {
+    override type Out = Int
   }
-//  implicit object IntTop extends IntTop
+  object IntTop extends IntTop
+
+//  sealed trait DoubleSeqTop extends NumTop /* DoubleLikeTop */ {
+//    def bridge(a: NumTop, b: NumTop): Bridge[a.Out, b.Out, Out] = ...
+//  }
+//  implicit object DoubleSeqTop extends DoubleSeqTop
+//
+//  sealed trait DoubleTop extends DoubleSeqTop
 
   final case class Foo[T <: NumTop](a: Elem[T], b: Elem[T])(implicit val tpe: T) extends Elem[T] {
     def mkIter: Iterator[tpe.Out] = {
@@ -64,10 +66,34 @@ object Types {
     }
   }
 
-  implicit def intElem   (i: Int     ): Elem[IntTop   ] = ???
-  implicit def intSeqElem(i: Seq[Int]): Elem[IntSeqTop] = ???
+  sealed trait StringTop extends Top
+
+  final case class ConstInt(x: Int) extends Elem[IntTop] {
+    val tpe: IntTop = IntTop
+
+    def mkIter: Iterator[tpe.Out] = Iterator.continually(x)
+  }
+
+  final case class ConstIntSeq(xs: Seq[Int]) extends Elem[IntSeqTop] {
+    val tpe: IntSeqTop = IntSeqTop
+
+    def mkIter: Iterator[tpe.Out] = Iterator.continually(xs)
+  }
+
+  implicit def intElem      (x: Int         ): Elem[IntTop      ] = ConstInt(x)
+  implicit def intSeqElem   (xs: Seq[Int]   ): Elem[IntSeqTop   ] = ConstIntSeq(xs)
+//  implicit def doubleElem   (i: Double      ): Elem[DoubleTop   ] = ...
+//  implicit def doubleSeqElem(i: Seq[Double] ): Elem[DoubleSeqTop] = ...
+//  implicit def stringElem   (s: String      ): Elem[StringTop   ] = ...
 
   def example(): Unit = {
+    // compiles
     Foo(Seq(1, 2), 3)
+
+//    // ambiguous implicits
+//    Foo(Seq(1, 2), 3.0)
+
+    //    // compiles not
+//    Foo(Seq(1, 2), "foo")
   }
 }
