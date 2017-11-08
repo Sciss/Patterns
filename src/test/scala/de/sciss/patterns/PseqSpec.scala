@@ -1,18 +1,15 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.Top
 import de.sciss.patterns.graph._
-import org.scalatest.{FlatSpec, Matchers}
 
-class PseqSpec extends FlatSpec with Matchers {
-  implicit val ctx: Context = Context()
+class PseqSpec extends PatSpec {
+  "A Pseq" should "produce the expected output for the help file examples" in {
+    // from help file
+    val pat1 = Pseq(Seq(1, 2, 3), 2)  // repeat twice
+    eval(pat1) shouldBe Seq(1, 2, 3, 1, 2, 3)
 
-  def eval[A, T <: Top](p: Pat[T { type Out = A }]): Seq[A] =
-    p.expand.toList
-
-  "A Pseq" should "produce the expected output for a 'flat' input" in {
-    val pat = Pseq(Seq(60, 61, 62), 2, 1)
-    eval(pat) shouldBe Seq(61, 62, 60, 61, 62, 60)
+    val pat2 = Pseq(Seq(1, 2, 3, 4), 3, 2)  // repeat 3, offset 2
+    eval(pat2) shouldBe Seq(3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2)
   }
 
   it should "produce the expected output for a 'nested' input" in {

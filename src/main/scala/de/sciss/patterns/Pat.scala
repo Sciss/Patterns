@@ -18,6 +18,8 @@ import de.sciss.patterns.Types.{DoubleTop, IntTop, Top}
 object Pat {
   type Int    = Pat[IntTop    ]
   type Double = Pat[DoubleTop ]
+
+  type $[T <: Top, A] = Pat[T { type Out = A }]
 }
 trait Pat[T <: Top] {
   val tpe: T

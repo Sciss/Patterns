@@ -17,6 +17,9 @@ package graph
 import de.sciss.patterns.Types.{Num, Top}
 import de.sciss.patterns.graph.impl.SeriesLike
 
+/** A pattern that generates an arithmetic series. Corresponds to `Pseries` in SuperCollider,
+  * but does not have a `length` arguments. Use `.take(N)` instead.
+  */
 final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
                                                        (implicit protected val br: Num[T1, T2, T])
   extends SeriesLike[T1, T2, T] {

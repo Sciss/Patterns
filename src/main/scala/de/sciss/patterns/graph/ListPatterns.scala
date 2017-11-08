@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.numbers.IntFunctions
-import de.sciss.patterns.Types.{IntLikeTop, Top}
+import de.sciss.patterns.Types.{IntLikeTop, IntTop, Top}
 
 import scala.collection.AbstractIterator
 
