@@ -13,8 +13,12 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.Top
+import de.sciss.patterns.Types.{DoubleTop, IntTop, Top}
 
+object Pat {
+  type Int    = Pat[IntTop    ]
+  type Double = Pat[DoubleTop ]
+}
 trait Pat[T <: Top] {
   val tpe: T
 

@@ -15,14 +15,17 @@ package de.sciss.patterns
 
 import java.lang.{String => _String}
 
-import de.sciss.patterns.Types.IntSeqTop.Index
-
-import scala.collection.GenTraversableOnce
-import scala.collection.generic.CanBuildFrom
-import scala.collection.immutable.List
 import scala.language.higherKinds
 
 object Types {
+  type TopT[A] = Top { type Out = A }
+
+  object Top {
+    def Seq[T <: Top](implicit peer: T): Seq[T] = new Seq(peer)
+    final class Seq[T <: Top](val peer: T) extends Top {
+      type Out = scala.Seq[peer.Out]
+    }
+  }
   trait Top {
     type Out
   }
@@ -38,14 +41,16 @@ object Types {
     def plus (a: tpe.Out, b: tpe.Out): tpe.Out
     def times(a: tpe.Out, b: tpe.Out): tpe.Out
   }
+  
+  trait SeqLikeNum[A] {
+    protected val num: Numeric[A]
+    
+    import num._
 
-  trait IntLikeNum {
-    final val tpe: IntSeqTop = IntSeqTop
-
-    final def plus (a: Seq[Int], b: Seq[Int]): Seq[Int] = combine(a, b)(_ + _)
-    final def times(a: Seq[Int], b: Seq[Int]): Seq[Int] = combine(a, b)(_ * _)
-
-    private def combine(a: Seq[Int], b: Seq[Int])(op: (Int, Int) => Int): Seq[Int] = {
+    final def plus (a: Seq[A], b: Seq[A]): Seq[A] = combine(a, b)(_ + _)
+    final def times(a: Seq[A], b: Seq[A]): Seq[A] = combine(a, b)(_ * _)
+    
+    protected def combine(a: Seq[A], b: Seq[A])(op: (A, A) => A): Seq[A] = {
       val as = a.size
       val bs = b.size
       val sz = math.max(as, bs)
@@ -53,6 +58,18 @@ object Types {
         op(a(i % as), b(i % bs))
       }
     }
+  }
+
+  trait IntLikeNum extends SeqLikeNum[Int] {
+    final val tpe: IntSeqTop = IntSeqTop
+
+    protected val num: Numeric[Int] = Numeric.IntIsIntegral
+  }
+
+  trait DoubleLikeNum extends SeqLikeNum[Double] {
+    final val tpe: DoubleSeqTop = DoubleSeqTop
+
+    protected val num: Numeric[Double] = Numeric.DoubleIsFractional
   }
 
   object Applicative {
@@ -77,92 +94,81 @@ object Types {
     def map2   [A, B, Z](fa: F[A], fb: F[B])(f: (A, B) => Z): F[Z]  = map(product(fa, fb)) { case (a, b) => f(a, b) }
   }
 
-  sealed trait IntLikeTop extends Top {
-    def lift(in: Out): Seq[Int]
+  trait ScalarOrSeqTop[A] {
+    def lift(in: Out): Seq[A]
 
-    type Index[A]
-    type Out = Index[Int]
+    type Index[_]
+    type Out = Index[A]
 
-//    def mkIndex     [A   ](x: Out     )(fun: Int => A     ): Index[A]
-    def mapIndex    [A, B](i: Index[A])(fun: A   => B     ): Index[B]
-//    def flatMapIndex[A, B: CanBuildFrom](i: Index[A])(fun: A   => Seq[B]): Seq  [B] = ???
-//    def flatMapIndex[A, B, That](i: Index[A])(f: A => GenTraversableOnce[B])(implicit bf: CanBuildFrom[Nothing, B, That]): That
+    def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C]
 
-    def traverse[G[_], A, B](fa: Index[A])(f: A => G[B])(implicit app: Applicative[G]): G[Index[B]]
+    def traverseIndex[G[_], B, C](fa: Index[B])(f: B => G[C])(implicit app: Applicative[G]): G[Index[C]]
   }
 
-  sealed trait IntSeqTop extends IntLikeTop {
-//    type Out      = Seq[Int]
-    type Index[A] = Seq[A]
-  }
-  implicit object IntSeqTop extends IntSeqTop with IntLikeNum with Num[IntSeqTop, IntSeqTop, IntSeqTop] {
-    def lift(in: Seq[Int]): Seq[Int] = in
+  trait SeqTop[A] extends ScalarOrSeqTop[A] {
+    type Index[B] = Seq[B]
 
-    def lift1(a: Seq[Int]): Seq[Int] = a
-    def lift2(a: Seq[Int]): Seq[Int] = a
+    final def lift(in: Seq[A]): Seq[A] = in
 
-    def mapIndex[A, B](i: Index[A])(fun: A => B): Index[B] = i.map(fun)
+    final def lift1(a: Seq[A]): Seq[A] = a
+    final def lift2(a: Seq[A]): Seq[A] = a
 
-    def traverse[G[_], A, B](fa: Index[A])(f: A => G[B])(implicit app: Applicative[G]): G[Index[B]] =
-      foldRight[A, G[Index[B]]](fa, app.pure(Seq.empty)) { (a, lglb) =>
+    final def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C] = i.map(fun)
+
+    final def traverseIndex[G[_], B, C](fa: Index[B])(f: B => G[C])(implicit app: Applicative[G]): G[Index[C]] =
+      foldRight[B, G[Index[C]]](fa, app.pure(Seq.empty)) { (a, lglb) =>
         app.map2(f(a), lglb)(_ +: _)
       }
 
-    private def foldRight[A, B](fa: Index[A], lb: B)(f: (A, B) => B): B = {
-      def loop(as: Index[A]): B =
+    private def foldRight[B, C](fa: Index[B], lb: C)(f: (B, C) => C): C = {
+      def loop(as: Index[B]): C =
         as match {
           case Nil    => lb
           case h +: t => f(h, loop(t))
         }
       loop(fa)
     }
-
-    //    def flatMapIndex[A, B, That](i: Index[A])(fun: A => GenTraversableOnce[B])(implicit bf: CanBuildFrom[Nothing, B, That]): That = {
-//      val builder = bf.apply()
-//      i.foreach { a =>
-//        val partial = fun(a)
-//        partial.foreach(builder += _)
-//      }
-//      builder.result()
-//    }
   }
 
-  sealed trait IntTop extends IntLikeTop {
-//    type Out      = Int
-    type Index[A] = A
+  trait ScalarTop[A] extends ScalarOrSeqTop[A] {
+    type Index[B] = B
+
+    final def lift(in: A): Seq[A] = in :: Nil
+
+    final def lift1(a: A): A = a
+    final def lift2(a: A): A = a
+
+    final def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C] = fun(i)
+
+    final def traverseIndex[G[_], B, C](fa: Index[B])(f: B => G[C])(implicit app: Applicative[G]): G[Index[C]] = f(fa)
   }
+
+  sealed trait IntLikeTop extends ScalarOrSeqTop[Int] with Top
+
+  sealed trait IntSeqTop extends IntLikeTop with SeqTop[Int]
+  implicit object IntSeqTop extends IntSeqTop with IntLikeNum with Num[IntSeqTop, IntSeqTop, IntSeqTop]
+
+  sealed trait IntTop extends IntLikeTop with ScalarTop[Int]
   implicit object IntTop extends IntTop with Num[IntTop, IntTop, IntTop] {
     val tpe: IntTop = this
 
-    def lift(in: Int): Seq[Int] = in :: Nil
-
-    def lift1(a: Int): Int = a
-    def lift2(a: Int): Int = a
-
     def plus (a: Int, b: Int): Int = a + b
     def times(a: Int, b: Int): Int = a * b
-
-    def mapIndex[A, B](i: Index[A])(fun: A => B): Index[B] = fun(i)
-
-    def traverse[G[_], A, B](fa: Index[A])(f: A => G[B])(implicit app: Applicative[G]): G[Index[B]] =
-      f(fa)
-
-    //    def flatMapIndex[A, B, That](i: Index[A])(fun: A => GenTraversableOnce[B])(implicit bf: CanBuildFrom[Nothing, B, That]): That = {
-//      val builder = bf.apply()
-//      val partial = fun(i)
-//      partial.foreach(builder += _)
-//      builder.result()
-//    }
   }
 
-//  sealed trait DoubleSeqTop extends NumTop /* DoubleLikeTop */ {
-//    def bridge(a: NumTop, b: NumTop): Bridge[a.Out, b.Out, Out] = ...
-//  }
-//  implicit object DoubleSeqTop extends DoubleSeqTop
-//
-//  sealed trait DoubleTop extends DoubleSeqTop
+  sealed trait DoubleLikeTop extends ScalarOrSeqTop[Double] with Top
 
+  sealed trait DoubleSeqTop extends DoubleLikeTop with SeqTop[Double]
+  implicit object DoubleSeqTop extends DoubleSeqTop with DoubleLikeNum with Num[DoubleSeqTop, DoubleSeqTop, DoubleSeqTop]
 
+  sealed trait DoubleTop extends DoubleLikeTop with ScalarTop[Double]
+  implicit object DoubleTop extends DoubleTop with Num[DoubleTop, DoubleTop, DoubleTop] {
+    val tpe: DoubleTop = this
+
+    def plus (a: Double, b: Double): Double = a + b
+    def times(a: Double, b: Double): Double = a * b
+  }
+  
   implicit object intSeqNum1 extends IntLikeNum with Num[IntTop, IntSeqTop, IntSeqTop] {
     def lift1(a: Int     ): Seq[Int] = a :: Nil
     def lift2(a: Seq[Int]): Seq[Int] = a
@@ -171,6 +177,16 @@ object Types {
   implicit object intSeqNum2 extends IntLikeNum with Num[IntSeqTop, IntTop, IntSeqTop] {
     def lift1(a: Seq[Int]): Seq[Int] = a
     def lift2(a: Int     ): Seq[Int] = a :: Nil
+  }
+
+  implicit object doubleSeqNum1 extends DoubleLikeNum with Num[DoubleTop, DoubleSeqTop, DoubleSeqTop] {
+    def lift1(a: Double     ): Seq[Double] = a :: Nil
+    def lift2(a: Seq[Double]): Seq[Double] = a
+  }
+
+  implicit object doubleSeqNum2 extends DoubleLikeNum with Num[DoubleSeqTop, DoubleTop, DoubleSeqTop] {
+    def lift1(a: Seq[Double]): Seq[Double] = a
+    def lift2(a: Double     ): Seq[Double] = a :: Nil
   }
 
   ////////////////////////////

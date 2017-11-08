@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.numbers.IntFunctions
-import de.sciss.patterns.Types.{IntLikeTop, IntTop, Top}
+import de.sciss.patterns.Types.{IntLikeTop, Top}
 
 import scala.collection.AbstractIterator
 
@@ -24,8 +24,8 @@ import scala.collection.AbstractIterator
 //}
 
 final case class Pseq[T1 <: Top, T2 <: IntLikeTop, T <: Top](list   : Seq[Pat[T1]],
-                                                             repeats: Pat[IntTop] = 1,
-                                                             offset : Pat[T2]     = 0)
+                                                             repeats: Pat.Int = 1,
+                                                             offset : Pat[T2] = 0)
                                                             (implicit val tpe: T { type Out = T2#Index[T1#Out] })
   extends Pattern[T { type Out = T2#Index[T1#Out] }] {
 
@@ -47,13 +47,13 @@ final case class Pseq[T1 <: Top, T2 <: IntLikeTop, T <: Top](list   : Seq[Pat[T1
 
         private def mkListIter(): Iterator[Out] = {
           import IntFunctions.wrap
-          import offset.tpe.{Index, mapIndex, traverse}
+          import offset.tpe.{Index, mapIndex, traverseIndex}
           val itx: Index[Iterator[T1#Out]] = mapIndex(offsetVal) { off0 =>
             val i             = wrap(sizeCnt + off0, 0, sizeVal - 1)
             val elem: Pat[T1] = indexed(i)
             elem.embed
           }
-          val it: Iterator[Index[T1#Out]] = traverse[Iterator, Iterator[T1#Out], T1#Out](itx)(identity)
+          val it: Iterator[Index[T1#Out]] = traverseIndex[Iterator, Iterator[T1#Out], T1#Out](itx)(identity)
           it
         }
 
@@ -131,13 +131,18 @@ final case class Pseq[T1 <: Top, T2 <: IntLikeTop, T <: Top](list   : Seq[Pat[T1
 //
 //  protected def makeStreams(implicit b: StreamGraph.Builder) = ???
 //}
-//
-//final case class Tuple(list: PE, repeats: PE = 1) extends Pattern {
-//  protected def makeStream(args: Vec[StreamIn])(implicit b: StreamGraph.Builder) = ???
-//
-//  protected def makeStreams(implicit b: StreamGraph.Builder) = ???
-//}
-//
+
+/** aka Ptuple */
+final case class Zip[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1)(implicit peerTpe: T)
+  extends Pattern[Top.Seq[T]] {
+
+  val tpe: Top.Seq[T] = Top.Seq[T]
+
+  def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
+    ???
+  }
+}
+
 //final case class Lace(list: PE, repeats: PE = 1) extends Pattern {
 //  protected def makeStream(args: Vec[StreamIn])(implicit b: StreamGraph.Builder) = ???
 //

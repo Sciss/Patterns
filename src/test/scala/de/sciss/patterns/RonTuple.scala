@@ -1,6 +1,7 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.graph.Pseq
+import de.sciss.patterns.Types.TopT
+import de.sciss.patterns.graph._
 
 /**
   * Almat: work in progress, seeing how
@@ -72,21 +73,24 @@ object RonTuple {
     durs
   }
 
-  def makePart[A](argPattern: Seq[A], cantus: Seq[A], start: Int = 0, stutter: Int = 1): Any = {
-    val durs = {
-      val durs0 = computeDurs(argPattern, cantus, start).map(_.toDouble)
+  def makePart[A, T <: TopT[A]](pattern: Seq[A], cantus: Seq[A], start: Int = 0, stutter: Int = 1)
+                               (implicit tpe: T, view: A => Pat[T]): (Pat[T], Pat.Double) = {
+    val durs1 = {
+      val durs0 = computeDurs(pattern, cantus, start).map(_.toDouble)
       if (stutter == 1) durs0 else durs0.stutter(stutter).map(_ / stutter)
     }
-    val inf = Int.MaxValue
-    ??? // continue here
+    val durs  = durs1.map(_ * 0.02)
+    val inf   = Int.MaxValue
 
-//    val pattern = if (stutter == 1) {
-//      Seq('r, Pseq(argPattern, inf))
+//    val ptrnOut = if (stutter == 1) {
+//      Seq('r, Pseq(pattern, inf))
 //    } else {
-//      pattern = Seq(Pseq(Seq.fill(stutter)('r)),
-//                    Pseq(argPattern.grouped(stutter).stutter(stutter).flatten, inf))
+//      Seq(Pseq(Seq.fill(stutter)('r)),
+//        Pseq(pattern.grouped(stutter).stutter(stutter).flatten, inf))
 //    }
-//
-//    Ptuple(Seq(Pseq(pattern), Pseq(durs.map(_ * 0.2))))
+    val ptrnOut = Seq(Pseq(pattern, inf))
+
+//    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
+    (Pseq(ptrnOut), Pseq(durs))
   }
 }
