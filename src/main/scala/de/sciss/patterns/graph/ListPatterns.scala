@@ -35,8 +35,8 @@ final case class Pseq[T1 <: Top, T2 <: IntLikeTop, T <: Top](list   : Seq[Pat[T1
     val repeatsIt = repeats.expand
     val offsetIt  = offset .expand
     val indexed   = list.toIndexedSeq
-    val size      = indexed.size
-    if (repeatsIt.isEmpty || offsetIt.isEmpty || size == 0) Iterator.empty
+    val sizeVal   = indexed.size
+    if (repeatsIt.isEmpty || offsetIt.isEmpty || sizeVal == 0) Iterator.empty
     else {
       val repeatsVal  = repeatsIt.next()
       val offsetVal   = offsetIt .next()
@@ -49,7 +49,7 @@ final case class Pseq[T1 <: Top, T2 <: IntLikeTop, T <: Top](list   : Seq[Pat[T1
           import IntFunctions.wrap
           import offset.tpe.{Index, mapIndex, traverse}
           val itx: Index[Iterator[T1#Out]] = mapIndex(offsetVal) { off0 =>
-            val i             = wrap(sizeCnt + off0, 0, size - 1)
+            val i             = wrap(sizeCnt + off0, 0, sizeVal - 1)
             val elem: Pat[T1] = indexed(i)
             elem.embed
           }
@@ -65,7 +65,7 @@ final case class Pseq[T1 <: Top, T2 <: IntLikeTop, T <: Top](list   : Seq[Pat[T1
           val res = listIter.next()
           if (listIter.isEmpty) {
             sizeCnt += 1
-            if (sizeCnt == size) {
+            if (sizeCnt == sizeVal) {
               repeatsCnt += 1
               sizeCnt     = 0
             }

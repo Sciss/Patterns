@@ -58,10 +58,23 @@ object Types {
   object Applicative {
     implicit object Iterator extends Applicative[scala.Iterator] {
       def pure[A](x: A): scala.Iterator[A] = scala.Iterator.single(x)
+
+      def map[A, B](fa: Iterator[A])(f: A => B): Iterator[B] = fa.map(f)
+
+      def flatMap[A, B](fa: Iterator[A])(f: A => Iterator[B]): Iterator[B] =
+        fa.flatMap(f)
     }
   }
-  trait Applicative[G[_]] {
-    def pure[A](x: A): G[A]
+  // XXX TODO -- a bit ad-hoc; we could just depend on Cats
+  trait Applicative[F[_]] {
+    def pure[A](x: A): F[A]
+
+    def map    [A, B](fa: F[A])(f: A =>   B ): F[B]
+    def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
+
+    def ap     [A, B   ](ff: F[A => B])(fa: F[A]): F[B]             = flatMap(ff)(f => map(fa)(f))
+    def product[A, B   ](fa: F[A], fb: F[B]): F[(A, B)]             = ap(map(fa)(a => (b: B) => (a, b)))(fb)
+    def map2   [A, B, Z](fa: F[A], fb: F[B])(f: (A, B) => Z): F[Z]  = map(product(fa, fb)) { case (a, b) => f(a, b) }
   }
 
   sealed trait IntLikeTop extends Top {
@@ -90,8 +103,18 @@ object Types {
 
     def mapIndex[A, B](i: Index[A])(fun: A => B): Index[B] = i.map(fun)
 
-    def traverse[G[_], A, B](fa: Index[A])(f: A => G[B])(implicit app: Applicative[G]): G[Index[B]] = {
-      ???
+    def traverse[G[_], A, B](fa: Index[A])(f: A => G[B])(implicit app: Applicative[G]): G[Index[B]] =
+      foldRight[A, G[Index[B]]](fa, app.pure(Seq.empty)) { (a, lglb) =>
+        app.map2(f(a), lglb)(_ +: _)
+      }
+
+    private def foldRight[A, B](fa: Index[A], lb: B)(f: (A, B) => B): B = {
+      def loop(as: Index[A]): B =
+        as match {
+          case Nil    => lb
+          case h +: t => f(h, loop(t))
+        }
+      loop(fa)
     }
 
     //    def flatMapIndex[A, B, That](i: Index[A])(fun: A => GenTraversableOnce[B])(implicit bf: CanBuildFrom[Nothing, B, That]): That = {

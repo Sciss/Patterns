@@ -33,6 +33,9 @@ package object patterns {
   implicit def constIntSeqPat(xs: Seq[Int]   ): Pat[IntSeqTop   ] = Constant(xs)
   implicit def constStringPat(x: String      ): Pat[StringTop   ] = Constant(x)
 
+  implicit def patSeq[A, T <: Top](xs: Seq[A])(implicit lift: A => Pat[T]): Seq[Pat[T]] =
+    xs.map(lift)
+
   private lazy val logHeader = new SimpleDateFormat("[d MMM yyyy, HH:mm''ss.SSS] 'pattern' - ", Locale.US)
 
   var showGraphLog    = false
