@@ -2,6 +2,8 @@ lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
 lazy val projectVersion     = "0.1.0-SNAPSHOT"
 
+lazy val numbersVersion     = "0.1.3"
+
 lazy val commonSettings = Seq(
   version             := projectVersion,
   organization        := "de.sciss",
@@ -11,10 +13,11 @@ lazy val commonSettings = Seq(
   crossScalaVersions  := Seq("2.12.4", "2.11.11"),
   licenses            := Seq(lgpl2),
   scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint"),
-//  libraryDependencies ++= Seq(
+  libraryDependencies ++= Seq(
+    "de.sciss" %% "numbers" % numbersVersion,
 //    "de.sciss" %% "coroutines" % coroutinesVersion,
 //    "de.sciss" %% "kollflitz"  % kollflitzVersion
-//  )
+  )
 )
 
 lazy val lgpl2 = "LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")

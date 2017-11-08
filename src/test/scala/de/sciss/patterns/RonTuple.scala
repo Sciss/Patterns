@@ -1,5 +1,7 @@
 package de.sciss.patterns
 
+import de.sciss.patterns.graph.Pseq
+
 /**
   * Almat: work in progress, seeing how
   * `tuple working 31.10.scd` can be translated to Scala.

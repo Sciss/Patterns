@@ -21,6 +21,7 @@ trait Pat[T <: Top] {
   private[patterns] def expand(implicit ctx: Context): Iterator[tpe.Out]
 
   def iterator(implicit ctx: Context): Iterator[tpe.Out]
+  def embed   (implicit ctx: Context): Iterator[tpe.Out]
 }
 
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */
@@ -36,4 +37,6 @@ trait Pattern[T <: Top] extends Pat[T] {
     *          or a single stream, or a group of streams)
     */
   final private[patterns] def expand(implicit ctx: Context): Iterator[tpe.Out] = ctx.visit(ref, iterator)
+
+  final def embed(implicit ctx: Context): Iterator[tpe.Out] = iterator
 }

@@ -22,3 +22,8 @@ The current version `v` is `"0.1.0-SNAPSHOT"`
 
 Please see the file [CONTRIBUTING.md](CONTRIBUTING.md)
 
+## documentation
+
+Useful links:
+
+- [Patterns in SuperCollider](http://doc.sccode.org/Tutorials/A-Practical-Guide/PG_01_Introduction.html)
