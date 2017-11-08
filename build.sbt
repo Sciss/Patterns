@@ -3,6 +3,7 @@ lazy val baseNameL          = baseName.toLowerCase
 lazy val projectVersion     = "0.1.0-SNAPSHOT"
 
 lazy val numbersVersion     = "0.1.3"
+lazy val scalaTestVersion   = "3.0.4"
 
 lazy val commonSettings = Seq(
   version             := projectVersion,
@@ -14,9 +15,8 @@ lazy val commonSettings = Seq(
   licenses            := Seq(lgpl2),
   scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint"),
   libraryDependencies ++= Seq(
-    "de.sciss" %% "numbers" % numbersVersion,
-//    "de.sciss" %% "coroutines" % coroutinesVersion,
-//    "de.sciss" %% "kollflitz"  % kollflitzVersion
+    "de.sciss"      %% "numbers"    % numbersVersion,
+    "org.scalatest" %% "scalatest"  % scalaTestVersion % "test"
   )
 )
 

@@ -116,18 +116,9 @@ object Types {
     final def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C] = i.map(fun)
 
     final def traverseIndex[G[_], B, C](fa: Index[B])(f: B => G[C])(implicit app: Applicative[G]): G[Index[C]] =
-      foldRight[B, G[Index[C]]](fa, app.pure(Seq.empty)) { (a, lglb) =>
+      fa.foldRight[G[Index[C]]](app.pure(Seq.empty)) { (a, lglb) =>
         app.map2(f(a), lglb)(_ +: _)
       }
-
-    private def foldRight[B, C](fa: Index[B], lb: C)(f: (B, C) => C): C = {
-      def loop(as: Index[B]): C =
-        as match {
-          case Nil    => lb
-          case h +: t => f(h, loop(t))
-        }
-      loop(fa)
-    }
   }
 
   trait ScalarTop[A] extends ScalarOrSeqTop[A] {
