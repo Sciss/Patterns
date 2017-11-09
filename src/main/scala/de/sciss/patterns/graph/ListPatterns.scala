@@ -44,16 +44,9 @@ final case class Pseq[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, offset 
         private[this] var sizeCnt     = 0
 
         private def mkListIter(): Iterator[T#Out] = {
-          ???
-//          import IntFunctions.wrap
-//          import offset.tpe.{Index, mapIndex, traverseIndex}
-//          val itx: Index[Iterator[T1#Out]] = mapIndex(offsetVal) { off0 =>
-//            val i             = wrap(sizeCnt + off0, 0, sizeVal - 1)
-//            val elem: Pat[T1] = indexed(i)
-//            elem.embed
-//          }
-//          val it: Iterator[Index[T1#Out]] = traverseIndex[Iterator, Iterator[T1#Out], T1#Out](itx)(identity)
-//          it
+          import IntFunctions.wrap
+          val i = wrap(sizeCnt + offsetVal, 0, sizeVal - 1)
+          indexed(i).embed
         }
 
         private[this] var listIter: Iterator[T#Out] = mkListIter()
