@@ -28,6 +28,8 @@ object Types {
   }
   trait Top {
     type Out
+
+//    def lift(x: Out): Out
   }
 
   trait Bridge[T1 <: Top, T2 <: Top, T <: Top] {

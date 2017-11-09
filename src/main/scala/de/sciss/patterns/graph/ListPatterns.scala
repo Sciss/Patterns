@@ -15,8 +15,9 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.numbers.IntFunctions
-import de.sciss.patterns.Types.{IntLikeTop, IntTop, Top}
+import de.sciss.patterns.Types.{IntLikeTop, Top}
 
+import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 
 //final case class Index[A <: Value](list: PE[A], index: PE.Int, repeats: PE.Int = 1) extends Pattern[A] {
@@ -148,15 +149,84 @@ final case class Zip[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1)(implicit
 //
 //  protected def makeStreams(implicit b: StreamGraph.Builder) = ???
 //}
-//
-//final case class Slide(list: PE, repeats: PE = 1, size: PE = 3, step: PE = 1, start: PE = 0, wrap: Boolean = true)
-//  extends Pattern {
-//
-//  protected def makeStream(args: Vec[StreamIn])(implicit b: StreamGraph.Builder) = ???
-//
-//  protected def makeStreams(implicit b: StreamGraph.Builder) = ???
-//}
-//
+
+final case class Slide[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, size: Pat.Int = 3, step: Pat.Int = 1,
+                                 start: Pat.Int = 0, wrap: Boolean = true)(implicit val tpe: T)
+  extends Pattern[T] {
+
+  def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
+    val repeatsIt = repeats.expand
+    val sizeIt    = size   .expand
+    val stepIt    = step   .expand
+    val startIt   = start  .expand
+    val indexed   = list.toIndexedSeq
+    val listSize  = indexed.size
+    if (repeatsIt.isEmpty || sizeIt.isEmpty || stepIt.isEmpty || startIt.isEmpty || listSize == 0) Iterator.empty
+    else {
+      val repeatsVal  = repeatsIt.next()
+      val startVal    = startIt  .next()
+
+      new AbstractIterator[tpe.Out] {
+        private[this] var pos           = startVal
+        private[this] var sizeVal       = sizeIt.next()
+        private[this] var stepVal       = stepIt.next()
+        private[this] var repeatsCnt    = 0
+        private[this] var sizeCnt       = 0
+        private[this] var listIt: Iterator[tpe.Out] = _
+        private[this] var elem: tpe.Out = _
+        private[this] var done          = false
+
+        private def pickIt(): Boolean = {
+          val i = pos + sizeCnt
+          val j = if (wrap) IntFunctions.wrap(i, 0, listSize - 1) else i
+          val ok = j >= 0 && j < listSize
+          listIt = ??? //  if (ok) indexed(j).embed.map(tpe.lift(_)) else Iterator.empty
+          ok
+        }
+
+        @inline
+        private def run(): Unit =
+          if (pickIt()) advance() else done = true
+
+        @tailrec
+        private def advance(): Unit =
+          if (listIt.hasNext) {
+            elem = listIt.next()
+          } else {
+            sizeCnt += 1
+            if (sizeCnt < sizeVal) {
+              run()
+
+            } else {
+              repeatsCnt += 1
+              if (repeatsCnt < repeatsVal && sizeIt.hasNext && stepIt.hasNext) {
+                pos        += stepVal
+                sizeVal     = sizeIt.next()
+                sizeCnt     = 0
+                stepVal     = stepIt.next()
+                advance()
+
+              } else {
+                done = true
+              }
+            }
+          }
+
+        def hasNext: Boolean = !done
+
+        run()
+
+        def next(): tpe.Out = {
+          if (done) throw new NoSuchElementException("next on empty iterator")
+          val res = elem
+          advance()
+          res
+        }
+      }
+    }
+  }
+}
+
 //final case class Walk(list: PE, step: PE, dir: PE = 1, start: PE = 0)
 //  extends Pattern {
 //
