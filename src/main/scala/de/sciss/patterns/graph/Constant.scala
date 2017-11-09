@@ -14,11 +14,11 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
+import de.sciss.patterns.Types.TopT
 
-final case class Constant[A, T <: Top](x: A)(implicit val tpe: T { type Out = A }) extends Pat[T] {
+final case class Constant[A, T <: TopT[A]](x: A) extends Pat[T] {
   def iterator(implicit ctx: Context): Iterator[A] = Iterator.continually(x)
   def embed   (implicit ctx: Context): Iterator[A] = Iterator.single     (x)
 
-  private[patterns] def expand(implicit ctx: Context) = iterator
+  private[patterns] def expand(implicit ctx: Context): Iterator[A] = iterator
 }

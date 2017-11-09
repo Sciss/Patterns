@@ -74,7 +74,7 @@ object RonTuple {
   }
 
   def makePart[A, T <: TopT[A]](pattern: Seq[A], cantus: Seq[A], start: Int = 0, stutter: Int = 1)
-                               (implicit tpe: T, view: A => Pat[T]): (Pat[T], Pat.Double) = {
+                               (implicit view: A => Pat[T]): (Pat[T], Pat.Double) = {
     val durs1 = {
       val durs0 = computeDurs(pattern, cantus, start).map(_.toDouble)
       if (stutter == 1) durs0 else durs0.stutter(stutter).map(_ / stutter)

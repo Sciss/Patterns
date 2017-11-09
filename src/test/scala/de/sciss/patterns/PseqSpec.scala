@@ -12,8 +12,8 @@ class PseqSpec extends PatSpec {
     eval(pat2) shouldBe Seq(3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2)
   }
 
-  it should "produce the expected output for a 'nested' input" in {
-    val pat = Pseq(Seq(60, 61, 62), 2, Seq(1, 2))
-    eval(pat) shouldBe Seq(Seq(61, 62), Seq(62, 60), Seq(60, 61), Seq(61, 62), Seq(62, 60), Seq(60, 61))
-  }
+//  it should "produce the expected output for a 'nested' input" in {
+//    val pat = Pseq(Seq(60, 61, 62), 2, Seq(1, 2))
+//    eval(pat) shouldBe Seq(Seq(61, 62), Seq(62, 60), Seq(60, 61), Seq(61, 62), Seq(62, 60), Seq(60, 61))
+//  }
 }

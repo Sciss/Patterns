@@ -24,12 +24,12 @@ final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pa
                                                        (implicit protected val br: Num[T1, T2, T])
   extends SeriesLike[T1, T2, T] {
 
-  protected def op(a: tpe.Out, b: tpe.Out): tpe.Out = br.plus(a, b)
+  protected def op(a: T#Out, b: T#Out): T#Out = br.plus(a, b)
 }
 
 final case class Geom[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
                                                      (implicit protected val br: Num[T1, T2, T])
   extends SeriesLike[T1, T2, T] {
 
-  protected def op(a: tpe.Out, b: tpe.Out): tpe.Out = br.plus(a, b)
+  protected def op(a: T#Out, b: T#Out): T#Out = br.plus(a, b)
 }

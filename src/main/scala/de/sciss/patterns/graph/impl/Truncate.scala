@@ -23,13 +23,11 @@ trait Truncate[T <: Top] extends Pattern[T] {
   protected val in: Pat[T]
   protected def length: Pat[IntTop]
 
-  protected def truncate(it: Iterator[tpe.Out], n: Int): Iterator[tpe.Out]
+  protected def truncate(it: Iterator[T#Out], n: Int): Iterator[T#Out]
 
   // ---- impl ----
 
-  final val tpe: in.tpe.type = in.tpe
-
-  def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
+  def iterator(implicit ctx: Context): Iterator[T#Out] = {
     val lenIt = length.expand
     if (lenIt.isEmpty) Iterator.empty
     else {

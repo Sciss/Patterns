@@ -21,12 +21,12 @@ import de.sciss.patterns.graph.impl.Truncate
 final case class Take[T <: Top](in: Pat[T], length: Pat[IntTop])
   extends Truncate[T] {
 
-  protected def truncate(it: Iterator[tpe.Out], n: Int): Iterator[tpe.Out] = it.take(n)
+  protected def truncate(it: Iterator[T#Out], n: Int): Iterator[T#Out] = it.take(n)
 }
 
 final case class Drop[T <: Top](in: Pat[T], length: Pat[IntTop])
   extends Truncate[T] {
 
-  protected def truncate(it: Iterator[tpe.Out], n: Int): Iterator[tpe.Out] = it.drop(n)
+  protected def truncate(it: Iterator[T#Out], n: Int): Iterator[T#Out] = it.drop(n)
 }
 

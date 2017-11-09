@@ -28,22 +28,20 @@ trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pattern[T] {
 
   protected def step: Pat[T2]
 
-  protected def op(a: tpe.Out, b: tpe.Out): tpe.Out
+  protected def op(a: T#Out, b: T#Out): T#Out
 
   // ---- impl ----
 
-  final val tpe: br.tpe.type = br.tpe
-
-  final def iterator(implicit ctx: Context): Iterator[tpe.Out] = {
+  final def iterator(implicit ctx: Context): Iterator[T#Out] = {
     val ai = start.expand.map(br.lift1)
     val bi = step .expand.map(br.lift2)
 
     if (ai.isEmpty) Iterator.empty
-    else new AbstractIterator[tpe.Out] {
-      private var state: tpe.Out = ai.next
+    else new AbstractIterator[T#Out] {
+      private var state: T#Out = ai.next
       var hasNext = true
 
-      def next(): tpe.Out = {
+      def next(): T#Out = {
         val res = state
         hasNext = ai.hasNext && bi.hasNext
         if (hasNext) {

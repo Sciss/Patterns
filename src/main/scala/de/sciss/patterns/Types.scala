@@ -21,10 +21,12 @@ object Types {
   type TopT[A] = Top { type Out = A }
 
   object Top {
-    def Seq[T <: Top](implicit peer: T): Seq[T] = new Seq(peer)
-    final class Seq[T <: Top](val peer: T) extends Top {
-      type Out = scala.Seq[peer.Out]
-    }
+    type Seq[T <: Top] = Top { type Out = scala.Seq[T#Out] }
+
+//    def Seq[T <: Top](implicit peer: T): Seq[T] = new Seq(peer)
+//    final class Seq[T <: Top](val peer: T) extends Top {
+//      type Out = scala.Seq[T#Out]
+//    }
   }
   trait Top {
     type Out
@@ -33,15 +35,13 @@ object Types {
   }
 
   trait Bridge[T1 <: Top, T2 <: Top, T <: Top] {
-    val tpe: T
-
-    def lift1(a: T1#Out): tpe.Out
-    def lift2(a: T2#Out): tpe.Out
+    def lift1(a: T1#Out): T#Out
+    def lift2(a: T2#Out): T#Out
   }
 
   trait Num[T1 <: Top, T2 <: Top, T <: Top] extends Bridge[T1, T2, T] {
-    def plus (a: tpe.Out, b: tpe.Out): tpe.Out
-    def times(a: tpe.Out, b: tpe.Out): tpe.Out
+    def plus (a: T#Out, b: T#Out): T#Out
+    def times(a: T#Out, b: T#Out): T#Out
   }
   
   trait SeqLikeNum[A] {
@@ -63,14 +63,10 @@ object Types {
   }
 
   trait IntLikeNum extends SeqLikeNum[Int] {
-    final val tpe: IntSeqTop = IntSeqTop
-
     protected val num: Numeric[Int] = Numeric.IntIsIntegral
   }
 
   trait DoubleLikeNum extends SeqLikeNum[Double] {
-    final val tpe: DoubleSeqTop = DoubleSeqTop
-
     protected val num: Numeric[Double] = Numeric.DoubleIsFractional
   }
 
@@ -143,8 +139,6 @@ object Types {
 
   sealed trait IntTop extends IntLikeTop with ScalarTop[Int]
   implicit object IntTop extends IntTop with Num[IntTop, IntTop, IntTop] {
-    val tpe: IntTop = this
-
     def plus (a: Int, b: Int): Int = a + b
     def times(a: Int, b: Int): Int = a * b
   }
@@ -156,8 +150,6 @@ object Types {
 
   sealed trait DoubleTop extends DoubleLikeTop with ScalarTop[Double]
   implicit object DoubleTop extends DoubleTop with Num[DoubleTop, DoubleTop, DoubleTop] {
-    val tpe: DoubleTop = this
-
     def plus (a: Double, b: Double): Double = a + b
     def times(a: Double, b: Double): Double = a * b
   }
@@ -188,8 +180,6 @@ object Types {
     type Out = _String
   }
   implicit object StringTop extends StringTop with Bridge[StringTop, StringTop, StringTop] {
-    val tpe: StringTop = this
-
     def lift1(a: _String): _String = a
     def lift2(a: _String): _String = a
   }

@@ -22,12 +22,10 @@ object Pat {
   type $[T <: Top, A] = Pat[T { type Out = A }]
 }
 trait Pat[T <: Top] {
-  val tpe: T
+  private[patterns] def expand(implicit ctx: Context): Iterator[T#Out]
 
-  private[patterns] def expand(implicit ctx: Context): Iterator[tpe.Out]
-
-  def iterator(implicit ctx: Context): Iterator[tpe.Out]
-  def embed   (implicit ctx: Context): Iterator[tpe.Out]
+  def iterator(implicit ctx: Context): Iterator[T#Out]
+  def embed   (implicit ctx: Context): Iterator[T#Out]
 }
 
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */
@@ -42,7 +40,7 @@ trait Pattern[T <: Top] extends Pat[T] {
     * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
     *          or a single stream, or a group of streams)
     */
-  final private[patterns] def expand(implicit ctx: Context): Iterator[tpe.Out] = ctx.visit(ref, iterator)
+  final private[patterns] def expand(implicit ctx: Context): Iterator[T#Out] = ctx.visit(ref, iterator)
 
-  final def embed(implicit ctx: Context): Iterator[tpe.Out] = iterator
+  final def embed(implicit ctx: Context): Iterator[T#Out] = iterator
 }
