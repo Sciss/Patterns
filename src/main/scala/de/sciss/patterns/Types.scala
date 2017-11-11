@@ -15,6 +15,8 @@ package de.sciss.patterns
 
 import java.lang.{String => _String}
 
+import de.sciss.numbers.{DoubleFunctions, IntFunctions}
+
 import scala.language.higherKinds
 import scala.math.Numeric.{DoubleIsFractional, IntIsIntegral}
 import scala.math.Ordering
@@ -66,23 +68,35 @@ object Types {
     final def minus(a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.minus)
     final def times(a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.times)
 
-    def negate(a: Seq[A]): Seq[A] = a.map(peer.negate)
-    def abs   (a: Seq[A]): Seq[A] = a.map(peer.abs   )
+    def negate(a: Seq[A]): Seq[A] = unOp(a)(peer.negate)
+    def abs   (a: Seq[A]): Seq[A] = unOp(a)(peer.abs   )
 
     def zero: Seq[A] = peer.zero :: Nil
     def one : Seq[A] = peer.one  :: Nil
 
-    def rand2(a: Seq[A]           )(implicit r: Random): Seq[A] = ???
-    def rrand(a: Seq[A], b: Seq[A])(implicit r: Random): Seq[A] = ???
+    def rand2(a: Seq[A]           )(implicit r: Random): Seq[A] = unOp (a   )(peer.rand2)
+    def rrand(a: Seq[A], b: Seq[A])(implicit r: Random): Seq[A] = binOp(a, b)(peer.rrand)
 
-    def fold(a: Seq[A], lo: Seq[A], hi: Seq[A])(implicit r: Random): Seq[A] = ???
+    def fold(a: Seq[A], lo: Seq[A], hi: Seq[A])(implicit r: Random): Seq[A] = ternOp(a, lo, hi)(peer.fold)
 
-    protected def binOp(a: Seq[A], b: Seq[A])(op: (A, A) => A): Seq[A] = {
+    final protected def unOp(a: Seq[A])(op: A => A): Seq[A] = a.map(op)
+
+    final protected def binOp(a: Seq[A], b: Seq[A])(op: (A, A) => A): Seq[A] = {
       val as = a.size
       val bs = b.size
       val sz = math.max(as, bs)
       Seq.tabulate(sz) { i =>
         op(a(i % as), b(i % bs))
+      }
+    }
+
+    final protected def ternOp(a: Seq[A], b: Seq[A], c: Seq[A])(op: (A, A, A) => A): Seq[A] = {
+      val as = a.size
+      val bs = b.size
+      val cs = c.size
+      val sz = math.max(math.max(as, bs), cs)
+      Seq.tabulate(sz) { i =>
+        op(a(i % as), b(i % bs), c(i % cs))
       }
     }
   }
@@ -174,11 +188,11 @@ object Types {
       with  IntIsIntegral 
       with  Ordering.IntOrdering {
     
-    def rand2(a: Int)(implicit r: Random): Int = ???
+    def rand2(a: Int)(implicit r: Random): Int = r.nextInt(2 * a + 1) - a
 
-    def rrand(a: Int, b: Int)(implicit r: Random): Int = ???
+    def rrand(a: Int, b: Int)(implicit r: Random): Int = r.nextInt(b - a + 1) + a
 
-    def fold(a: Int, lo: Int, hi: Int)(implicit r: Random): Int = ???
+    def fold(a: Int, lo: Int, hi: Int)(implicit r: Random): Int = IntFunctions.fold(a, lo, hi)
   }
 
   sealed trait DoubleLikeTop extends ScalarOrSeqTop[Double] with Top
@@ -198,11 +212,11 @@ object Types {
       with  DoubleIsFractional
       with  Ordering.DoubleOrdering {
 
-    def rand2(a: Double)(implicit r: Random): Double = ???
+    def rand2(a: Double)(implicit r: Random): Double = (r.nextDouble() * 2 - 1) * a
 
-    def rrand(a: Double, b: Double)(implicit r: Random): Double = ???
+    def rrand(a: Double, b: Double)(implicit r: Random): Double = r.nextDouble() * (b - a) + a
 
-    def fold(a: Double, lo: Double, hi: Double)(implicit r: Random): Double = ???
+    def fold(a: Double, lo: Double, hi: Double)(implicit r: Random): Double = DoubleFunctions.fold(a, lo, hi)
   }
   
   implicit object intSeqBridge1 extends /* IntLikeNum with */ Bridge[IntTop, IntSeqTop, IntSeqTop] {

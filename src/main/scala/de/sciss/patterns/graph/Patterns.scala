@@ -54,8 +54,6 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
       private[this] implicit val r: Random  = ctx.mkRandom()
       private[this] var state: T#Out        = num.rrand(loIt.next(), hiIt.next())
       private[this] val stepIt              = step.expand
-      private[this] val loVal               = loIt.next()
-      private[this] val hiVal               = hiIt.next()
 
       var hasNext = true
 
@@ -63,8 +61,39 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
         val res = state
         hasNext = loIt.hasNext && hiIt.hasNext && stepIt.hasNext
         if (hasNext) {
+          val loVal = loIt.next()
+          val hiVal = hiIt.next()
           val x = calcNext(state, br.lift2(stepIt.next()))
           state = num.fold(x, loVal, hiVal)
+        }
+        res
+      }
+    }
+  }
+}
+
+final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T#Out])
+  extends Pattern[T] {
+
+  def iterator(implicit ctx: Context): Iterator[T#Out] = {
+    val loIt = lo.expand
+    val hiIt = hi.expand
+
+    if (loIt.isEmpty || hiIt.isEmpty) Iterator.empty
+    else new AbstractIterator[T#Out] {
+      private[this] implicit val r: Random = ctx.mkRandom()
+
+      private def mkState(): T#Out = num.rrand(loIt.next(), hiIt.next())
+
+      private[this] var state: T#Out = mkState()
+
+      var hasNext = true
+
+      def next(): T#Out = {
+        val res = state
+        hasNext = loIt.hasNext && hiIt.hasNext
+        if (hasNext) {
+          state = mkState()
         }
         res
       }
