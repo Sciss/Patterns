@@ -16,6 +16,7 @@ package de.sciss.patterns
 import java.lang.{String => _String}
 
 import scala.language.higherKinds
+import scala.util.Random
 
 object Types {
   type TopT[A] = Top { type Out = A }
@@ -42,6 +43,11 @@ object Types {
   trait Num[T1 <: Top, T2 <: Top, T <: Top] extends Bridge[T1, T2, T] {
     def plus (a: T#Out, b: T#Out): T#Out
     def times(a: T#Out, b: T#Out): T#Out
+
+    def rand2(a: T#Out          )(implicit r: Random): T#Out
+    def rrand(a: T#Out, b: T#Out)(implicit r: Random): T#Out
+
+    def fold(a: T#Out, lo: T#Out, hi: T#Out)(implicit r: Random): T#Out
   }
   
   trait SeqLikeNum[A] {
@@ -51,7 +57,12 @@ object Types {
 
     final def plus (a: Seq[A], b: Seq[A]): Seq[A] = combine(a, b)(_ + _)
     final def times(a: Seq[A], b: Seq[A]): Seq[A] = combine(a, b)(_ * _)
-    
+
+    def rand2(a: Seq[A]           )(implicit r: Random): Seq[A] = ???
+    def rrand(a: Seq[A], b: Seq[A])(implicit r: Random): Seq[A] = ???
+
+    def fold(a: Seq[A], lo: Seq[A], hi: Seq[A])(implicit r: Random): Seq[A] = ???
+
     protected def combine(a: Seq[A], b: Seq[A])(op: (A, A) => A): Seq[A] = {
       val as = a.size
       val bs = b.size
@@ -141,6 +152,12 @@ object Types {
   implicit object IntTop extends IntTop with Num[IntTop, IntTop, IntTop] {
     def plus (a: Int, b: Int): Int = a + b
     def times(a: Int, b: Int): Int = a * b
+
+    def rand2(a: Int)(implicit r: Random): Int = ???
+
+    def rrand(a: Int, b: Int)(implicit r: Random): Int = ???
+
+    def fold(a: Int, lo: Int, hi: Int)(implicit r: Random): Int = ???
   }
 
   sealed trait DoubleLikeTop extends ScalarOrSeqTop[Double] with Top
@@ -152,6 +169,12 @@ object Types {
   implicit object DoubleTop extends DoubleTop with Num[DoubleTop, DoubleTop, DoubleTop] {
     def plus (a: Double, b: Double): Double = a + b
     def times(a: Double, b: Double): Double = a * b
+
+    def rand2(a: Double)(implicit r: Random): Double = ???
+
+    def rrand(a: Double, b: Double)(implicit r: Random): Double = ???
+
+    def fold(a: Double, lo: Double, hi: Double)(implicit r: Random): Double = ???
   }
   
   implicit object intSeqNum1 extends IntLikeNum with Num[IntTop, IntSeqTop, IntSeqTop] {

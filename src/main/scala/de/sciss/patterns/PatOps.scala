@@ -21,4 +21,6 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   def drop(length: Pat[IntTop]): Drop[T] = Drop(x, length)
 
   def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2]): Cat[T, T1, T2] = Cat(x, that)
+
+  def stutter(n: Pat.Int): Pat[T] = Stutter(n, x)
 }

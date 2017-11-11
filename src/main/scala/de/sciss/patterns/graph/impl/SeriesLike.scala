@@ -38,7 +38,7 @@ trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pattern[T] {
 
     if (ai.isEmpty) Iterator.empty
     else new AbstractIterator[T#Out] {
-      private var state: T#Out = ai.next
+      private[this] var state: T#Out = ai.next
       var hasNext = true
 
       def next(): T#Out = {
