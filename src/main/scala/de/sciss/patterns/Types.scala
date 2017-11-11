@@ -16,6 +16,8 @@ package de.sciss.patterns
 import java.lang.{String => _String}
 
 import scala.language.higherKinds
+import scala.math.Numeric.{DoubleIsFractional, IntIsIntegral}
+import scala.math.Ordering
 import scala.util.Random
 
 object Types {
@@ -40,30 +42,42 @@ object Types {
     def lift2(a: T2#Out): T#Out
   }
 
-  trait Num[T1 <: Top, T2 <: Top, T <: Top] extends Bridge[T1, T2, T] {
-    def plus (a: T#Out, b: T#Out): T#Out
-    def times(a: T#Out, b: T#Out): T#Out
+  trait Num[A] {
+    def plus  (x: A, y: A): A
+    def minus (x: A, y: A): A
+    def times (x: A, y: A): A
 
-    def rand2(a: T#Out          )(implicit r: Random): T#Out
-    def rrand(a: T#Out, b: T#Out)(implicit r: Random): T#Out
+    def negate(x: A): A
+    def abs   (x: A): A
 
-    def fold(a: T#Out, lo: T#Out, hi: T#Out)(implicit r: Random): T#Out
+    def zero: A
+    def one : A
+
+    def rand2(a: A      )(implicit r: Random): A
+    def rrand(a: A, b: A)(implicit r: Random): A
+
+    def fold(a: A, lo: A, hi: A)(implicit r: Random): A
   }
   
-  trait SeqLikeNum[A] {
-    protected val num: Numeric[A]
+  trait SeqLikeNum[A] extends Num[Seq[A]] {
+    protected val peer: Num[A]
     
-    import num._
+    final def plus (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.plus )
+    final def minus(a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.minus)
+    final def times(a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.times)
 
-    final def plus (a: Seq[A], b: Seq[A]): Seq[A] = combine(a, b)(_ + _)
-    final def times(a: Seq[A], b: Seq[A]): Seq[A] = combine(a, b)(_ * _)
+    def negate(a: Seq[A]): Seq[A] = a.map(peer.negate)
+    def abs   (a: Seq[A]): Seq[A] = a.map(peer.abs   )
+
+    def zero: Seq[A] = peer.zero :: Nil
+    def one : Seq[A] = peer.one  :: Nil
 
     def rand2(a: Seq[A]           )(implicit r: Random): Seq[A] = ???
     def rrand(a: Seq[A], b: Seq[A])(implicit r: Random): Seq[A] = ???
 
     def fold(a: Seq[A], lo: Seq[A], hi: Seq[A])(implicit r: Random): Seq[A] = ???
 
-    protected def combine(a: Seq[A], b: Seq[A])(op: (A, A) => A): Seq[A] = {
+    protected def binOp(a: Seq[A], b: Seq[A])(op: (A, A) => A): Seq[A] = {
       val as = a.size
       val bs = b.size
       val sz = math.max(as, bs)
@@ -74,11 +88,11 @@ object Types {
   }
 
   trait IntLikeNum extends SeqLikeNum[Int] {
-    protected val num: Numeric[Int] = Numeric.IntIsIntegral
+    protected final val peer: Num[Int] = IntTop
   }
 
   trait DoubleLikeNum extends SeqLikeNum[Double] {
-    protected val num: Numeric[Double] = Numeric.DoubleIsFractional
+    protected final val peer: Num[Double] = DoubleTop
   }
 
   object Applicative {
@@ -146,13 +160,20 @@ object Types {
   sealed trait IntLikeTop extends ScalarOrSeqTop[Int] with Top
 
   sealed trait IntSeqTop extends IntLikeTop with SeqTop[Int]
-  implicit object IntSeqTop extends IntSeqTop with IntLikeNum with Num[IntSeqTop, IntSeqTop, IntSeqTop]
+  implicit object IntSeqTop
+    extends IntSeqTop 
+      with  IntLikeNum
+      with  Bridge[IntSeqTop, IntSeqTop, IntSeqTop] 
+      with  Num[Seq[Int]]
 
   sealed trait IntTop extends IntLikeTop with ScalarTop[Int]
-  implicit object IntTop extends IntTop with Num[IntTop, IntTop, IntTop] {
-    def plus (a: Int, b: Int): Int = a + b
-    def times(a: Int, b: Int): Int = a * b
-
+  implicit object IntTop 
+    extends IntTop 
+      with  Bridge[IntTop, IntTop, IntTop] 
+      with  Num[Int] 
+      with  IntIsIntegral 
+      with  Ordering.IntOrdering {
+    
     def rand2(a: Int)(implicit r: Random): Int = ???
 
     def rrand(a: Int, b: Int)(implicit r: Random): Int = ???
@@ -163,12 +184,19 @@ object Types {
   sealed trait DoubleLikeTop extends ScalarOrSeqTop[Double] with Top
 
   sealed trait DoubleSeqTop extends DoubleLikeTop with SeqTop[Double]
-  implicit object DoubleSeqTop extends DoubleSeqTop with DoubleLikeNum with Num[DoubleSeqTop, DoubleSeqTop, DoubleSeqTop]
+  implicit object DoubleSeqTop
+    extends DoubleSeqTop
+      with  DoubleLikeNum
+      with  Bridge[DoubleSeqTop, DoubleSeqTop, DoubleSeqTop]
+      with  Num[Seq[Double]]
 
   sealed trait DoubleTop extends DoubleLikeTop with ScalarTop[Double]
-  implicit object DoubleTop extends DoubleTop with Num[DoubleTop, DoubleTop, DoubleTop] {
-    def plus (a: Double, b: Double): Double = a + b
-    def times(a: Double, b: Double): Double = a * b
+  implicit object DoubleTop
+    extends DoubleTop
+      with  Bridge[DoubleTop, DoubleTop, DoubleTop]
+      with  Num[Double]
+      with  DoubleIsFractional
+      with  Ordering.DoubleOrdering {
 
     def rand2(a: Double)(implicit r: Random): Double = ???
 
@@ -177,22 +205,22 @@ object Types {
     def fold(a: Double, lo: Double, hi: Double)(implicit r: Random): Double = ???
   }
   
-  implicit object intSeqNum1 extends IntLikeNum with Num[IntTop, IntSeqTop, IntSeqTop] {
+  implicit object intSeqBridge1 extends /* IntLikeNum with */ Bridge[IntTop, IntSeqTop, IntSeqTop] {
     def lift1(a: Int     ): Seq[Int] = a :: Nil
     def lift2(a: Seq[Int]): Seq[Int] = a
   }
 
-  implicit object intSeqNum2 extends IntLikeNum with Num[IntSeqTop, IntTop, IntSeqTop] {
+  implicit object intSeqBridge2 extends /* IntLikeNum with */ Bridge[IntSeqTop, IntTop, IntSeqTop] {
     def lift1(a: Seq[Int]): Seq[Int] = a
     def lift2(a: Int     ): Seq[Int] = a :: Nil
   }
 
-  implicit object doubleSeqNum1 extends DoubleLikeNum with Num[DoubleTop, DoubleSeqTop, DoubleSeqTop] {
+  implicit object doubleSeqBridge1 extends /* DoubleLikeNum with */ Bridge[DoubleTop, DoubleSeqTop, DoubleSeqTop] {
     def lift1(a: Double     ): Seq[Double] = a :: Nil
     def lift2(a: Seq[Double]): Seq[Double] = a
   }
 
-  implicit object doubleSeqNum2 extends DoubleLikeNum with Num[DoubleSeqTop, DoubleTop, DoubleSeqTop] {
+  implicit object doubleSeqBridge2 extends /* DoubleLikeNum with */ Bridge[DoubleSeqTop, DoubleTop, DoubleSeqTop] {
     def lift1(a: Seq[Double]): Seq[Double] = a
     def lift2(a: Double     ): Seq[Double] = a :: Nil
   }

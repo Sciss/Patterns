@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Num, Top}
+import de.sciss.patterns.Types.{Bridge, Num, Top}
 import de.sciss.patterns.graph.impl.SeriesLike
 
 import scala.collection.AbstractIterator
@@ -24,25 +24,25 @@ import scala.util.Random
   * but does not have a `length` arguments. Use `.take(N)` instead.
   */
 final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
-                                                       (implicit protected val br: Num[T1, T2, T])
+                                                       (implicit protected val br: Bridge[T1, T2, T], num: Num[T#Out])
   extends SeriesLike[T1, T2, T] {
 
-  protected def op(a: T#Out, b: T#Out): T#Out = br.plus(a, b)
+  protected def op(a: T#Out, b: T#Out): T#Out = num.plus(a, b)
 }
 
 final case class Geom[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
-                                                     (implicit protected val br: Num[T1, T2, T])
+                                                     (implicit protected val br: Bridge[T1, T2, T], num: Num[T#Out])
   extends SeriesLike[T1, T2, T] {
 
-  protected def op(a: T#Out, b: T#Out): T#Out = br.plus(a, b)
+  protected def op(a: T#Out, b: T#Out): T#Out = num.times(a, b)
 }
 
 final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1], step: Pat[T2])
-                                                      (implicit protected val br: Num[T1, T2, T])
+                                                      (implicit protected val br: Bridge[T1, T2, T], num: Num[T#Out])
   extends Pattern[T] {
 
   protected def calcNext(cur: T#Out, step: T#Out)(implicit r: Random): T#Out = {
-    br.plus(cur, br.rand2(step))
+    num.plus(cur, num.rand2(step))
   }
 
   def iterator(implicit ctx: Context): Iterator[T#Out] = {
@@ -52,7 +52,7 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
     if (loIt.isEmpty || hiIt.isEmpty) Iterator.empty
     else new AbstractIterator[T#Out] {
       private[this] implicit val r: Random  = ctx.mkRandom()
-      private[this] var state: T#Out        = br.rrand(loIt.next(), hiIt.next())
+      private[this] var state: T#Out        = num.rrand(loIt.next(), hiIt.next())
       private[this] val stepIt              = step.expand
       private[this] val loVal               = loIt.next()
       private[this] val hiVal               = hiIt.next()
@@ -64,7 +64,7 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
         hasNext = loIt.hasNext && hiIt.hasNext && stepIt.hasNext
         if (hasNext) {
           val x = calcNext(state, br.lift2(stepIt.next()))
-          state = br.fold(x, loVal, hiVal)
+          state = num.fold(x, loVal, hiVal)
         }
         res
       }
