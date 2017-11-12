@@ -16,7 +16,8 @@ package graph
 package impl
 
 import scala.annotation.tailrec
-import scala.collection.{AbstractIterator, mutable}
+import scala.collection.AbstractIterator
+import scala.collection.immutable.{SortedMap => ISortedMap}
 import scala.util.Random
 
 object QueueImpl {
@@ -28,7 +29,9 @@ object QueueImpl {
         }
     }
   }
-  final case class Ref(id: Int)(var time: Double)
+  final case class Ref(id: Int) {
+    var time: Double = 0.0
+  }
 
   sealed trait Cmd
   final case class Par    (ref: Ref, pat: Pat.Event)  extends Cmd
@@ -36,13 +39,13 @@ object QueueImpl {
   final case class Seq    (pat: Pat.Event)            extends Cmd
   final case class Advance(seconds: Double)           extends Cmd
 
-  sealed trait Blocking
-  final class SeqB(it: Iterator[Event#Out]) extends Blocking {
-    var done: Boolean = it.hasNext
-    var curr: Event#Out = if (done) null else it.next()
-  }
-  final case class AdvanceB(stop: Double) extends Blocking
-  final case object Flush extends Blocking
+//  sealed trait Blocking
+//  final class SeqB(val it: Iterator[Event#Out]) extends Blocking {
+//    var done: Boolean = it.hasNext
+//    var curr: Event#Out = if (done) null else it.next()
+//  }
+//  final case class AdvanceB(stop: Double) extends Blocking
+//  final case object Flush extends Blocking
 }
 final class QueueImpl(implicit val context: Context)
   extends Spawner.Queue {
@@ -57,7 +60,7 @@ final class QueueImpl(implicit val context: Context)
   implicit val random: Random = context.mkRandom()
 
   def par(pat: Pat.Event): Ref = {
-    val ref = new Ref(refCnt)(0.0)  // time will be updated later
+    val ref = new Ref(refCnt)
     refCnt += 1
 //    pq += ref -> pat.expand
     cmdRev ::= Par(ref, pat)
@@ -76,12 +79,12 @@ final class QueueImpl(implicit val context: Context)
   type Out = Event#Out
 
   def iterator: Iterator[Out] = new AbstractIterator[Out] {
-    private[this] val pq              = mutable.SortedMap.empty[Ref, Iterator[_]]
+    private[this] var pq              = ISortedMap.empty[Ref, Either[Iterator[Out], Iterator[Cmd]]]
     private[this] val cmdIt           = cmdRev.reverseIterator
     private[this] var now             = 0.0
     private[this] var pqStop          = 0.0
     private[this] var elem: Out       = _
-    private[this] var cmd : Blocking  = _
+//    private[this] var cmd : Blocking  = _
     private[this] var done            = false
 
     @tailrec
@@ -90,7 +93,7 @@ final class QueueImpl(implicit val context: Context)
         cmdIt.next() match {
           case Par(ref, pat) =>
             ref.time = now
-            pq += ref -> pat.expand
+            ??? // pq += ref -> pat.expand
             init()
 
           case Suspend(ref) =>
@@ -98,27 +101,35 @@ final class QueueImpl(implicit val context: Context)
             init()
 
           case Seq(pat) =>
-            cmd = new SeqB(pat.expand)
-            advance()
+            ???
+//            cmd = new SeqB(pat.expand)
 
           case Advance(seconds) =>
-            cmd = AdvanceB(now + seconds)
-            advance()
+            ???
+//            cmd = AdvanceB(now + seconds)
         }
       } else {
         done = true
       }
 
-    private def advance(): Unit = cmd match {
-      case b: SeqB =>
-        ???
-      case AdvanceB(stop) =>
-        ???
-      case Flush =>
-        ???
-    }
+    private def advance(): Unit = ???
+
+//    private def advance(): Unit = cmd match {
+//      case b: SeqB =>
+//        elem = b.it.next()
+//        val d = Event.delta(elem)
+//        if (d > 0.0) now += d
+////        if (d >= 0.0 && it.hasNext) pq = pq.tail + ((time + d) -> it)
+//
+//        ???
+//      case AdvanceB(stop) =>
+//        ???
+//      case Flush =>
+//        ???
+//    }
 
     init()
+    if (!done) advance()
 
     def hasNext: Boolean = !done
 
