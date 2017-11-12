@@ -61,9 +61,8 @@ object RonTuple {
 
   // function to sort a groups of time points based on their total duration
   def sortTuples[A](array: Seq[Seq[A]], cycle: A)(implicit num: Integral[A]): Seq[Seq[A]] = {
-    import num._
     array.sortWith { (a, b) =>
-      computeDur[A](a, cycle) <= computeDur[A](b, cycle)
+      num.lteq(computeDur[A](a, cycle), computeDur[A](b, cycle))
     }
   }
 
@@ -95,7 +94,7 @@ object RonTuple {
 //      Seq(Pseq(Seq.fill(stutter)('r)),
 //        Pseq(pattern.grouped(stutter).stutter(stutter).flatten, inf))
 //    }
-    val ptrnOut = Seq(Pseq(pattern, inf))
+    val ptrnOut: Seq[Pseq[T]] = Seq(Pseq(pattern, inf))
 
 //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
     (Pseq(ptrnOut), Pseq(durs))
