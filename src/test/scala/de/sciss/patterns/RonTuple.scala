@@ -1,7 +1,10 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.TopT
+import de.sciss.patterns.Types.{DoubleTop, IntTop, TopT}
 import de.sciss.patterns.graph._
+import de.sciss.numbers.Implicits._
+
+import scala.util.Random
 
 /**
   * Almat: work in progress, seeing how
@@ -18,6 +21,10 @@ object RonTuple {
     }
 
     def stutter(n: Int): Seq[A] = xs.flatMap(a => Seq.fill(n)(a))
+
+    def mirror: Seq[A] = ???
+
+    def choose()(implicit r: Random): A = ???
   }
 
   // all pairs from two arrays
@@ -92,5 +99,64 @@ object RonTuple {
 
 //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
     (Pseq(ptrnOut), Pseq(durs))
+  }
+
+  Spawner[Event] { sp =>
+    import sp.{context, random}
+    val inf = Int.MaxValue
+    def catPat(cantus: Seq[Double]) =
+      Bind(
+        "instrument"  -> "sine4",
+        "note"        -> Pseq(cantus, inf), // Prout({ loop{ Pseq(~cantus).embedInStream } }),
+        "dur"         -> 0.2,
+        "db"          -> -45,
+        "octave"      -> 5,
+        "detune"      -> White(-2.0,2.0),
+        "pan"         -> 0,
+        "out"         -> White(0, 23),
+        "i"           -> 4,
+        "ar"          -> 0.001,
+        "dr"          -> 0.1,
+        "stretch"     -> 1,
+      )
+    val lPat  = Pseq[IntTop   ]((8 to 12).mirror            , inf).iterator
+    val rPat  = Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf).iterator
+    for (_ <- 1 to 4) { // original: infinite
+      ??? // ~tupletempo.tempo = ((10..20)/30).choose /2;
+      val length    = lPat.next()
+      val cantus0   = ((Brown(-6, 6, 3): Pat.Int) * 2.4).iterator.take(length).toList.map(_ + 4)
+      val numPause: Int = (length * rPat.next()).toInt
+      println(numPause)
+      val cantus = (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
+      println(s"starting $cantus")
+      val catter = sp.par(catPat(cantus))
+
+      val parts = cantus.distinct.combinations(3).toList
+      val pats = parts.zipWithIndex.map { case (part, i) =>
+        val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
+
+        Bind(
+          "instrument"  -> "sine4",
+          "note"        -> notePat,
+          "dur"         -> durPat,
+//        Pfunc({ ("voice" + i + "done").postln; nil })]),
+          "db"          -> -15,
+          "octave"      -> 5,
+          "legato"      -> i.linlin(0, parts.size, 0.02, 1),
+          "detune"      -> White(-2.0,2.0),
+        //		out: Pseq((0..23), inf, i),
+          "i"           -> Pseq(0 to 23, inf, i),
+          "ar"          -> 0.001,
+          "dr"          -> 0.1,
+          "stretch"     -> 1,
+          "db"          -> i.linlin(0, parts.size, -40, -30),
+        )
+      }
+      sp.seq(Ppar(pats))
+      println(s"ending $cantus")
+      // { cantus(cantus.size.rand) = 'r }.dup(5)
+      sp.advance(length * 2 * 0.2)
+      sp.suspend(catter)
+    }
   }
 }

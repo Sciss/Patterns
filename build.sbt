@@ -2,7 +2,12 @@ lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
 lazy val projectVersion     = "0.1.0-SNAPSHOT"
 
+// ---- main dependencies ----
+
 lazy val numbersVersion     = "0.1.3"
+
+// ---- test dependencies ----
+
 lazy val scalaTestVersion   = "3.0.4"
 
 lazy val commonSettings = Seq(

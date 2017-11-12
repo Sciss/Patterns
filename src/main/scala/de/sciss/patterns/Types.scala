@@ -239,6 +239,8 @@ object Types {
     def lift2(a: Double     ): Seq[Double] = a :: Nil
   }
 
+  implicit def intDoubleBridge1: Bridge[IntTop, DoubleTop, DoubleTop] = ???
+
   ////////////////////////////
 
   sealed trait StringTop extends Top {

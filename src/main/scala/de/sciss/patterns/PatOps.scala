@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Bridge, IntTop, Top}
+import de.sciss.patterns.Types.{Bridge, IntTop, Num, Top}
 import de.sciss.patterns.graph._
 
 final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
@@ -21,6 +21,9 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   def drop(length: Pat[IntTop]): Drop[T] = Drop(x, length)
 
   def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2]): Cat[T, T1, T2] = Cat(x, that)
+
+  def + [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = ???
+  def * [T1 <: Top, A, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2 { type Out = A }], num: Num[A]): Pat[T2 { type Out = A }] = ???
 
   def stutter(n: Pat.Int): Pat[T] = Stutter(n, x)
 }
