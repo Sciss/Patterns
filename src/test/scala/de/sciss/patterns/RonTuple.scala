@@ -11,6 +11,14 @@ import scala.util.Random
   * `tuple working 31.10.scd` can be translated to Scala.
   */
 object RonTuple {
+  def main(args: Array[String]): Unit = {
+    val x = spawner()
+    implicit val ctx: Context = Context()
+    val it = x.expand
+    println("Done.")
+    it.foreach(println)
+  }
+
   // some extra operations
   implicit class SeqOps[A](xs: Seq[A]) {
     // like Kollflitz' `differentiate` but keeps first value
@@ -22,9 +30,9 @@ object RonTuple {
 
     def stutter(n: Int): Seq[A] = xs.flatMap(a => Seq.fill(n)(a))
 
-    def mirror: Seq[A] = ???
+    def mirror: Seq[A] = if (xs.isEmpty) xs else xs ++ xs.reverse.tail
 
-    def choose()(implicit r: Random): A = ???
+    def choose()(implicit r: Random): A = xs(r.nextInt(xs.size))
   }
 
   // all pairs from two arrays
@@ -100,10 +108,10 @@ object RonTuple {
     (Pseq(ptrnOut), Pseq(durs))
   }
 
-  Spawner[Event] { sp =>
+  def spawner(): Pat.Event = Spawner { sp =>
     import sp.{context, random}
     val inf = Int.MaxValue
-    def catPat(cantus: Seq[Double]) =
+    def catPat(cantus: Seq[Double]): Pat.Event =
       Bind(
         "instrument"  -> "sine4",
         "note"        -> Pseq(cantus, inf), // Prout({ loop{ Pseq(~cantus).embedInStream } }),
@@ -121,7 +129,7 @@ object RonTuple {
     val lPat  = Pseq[IntTop   ]((8 to 12).mirror            , inf).iterator
     val rPat  = Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf).iterator
     for (_ <- 1 to 4) { // original: infinite
-      ??? // ~tupletempo.tempo = ((10..20)/30).choose /2;
+      // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
       val length    = lPat.next()
       val cantus0   = ((Brown(-6, 6, 3): Pat.Int) * 2.4).iterator.take(length).toList.map(_ + 4)
       val numPause: Int = (length * rPat.next()).toInt
@@ -153,6 +161,7 @@ object RonTuple {
       }
       sp.seq(Ppar(pats))
       println(s"ending $cantus")
+      // at this point, it wouldn't have any effect:
       // { cantus(cantus.size.rand) = 'r }.dup(5)
       sp.advance(length * 2 * 0.2)
       sp.suspend(catter)
