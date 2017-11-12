@@ -15,7 +15,8 @@ package de.sciss.patterns
 package graph
 package impl
 
-import scala.collection.mutable
+import scala.annotation.tailrec
+import scala.collection.{AbstractIterator, mutable}
 import scala.util.Random
 
 object QueueImpl {
@@ -31,9 +32,17 @@ object QueueImpl {
 
   sealed trait Cmd
   final case class Par    (ref: Ref, pat: Pat.Event)  extends Cmd
-  final case class Seq    (pat: Pat.Event)            extends Cmd
   final case class Suspend(ref: Ref)                  extends Cmd
+  final case class Seq    (pat: Pat.Event)            extends Cmd
   final case class Advance(seconds: Double)           extends Cmd
+
+  sealed trait Blocking
+  final class SeqB(it: Iterator[Event#Out]) extends Blocking {
+    var done: Boolean = it.hasNext
+    var curr: Event#Out = if (done) null else it.next()
+  }
+  final case class AdvanceB(stop: Double) extends Blocking
+  final case object Flush extends Blocking
 }
 final class QueueImpl(implicit val context: Context)
   extends Spawner.Queue {
@@ -64,10 +73,60 @@ final class QueueImpl(implicit val context: Context)
 
   def advance(seconds: Double): Unit = cmdRev ::= Advance(seconds)
 
-  def iterator: Iterator[Event#Out] = {
-    val pq  = mutable.SortedMap.empty[Ref, Iterator[_]]
-    var now = 0.0
+  type Out = Event#Out
 
-    ???
+  def iterator: Iterator[Out] = new AbstractIterator[Out] {
+    private[this] val pq              = mutable.SortedMap.empty[Ref, Iterator[_]]
+    private[this] val cmdIt           = cmdRev.reverseIterator
+    private[this] var now             = 0.0
+    private[this] var pqStop          = 0.0
+    private[this] var elem: Out       = _
+    private[this] var cmd : Blocking  = _
+    private[this] var done            = false
+
+    @tailrec
+    private def init(): Unit =
+      if (cmdIt.hasNext) {
+        cmdIt.next() match {
+          case Par(ref, pat) =>
+            ref.time = now
+            pq += ref -> pat.expand
+            init()
+
+          case Suspend(ref) =>
+            pq -= ref
+            init()
+
+          case Seq(pat) =>
+            cmd = new SeqB(pat.expand)
+            advance()
+
+          case Advance(seconds) =>
+            cmd = AdvanceB(now + seconds)
+            advance()
+        }
+      } else {
+        done = true
+      }
+
+    private def advance(): Unit = cmd match {
+      case b: SeqB =>
+        ???
+      case AdvanceB(stop) =>
+        ???
+      case Flush =>
+        ???
+    }
+
+    init()
+
+    def hasNext: Boolean = !done
+
+    def next(): Out = {
+      if (done) throw new NoSuchElementException("next on empty iterator")
+      val res = elem
+      advance()
+      res
+    }
   }
 }

@@ -14,10 +14,10 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
+final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.Int = 0)
+  extends Pattern[Event] {
 
-final case class Ppar[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, offset : Pat.Int = 0)
-  extends Pattern[T] {
+  type Out = Event#Out
 
-  def iterator(implicit ctx: Context): Iterator[T#Out] = ???
+  def iterator(implicit ctx: Context): Iterator[Out] = ???
 }
