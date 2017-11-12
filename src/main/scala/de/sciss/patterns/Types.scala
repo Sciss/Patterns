@@ -242,7 +242,10 @@ object Types {
     def lift2(a: Double     ): Seq[Double] = a :: Nil
   }
 
-  implicit def intDoubleBridge1: Bridge[IntTop, DoubleTop, DoubleTop] = ???
+  implicit object intDoubleBridge1 extends Bridge[IntTop, DoubleTop, DoubleTop] {
+    def lift1(a: Int    ): Double = a.toDouble
+    def lift2(a: Double ): Double = a
+  }
 
   ////////////////////////////
 
