@@ -116,7 +116,7 @@ object RonTuple {
         "i"           -> 4,
         "ar"          -> 0.001,
         "dr"          -> 0.1,
-        "stretch"     -> 1,
+        "stretch"     -> 1
       )
     val lPat  = Pseq[IntTop   ]((8 to 12).mirror            , inf).iterator
     val rPat  = Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf).iterator
@@ -148,7 +148,7 @@ object RonTuple {
           "ar"          -> 0.001,
           "dr"          -> 0.1,
           "stretch"     -> 1,
-          "db"          -> i.linlin(0, parts.size, -40.0, -30.0),
+          "db"          -> i.linlin(0, parts.size, -40.0, -30.0)
         )
       }
       sp.seq(Ppar(pats))
