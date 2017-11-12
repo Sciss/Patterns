@@ -24,21 +24,21 @@ import scala.util.Random
   * but does not have a `length` arguments. Use `.take(N)` instead.
   */
 final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
-                                                       (implicit protected val br: Bridge[T1, T2, T], num: Num[T#Out])
+                                                       (implicit protected val br: Bridge[T1, T2, T], num: Num[T])
   extends SeriesLike[T1, T2, T] {
 
   protected def op(a: T#Out, b: T#Out): T#Out = num.plus(a, b)
 }
 
 final case class Geom[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
-                                                     (implicit protected val br: Bridge[T1, T2, T], num: Num[T#Out])
+                                                     (implicit protected val br: Bridge[T1, T2, T], num: Num[T])
   extends SeriesLike[T1, T2, T] {
 
   protected def op(a: T#Out, b: T#Out): T#Out = num.times(a, b)
 }
 
 final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1], step: Pat[T2])
-                                                      (implicit protected val br: Bridge[T1, T2, T], num: Num[T#Out])
+                                                      (implicit protected val br: Bridge[T1, T2, T], num: Num[T])
   extends Pattern[T] {
 
   protected def calcNext(cur: T#Out, step: T#Out)(implicit r: Random): T#Out = {
@@ -72,7 +72,7 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
   }
 }
 
-final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T#Out])
+final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T])
   extends Pattern[T] {
 
   def iterator(implicit ctx: Context): Iterator[T#Out] = {

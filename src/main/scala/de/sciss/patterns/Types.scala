@@ -44,25 +44,26 @@ object Types {
     def lift2(a: T2#Out): T#Out
   }
 
-  trait Num[A] {
-    def plus  (x: A, y: A): A
-    def minus (x: A, y: A): A
-    def times (x: A, y: A): A
+  trait Num[T <: Top] {
+    def plus  (x: T#Out, y: T#Out): T#Out
+    def minus (x: T#Out, y: T#Out): T#Out
+    def times (x: T#Out, y: T#Out): T#Out
 
-    def negate(x: A): A
-    def abs   (x: A): A
+    def negate(x: T#Out): T#Out
+    def abs   (x: T#Out): T#Out
 
-    def zero: A
-    def one : A
+    def zero: T#Out
+    def one : T#Out
 
-    def rand2(a: A      )(implicit r: Random): A
-    def rrand(a: A, b: A)(implicit r: Random): A
+    def rand2(a: T#Out      )(implicit r: Random): T#Out
+    def rrand(a: T#Out, b: T#Out)(implicit r: Random): T#Out
 
-    def fold(a: A, lo: A, hi: A)(implicit r: Random): A
+    def fold(a: T#Out, lo: T#Out, hi: T#Out)(implicit r: Random): T#Out
   }
   
-  trait SeqLikeNum[A] extends Num[Seq[A]] {
-    protected val peer: Num[A]
+  trait SeqLikeNum[A, T <: SeqTop[A]] extends Num[T] {
+    type P <: Top { type Out = A }
+    protected val peer: Num[P]
     
     final def plus (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.plus )
     final def minus(a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.minus)
@@ -101,12 +102,14 @@ object Types {
     }
   }
 
-  trait IntLikeNum extends SeqLikeNum[Int] {
-    protected final val peer: Num[Int] = IntTop
+  trait IntLikeNum[T <: SeqTop[Int]] extends SeqLikeNum[Int, T] {
+    type P = IntTop
+    protected final val peer: Num[IntTop] = IntTop
   }
 
-  trait DoubleLikeNum extends SeqLikeNum[Double] {
-    protected final val peer: Num[Double] = DoubleTop
+  trait DoubleLikeNum[T <: SeqTop[Double]] extends SeqLikeNum[Double, T] {
+    type P = DoubleTop
+    protected final val peer: Num[DoubleTop] = DoubleTop
   }
 
   object Applicative {
@@ -131,7 +134,7 @@ object Types {
     def map2   [A, B, Z](fa: F[A], fb: F[B])(f: (A, B) => Z): F[Z]  = map(product(fa, fb)) { case (a, b) => f(a, b) }
   }
 
-  trait ScalarOrSeqTop[A] {
+  trait ScalarOrSeqTop[A] extends Top {
     def lift(in: Out): Seq[A]
 
     type Index[_]
@@ -176,15 +179,15 @@ object Types {
   sealed trait IntSeqTop extends IntLikeTop with SeqTop[Int]
   implicit object IntSeqTop
     extends IntSeqTop 
-      with  IntLikeNum
+      with  IntLikeNum[IntSeqTop]
       with  Bridge[IntSeqTop, IntSeqTop, IntSeqTop] 
-      with  Num[Seq[Int]]
+      with  Num[IntSeqTop]
 
   sealed trait IntTop extends IntLikeTop with ScalarTop[Int]
   implicit object IntTop 
     extends IntTop 
       with  Bridge[IntTop, IntTop, IntTop] 
-      with  Num[Int] 
+      with  Num[IntTop]
       with  IntIsIntegral 
       with  Ordering.IntOrdering {
     
@@ -200,15 +203,15 @@ object Types {
   sealed trait DoubleSeqTop extends DoubleLikeTop with SeqTop[Double]
   implicit object DoubleSeqTop
     extends DoubleSeqTop
-      with  DoubleLikeNum
+      with  DoubleLikeNum[DoubleSeqTop]
       with  Bridge[DoubleSeqTop, DoubleSeqTop, DoubleSeqTop]
-      with  Num[Seq[Double]]
+      with  Num[DoubleSeqTop]
 
   sealed trait DoubleTop extends DoubleLikeTop with ScalarTop[Double]
   implicit object DoubleTop
     extends DoubleTop
       with  Bridge[DoubleTop, DoubleTop, DoubleTop]
-      with  Num[Double]
+      with  Num[DoubleTop]
       with  DoubleIsFractional
       with  Ordering.DoubleOrdering {
 

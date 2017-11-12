@@ -6,7 +6,7 @@ import de.sciss.patterns.Types.{Bridge, Num, Top}
 import scala.collection.AbstractIterator
 
 final case class Add[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
-                                                    (implicit protected val br: Bridge[T1, T2, T], num: Num[T#Out])
+                                                    (implicit protected val br: Bridge[T1, T2, T], num: Num[T])
   extends Pattern[T] {
 
   def iterator(implicit ctx: Context): Iterator[T#Out] = {

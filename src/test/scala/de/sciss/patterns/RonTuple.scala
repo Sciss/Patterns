@@ -149,7 +149,7 @@ object RonTuple {
           "ar"          -> 0.001,
           "dr"          -> 0.1,
           "stretch"     -> 1,
-          "db"          -> i.linlin(0, parts.size, -40, -30),
+          "db"          -> i.linlin(0, parts.size, -40.0, -30.0),
         )
       }
       sp.seq(Ppar(pats))
