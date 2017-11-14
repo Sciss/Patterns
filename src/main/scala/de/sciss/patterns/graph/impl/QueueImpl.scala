@@ -78,7 +78,7 @@ final class QueueImpl(implicit val context: Context)
 
 //    private[this] var cmdRef = Map.empty[Ref, Ref]
 
-    private[this] var now       = 0.0
+//    private[this] var now       = 0.0
     private[this] var elem: Out = _
     private[this] var done      = false
 
@@ -115,15 +115,20 @@ final class QueueImpl(implicit val context: Context)
 
         it.next() match {
           case Left(_elem) =>
-            elem = _elem
-            val d = math.max(0.0, Event.delta(_elem))
+            elem      = _elem
+            val d     = math.max(0.0, Event.delta(_elem))
+            val now   = ref.time
             ref.time += d
             putBack()
+            if (pq.nonEmpty) {
+              val nextTime = pq.firstKey.time
+              elem += Event.keyDelta -> (nextTime - now)
+            }
 
           case Right(cmd) =>
             cmd match {
               case Par(refP, pat) =>
-                refP.time = now
+                refP.time = ref.time // now
                 val patIt = pat.expand
                 if (patIt.nonEmpty) pq += refP -> patIt.map(Left(_))
                 putBack()

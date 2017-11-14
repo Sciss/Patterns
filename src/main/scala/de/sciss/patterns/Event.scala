@@ -23,8 +23,10 @@ object Event {
       case _                => default
     }
 
+  final val keyDelta = "delta"
+
   def delta(m: Event#Out): Double =
-    getOrElseDouble(m, "delta", {
+    getOrElseDouble(m, keyDelta, {
       val stretch = getOrElseDouble(m, "stretch", 1.0)
       val dur     = getOrElseDouble(m, "dur"    , 0.0)
       stretch * dur

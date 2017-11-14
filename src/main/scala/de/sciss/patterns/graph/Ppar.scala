@@ -43,12 +43,18 @@ final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.I
       private def advance(): Unit =
         if (pq.nonEmpty) {
           val (ref, it) = pq.head
-          pq            = pq.tail
+          pq        = pq.tail
+          val _elem = it.next()
 
-          elem  = it.next()
-          val d = math.max(0.0, Event.delta(elem))
+          elem      = _elem
+          val d     = math.max(0.0, Event.delta(_elem))
+          val now   = ref.time
           ref.time += d
           if (it.hasNext) pq += ref -> it
+          if (pq.nonEmpty) {
+            val nextTime = pq.firstKey.time
+            elem += Event.keyDelta -> (nextTime - now)
+          }
 
         } else {
           done = true

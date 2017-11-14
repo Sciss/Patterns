@@ -16,9 +16,18 @@ object RonTuple {
     implicit val ctx: Context = Context()
     val it = x.expand
     println("Done.")
-    it.foreach { elem =>
-      println(elem)
+    var time = 0.0
+    it.foreach { elem: Event#Out =>
+//      val elemS = elem.map {
+//        case (k, d: Double) => f"$k -> $d%g"
+//        case (k, a)         => s"$k -> $a"
+//      } .mkString("(", ", ", ")")
+//      println(f"t = $time%g: $elemS")
+      println(f"t = $time%g: $elem")
+
+      time += Event.delta(elem)
     }
+    println(f"Stop time = $time%g")
   }
 
   // some extra operations
@@ -165,7 +174,9 @@ object RonTuple {
       println(s"ending $cantus")
       // at this point, it wouldn't have any effect:
       // { cantus(cantus.size.rand) = 'r }.dup(5)
-      sp.advance(length * 2 * 0.2)
+      val stopTime = length * 2 * 0.2
+      println(f"--- stopTime = $stopTime%g")
+      sp.advance(stopTime)
       sp.suspend(catter)
     }
   }
