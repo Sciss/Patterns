@@ -8,14 +8,18 @@ import de.sciss.numbers.IntFunctions
 import scala.util.Random
 
 object RonTupleDet {
+  def mkElemString(in: Any): String = in match {
+    case ch: Seq[_] => ch.map(mkElemString).mkString("[ ", ", ", " ]")
+    case d: Double => val s = d.toFloat.toString; if (s.endsWith(".0")) s.dropRight(2) else s
+    case other => other.toString
+  }
+
+  final val DEBUG = false
+  final val LOG   = true
+
   def log(elems: Any*): Unit = {
-    def mkElem(in: Any): String = in match {
-      case ch: Seq[_] => ch.map(mkElem).mkString("[ ", ", ", " ]")
-      case d: Double => d.toFloat.toString
-      case other => other.toString
-    }
-    val s = mkElem(elems)
-    println(s)
+    val s = mkElemString(elems)
+    if (LOG) println(s)
   }
 
   def main(args: Array[String]): Unit = {
@@ -142,11 +146,10 @@ object RonTupleDet {
   def makePart[A, T <: TopT[A]](pattern: Seq[A], cantus: Seq[A], start: Int = 0, stutter: Int = 1)
                                (implicit view: A => Pat[T]): (Pat[T], Pat.Double) = {
     log("makePart", pattern, cantus, start, stutter)
-    val durs1 = {
+    val durs = {
       val durs0 = computeDurs(pattern, cantus, start).map(_.toDouble)
-      if (stutter == 1) durs0 else durs0.stutter(stutter).map(_ / stutter)
+      durs0 // if (stutter == 1) durs0 else durs0.stutter(stutter).map(_ / stutter)
     }
-    val durs  = durs1.map(_ * 0.02)
     val inf   = Int.MaxValue
 
     //    val ptrnOut = if (stutter == 1) {
@@ -159,7 +162,7 @@ object RonTupleDet {
 
     //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
     log("makePart - durs", durs)
-    (Pseq(ptrnOut), Pseq(durs))
+    (Pseq(ptrnOut), Pseq(durs.map(_ * 0.02)))
   }
 
   def spawner(): Pat.Event = Spawner { sp =>
@@ -189,15 +192,15 @@ object RonTupleDet {
       val numPause: Int = (length * rPat.next()).toInt
 //      println(numPause)
       val cantus = (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
-//      println(s"starting $cantus")
+      if (DEBUG) println(s"starting ${mkElemString(cantus)}")
       val catter = sp.par(catPat(cantus))
 
 //      println(s"CANTUS $cantus")
 
       val parts = cantus.distinct  .sorted /* ! */ .combinations(3).toList
 
-//      println("PARTS:")
-//      parts.foreach(println)
+      if (DEBUG) println("PARTS:")
+      if (DEBUG) parts.foreach(p => println(mkElemString(p)))
 
       val pats = parts.zipWithIndex.map { case (part, i) =>
         val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4)(iter) /* .choose() */)
