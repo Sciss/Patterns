@@ -83,19 +83,20 @@ object RonTupleDet {
     res
   }
 
+  // N.B. SuperCollider `mod` is different from `%` for negative numbers!
+  def mod[A](a: A, b: A)(implicit num: Integral[A]): A = {
+    import num._
+    if (gteq(a, zero)) a % b else {
+      val c = -a % b
+      if (c == zero) zero else b - c
+    }
+  }
+
   // computes the duration of a set of time points relative toa cycle.
   def computeDur[A](tps: Seq[A], cycle: A)(implicit num: Integral[A]): A = {
     import num._
     val dur0  = tps.differentiate.tail
-    // N.B. SuperCollider `mod` is different from `%` for negative numbers!
 //    val dur1  = dur0.map(_ % cycle)
-
-    def mod(a: A, b: A): A =
-      if (a >= zero) a % b else {
-        val c = -a % b
-        if (c == zero) zero else b - c
-      }
-
     val dur1  = dur0.map(mod(_, cycle))
     val dur   = dur1.map { v => if (v == zero) cycle else v }
     val res   = dur.sum
@@ -129,9 +130,9 @@ object RonTupleDet {
       }
     }
     log("computeDurs -- tuples", tuples)
-    val clump     = (Seq(start % cantus.size) ++ tuples.flatten).sliding(2).toList
+    val clump     = (Seq(mod(start, cantus.size)) ++ tuples.flatten).sliding(2).toList
     val durs      = clump.map { case Seq(pr0, pr1) =>
-      val dur0 = (pr1 - pr0) % cantus.size
+      val dur0 = mod(pr1 - pr0, cantus.size)
       if (dur0 == 0) { cantus.size } else dur0
     }
     log("computeDurs", pattern, cantus, start, " => ", durs)
