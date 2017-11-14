@@ -59,10 +59,14 @@ final class QueueImpl(implicit val context: Context)
 
   implicit val random: Random = context.mkRandom()
 
-  def par(pat: Pat.Event): Ref = {
+  private def mkRef(): Ref = {
     val ref = new Ref(refCnt)
     refCnt += 1
-//    pq += ref -> pat.expand
+    ref
+  }
+
+  def par(pat: Pat.Event): Ref = {
+    val ref = mkRef()
     cmdRev ::= Par(ref, pat)
     ref
   }
@@ -79,57 +83,95 @@ final class QueueImpl(implicit val context: Context)
   type Out = Event#Out
 
   def iterator: Iterator[Out] = new AbstractIterator[Out] {
-    private[this] var pq              = ISortedMap.empty[Ref, Either[Iterator[Out], Iterator[Cmd]]]
-    private[this] val cmdIt           = cmdRev.reverseIterator
+    private[this] var pq = ISortedMap.empty[Ref, Either[Iterator[Out], Iterator[Cmd]]]
+
+    if (cmdRev.nonEmpty) pq += mkRef() -> Right(cmdRev.reverseIterator)
+
+//    private[this] var cmdRef = Map.empty[Ref, Ref]
+
     private[this] var now             = 0.0
     private[this] var pqStop          = 0.0
     private[this] var elem: Out       = _
 //    private[this] var cmd : Blocking  = _
     private[this] var done            = false
 
+    /*
+
+ - if a pattern iterator is found, set `elem` to the next value; determine delta, and if the iterator is not
+   exhausted, reschedule the thing
+ - if a command iterator is found, look at the next command:
+   - `Advance`: adjust stop-time     , put tail back on queue, and iterate
+   - `Suspend`: remove pat from queue, put tail back on queue, and iterate
+   - `Par`    : add pat iterator on q, put tail back on queue, and iterate
+   - `Seq`    :
+     - if pat iterator is empty, put tail back on queue, and iterate
+     - otherwise, set `elem` to the next value; determine delta, and if the iterator is not
+       exhausted, reschedule the thing;
+       advance stop-time, put tail back on queue
+
+     */
+
     @tailrec
-    private def init(): Unit =
-      if (cmdIt.hasNext) {
-        cmdIt.next() match {
-          case Par(ref, pat) =>
-            ref.time = now
-            ??? // pq += ref -> pat.expand
-            init()
+    private def advance(): Unit =
+      if (pq.nonEmpty) {
+        val head = pq.head
+        val tail = pq.tail
+        head match {
+          case (ref, l @ Left(patIt)) =>
+            elem = patIt.next()
+            val d = math.max(0.0, Event.delta(elem))
+            ref.time += d
+            pq = if (patIt.hasNext) {
+              tail + (ref -> l)
+            } else {
+              tail
+            }
 
-          case Suspend(ref) =>
-            pq -= ref
-            init()
+          case (ref, r @ Right(cmdIt)) =>
+            val cmd = cmdIt.next()
 
-          case Seq(pat) =>
-            ???
-//            cmd = new SeqB(pat.expand)
+            def putBack(): Unit =
+              pq = if (cmdIt.hasNext) {
+                tail + (ref -> r)
+              } else {
+                tail
+              }
 
-          case Advance(seconds) =>
-            ???
-//            cmd = AdvanceB(now + seconds)
+            cmd match {
+              case Par(refP, pat) =>
+                refP.time = now
+                val patIt = pat.expand
+                pq += refP -> Left(patIt)
+                putBack()
+                advance()
+
+              case Suspend(refP) =>
+                pq -= refP
+                advance()
+
+              case Seq(pat) =>
+                // - if pat iterator is empty, put tail back on queue, and iterate
+                // - otherwise, set `elem` to the next value; determine delta, and if the iterator is not
+                //   exhausted, reschedule the thing;
+                //   advance stop-time, put tail back on queue
+                ??? // refP.time = now
+                val patIt = pat.expand
+
+                ???
+              // cmd = new SeqB(pat.expand)
+
+              case Advance(d) =>
+                ref.time += d
+                putBack()
+                advance()
+            }
         }
+
       } else {
         done = true
       }
 
-    private def advance(): Unit = ???
-
-//    private def advance(): Unit = cmd match {
-//      case b: SeqB =>
-//        elem = b.it.next()
-//        val d = Event.delta(elem)
-//        if (d > 0.0) now += d
-////        if (d >= 0.0 && it.hasNext) pq = pq.tail + ((time + d) -> it)
-//
-//        ???
-//      case AdvanceB(stop) =>
-//        ???
-//      case Flush =>
-//        ???
-//    }
-
-    init()
-    if (!done) advance()
+    advance()
 
     def hasNext: Boolean = !done
 
