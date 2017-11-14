@@ -1,9 +1,8 @@
 package de.sciss.patterns
 
+import de.sciss.numbers.Implicits._
 import de.sciss.patterns.Types.{DoubleTop, IntTop, TopT}
 import de.sciss.patterns.graph._
-import de.sciss.numbers.Implicits._
-import de.sciss.numbers.IntFunctions
 
 import scala.util.Random
 
@@ -15,7 +14,7 @@ object RonTupleDet {
   }
 
   final val DEBUG = false
-  final val LOG   = true
+  final val LOG   = false
 
   def log(elems: Any*): Unit = {
     val s = mkElemString(elems)
@@ -29,12 +28,9 @@ object RonTupleDet {
     println("Done.")
     var time = 0.0
     it.foreach { elem: Event#Out =>
-      //      val elemS = elem.map {
-      //        case (k, d: Double) => f"$k -> $d%g"
-      //        case (k, a)         => s"$k -> $a"
-      //      } .mkString("(", ", ", ")")
-      //      println(f"t = $time%g: $elemS")
-      // println(f"t = $time%g: $elem")
+      val elemS = elem.mapValues(mkElemString).mkString("(", ", ", ")")
+      println(f"t = $time%g: $elemS")
+//      println(f"t = $time%g: $elem")
 
       time += Event.delta(elem)
     }
@@ -166,7 +162,7 @@ object RonTupleDet {
   }
 
   def spawner(): Pat.Event = Spawner { sp =>
-    import sp.{context, random}
+    import sp.context
     val inf = Int.MaxValue
     def catPat(cantus: Seq[Double]): Pat.Event =
       Bind(
@@ -185,6 +181,7 @@ object RonTupleDet {
       )
     val lPat  = Pseq[IntTop   ]((8 to 12).mirror            , inf).iterator
     val rPat  = Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf).iterator
+//    lPat.next(); rPat.next()
     for (iter <- 0 until 4) { // original: infinite
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
       val length    = lPat.next()
@@ -202,8 +199,12 @@ object RonTupleDet {
       if (DEBUG) println("PARTS:")
       if (DEBUG) parts.foreach(p => println(mkElemString(p)))
 
+      var durs = List.empty[Double]
+
       val pats = parts.zipWithIndex.map { case (part, i) =>
         val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4)(iter) /* .choose() */)
+
+        durs ::= durPat.iterator.sum
 
         Bind(
           "instrument"  -> "sine4",
@@ -222,12 +223,15 @@ object RonTupleDet {
           "db"          -> i.linlin(0, parts.size, -40.0, -30.0)
         )
       }
+
+      println(s"DURS IS ${mkElemString(durs)} - MAX ${mkElemString(durs.max)}")
+
       sp.seq(Ppar(pats))
 //      println(s"ending $cantus")
       // at this point, it wouldn't have any effect:
       // { cantus(cantus.size.rand) = 'r }.dup(5)
       val stopTime = length * 2 * 0.2
-//      println(f"--- stopTime = $stopTime%g")
+      println(f"--- stopTime = $stopTime%g")
       sp.advance(stopTime)
       sp.suspend(catter)
     }
