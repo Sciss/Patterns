@@ -42,7 +42,7 @@ trait Pattern[T <: Top] extends Pat[T] {
     * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
     *          or a single stream, or a group of streams)
     */
-  final private[patterns] def expand(implicit ctx: Context): Iterator[T#Out] = ctx.visit(ref, iterator)
+  final private[patterns] def expand(implicit ctx: Context): Iterator[T#Out] = iterator // ctx.visit(ref, iterator)
 
   final def embed(implicit ctx: Context): Iterator[T#Out] = iterator
 }

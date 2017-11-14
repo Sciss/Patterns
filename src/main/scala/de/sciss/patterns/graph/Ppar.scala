@@ -35,6 +35,9 @@ final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.I
       }
     }
 
+    if (repeats.expand.next() != 1) throw new NotImplementedError("Ppar repeats")
+    if (offset .expand.next() != 0) throw new NotImplementedError("Ppar offset")
+
     new AbstractIterator[Out] {
       private[this] var pq    = pq0
       private[this] var done  = pq0.isEmpty

@@ -20,7 +20,7 @@ final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
   type Out = Event#Out
 
   def iterator(implicit ctx: Context): Iterator[Out] = {
-    val mapE: Map[String, Iterator[_]] = entries.map { case (key, value) => key -> value.embed } (breakOut)
+    val mapE: Map[String, Iterator[_]] = entries.map { case (key, value) => key -> value.expand } (breakOut)
 
     def checkNext(): Boolean = mapE.forall(_._2.hasNext)
 
