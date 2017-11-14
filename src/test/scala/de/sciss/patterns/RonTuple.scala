@@ -16,7 +16,9 @@ object RonTuple {
     implicit val ctx: Context = Context()
     val it = x.expand
     println("Done.")
-    it.foreach(println)
+    it.foreach { elem =>
+      println(elem)
+    }
   }
 
   // some extra operations

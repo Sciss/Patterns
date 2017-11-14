@@ -14,7 +14,9 @@
 package de.sciss.patterns
 package graph
 
-import scala.collection.{AbstractIterator, breakOut}
+import de.sciss.patterns.graph.impl.TimeRef
+
+import scala.collection.AbstractIterator
 import scala.collection.immutable.{SortedMap => ISortedMap}
 
 final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.Int = 0)
@@ -23,10 +25,15 @@ final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.I
   type Out = Event#Out
 
   def iterator(implicit ctx: Context): Iterator[Out] = {
-    val pq0: ISortedMap[Double, Iterator[Out]] = list.flatMap { pat =>
+    var refCnt = 0
+    var pq0 = ISortedMap.empty[TimeRef, Iterator[Out]]
+    list.foreach { pat =>
       val it = pat.expand
-      if (it.hasNext) Some(0.0 -> it) else None
-    } (breakOut)
+      if (it.hasNext) {
+        pq0 += new TimeRef(refCnt) -> it
+        refCnt += 1
+      }
+    }
 
     new AbstractIterator[Out] {
       private[this] var pq    = pq0
@@ -34,13 +41,17 @@ final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.I
       private[this] var elem: Out = _
 
       private def advance(): Unit =
-        pq.headOption match {
-          case Some((time, it)) =>
-            elem  = it.next()
-            val d = Event.delta(elem)
-            if (d >= 0.0 && it.hasNext) pq = pq.tail + ((time + d) -> it)
+        if (pq.nonEmpty) {
+          val (ref, it) = pq.head
+          pq            = pq.tail
 
-          case None => done = true
+          elem  = it.next()
+          val d = math.max(0.0, Event.delta(elem))
+          ref.time += d
+          if (it.hasNext) pq += ref -> it
+
+        } else {
+          done = true
         }
 
       def hasNext: Boolean = !done

@@ -21,21 +21,10 @@ import scala.collection.immutable.{SortedMap => ISortedMap}
 import scala.util.Random
 
 object QueueImpl {
-  object Ref {
-    implicit object ord extends Ordering[Ref] {
-      def compare(x: Ref, y: Ref): Int =
-        if (x.time < y.time) -1 else if (x.time > y.time) 1 else {
-          if (x.id < y.id  ) -1 else if (x.id   > y.id  ) 1 else 0
-        }
-    }
-  }
-  final case class Ref(id: Int) {
-    var time: Double = 0.0
-  }
 
   sealed trait Cmd
-  final case class Par    (ref: Ref, pat: Pat.Event)  extends Cmd
-  final case class Suspend(ref: Ref)                  extends Cmd
+  final case class Par    (ref: TimeRef, pat: Pat.Event)  extends Cmd
+  final case class Suspend(ref: TimeRef)                  extends Cmd
   final case class Seq    (pat: Pat.Event)            extends Cmd
   final case class Advance(seconds: Double)           extends Cmd
 
@@ -50,9 +39,9 @@ object QueueImpl {
 final class QueueImpl(implicit val context: Context)
   extends Spawner.Queue {
 
-  import QueueImpl.{Ref => _, _}
+  import QueueImpl._
 
-  type Ref = QueueImpl.Ref
+  type Ref = TimeRef
 
   private[this] var refCnt  = 0
   private[this] var cmdRev  = List.empty[Cmd]
@@ -83,17 +72,15 @@ final class QueueImpl(implicit val context: Context)
   type Out = Event#Out
 
   def iterator: Iterator[Out] = new AbstractIterator[Out] {
-    private[this] var pq = ISortedMap.empty[Ref, Either[Iterator[Out], Iterator[Cmd]]]
+    private[this] var pq = ISortedMap.empty[Ref, Iterator[Either[Out, Cmd]]]
 
-    if (cmdRev.nonEmpty) pq += mkRef() -> Right(cmdRev.reverseIterator)
+    if (cmdRev.nonEmpty) pq += mkRef() -> cmdRev.reverseIterator.map(Right(_))
 
 //    private[this] var cmdRef = Map.empty[Ref, Ref]
 
-    private[this] var now             = 0.0
-    private[this] var pqStop          = 0.0
-    private[this] var elem: Out       = _
-//    private[this] var cmd : Blocking  = _
-    private[this] var done            = false
+    private[this] var now       = 0.0
+    private[this] var elem: Out = _
+    private[this] var done      = false
 
     /*
 
@@ -109,56 +96,51 @@ final class QueueImpl(implicit val context: Context)
        exhausted, reschedule the thing;
        advance stop-time, put tail back on queue
 
+    NOTE: the above is incorrect/unsolved for `Seq`. The implementation below
+    fixes that by concatenating the tail of the command-containing iterator to
+    the seq-pat iterator.
+
      */
 
     @tailrec
     private def advance(): Unit =
       if (pq.nonEmpty) {
-        val head = pq.head
-        val tail = pq.tail
-        head match {
-          case (ref, l @ Left(patIt)) =>
-            elem = patIt.next()
-            val d = math.max(0.0, Event.delta(elem))
+        val (ref, it) = pq.head
+        pq            = pq.tail
+
+        def putBack(): Unit =
+          if (it.hasNext) {
+            pq += (ref -> it)
+          }
+
+        it.next() match {
+          case Left(_elem) =>
+            elem = _elem
+            val d = math.max(0.0, Event.delta(_elem))
             ref.time += d
-            pq = if (patIt.hasNext) {
-              tail + (ref -> l)
-            } else {
-              tail
-            }
+            putBack()
 
-          case (ref, r @ Right(cmdIt)) =>
-            val cmd = cmdIt.next()
-
-            def putBack(): Unit =
-              pq = if (cmdIt.hasNext) {
-                tail + (ref -> r)
-              } else {
-                tail
-              }
-
+          case Right(cmd) =>
             cmd match {
               case Par(refP, pat) =>
                 refP.time = now
                 val patIt = pat.expand
-                pq += refP -> Left(patIt)
+                if (patIt.nonEmpty) pq += refP -> patIt.map(Left(_))
                 putBack()
                 advance()
 
               case Suspend(refP) =>
                 pq -= refP
+                putBack()
                 advance()
 
               case Seq(pat) =>
-                // - if pat iterator is empty, put tail back on queue, and iterate
-                // - otherwise, set `elem` to the next value; determine delta, and if the iterator is not
-                //   exhausted, reschedule the thing;
-                //   advance stop-time, put tail back on queue
-                ??? // refP.time = now
                 val patIt = pat.expand
-
-                ???
-              // cmd = new SeqB(pat.expand)
+                val cat   = patIt.map(Left(_)) ++ it
+                if (patIt.nonEmpty) {
+                  pq += ref -> cat
+                }
+                advance()
 
               case Advance(d) =>
                 ref.time += d
