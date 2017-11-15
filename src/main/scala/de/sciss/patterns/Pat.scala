@@ -32,8 +32,8 @@ trait Pat[T <: Top] {
 
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */
 trait Pattern[T <: Top] extends Pat[T] {
-  // this acts now as a fast unique reference
-  @transient final private[this] lazy val ref = new AnyRef
+//  // this acts now as a fast unique reference
+//  @transient final private[this] lazy val ref = new AnyRef
 
   /** A final implementation of this method which looks up the current stream graph
     * builder and then performs the expansion just as `force`, returning the

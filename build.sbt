@@ -5,6 +5,7 @@ lazy val projectVersion     = "0.1.0-SNAPSHOT"
 // ---- main dependencies ----
 
 lazy val numbersVersion     = "0.1.3"
+lazy val optionalVersion    = "1.0.0"
 
 // ---- test dependencies ----
 
@@ -21,6 +22,7 @@ lazy val commonSettings = Seq(
   scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint"),
   libraryDependencies ++= Seq(
     "de.sciss"      %% "numbers"    % numbersVersion,
+    "de.sciss"      %% "optional"   % optionalVersion,
     "org.scalatest" %% "scalatest"  % scalaTestVersion % "test"
   )
 )

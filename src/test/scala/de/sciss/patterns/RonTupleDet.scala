@@ -27,7 +27,12 @@ object RonTupleDet {
     val it = x.expand
     println("Done.")
     var time = 0.0
-    it.foreach { elem: Event#Out =>
+    it.foreach { elem0: Event#Out =>
+      val elem  = elem0 +
+        (Event.keyDetunedFreq -> Event.detunedFreq(elem0)) +
+        (Event.keySustain     -> Event.sustain    (elem0)) +
+        (Event.keyAmp         -> Event.amp        (elem0))
+
       val elemS = elem.mapValues(mkElemString).mkString("(", ", ", ")")
       println(f"t = $time%g: $elemS")
 //      println(f"t = $time%g: $elem")
