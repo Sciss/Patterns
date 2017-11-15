@@ -21,18 +21,18 @@ import scala.collection.immutable.{IndexedSeq => Vec}
 object Tuning {
   import numbers.Implicits._
 
-  def apply(tuning: Vec[Double], octaveRatio: Double, name: String = "Unknown Tuning"): Tuning =
-    new Tuning(tuning, octaveRatio, name)
+//  def apply(tuning: Vec[Double], octaveRatio: Double, name: String = "Unknown Tuning"): Tuning =
+//    new Tuning(tuning, octaveRatio, name)
   
   def default(stepsPerOctave: Int): Tuning = et(stepsPerOctave)
 
   def et(stepsPerOctave: Int = 12): Tuning =
     apply(etSteps(stepsPerOctave), 2.0, etName(stepsPerOctave))
 
-  private def etSteps(stepsPerOctave: Int = 12): Vec[Double] =
+  private def etSteps(stepsPerOctave: Int): Vec[Double] =
     Vector.tabulate(stepsPerOctave)(i => i * 12.0 / stepsPerOctave)
 
-  private def etName(stepsPerOctave: Int = 12): String = s"ET$stepsPerOctave"
+  private def etName(stepsPerOctave: Int): String = s"ET$stepsPerOctave"
 
   ////////////////
 
@@ -163,7 +163,7 @@ object Tuning {
   val wcBeta  = Tuning((0 to 18).map(_ * 0.638), (19 * 0.638).midiratio, "Wendy Carlos Beta" )
   val wcGamma = Tuning((0 to 33).map(_ * 0.351), (34 * 0.351).midiratio, "Wendy Carlos Gamma")
 }
-final case class Tuning private (tuning: Vec[Double], octaveRatio: Double, name: String) {
+final case class Tuning(tuning: Vec[Double], octaveRatio: Double, name: String = "Unknown Tuning") {
   def size: Int = tuning.size
 
   def wrapAt(index: Int): Double = {
