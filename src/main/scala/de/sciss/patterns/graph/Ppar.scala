@@ -16,7 +16,6 @@ package graph
 
 import de.sciss.patterns.graph.impl.TimeRef
 
-import scala.collection.AbstractIterator
 import scala.collection.immutable.{SortedMap => ISortedMap}
 
 final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.Int = 0)
@@ -24,9 +23,9 @@ final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.I
 
   type Out = Event#Out
 
-  def iterator(implicit ctx: Context): Iterator[Out] = {
+  def iterator(implicit ctx: Context): Stream[Out] = {
     var refCnt = 0
-    var pq0 = ISortedMap.empty[TimeRef, Iterator[Out]]
+    var pq0 = ISortedMap.empty[TimeRef, Stream[Out]]
     list.foreach { pat =>
       val it = pat.expand
       if (it.hasNext) {
@@ -38,7 +37,7 @@ final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.I
     if (repeats.expand.next() != 1) throw new NotImplementedError("Ppar repeats")
     if (offset .expand.next() != 0) throw new NotImplementedError("Ppar offset")
 
-    new AbstractIterator[Out] {
+    new Stream[Out] {
       private[this] var pq    = pq0
       private[this] var done  = pq0.isEmpty
       private[this] var elem: Out = _
@@ -66,6 +65,8 @@ final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.I
       def hasNext: Boolean = !done
 
       advance()
+
+      def reset(): Unit = ???
 
       def next(): Out = {
         if (done) throw new NoSuchElementException("next on empty iterator")

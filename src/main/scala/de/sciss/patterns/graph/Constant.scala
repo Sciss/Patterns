@@ -17,8 +17,8 @@ package graph
 import de.sciss.patterns.Types.TopT
 
 final case class Constant[A, T <: TopT[A]](x: A) extends Pat[T] {
-  def iterator(implicit ctx: Context): Iterator[A] = Iterator.continually(x)
-  def embed   (implicit ctx: Context): Iterator[A] = Iterator.single     (x)
+  def iterator(implicit ctx: Context): Stream[A] = Stream.continually(x)
+  def embed   (implicit ctx: Context): Stream[A] = Stream.single     (x)
 
-  private[patterns] def expand(implicit ctx: Context): Iterator[A] = iterator
+  private[patterns] def expand(implicit ctx: Context): Stream[A] = iterator
 }

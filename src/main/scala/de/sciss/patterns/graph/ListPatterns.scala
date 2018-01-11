@@ -18,7 +18,6 @@ import de.sciss.numbers.IntFunctions
 import de.sciss.patterns.Types.Top
 
 import scala.annotation.tailrec
-import scala.collection.AbstractIterator
 
 //final case class Index[A <: Value](list: PE[A], index: PE.Int, repeats: PE.Int = 1) extends Pattern[A] {
 //  def iterator(implicit b: StreamGraph.Builder): Stream[A] = ...
@@ -29,27 +28,29 @@ final case class Pseq[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, offset 
 
 //  type Out = T2#Index[T1#Out]
 
-  def iterator(implicit ctx: Context): Iterator[T#Out] = {
+  def iterator(implicit ctx: Context): Stream[T#Out] = {
     val repeatsIt = repeats.expand
     val offsetIt  = offset .expand
     val indexed   = list.toIndexedSeq
     val sizeVal   = indexed.size
-    if (repeatsIt.isEmpty || offsetIt.isEmpty || sizeVal == 0) Iterator.empty
+    if (repeatsIt.isEmpty || offsetIt.isEmpty || sizeVal == 0) Stream.empty
     else {
       val repeatsVal  = repeatsIt.next()
       val offsetVal   = offsetIt .next()
 
-      new AbstractIterator[T#Out] {
+      new Stream[T#Out] {
         private[this] var repeatsCnt  = 0
         private[this] var sizeCnt     = 0
 
-        private def mkListIter(): Iterator[T#Out] = {
+        private def mkListIter(): Stream[T#Out] = {
           import IntFunctions.wrap
           val i = wrap(sizeCnt + offsetVal, 0, sizeVal - 1)
           indexed(i).embed
         }
 
-        private[this] var listIter: Iterator[T#Out] = mkListIter()
+        private[this] var listIter: Stream[T#Out] = mkListIter()
+
+        def reset(): Unit = ???
 
         def hasNext: Boolean = repeatsCnt < repeatsVal
 
@@ -130,7 +131,7 @@ final case class Zip[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1)
 
 //  val tpe: Top.Seq[T] = Top.Seq[T]
 
-  def iterator(implicit ctx: Context): Iterator[Seq[T#Out]] = {
+  def iterator(implicit ctx: Context): Stream[Seq[T#Out]] = {
     ???
   }
 }
@@ -145,33 +146,35 @@ final case class Slide[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, size: 
                                  start: Pat.Int = 0, wrap: Boolean = true)
   extends Pattern[T] {
 
-  def iterator(implicit ctx: Context): Iterator[T#Out] = {
+  def iterator(implicit ctx: Context): Stream[T#Out] = {
     val repeatsIt = repeats.expand
     val sizeIt    = size   .expand
     val stepIt    = step   .expand
     val startIt   = start  .expand
     val indexed   = list.toIndexedSeq
     val listSize  = indexed.size
-    if (repeatsIt.isEmpty || sizeIt.isEmpty || stepIt.isEmpty || startIt.isEmpty || listSize == 0) Iterator.empty
+    if (repeatsIt.isEmpty || sizeIt.isEmpty || stepIt.isEmpty || startIt.isEmpty || listSize == 0) Stream.empty
     else {
       val repeatsVal  = repeatsIt.next()
       val startVal    = startIt  .next()
 
-      new AbstractIterator[T#Out] {
+      new Stream[T#Out] {
         private[this] var pos           = startVal
         private[this] var sizeVal       = sizeIt.next()
         private[this] var stepVal       = stepIt.next()
         private[this] var repeatsCnt    = 0
         private[this] var sizeCnt       = 0
-        private[this] var listIt: Iterator[T#Out] = _
+        private[this] var listIt: Stream[T#Out] = _
         private[this] var elem: T#Out   = _
         private[this] var done          = false
+
+        def reset(): Unit = ???
 
         private def pickIt(): Boolean = {
           val i = pos + sizeCnt
           val j = if (wrap) IntFunctions.wrap(i, 0, listSize - 1) else i
           val ok = j >= 0 && j < listSize
-          listIt = if (ok) indexed(j).embed else Iterator.empty
+          listIt = if (ok) indexed(j).embed else Stream.empty
           ok
         }
 

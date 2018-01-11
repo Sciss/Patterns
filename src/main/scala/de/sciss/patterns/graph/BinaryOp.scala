@@ -37,7 +37,7 @@ final case class BinaryOp[T1 <: Top, T2 <: Top, T <: Top](op: BinaryOp.Op[T], a:
                                                          (implicit br: Bridge[T1, T2, T])
   extends Pattern[T] {
 
-  def iterator(implicit ctx: Context): Iterator[T#Out] = {
+  def iterator(implicit ctx: Context): Stream[T#Out] = {
     val ai = a.expand.map(br.lift1)
     val bi = b.expand.map(br.lift2)
     (ai zip bi).map { case (av, bv) => op(av, bv) }

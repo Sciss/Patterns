@@ -17,8 +17,6 @@ package impl
 
 import de.sciss.patterns.Types.{Bridge, Top}
 
-import scala.collection.AbstractIterator
-
 trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pattern[T] {
   // ---- abstract ----
 
@@ -32,14 +30,16 @@ trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pattern[T] {
 
   // ---- impl ----
 
-  final def iterator(implicit ctx: Context): Iterator[T#Out] = {
+  final def iterator(implicit ctx: Context): Stream[T#Out] = {
     val ai = start.expand.map(br.lift1)
     val bi = step .expand.map(br.lift2)
 
-    if (ai.isEmpty) Iterator.empty
-    else new AbstractIterator[T#Out] {
+    if (ai.isEmpty) Stream.empty
+    else new Stream[T#Out] {
       private[this] var state: T#Out = ai.next
       var hasNext = true
+
+      def reset(): Unit = ???
 
       def next(): T#Out = {
         val res = state

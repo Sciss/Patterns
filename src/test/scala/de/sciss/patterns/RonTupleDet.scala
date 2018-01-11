@@ -209,7 +209,7 @@ object RonTupleDet {
       val pats = parts.zipWithIndex.map { case (part, i) =>
         val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4)(iter) /* .choose() */)
 
-        durs ::= durPat.iterator.sum
+        durs ::= durPat.iterator.toList.sum
 
         Bind(
           "instrument"  -> "sine4",

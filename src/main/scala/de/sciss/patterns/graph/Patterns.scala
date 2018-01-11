@@ -17,7 +17,6 @@ package graph
 import de.sciss.patterns.Types.{Bridge, Num, Top}
 import de.sciss.patterns.graph.impl.SeriesLike
 
-import scala.collection.AbstractIterator
 import scala.util.Random
 
 /** A pattern that generates an arithmetic series. Corresponds to `Pseries` in SuperCollider,
@@ -45,17 +44,19 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
     num.plus(cur, num.rand2(step))
   }
 
-  def iterator(implicit ctx: Context): Iterator[T#Out] = {
+  def iterator(implicit ctx: Context): Stream[T#Out] = {
     val loIt = lo.expand.map(br.lift1)
     val hiIt = hi.expand.map(br.lift1)
 
-    if (loIt.isEmpty || hiIt.isEmpty) Iterator.empty
-    else new AbstractIterator[T#Out] {
+    if (loIt.isEmpty || hiIt.isEmpty) Stream.empty
+    else new Stream[T#Out] {
       private[this] implicit val r: Random  = ctx.mkRandom()
       private[this] var state: T#Out        = num.rrand(loIt.next(), hiIt.next())
       private[this] val stepIt              = step.expand
 
       var hasNext = true
+
+      def reset(): Unit = ???
 
       def next(): T#Out = {
         val res = state
@@ -75,12 +76,12 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
 final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T])
   extends Pattern[T] {
 
-  def iterator(implicit ctx: Context): Iterator[T#Out] = {
+  def iterator(implicit ctx: Context): Stream[T#Out] = {
     val loIt = lo.expand
     val hiIt = hi.expand
 
-    if (loIt.isEmpty || hiIt.isEmpty) Iterator.empty
-    else new AbstractIterator[T#Out] {
+    if (loIt.isEmpty || hiIt.isEmpty) Stream.empty
+    else new Stream[T#Out] {
       private[this] implicit val r: Random = ctx.mkRandom()
 
       private def mkState(): T#Out = num.rrand(loIt.next(), hiIt.next())
@@ -88,6 +89,8 @@ final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T])
       private[this] var state: T#Out = mkState()
 
       var hasNext = true
+
+      def reset(): Unit = ???
 
       def next(): T#Out = {
         val res = state

@@ -14,18 +14,18 @@
 package de.sciss.patterns
 package graph
 
-import scala.collection.{AbstractIterator, breakOut}
-
 final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
   type Out = Event#Out
 
-  def iterator(implicit ctx: Context): Iterator[Out] = {
-    val mapE: Map[String, Iterator[_]] = entries.map { case (key, value) => key -> value.expand } (breakOut)
+  def iterator(implicit ctx: Context): Stream[Out] = {
+    val mapE: Map[String, Stream[_]] = entries.map { case (key, value) => key -> value.expand } .toMap  // (breakOut)
 
     def checkNext(): Boolean = mapE.forall(_._2.hasNext)
 
-    new AbstractIterator[Out] {
+    new Stream[Out] {
       var hasNext: Boolean = checkNext()
+
+      def reset(): Unit = ???
 
       private def mkState(): Out = mapE.map { case (key, value) => key -> value.next() }
 

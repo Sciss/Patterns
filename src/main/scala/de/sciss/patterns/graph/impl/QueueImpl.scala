@@ -16,7 +16,6 @@ package graph
 package impl
 
 import scala.annotation.tailrec
-import scala.collection.AbstractIterator
 import scala.collection.immutable.{SortedMap => ISortedMap}
 import scala.util.Random
 
@@ -71,10 +70,10 @@ final class QueueImpl(implicit val context: Context)
 
   type Out = Event#Out
 
-  def iterator: Iterator[Out] = new AbstractIterator[Out] {
-    private[this] var pq = ISortedMap.empty[Ref, Iterator[Either[Out, Cmd]]]
+  def iterator: Stream[Out] = new Stream[Out] {
+    private[this] var pq = ISortedMap.empty[Ref, Stream[Either[Out, Cmd]]]
 
-    if (cmdRev.nonEmpty) pq += mkRef() -> cmdRev.reverseIterator.map(Right(_))
+    if (cmdRev.nonEmpty) pq += mkRef() -> Stream.reverseIterator(cmdRev).map(Right(_))
 
 //    private[this] var cmdRef = Map.empty[Ref, Ref]
 
@@ -161,6 +160,8 @@ final class QueueImpl(implicit val context: Context)
     advance()
 
     def hasNext: Boolean = !done
+
+    def reset(): Unit = ???
 
     def next(): Out = {
       if (done) throw new NoSuchElementException("next on empty iterator")

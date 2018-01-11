@@ -23,7 +23,7 @@ object Spawner {
 final case class Spawner(fun: Spawner.Queue => Unit) extends Pattern[Event] {
   type Out = Event#Out
 
-  def iterator(implicit ctx: Context): Iterator[Out] = {
+  def iterator(implicit ctx: Context): Stream[Out] = {
     val queue = new QueueImpl
     fun(queue)
     queue.iterator
