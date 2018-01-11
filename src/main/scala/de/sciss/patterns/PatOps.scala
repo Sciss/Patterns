@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Bridge, IntTop, Num, Top}
+import de.sciss.patterns.Types.{Bridge, IntTop, Num, Top, TopT}
 import de.sciss.patterns.graph._
 
 final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
@@ -32,5 +32,18 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     BinaryOp(op, x, that)
   }
 
+  def roundTo[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): BinaryOp[T, T1, T2] = {
+    val op = BinaryOp.RoundTo[T2]()
+    BinaryOp(op, x, that)
+  }
+
   def stutter(n: Pat.Int): Pat[T] = Stutter(n, x)
+
+  def distinct: Pat[T] = ???
+
+  def size: Pat.Int = ???
+
+  def sorted(implicit ord: Ordering[T#Out]): Pat[T] = ???
+
+  def combinations(n: Pat.Int): Pat[TopT[Seq[T#Out]]] = ???
 }

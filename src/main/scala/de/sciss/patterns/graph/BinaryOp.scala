@@ -28,6 +28,10 @@ object BinaryOp {
   final case class Times[T <: Top]()(implicit num: Num[T]) extends Op[T] {
     def apply(a: T#Out, b: T#Out): T#Out = num.times(a, b)
   }
+
+  final case class RoundTo[T <: Top]()(implicit num: Num[T]) extends Op[T] {
+    def apply(a: T#Out, b: T#Out): T#Out = num.times(a, b)
+  }
 }
 final case class BinaryOp[T1 <: Top, T2 <: Top, T <: Top](op: BinaryOp.Op[T], a: Pat[T1], b: Pat[T2])
                                                          (implicit br: Bridge[T1, T2, T])

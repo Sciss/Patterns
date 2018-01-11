@@ -9,7 +9,7 @@ import scala.collection.immutable.{SortedMap => ISortedMap}
 
 object RonWithESP {
   def main(args: Array[String]): Unit = {
-    Server.run(run(_))
+    Server.run()(run)
   }
 
   def run(s: Server): Unit = {
@@ -71,7 +71,7 @@ object RonWithESP {
 
     val pat = RonTupleNeu.spawner()
     implicit val ctx: Context = Context()
-    val it  = pat.expand
+    val it0  = pat.expand
 
     new Thread {
       override def run(): Unit = {
@@ -87,7 +87,7 @@ object RonWithESP {
           res
         }
 
-        if (it.hasNext) pq += mkRef() -> Left(it)
+        if (it0.hasNext) pq += mkRef() -> Left(it0)
         refCnt += 1
         val t0      = System.currentTimeMillis()
         val latency = 100
@@ -105,8 +105,8 @@ object RonWithESP {
 
           obj match {
             case Left(it) =>
-              val evt = it.next()
-              val ctls0 = ctlNames.flatMap { key =>
+              val evt: Out = it.next()
+              val ctl0 = ctlNames.flatMap { key =>
                 evt.get(key).collect {
                   case d: Double  => key -> d: ControlSet
                   case i: Int     => key -> i: ControlSet
@@ -116,12 +116,12 @@ object RonWithESP {
               val amp     = Event.amp         (evt)
               val sustain = Event.sustain     (evt) / tempo
               val delta   = Event.delta       (evt) / tempo
-              val defName = evt.getOrElse("instrument", "default").toString
+              val defName = evt.get("instrument").fold("default")(_.toString)
 
-              val ctls    = ctls0 ++ List[ControlSet]("freq" -> freq, "amp" -> amp)
+              val ctl     = ctl0 ++ List[ControlSet]("freq" -> freq, "amp" -> amp)
 
               val syn = Synth(s)
-              val m = syn.newMsg(defName, s, args = ctls)
+              val m = syn.newMsg(defName, s, args = ctl)
               s ! osc.Bundle.millis(t2 + latency, m)
 
               ref.time += delta

@@ -14,12 +14,13 @@
 package de.sciss.patterns
 
 import de.sciss.patterns
-import de.sciss.patterns.Types.{DoubleTop, IntTop, Top}
+import de.sciss.patterns.Types.{DoubleSeqTop, DoubleTop, IntTop, Top}
 
 object Pat {
-  type Int    = Pat[IntTop        ]
-  type Double = Pat[DoubleTop     ]
-  type Event  = Pat[patterns.Event]
+  type Int        = Pat[IntTop        ]
+  type Double     = Pat[DoubleTop     ]
+  type DoubleSeq  = Pat[DoubleSeqTop  ]
+  type Event      = Pat[patterns.Event]
 
   type $[T <: Top, A] = Pat[T { type Out = A }]
 }

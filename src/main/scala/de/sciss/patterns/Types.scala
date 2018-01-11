@@ -15,7 +15,7 @@ package de.sciss.patterns
 
 import java.lang.{String => _String}
 
-import de.sciss.numbers.{DoubleFunctions, IntFunctions}
+import de.sciss.numbers.{DoubleFunctions => rd, IntFunctions}
 
 import scala.language.higherKinds
 import scala.math.Numeric.{DoubleIsFractional, IntIsIntegral}
@@ -45,17 +45,19 @@ object Types {
   }
 
   trait Num[T <: Top] {
-    def plus  (x: T#Out, y: T#Out): T#Out
-    def minus (x: T#Out, y: T#Out): T#Out
-    def times (x: T#Out, y: T#Out): T#Out
+    def plus    (a: T#Out, b: T#Out): T#Out
+    def minus   (a: T#Out, b: T#Out): T#Out
+    def times   (a: T#Out, b: T#Out): T#Out
 
-    def negate(x: T#Out): T#Out
-    def abs   (x: T#Out): T#Out
+    def roundTo (a: T#Out, b: T#Out): T#Out
+
+    def negate  (a: T#Out): T#Out
+    def abs     (a: T#Out): T#Out
 
     def zero: T#Out
     def one : T#Out
 
-    def rand2(a: T#Out      )(implicit r: Random): T#Out
+    def rand2(a: T#Out          )(implicit r: Random): T#Out
     def rrand(a: T#Out, b: T#Out)(implicit r: Random): T#Out
 
     def fold(a: T#Out, lo: T#Out, hi: T#Out)(implicit r: Random): T#Out
@@ -65,9 +67,10 @@ object Types {
     type P <: Top { type Out = A }
     protected val peer: Num[P]
     
-    final def plus (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.plus )
-    final def minus(a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.minus)
-    final def times(a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.times)
+    final def plus    (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.plus    )
+    final def minus   (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.minus   )
+    final def times   (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.times   )
+    final def roundTo (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.roundTo )
 
     def negate(a: Seq[A]): Seq[A] = unOp(a)(peer.negate)
     def abs   (a: Seq[A]): Seq[A] = unOp(a)(peer.abs   )
@@ -190,7 +193,10 @@ object Types {
       with  Num[IntTop]
       with  IntIsIntegral 
       with  Ordering.IntOrdering {
-    
+
+
+    def roundTo(a: Int, b: Int): Int = if (b == 0) a else math.round(a.toDouble / b).toInt * b
+
     def rand2(a: Int)(implicit r: Random): Int = r.nextInt(2 * a + 1) - a
 
     def rrand(a: Int, b: Int)(implicit r: Random): Int = r.nextInt(b - a + 1) + a
@@ -215,11 +221,13 @@ object Types {
       with  DoubleIsFractional
       with  Ordering.DoubleOrdering {
 
+    def roundTo(a: Double, b: Double): Double = rd.roundTo(a, b)
+
     def rand2(a: Double)(implicit r: Random): Double = (r.nextDouble() * 2 - 1) * a
 
     def rrand(a: Double, b: Double)(implicit r: Random): Double = r.nextDouble() * (b - a) + a
 
-    def fold(a: Double, lo: Double, hi: Double)(implicit r: Random): Double = DoubleFunctions.fold(a, lo, hi)
+    def fold(a: Double, lo: Double, hi: Double)(implicit r: Random): Double = rd.fold(a, lo, hi)
   }
   
   implicit object intSeqBridge1 extends /* IntLikeNum with */ Bridge[IntTop, IntSeqTop, IntSeqTop] {
