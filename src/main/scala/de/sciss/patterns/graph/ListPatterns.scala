@@ -2,7 +2,7 @@
  *  ListPatterns.scala
  *  (Patterns)
  *
- *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v2+
  *
@@ -211,7 +211,7 @@ final case class Slide[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, size: 
         run()
 
         def next(): T#Out = {
-          if (done) throw new NoSuchElementException("next on empty iterator")
+          if (done) Stream.exhausted()
           val res = elem
           advance()
           res

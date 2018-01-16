@@ -2,7 +2,7 @@
  *  QueueImpl.scala
  *  (Patterns)
  *
- *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
  *
  *	This software is published under the GNU Lesser General Public License v2.1+
  *
@@ -164,7 +164,7 @@ final class QueueImpl(implicit val context: Context)
     def reset(): Unit = ???
 
     def next(): Out = {
-      if (done) throw new NoSuchElementException("next on empty iterator")
+      if (done) Stream.exhausted()
       val res = elem
       advance()
       res

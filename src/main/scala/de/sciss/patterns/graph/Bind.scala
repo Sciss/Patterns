@@ -2,7 +2,7 @@
  *  Bind.scala
  *  (Patterns)
  *
- *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
  *
  *	This software is published under the GNU Lesser General Public License v2.1+
  *
@@ -30,7 +30,7 @@ final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
       private def mkState(): Out = mapE.map { case (key, value) => key -> value.next() }
 
       def next(): Out = {
-        if (!hasNext) throw new NoSuchElementException("next on empty iterator")
+        if (!hasNext) Stream.exhausted()
         val res = mkState()
         hasNext = checkNext()
         res

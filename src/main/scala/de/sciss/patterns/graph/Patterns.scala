@@ -2,7 +2,7 @@
  *  Patterns.scala
  *  (Patterns)
  *
- *  Copyright (c) 2017 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
  *
  *	This software is published under the GNU Lesser General Public License v2.1+
  *
@@ -44,31 +44,39 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
     num.plus(cur, num.rand2(step))
   }
 
-  def iterator(implicit ctx: Context): Stream[T#Out] = {
-    val loIt = lo.expand.map(br.lift1)
-    val hiIt = hi.expand.map(br.lift1)
+  def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
+    private[this] val loStream    = lo.expand.map(br.lift1)
+    private[this] val hiStream    = hi.expand.map(br.lift1)
+    private[this] val stepStream  = step.expand
 
-    if (loIt.isEmpty || hiIt.isEmpty) Stream.empty
-    else new Stream[T#Out] {
-      private[this] implicit val r: Random  = ctx.mkRandom()
-      private[this] var state: T#Out        = num.rrand(loIt.next(), hiIt.next())
-      private[this] val stepIt              = step.expand
+    private[this] implicit val r: Random  = ctx.mkRandom()
 
-      var hasNext = true
+    private[this] var state   : T#Out   = _
+    private[this] var _hasNext: Boolean = _
 
-      def reset(): Unit = ???
+    def hasNext: Boolean = _hasNext
 
-      def next(): T#Out = {
-        val res = state
-        hasNext = loIt.hasNext && hiIt.hasNext && stepIt.hasNext
-        if (hasNext) {
-          val loVal = loIt.next()
-          val hiVal = hiIt.next()
-          val x = calcNext(state, br.lift2(stepIt.next()))
-          state = num.fold(x, loVal, hiVal)
-        }
-        res
+    def reset(): Unit = {
+      _hasNext = loStream.hasNext && hiStream.hasNext
+      if (_hasNext) {
+        state = num.rrand(loStream.next(), hiStream.next())
       }
+    }
+
+    reset()
+
+    def next(): T#Out = {
+      if (!_hasNext) Stream.exhausted()
+      val res = state
+      _hasNext = loStream.hasNext && hiStream.hasNext && stepStream.hasNext
+      if (_hasNext) {
+        val loVal   = loStream.next()
+        val hiVal   = hiStream.next()
+        val stepVal = stepStream.next()
+        val x       = calcNext(state, br.lift2(stepVal))
+        state       = num.fold(x, loVal, hiVal)
+      }
+      res
     }
   }
 }

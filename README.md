@@ -5,7 +5,7 @@
 ## statement
 
 Patterns is an ongoing experiment to see how SuperCollider's patterns system could be translated to Scala (and ultimately, [SoundProcesses](https://github.com/Sciss/SoundProcesses)).
-It is (C)opyright 2017 by Hanns Holger Rutz. All rights reserved. This project is released under the [GNU Lesser General Public License](https://raw.github.com/Sciss/Patterns/master/LICENSE) v2.1+ and comes with absolutely no warranties. To contact the author, send an email to `contact at sciss.de`
+It is (C)opyright 2017&ndash;2018 by Hanns Holger Rutz. All rights reserved. This project is released under the [GNU Lesser General Public License](https://raw.github.com/Sciss/Patterns/master/LICENSE) v2.1+ and comes with absolutely no warranties. To contact the author, send an email to `contact at sciss.de`
 
 ## requirements / installation
 

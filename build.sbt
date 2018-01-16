@@ -2,16 +2,19 @@ lazy val baseName             = "Patterns"
 lazy val baseNameL            = baseName.toLowerCase
 lazy val projectVersion       = "0.1.0-SNAPSHOT"
 
-// ---- main dependencies ----
+val deps = new {
+  val main = new {
+    val numbers             = "0.1.3"
+    val optional            = "1.0.0"
+  }
 
-lazy val numbersVersion       = "0.1.3"
-lazy val optionalVersion      = "1.0.0"
-
-// ---- test dependencies ----
-
-lazy val scalaColliderVersion = "1.23.0"
-lazy val ugensVersion         = "1.17.1"
-lazy val scalaTestVersion     = "3.0.4"
+  val test = new {
+    val scalaCollider       = "1.23.0"
+    val ugens               = "1.17.1"
+    val scalaColliderSwing  = "1.35.0"
+    val scalaTest           = "3.0.4"
+  }
+}
 
 lazy val commonSettings = Seq(
   version             := projectVersion,
@@ -23,11 +26,12 @@ lazy val commonSettings = Seq(
   licenses            := Seq(lgpl2),
   scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint"),
   libraryDependencies ++= Seq(
-    "de.sciss"      %% "numbers"                    % numbersVersion,
-    "de.sciss"      %% "optional"                   % optionalVersion,
-    "de.sciss"      %% "scalacollider"              % scalaColliderVersion  % "test",
-    "de.sciss"      %% "scalacolliderugens-plugins" % ugensVersion          % "test",
-    "org.scalatest" %% "scalatest"                  % scalaTestVersion      % "test"
+    "de.sciss"      %% "numbers"                      % deps.main.numbers,
+    "de.sciss"      %% "optional"                     % deps.main.optional,
+    "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % "test",
+    "de.sciss"      %% "scalacolliderswing-plotting"  % deps.test.scalaColliderSwing  % "test",
+    "de.sciss"      %% "scalacolliderugens-plugins"   % deps.test.ugens               % "test",
+    "org.scalatest" %% "scalatest"                    % deps.test.scalaTest           % "test"
   ),
   mainClass in (Test, run) := Some("de.sciss.patterns.RonWithESP")
 )
