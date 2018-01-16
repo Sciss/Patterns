@@ -44,6 +44,8 @@ trait Truncate[T <: Top] extends Pattern[T] {
       }
     }
 
+    reset()
+
     def hasNext: Boolean = _hasNext
 
     def next(): T#Out = {

@@ -9,6 +9,8 @@ object DistinctSortedExample {
 
     import graph._
 
+//    List(2,3,4,5).combinations(3)
+
     val ex1 = Graph {
       Pat.seqFill(4) { _ =>
         val b = Brown(0, 100, 2)
