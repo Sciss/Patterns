@@ -23,17 +23,34 @@ trait Truncate[T <: Top] extends Pattern[T] {
   protected val in: Pat[T]
   protected def length: Pat[IntTop]
 
-  protected def truncate(it: Stream[T#Out], n: Int): Stream[T#Out]
+  protected def truncate(inStream: Stream[T#Out], n: Int): Stream[T#Out]
 
   // ---- impl ----
 
-  def iterator(implicit ctx: Context): Stream[T#Out] = {
-    val lenIt = length.expand
-    if (lenIt.isEmpty) Stream.empty
-    else {
-      val lenVal  = lenIt.next()
-      val inIt    = in.expand
-      truncate(inIt, lenVal)
+  def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
+    private[this] val lenStream = length.expand
+    private[this] val inStream  = in    .expand
+
+    private[this] var peer    : Stream[T#Out] = _
+    private[this] var _hasNext: Boolean       = _
+
+    def reset(): Unit = {
+      _hasNext = lenStream.hasNext
+      if (_hasNext) {
+        val lenVal = lenStream.next()
+        peer = truncate(inStream, lenVal)
+        _hasNext = peer.hasNext
+        // if (!_hasNext) reset()
+      }
+    }
+
+    def hasNext: Boolean = _hasNext
+
+    def next(): T#Out = {
+      if (!_hasNext) Stream.exhausted()
+      val res = peer.next()
+      _hasNext = peer.hasNext
+      res
     }
   }
 }

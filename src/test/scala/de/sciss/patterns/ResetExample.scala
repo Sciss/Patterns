@@ -22,10 +22,10 @@ object ResetExample {
     }
 
     implicit val ctx: Context = Context()
-    outer.iterator.foreach(println)
+//    outer.iterator.foreach(println)
 
-//    Swing.onEDT {
-//      outer.iterator.toList.plot(discrete = true)
-//    }
+    Swing.onEDT {
+      outer.iterator.toList.plot(discrete = true)
+    }
   }
 }

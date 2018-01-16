@@ -199,7 +199,8 @@ object Types {
 
     def rand2(a: Int)(implicit r: Random): Int = r.nextInt(2 * a + 1) - a
 
-    def rrand(a: Int, b: Int)(implicit r: Random): Int = r.nextInt(b - a + 1) + a
+    def rrand(a: Int, b: Int)(implicit r: Random): Int =
+      r.nextInt(b - a + 1) + a
 
     def fold(a: Int, lo: Int, hi: Int)(implicit r: Random): Int = IntFunctions.fold(a, lo, hi)
   }

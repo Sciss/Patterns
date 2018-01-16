@@ -45,6 +45,9 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
   }
 
   def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
+    // println("Brown.iterator")
+    // (new Exception).fillInStackTrace().printStackTrace()
+
     private[this] val loStream    = lo.expand.map(br.lift1)
     private[this] val hiStream    = hi.expand.map(br.lift1)
     private[this] val stepStream  = step.expand
