@@ -16,14 +16,15 @@ package de.sciss.patterns
 object Stream {
   def exhausted(): Nothing = throw new NoSuchElementException("next on empty iterator")
 
-  def fill[A](n: Int)(elem: => A): Stream[A] = ???
+  def fill[A](n: Int)(elem: => A): Stream[A] =
+    continually(elem).take(n) // XXX TODO -- more efficient
 
   def empty[A]: Stream[A] = new Stream[A] {
     def reset(): Unit = ()
 
     def hasNext: Boolean = false
 
-    def next(): A = ???
+    def next(): A = Stream.exhausted()
   }
 
   def reverseIterator[A](that: Iterable[A]): Stream[A] = ???
@@ -36,9 +37,21 @@ object Stream {
     def next(): A = elem
   }
 
-  def single[A](elem: A): Stream[A] = ???
+  def single[A](elem: A): Stream[A] = new Stream[A] {
+    private[this] var _hasNext = true
+
+    def hasNext: Boolean = _hasNext
+
+    def reset(): Unit = ()
+
+    def next(): A = {
+      if (!_hasNext) Stream.exhausted()
+      _hasNext = false
+      elem
+    }
+  }
 }
-trait Stream[A] { outer =>
+abstract class Stream[A] { outer =>
   def reset(): Unit
   def hasNext: Boolean
   def next(): A
@@ -84,5 +97,6 @@ trait Stream[A] { outer =>
 
   def size: Int = ???
 
-  def foreach(fun: A => Unit): Unit = ???
+  def foreach(fun: A => Unit): Unit =
+    while (hasNext) fun(next())
 }

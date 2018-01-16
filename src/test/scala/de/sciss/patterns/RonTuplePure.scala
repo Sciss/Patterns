@@ -187,7 +187,7 @@ object RonTuplePure {
     val lPat  = Pseq[IntTop   ]((8 to 12).mirror            , inf) // .iterator
     val rPat  = Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf) // .iterator
     //    lPat.next(); rPat.next()
-    for (_ <- 0 until 4) { // original: infinite
+    Pat.seqFill(4) { _ => // original: infinite
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
       val length    = lPat // .next()
       val cantus0: Pat.Double = ((Brown(-6, 6, 3): Pat.Int) * 2.4 + 4.0).take(length) // .iterator.take(length).toList
@@ -243,6 +243,7 @@ object RonTuplePure {
       val stopTime = length * 2 * 0.2
       ??? // sp.advance(stopTime)
       sp.suspend(catter)
+      ???
     }
   }
 }

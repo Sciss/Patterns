@@ -21,9 +21,11 @@ object ResetExample {
       }
     }
 
-    Swing.onEDT {
-      implicit val ctx: Context = Context()
-      outer.iterator.toList.plot(discrete = true)
-    }
+    implicit val ctx: Context = Context()
+    outer.iterator.foreach(println)
+
+//    Swing.onEDT {
+//      outer.iterator.toList.plot(discrete = true)
+//    }
   }
 }
