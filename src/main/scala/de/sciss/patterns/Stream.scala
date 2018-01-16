@@ -102,7 +102,14 @@ abstract class Stream[A] { outer =>
     def next(): (A, B) = (outer.next(), that.next())
   }
 
-  def ++ [B >: A](that: Stream[B]): Stream[B] = ???
+  def ++ [B >: A](that: Stream[B]): Stream[B] = new Stream[B] {
+    def reset(): Unit = ()
+
+    def hasNext: Boolean = outer.hasNext || that.hasNext
+
+    def next(): B =
+      if (outer.hasNext) outer.next() else that.next()
+  }
 
   def take(n: Int): Stream[A] = new Stream[A] {
     private[this] var i = 0

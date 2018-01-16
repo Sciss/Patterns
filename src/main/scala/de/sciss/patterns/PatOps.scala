@@ -20,6 +20,9 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   def take(length: Pat[IntTop]): Take[T] = Take(x, length)
   def drop(length: Pat[IntTop]): Drop[T] = Drop(x, length)
 
+  def head: Pat[T] = take(1)
+  def tail: Pat[T] = drop(1)
+
   def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2]): Cat[T, T1, T2] = Cat(x, that)
 
   def + [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): BinaryOp[T, T1, T2] = {
@@ -39,11 +42,11 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
 
   def stutter(n: Pat.Int): Pat[T] = Stutter(n, x)
 
-  def distinct: Pat[T] = ???
+  def distinct: Pat[T] = Distinct(x)
 
   def size: Pat.Int = ???
 
-  def sorted(implicit ord: Ordering[T#Out]): Pat[T] = ???
+  def sorted(implicit ord: Ordering[T#Out]): Pat[T] = Sorted(x)
 
   def combinations(n: Pat.Int): Pat[TopT[Seq[T#Out]]] = ???
 }

@@ -86,8 +86,9 @@ final case class Graph[T <: Top](sources: Vec[Pattern[_]], out: Pat[T]) extends 
       // XXX TODO --- that means the same stream
       // is reset twice; which is probably fine in
       // most cases, so here's the quick hack:
+      // NOT fine: calling reset more than once can cause problems
       sourceStreams.foreach(_.reset())
-      peer.reset()
+      // peer.reset()
     }
 
     def hasNext: Boolean = peer.hasNext
