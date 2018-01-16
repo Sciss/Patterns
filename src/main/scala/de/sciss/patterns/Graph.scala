@@ -79,16 +79,11 @@ final case class Graph[T <: Top](sources: Vec[Pattern[_]], out: Pat[T]) extends 
   def nonEmpty: Boolean = !isEmpty
 
   def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
-    private[this] val sourceStreams = sources.map(_.expand)
-    private[this] val peer          = out.expand
+//    private[this] val sourceStreams = sources.map(_.expand)
+    private[this] val peer = out.expand
 
     def reset(): Unit = {
-      // XXX TODO --- that means the same stream
-      // is reset twice; which is probably fine in
-      // most cases, so here's the quick hack:
-      // NOT fine: calling reset more than once can cause problems
-      sourceStreams.foreach(_.reset())
-      // peer.reset()
+      sources.foreach(_.reset())
     }
 
     def hasNext: Boolean = peer.hasNext

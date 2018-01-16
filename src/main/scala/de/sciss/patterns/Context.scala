@@ -16,7 +16,11 @@ package de.sciss.patterns
 import scala.util.Random
 
 trait Context {
-  def visit[U](ref: AnyRef, init: => U): U
+//  def visit[U](ref: AnyRef, init: => U): U
+
+  def addStream[A](ref: AnyRef, stream: Stream[A]): Stream[A]
+
+  def getStreams(ref: AnyRef): List[Stream[_]]
 
   def mkRandom(): Random
 }
@@ -31,29 +35,37 @@ object Context {
   }
 }
 
-private[patterns] trait ContextLike extends Context {
+private[patterns] abstract class ContextLike extends Context {
+  private[this] var streamMap = Map.empty[AnyRef, List[Stream[_]]]
 
-  private[this] var sourceMap = Map.empty[AnyRef, Any]
+//  private[this] var sourceMap = Map.empty[AnyRef, Any]
+//
+//  private def printSmart(x: Any): String = x match {
+////    case s: Stream[_]     => s.name
+//    case _                => x.toString
+//  }
+//
+//  @inline
+//  private def printRef(ref: AnyRef): String = {
+//    val hash = ref.hashCode.toHexString
+//    hash
+//  }
+//
+//  def visit[U](ref: AnyRef, init: => U): U = {
+//    logGraph(s"visit  ${printRef(ref)}")
+//    sourceMap.getOrElse(ref, {
+//      logGraph(s"expand ${printRef(ref)}...")
+//      val exp = init
+//      logGraph(s"...${printRef(ref)} -> ${exp.hashCode.toHexString} ${printSmart(exp)}")
+//      sourceMap += ref -> exp
+//      exp
+//    }).asInstanceOf[U] // not so pretty...
+//  }
 
-  private def printSmart(x: Any): String = x match {
-//    case s: Stream[_]     => s.name
-    case _                => x.toString
+  def addStream[A](ref: AnyRef, stream: Stream[A]): Stream[A] = {
+    streamMap += ref -> (stream :: streamMap.getOrElse(ref, Nil))
+    stream
   }
 
-  @inline
-  private def printRef(ref: AnyRef): String = {
-    val hash = ref.hashCode.toHexString
-    hash
-  }
-
-  def visit[U](ref: AnyRef, init: => U): U = {
-    logGraph(s"visit  ${printRef(ref)}")
-    sourceMap.getOrElse(ref, {
-      logGraph(s"expand ${printRef(ref)}...")
-      val exp = init
-      logGraph(s"...${printRef(ref)} -> ${exp.hashCode.toHexString} ${printSmart(exp)}")
-      sourceMap += ref -> exp
-      exp
-    }).asInstanceOf[U] // not so pretty...
-  }
+  def getStreams(ref: AnyRef): List[Stream[_]] = streamMap.getOrElse(ref, Nil)
 }

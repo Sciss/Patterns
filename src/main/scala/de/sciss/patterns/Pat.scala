@@ -41,7 +41,7 @@ trait Pat[T <: Top] {
 }
 
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */
-trait Pattern[T <: Top] extends Pat[T] {
+abstract class Pattern[T <: Top] extends Pat[T] {
   // this acts now as a fast unique reference
   @transient final private[this] lazy val ref = new AnyRef
 
@@ -54,7 +54,13 @@ trait Pattern[T <: Top] extends Pat[T] {
     * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
     *          or a single stream, or a group of streams)
     */
-  final private[patterns] def expand(implicit ctx: Context): Stream[T#Out] = ctx.visit(ref, iterator)
+  final private[patterns] def expand(implicit ctx: Context): Stream[T#Out] = {
+//    ctx.visit(ref, iterator)
+    ctx.addStream(ref, iterator)
+  }
+
+  final private[patterns] def reset()(implicit ctx: Context): Unit =
+    ctx.getStreams(ref).foreach(_.reset())
 
   final def embed(implicit ctx: Context): Stream[T#Out] = iterator
 }
