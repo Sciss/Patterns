@@ -7,7 +7,7 @@ import scala.swing.Swing
 /*
 
   Reset a brownian walk every ten steps, four times.
-  
+
   ex1: Brown is inside the reset scope
   ex2: Brown is outside the reset scope
 

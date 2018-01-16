@@ -13,6 +13,8 @@
 
 package de.sciss.patterns
 
+import scala.annotation.tailrec
+
 object Stream {
   def exhausted(): Nothing = throw new NoSuchElementException("next on empty iterator")
 
@@ -64,9 +66,41 @@ abstract class Stream[A] { outer =>
     def next(): B = f(outer.next())
   }
 
-  def flatMap[B](that: A => Stream[B]): Stream[B] = ???
+  def flatMap[B](f: A => Stream[B]): Stream[B] = new Stream[B] {
+    def reset(): Unit = ()
 
-  def zip[B](that: Stream[B]): Stream[(A, B)] = ???
+    private[this] var _hasNext: Boolean = _
+    private[this] var sub: Stream[B] = _
+
+    @tailrec
+    private def step(): Unit = {
+      _hasNext = outer.hasNext
+      if (_hasNext) {
+        sub = f(outer.next())
+        _hasNext = sub.hasNext
+        if (!_hasNext) step()
+      }
+    }
+
+    step()
+
+    def hasNext: Boolean = _hasNext
+
+    def next(): B = {
+      if (!_hasNext) Stream.exhausted()
+      val res = sub.next()
+      if (!sub.hasNext) step()
+      res
+    }
+  }
+
+  def zip[B](that: Stream[B]): Stream[(A, B)] = new Stream[(A, B)] {
+    def reset(): Unit = ()
+
+    def hasNext: Boolean = outer.hasNext && that.hasNext
+
+    def next(): (A, B) = (outer.next(), that.next())
+  }
 
   def ++ [B >: A](that: Stream[B]): Stream[B] = ???
 
