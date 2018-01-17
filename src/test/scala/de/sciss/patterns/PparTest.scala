@@ -14,7 +14,7 @@ object PparTest extends App {
 
 //  println(s"p1.size = ${p1.expand.size}")
 //  println(s"d1.size = ${d1.expand.size}")
-  println(s"b1.size = ${b1.expand.size}")
+  println(s"b1.size = ${b1.expand.toList.size}")
 
   val par   = Ppar(List(b1, b2))
 

@@ -1,6 +1,5 @@
 package de.sciss.patterns
 
-import de.sciss.patterns
 import de.sciss.patterns.Types.{DoubleTop, IntTop, TopT}
 import de.sciss.patterns.graph._
 
@@ -208,31 +207,32 @@ object RonTuplePure {
 
       // val numParts = parts.size
       val partsIdx = Indices(parts)
-      val pats: Pat[TopT[Seq[patterns.Event]]] = ???
-//        parts.map { part =>
+      val pats: Pat[Pat.Event] = parts.map { part =>
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-//
-//          //        durs ::= durPat.iterator.sum
-//
-//          Bind(
-//            "instrument"  -> "sine4",
-//            "note"        -> notePat,
-//            "dur"         -> durPat,
-//            //        Pfunc({ ("voice" + i + "done").postln; nil })]),
-//            //          "db"          -> -15,
-//            "octave"      -> 5,
-//            "legato"      -> partsIdx.linlin(0, parts.size, 0.02, 1),
-//            "detune"      -> White(-2.0,2.0),
-//            //		out: Pseq((0..23), inf, i),
-//            "i"           -> Pseq(0 to 23, inf, partsIdx),
-//            "ar"          -> 0.001,
-//            "dr"          -> 0.1,
-//            "stretch"     -> 1,
-//            "db"          -> partsIdx.linlin(0, parts.size, -40.0, -30.0)
-//          )
-//        }
+        val notePat: Pat.Double = ???
+        val durPat : Pat.Double = ???
 
-      val patsF: Pat.Event = ??? // pats.flatten
+          //        durs ::= durPat.iterator.sum
+
+        Bind(
+          "instrument"  -> "sine4",
+          "note"        -> notePat,
+          "dur"         -> durPat,
+          //        Pfunc({ ("voice" + i + "done").postln; nil })]),
+          //          "db"          -> -15,
+          "octave"      -> 5,
+          "legato"      -> partsIdx.linlin(0, parts.size, 0.02, 1.0),
+          "detune"      -> White(-2.0,2.0),
+          //		out: Pseq((0..23), inf, i),
+          "i"           -> Pseq(0 to 23, inf, partsIdx),
+          "ar"          -> 0.001,
+          "dr"          -> 0.1,
+          "stretch"     -> 1,
+          "db"          -> partsIdx.linlin(0, parts.size, -40.0, -30.0)
+        )
+      }
+
+      val patsF: Pat.Event = pats.flatten
 
       //      println(s"DURS IS ${mkElemString(durs)} - MAX ${mkElemString(durs.max)}")
 
