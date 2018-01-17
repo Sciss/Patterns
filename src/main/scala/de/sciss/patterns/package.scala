@@ -17,7 +17,7 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
 import de.sciss.patterns.Types.{DoubleSeqTop, DoubleTop, IntSeqTop, IntTop, StringTop, Top}
-import de.sciss.patterns.graph.Constant
+import de.sciss.patterns.graph.{Constant, PatPat}
 
 import scala.annotation.elidable
 import scala.annotation.elidable.CONFIG
@@ -25,7 +25,6 @@ import scala.language.implicitConversions
 
 package object patterns {
   implicit def patOps[T <: Top](p: Pat[T]): PatOps[T] = new PatOps(p)
-
 
   //  implicit def const[A, T <: Top](x: A)(implicit tpe: T { type Out = A }): Elem[T] = Const(x)
 
@@ -38,7 +37,8 @@ package object patterns {
   implicit def patSeq[A, T <: Top](xs: Seq[A])(implicit lift: A => Pat[T]): Seq[Pat[T]] =
     xs.map(lift)
 
-  implicit def seqPat[A, T <: Top](xs: Seq[A])(implicit lift: A => Pat[T]): Pat[Pat[T]] = ???
+  implicit def seqPat[A, T <: Top](xs: Seq[A])(implicit lift: A => Pat[T]): Pat[Pat[T]] =
+    PatPat(xs.map(lift))
 
   private lazy val logHeader = new SimpleDateFormat("[d MMM yyyy, HH:mm''ss.SSS] 'pattern' - ", Locale.US)
 

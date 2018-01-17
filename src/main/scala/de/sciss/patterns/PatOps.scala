@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Bridge, IntTop, Num, Top}
+import de.sciss.patterns.Types.{Bridge, IntTop, Num, NumFrac, Top}
 import de.sciss.patterns.graph._
 
 final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
@@ -41,21 +41,24 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   }
 
   def linlin[T1 <: Top, T2 <: Top](inLo: Pat[T], inHi: Pat[T], outLo: Pat[T1], outHi: Pat[T1])
-                                  (implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = ???
+                                  (implicit br: Bridge[T, T1, T2], num: NumFrac[T2]): Pat[T2] =
+    LinLin[T, T1, T2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
 
   def stutter(n: Pat.Int): Pat[T] = Stutter(n, x)
 
   def distinct: Pat[T] = Distinct(x)
 
-  def size: Pat.Int = ???
+  /** Same as `length`. */
+  def size  : Pat.Int = Length(x)
+  def length: Pat.Int = Length(x)
 
   def sorted(implicit ord: Ordering[T#Out]): Pat[T] = Sorted(x)
 
   def map[A <: Top, B <: Top](f: T => Pat[B])(implicit ev: T <:< Pat[A]): Pat[Pat[B]] = ???
 
-//  def flatMap[A <: Top, B <: Top](f: T => Pat[B])(implicit ev: T <:< Pat[A]): Pat[B]      = ???
+//  def flatMap[A <: Top, B <: Top](f: T => Pat[B])(implicit ev: T <:< Pat[A]): Pat[B] = ...
 
-  def flatten[A <: Top](implicit ev: T <:< Pat[A]): Pat[A] = ???
+  def flatten[A <: Top](implicit ev: T <:< Pat[A]): Pat[A] = Flatten(x.asInstanceOf[Pat[Pat[A]]])
 
-  def combinations(n: Pat.Int): Pat[Pat[T]] = ???
+  def combinations(n: Pat.Int): Pat[Pat[T]] = Combinations(x, n)
 }

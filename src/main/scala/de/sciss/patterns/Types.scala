@@ -62,6 +62,10 @@ object Types {
 
     def fold(a: T#Out, lo: T#Out, hi: T#Out)(implicit r: Random): T#Out
   }
+
+  trait NumFrac[T <: Top] extends Num[T] {
+    def div(a: T#Out, b: T#Out): T#Out
+  }
   
   trait SeqLikeNum[A, T <: SeqTop[A]] extends Num[T] {
     type P <: Top { type Out = A }
@@ -105,14 +109,20 @@ object Types {
     }
   }
 
+  trait SeqLikeNumFrac[A, T <: SeqTop[A]] extends SeqLikeNum[A, T] with NumFrac[T] {
+    override protected val peer: NumFrac[P]
+
+    final def div(a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.div)
+  }
+
   trait IntLikeNum[T <: SeqTop[Int]] extends SeqLikeNum[Int, T] {
     type P = IntTop
     protected final val peer: Num[IntTop] = IntTop
   }
 
-  trait DoubleLikeNum[T <: SeqTop[Double]] extends SeqLikeNum[Double, T] {
+  trait DoubleLikeNum[T <: SeqTop[Double]] extends SeqLikeNumFrac[Double, T] {
     type P = DoubleTop
-    protected final val peer: Num[DoubleTop] = DoubleTop
+    protected final val peer: NumFrac[DoubleTop] = DoubleTop
   }
 
   object Applicative {
@@ -218,7 +228,7 @@ object Types {
   implicit object DoubleTop
     extends DoubleTop
       with  Bridge[DoubleTop, DoubleTop, DoubleTop]
-      with  Num[DoubleTop]
+      with  NumFrac[DoubleTop]
       with  DoubleIsFractional
       with  Ordering.DoubleOrdering {
 

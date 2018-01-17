@@ -18,31 +18,44 @@ import de.sciss.patterns.graph.impl.TimeRef
 
 import scala.collection.immutable.{SortedMap => ISortedMap}
 
-final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset : Pat.Int = 0)
+final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset: Pat.Int = 0)
   extends Pattern[Event] {
 
   type EOut = Event#Out
 
   def iterator(implicit ctx: Context): Stream[EOut] = new Stream[EOut] {
-    private[this] var pq = ISortedMap.empty[TimeRef, Stream[EOut]]
-    ???
+    private[this] val listStream    = list    .expand
+    private[this] val repeatsStream = repeats .expand
+    private[this] val offsetStream  = offset  .expand
+    private[this] var pq: ISortedMap[TimeRef, Stream[EOut]] = _
 
-    // {
-    //   var refCnt = 0
-    //   list.foreach { pat =>
-    //     val it = pat.expand
-    //     if (it.hasNext) {
-    //       pq0 += new TimeRef(refCnt) -> it
-    //       refCnt += 1
-    //     }
-    //   }
-    // }
+    private[this] var _hasNext  : Boolean = _
+    private[this] var repeatsVal: Int     = _
+    private[this] var offsetVal : Int     = _
+    private[this] var elem      : EOut    = _
 
-    if (repeats.expand.next() != 1) throw new NotImplementedError("Ppar repeats")
-    if (offset .expand.next() != 0) throw new NotImplementedError("Ppar offset")
+    def reset(): Unit = {
+      pq = ISortedMap.empty
+      _hasNext = pq.nonEmpty && repeatsStream.hasNext && offsetStream.hasNext
+      if (!_hasNext) return
 
-    private[this] var done  = pq.isEmpty
-    private[this] var elem: EOut = _
+      repeatsVal = repeatsStream.next()
+      offsetVal  = offsetStream .next()
+      if (repeatsVal != 1) throw new NotImplementedError("Ppar repeats")
+      if (offsetVal  != 0) throw new NotImplementedError("Ppar offset")
+
+      var refCnt = 0
+      listStream.foreach { it =>
+        if (it.hasNext) {
+          pq += new TimeRef(refCnt) -> it
+          refCnt += 1
+        }
+      }
+
+      advance()
+    }
+
+    reset()
 
     private def advance(): Unit =
       if (pq.nonEmpty) {
@@ -61,17 +74,13 @@ final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset : Pat.I
         }
 
       } else {
-        done = true
+        _hasNext = false
       }
 
-    def hasNext: Boolean = !done
-
-    advance()
-
-    def reset(): Unit = ???
+    def hasNext: Boolean = _hasNext
 
     def next(): EOut = {
-      if (done) Stream.exhausted()
+      if (!_hasNext) Stream.exhausted()
       val res = elem
       advance()
       res

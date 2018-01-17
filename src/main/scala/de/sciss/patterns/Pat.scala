@@ -34,7 +34,7 @@ object Pat {
   }
 }
 trait Pat[T <: Top] extends Top {
-  type Out = Seq[T#Out]
+  final type Out = Stream[T#Out] // Seq[T#Out]
 
   private[patterns] def expand(implicit ctx: Context): Stream[T#Out]
 

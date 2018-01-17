@@ -53,7 +53,7 @@ object Stream {
     }
   }
 }
-abstract class Stream[A] { outer =>
+abstract class Stream[+A] { outer =>
   def reset(): Unit
   def hasNext: Boolean
   def next(): A
