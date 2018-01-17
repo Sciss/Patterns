@@ -165,7 +165,7 @@ object RonTuplePure {
     (Pseq(ptrnOut), Pseq(durs.map(_ * 0.02)))
   }
 
-  def spawner(): Pat.Event = Spawner { sp =>
+  def spawner(): Pat.Event = {
     implicit val random: Random = new Random()
     val inf = Int.MaxValue
     def catPat(cantus: Pat.Double): Pat.Event =
@@ -194,7 +194,8 @@ object RonTuplePure {
       //      println(numPause)
       val cantus = cantus0 // (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
       if (DEBUG) println(s"starting ${mkElemString(cantus)}")
-      val catter = sp.par(catPat(cantus))
+      val cantusEvt = catPat(cantus)
+      //      val catter = sp.par(cantusEvt)
 
       //      println(s"CANTUS $cantus")
 
@@ -232,17 +233,19 @@ object RonTuplePure {
         )
       }
 
-      val patsF: Pat.Event = pats.flatten
+//      val patsF: Pat.Event = pats.flatten
 
       //      println(s"DURS IS ${mkElemString(durs)} - MAX ${mkElemString(durs.max)}")
 
-      sp.seq(patsF) // Ppar(patsF))
+      val patsF: Pat.Event = Ppar(pats)
+
+      ??? // sp.seq(patsF) // Ppar(patsF))
       //      println(s"ending $cantus")
       // at this point, it wouldn't have any effect:
       // { cantus(cantus.size.rand) = 'r }.dup(5)
       val stopTime = length * 2 * 0.2
       ??? // sp.advance(stopTime)
-      sp.suspend(catter)
+      ??? // sp.suspend(catter)
       ???
     }
   }
