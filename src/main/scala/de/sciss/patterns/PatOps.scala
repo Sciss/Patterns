@@ -48,5 +48,5 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
 
   def sorted(implicit ord: Ordering[T#Out]): Pat[T] = Sorted(x)
 
-  def combinations(n: Pat.Int): Pat[TopT[Seq[T#Out]]] = ???
+  def combinations(n: Pat.Int): Pat[Pat[T]] = ???
 }

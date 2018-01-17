@@ -1,3 +1,16 @@
+/*
+ *  Spawner.scala
+ *  (Patterns)
+ *
+ *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
+ *
+ *	This software is published under the GNU Lesser General Public License v2.1+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
 package de.sciss.patterns
 package graph
 
@@ -21,9 +34,9 @@ object Spawner {
   }
 }
 final case class Spawner(fun: Spawner.Queue => Unit) extends Pattern[Event] {
-  type Out = Event#Out
+  type EOut = Event#Out
 
-  def iterator(implicit ctx: Context): Stream[Out] = {
+  def iterator(implicit ctx: Context): Stream[EOut] = {
     val queue = new QueueImpl
     fun(queue)
     queue.iterator

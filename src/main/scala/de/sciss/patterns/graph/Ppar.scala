@@ -21,11 +21,11 @@ import scala.collection.immutable.{SortedMap => ISortedMap}
 final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.Int = 0)
   extends Pattern[Event] {
 
-  type Out = Event#Out
+  type EOut = Event#Out
 
-  def iterator(implicit ctx: Context): Stream[Out] = {
+  def iterator(implicit ctx: Context): Stream[EOut] = {
     var refCnt = 0
-    var pq0 = ISortedMap.empty[TimeRef, Stream[Out]]
+    var pq0 = ISortedMap.empty[TimeRef, Stream[EOut]]
     list.foreach { pat =>
       val it = pat.expand
       if (it.hasNext) {
@@ -37,10 +37,10 @@ final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.I
     if (repeats.expand.next() != 1) throw new NotImplementedError("Ppar repeats")
     if (offset .expand.next() != 0) throw new NotImplementedError("Ppar offset")
 
-    new Stream[Out] {
+    new Stream[EOut] {
       private[this] var pq    = pq0
       private[this] var done  = pq0.isEmpty
-      private[this] var elem: Out = _
+      private[this] var elem: EOut = _
 
       private def advance(): Unit =
         if (pq.nonEmpty) {
@@ -68,7 +68,7 @@ final case class Ppar(list: Seq[Pat.Event], repeats: Pat.Int = 1, offset : Pat.I
 
       def reset(): Unit = ???
 
-      def next(): Out = {
+      def next(): EOut = {
         if (done) Stream.exhausted()
         val res = elem
         advance()

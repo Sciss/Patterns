@@ -33,7 +33,9 @@ object Pat {
     SeqFill(n, inner)
   }
 }
-trait Pat[T <: Top] {
+trait Pat[T <: Top] extends Top {
+  type Out = Seq[T#Out]
+
   private[patterns] def expand(implicit ctx: Context): Stream[T#Out]
 
   def iterator(implicit ctx: Context): Stream[T#Out]

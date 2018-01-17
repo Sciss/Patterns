@@ -199,7 +199,7 @@ object RonTuplePure {
 
       //      println(s"CANTUS $cantus")
 
-      val parts: Pat[TopT[Seq[Double]]] = cantus.distinct  .sorted /* ! */ .combinations(3) // .toList
+      val parts: Pat[Pat.Double] = cantus.distinct  .sorted /* ! */ .combinations(3) // .toList
 
       if (DEBUG) println("PARTS:")
       // if (DEBUG) parts.foreach(p => println(mkElemString(p)))
