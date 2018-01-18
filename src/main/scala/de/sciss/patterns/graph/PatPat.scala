@@ -30,6 +30,7 @@ final case class PatPat[T <: Top](in: Seq[Pat[T]]) extends Pattern[Pat[T]] {
     def next(): Stream[T#Out] = {
       if (!hasNext) Stream.exhausted()
       val res = inStreams(inIdx)
+      inIdx += 1
 //      val res   = s.next()
 //      while (!s.hasNext && inIdx < inStreams.length) {
 //        inIdx += 1

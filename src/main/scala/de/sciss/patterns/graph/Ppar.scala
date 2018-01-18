@@ -36,7 +36,7 @@ final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset: Pat.In
 
     def reset(): Unit = {
       pq = ISortedMap.empty
-      _hasNext = pq.nonEmpty && repeatsStream.hasNext && offsetStream.hasNext
+      _hasNext = repeatsStream.hasNext && offsetStream.hasNext
       if (!_hasNext) return
 
       repeatsVal = repeatsStream.next()
