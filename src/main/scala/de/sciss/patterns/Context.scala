@@ -22,6 +22,10 @@ trait Context {
 
   def getStreams(ref: AnyRef): List[Stream[_]]
 
+  def getOuterStream[A](token: Int): Stream[A]
+
+  def setOuterStream[A](token: Int, outer: Stream[A]): Unit
+
   def mkRandom(): Random
 }
 
@@ -30,6 +34,22 @@ object Context {
 
   private final class Impl extends ContextLike {
     private[this] lazy val seedRnd = new Random()
+    private[this] var tokenMap = Map.empty[Int, Stream[_]]
+
+    def setOuterStream[A](token: Int, outer: Stream[A]): Unit =
+      tokenMap += token -> outer
+
+//    def setOuterStream[A, B](token: Int, outer: Stream[A])(body: => B): B = {
+//      val old = tokenMap.get(token)
+//      tokenMap += token -> outer
+//      try {
+//        body
+//      } finally {
+//        old.fold(tokenMap -= token)(tokenMap += token -> _)
+//      }
+//    }
+
+    def getOuterStream[A](token: Int): Stream[A] = tokenMap(token).asInstanceOf[Stream[A]]
 
     def mkRandom(): Random = new Random(seedRnd.nextLong())
   }

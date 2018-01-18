@@ -125,7 +125,14 @@ abstract class Stream[+A] { outer =>
     }
   }
 
-  def drop(n: Int): Stream[A] = ???
+  def drop(n: Int): Stream[A] = {
+    var j = 0
+    while (j < n && hasNext) {
+      next()
+      j += 1
+    }
+    this
+  }
 
   def isEmpty : Boolean = !hasNext
   def nonEmpty: Boolean = hasNext

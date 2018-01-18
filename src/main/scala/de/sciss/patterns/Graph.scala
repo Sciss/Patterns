@@ -21,6 +21,8 @@ object Graph {
   trait Builder {
     def addPattern(p: Pattern[_]): Unit
 
+    def allocToken(): Int
+
     def visit[P](ref: AnyRef, init: => P): P
   }
 
@@ -35,6 +37,8 @@ object Graph {
     private def outOfContext: Nothing = sys.error("Out of context")
 
     def addPattern(p: Pattern[_]): Unit = ()
+
+    def allocToken(): Int = -1
 
     def visit[P](ref: AnyRef, init: => P): P = outOfContext
   }
@@ -54,12 +58,19 @@ object Graph {
   private[this] final class BuilderImpl[T <: Top] extends Builder {
     private[this] val lazies    = Vec.newBuilder[Pattern[_]]
     private[this] var sourceMap = Map.empty[AnyRef, Any]
+    private[this] var tokenId   = 0
 
     override def toString = s"patterns.Graph.Builder@${hashCode.toHexString}"
 
     def build(out: Pat[T]) = Graph(lazies.result(), out)
 
     def addPattern(p: Pattern[_]): Unit = lazies += p
+
+    def allocToken(): Int = {
+      val res = tokenId
+      tokenId += 1
+      res
+    }
 
     def visit[P](ref: AnyRef, init: => P): P = {
       // log(s"visit  ${ref.hashCode.toHexString}")

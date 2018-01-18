@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{DoubleTop, IntTop, TopT}
+import de.sciss.patterns.Types.{DoubleTop, IntTop, Top, TopT}
 import de.sciss.patterns.graph._
 
 import scala.util.Random
@@ -58,13 +58,21 @@ object RonTuplePure {
   }
 
   // all pairs from two arrays
-  def directProduct[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] = {
+  def directProduct_Sq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] = {
     val res = a.flatMap { v => b.map { w => v :+ w } }
     log("directProduct", a, b, " => ", res)
     res
   }
 
-  // collects every occurrence of elements of t in s
+  // all pairs from two arrays
+  def directProduct[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] = {
+    ???
+//    val res = a.flatMap { v => b.map { w => v :+ w } }
+//    log("directProduct", a, b, " => ", res)
+//    res
+  }
+
+  // collects the indices of every occurrence of elements of t in s
   def extract[A](s: Seq[A], t: Seq[A]): Seq[Seq[Int]] = {
     val res = t.map { tj =>
       s.zipWithIndex.collect {
@@ -81,7 +89,7 @@ object RonTuplePure {
     val size = x.size
     var res: Seq[Seq[A]] = x.head.map(Seq(_))
     for (i <- 1 until size) {
-      res = directProduct(res, x(i))
+      res = directProduct_Sq(res, x(i))
     }
     log("allTuples", x, " => ", res)
     res
@@ -208,7 +216,7 @@ object RonTuplePure {
 
       // val numParts = parts.size
       val partsIdx = Indices(parts)
-      val pats: Pat[Pat.Event] = parts.map { part =>
+      val pats: Pat[Pat.Event] = parts.map { part: Pat.Double =>
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
         val notePat: Pat.Double = ???
         val durPat : Pat.Double = ???

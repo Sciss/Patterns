@@ -54,9 +54,17 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
 
   def sorted(implicit ord: Ordering[T#Out]): Pat[T] = Sorted(x)
 
-  def map[A <: Top, B <: Top](f: T => Pat[B])(implicit ev: T <:< Pat[A]): Pat[Pat[B]] = ???
+  def map[A <: Top, B <: Top](f: Pat[A] => Pat[B])(implicit ev: T <:< Pat[A]): Pat[Pat[B]] = {
+    val token = Graph.builder.allocToken()
+    val it    = It[A](token)
+    val inner = Graph {
+      f(it)
+    }
+    PatMap(x.asInstanceOf[Pat[Pat[A]]], it, inner)
+  }
 
-//  def flatMap[A <: Top, B <: Top](f: T => Pat[B])(implicit ev: T <:< Pat[A]): Pat[B] = ...
+  def flatMap  [A <: Top, B <: Top](f:     T  => Pat[B])(implicit ev: T <:< Pat[A]): Pat[B]       = ???
+  def bubbleMap[          B <: Top](f: Pat[T] => Pat[B])                           : Pat[B]       = ???
 
   def flatten[A <: Top](implicit ev: T <:< Pat[A]): Pat[A] = Flatten(x.asInstanceOf[Pat[Pat[A]]])
 
