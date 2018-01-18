@@ -45,7 +45,6 @@ trait Truncate[T <: Top] extends Pattern[T] {
         val lenVal = lenStream.next()
         peer = truncate(inStream, lenVal)
         _hasNext = peer.hasNext
-        // if (!_hasNext) reset()
       }
     }
 
