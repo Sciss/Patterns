@@ -34,12 +34,12 @@ trait Truncate[T <: Top] extends Pattern[T] {
     private[this] var peer    : Stream[T#Out] = _
     private[this] var _hasNext: Boolean       = _
 
-    private[this] var IS_RESET  = false
     private[this] var IS_VALID  = false
 
-    def reset(): Unit = if (!IS_RESET) {
-      IS_RESET  = true
-      IS_VALID  = true
+    def reset(): Unit = IS_VALID = false
+
+    private def validate(): Unit = if (!IS_VALID) {
+      IS_VALID = true
       _hasNext = lenStream.hasNext
       if (_hasNext) {
         val lenVal = lenStream.next()
@@ -48,19 +48,16 @@ trait Truncate[T <: Top] extends Pattern[T] {
       }
     }
 
-    reset()
-
     def hasNext: Boolean = {
-      if (!IS_VALID) reset()
+      validate()
       _hasNext
     }
 
     def next(): T#Out = {
-      if (!IS_VALID) reset()
+      validate()
       if (!_hasNext) Stream.exhausted()
       val res = peer.next()
       _hasNext = peer.hasNext
-      IS_RESET = false
       res
     }
   }
