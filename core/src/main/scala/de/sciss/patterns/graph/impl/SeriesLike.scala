@@ -30,28 +30,36 @@ trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pattern[T] {
 
   // ---- impl ----
 
-  final def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
+  final def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
     private[this] val ai = start.expand.map(br.lift1)
     private[this] val bi = step .expand.map(br.lift2)
 
-    private[this] var state   : T#Out   = _
-    private[this] var _hasNext: Boolean = _
+    private[this] val state     = ctx.newVar[T#Out](null.asInstanceOf[T#Out])
+    private[this] val _hasNext  = ctx.newVar(false)
+    private[this] val _valid    = ctx.newVar(false)
 
-    def hasNext: Boolean = _hasNext
-
-    def reset(): Unit = {
-      _hasNext = ai.hasNext
-      if (_hasNext) state = ai.next()
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
     }
 
-    reset()
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
 
-    def next(): T#Out = {
-      if (!_hasNext) Stream.exhausted()
-      val res = state
-      _hasNext = /* ai.hasNext && */ bi.hasNext
-      if (_hasNext) {
-        state = op(state, bi.next())
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid() = true
+        _hasNext() = ai.hasNext
+        if (_hasNext()) state() = ai.next()
+      }
+
+    def next()(implicit tx: Tx): T#Out = {
+      validate()
+      if (!_hasNext()) Stream.exhausted()
+      val res = state()
+      _hasNext() = /* ai.hasNext && */ bi.hasNext
+      if (_hasNext()) {
+        state() = op(res, bi.next())
       }
       res
     }

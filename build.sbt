@@ -8,10 +8,10 @@ val deps = new {
     val optional            = "1.0.0"
     val serial              = "1.0.3"
     val soundProcesses      = "3.16.1"
+    val lucre               = "3.5.0"
   }
 
   val test = new {
-    val lucre               = "3.5.0"
     val scalaCollider       = "1.23.0"
     val scalaColliderSwing  = "1.35.0"
     val scalaTest           = "3.0.4"
@@ -49,6 +49,7 @@ lazy val core = project.in(file("core"))
       "de.sciss"      %% "numbers"                      % deps.main.numbers,
       "de.sciss"      %% "optional"                     % deps.main.optional,
       "de.sciss"      %% "serial"                       % deps.main.serial,
+      "de.sciss"      %% "lucre-core"                   % deps.main.lucre,
       "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % "test",
       "de.sciss"      %% "scalacolliderswing-plotting"  % deps.test.scalaColliderSwing  % "test",
       "de.sciss"      %% "scalacolliderugens-plugins"   % deps.test.ugens               % "test",
@@ -66,7 +67,7 @@ lazy val lucre = project.in(file("lucre"))
     name := s"$baseName-lucre",
     libraryDependencies ++= Seq(
       "de.sciss"      %% "soundprocesses-core"  % deps.main.soundProcesses,
-      "de.sciss"      %% s"lucre-$bdb"          % deps.test.lucre           % "test",
+      "de.sciss"      %% s"lucre-$bdb"          % deps.main.lucre           % "test",
       "org.scalatest" %% "scalatest"            % deps.test.scalaTest       % "test"
     )
   )

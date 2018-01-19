@@ -18,114 +18,125 @@ import scala.annotation.tailrec
 object Stream {
   def exhausted(): Nothing = throw new NoSuchElementException("next on empty iterator")
 
-  def fill[A](n: Int)(elem: => A): Stream[A] =
+  def fill[Tx, A](n: Int)(elem: => A)(implicit ctx: Context[Tx]): Stream[Tx, A] =
     continually(elem).take(n) // XXX TODO -- more efficient
 
-  def empty[A]: Stream[A] = new Stream[A] {
-    def reset(): Unit = ()
+  def empty[Tx, A]: Stream[Tx, A] = new Stream[Tx, A] {
+    def reset()(implicit tx: Tx): Unit = ()
 
-    def hasNext: Boolean = false
+    def hasNext(implicit tx: Tx): Boolean = false
 
-    def next(): A = Stream.exhausted()
+    def next()(implicit tx: Tx): A = Stream.exhausted()
   }
 
-  def reverseIterator[A](that: Iterable[A]): Stream[A] = ???
+  def reverseIterator[Tx, A](that: Iterable[A]): Stream[Tx, A] = ???
 
-  def continually[A](elem: => A): Stream[A] = new Stream[A] {
-    def reset(): Unit = ()
+  def continually[Tx, A](elem: => A): Stream[Tx, A] = new Stream[Tx, A] {
+    def reset()(implicit tx: Tx): Unit = ()
 
-    def hasNext: Boolean = true
+    def hasNext(implicit tx: Tx): Boolean = true
 
-    def next(): A = elem
+    def next()(implicit tx: Tx): A = elem
   }
 
-  def single[A](elem: A): Stream[A] = new Stream[A] {
-    private[this] var _hasNext = true
+  def single[Tx, A](elem: A)(implicit ctx: Context[Tx]): Stream[Tx, A] = new Stream[Tx, A] {
+    private[this] val _hasNext = ctx.newVar(true)
 
-    def hasNext: Boolean = _hasNext
+    def hasNext(implicit tx: Tx): Boolean = _hasNext()
 
-    def reset(): Unit = ()
+    def reset()(implicit tx: Tx): Unit = _hasNext() = true
 
-    def next(): A = {
-      if (!_hasNext) Stream.exhausted()
-      _hasNext = false
+    def next()(implicit tx: Tx): A = {
+      if (!_hasNext()) Stream.exhausted()
+      _hasNext() = false
       elem
     }
   }
 }
-abstract class Stream[+A] { outer =>
-  def reset(): Unit
-  def hasNext: Boolean
-  def next(): A
+abstract class Stream[Tx, +A] { outer =>
+  def reset()(implicit tx: Tx): Unit
+  def hasNext(implicit tx: Tx): Boolean
+  def next ()(implicit tx: Tx): A
 
-  def map[B](f: A => B): Stream[B] = new Stream[B] {
-    def reset(): Unit = ()
+  def map[B](f: A => B): Stream[Tx, B] = new Stream[Tx, B] {
+    def reset()(implicit tx: Tx): Unit = ()
 
-    def hasNext: Boolean = outer.hasNext
+    def hasNext(implicit tx: Tx): Boolean = outer.hasNext
 
-    def next(): B = f(outer.next())
+    def next()(implicit tx: Tx): B = f(outer.next())
   }
 
-  def flatMap[B](f: A => Stream[B]): Stream[B] = new Stream[B] {
-    def reset(): Unit = ()
+  def flatMap[B](f: A => Stream[Tx, B])(implicit ctx: Context[Tx]): Stream[Tx, B] = new Stream[Tx, B] {
 
-    private[this] var _hasNext: Boolean = _
-    private[this] var sub: Stream[B] = _
+    private[this] val _valid    = ctx.newVar(false)
+    private[this] val _hasNext  = ctx.newVar(false)
+    private[this] val sub       = ctx.newVar[Stream[Tx, B]](null)
+
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
 
     @tailrec
-    private def step(): Unit = {
-      _hasNext = outer.hasNext
-      if (_hasNext) {
-        sub = f(outer.next())
-        _hasNext = sub.hasNext
-        if (!_hasNext) step()
+    private def step()(implicit tx: Tx): Unit = {
+      _hasNext() = outer.hasNext
+      if (_hasNext()) {
+        sub() = f(outer.next())
+        _hasNext() = sub().hasNext
+        if (!_hasNext()) step()
       }
     }
 
-    step()
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid() = true
+        step()
+      }
 
-    def hasNext: Boolean = _hasNext
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
+    }
 
-    def next(): B = {
-      if (!_hasNext) Stream.exhausted()
-      val res = sub.next()
-      if (!sub.hasNext) step()
+    def next()(implicit tx: Tx): B = {
+      validate()
+      if (!_hasNext()) Stream.exhausted()
+      val res = sub().next()
+      if (!sub().hasNext) step()
       res
     }
   }
 
-  def zip[B](that: Stream[B]): Stream[(A, B)] = new Stream[(A, B)] {
-    def reset(): Unit = ()
+  def zip[B](that: Stream[Tx, B]): Stream[Tx, (A, B)] = new Stream[Tx, (A, B)] {
+    def reset()(implicit tx: Tx): Unit = ()
 
-    def hasNext: Boolean = outer.hasNext && that.hasNext
+    def hasNext(implicit tx: Tx): Boolean = outer.hasNext && that.hasNext
 
-    def next(): (A, B) = (outer.next(), that.next())
+    def next()(implicit tx: Tx): (A, B) = (outer.next(), that.next())
   }
 
-  def ++ [B >: A](that: Stream[B]): Stream[B] = new Stream[B] {
-    def reset(): Unit = ()
+  def ++ [B >: A](that: Stream[Tx, B]): Stream[Tx, B] = new Stream[Tx, B] {
+    def reset()(implicit tx: Tx): Unit = ()
 
-    def hasNext: Boolean = outer.hasNext || that.hasNext
+    def hasNext(implicit tx: Tx): Boolean = outer.hasNext || that.hasNext
 
-    def next(): B =
+    def next()(implicit tx: Tx): B =
       if (outer.hasNext) outer.next() else that.next()
   }
 
-  def take(n: Int): Stream[A] = new Stream[A] {
-    private[this] var i = 0
+  def take(n: Int)(implicit ctx: Context[Tx]): Stream[Tx, A] = new Stream[Tx, A] {
+    private[this] val i = ctx.newVar(0)
 
-    def reset(): Unit = ()
+    def reset()(implicit tx: Tx): Unit = ()
 
-    def hasNext: Boolean = i < n && outer.hasNext
+    def hasNext(implicit tx: Tx): Boolean = i() < n && outer.hasNext
 
-    def next(): A = {
+    def next()(implicit tx: Tx): A = {
       if (!hasNext) Stream.exhausted()
-      i += 1
+      i() = i() + 1
       outer.next()
     }
   }
 
-  def drop(n: Int): Stream[A] = {
+  def drop(n: Int)(implicit tx: Tx): Stream[Tx, A] = {
     var j = 0
     while (j < n && hasNext) {
       next()
@@ -134,17 +145,17 @@ abstract class Stream[+A] { outer =>
     this
   }
 
-  def isEmpty : Boolean = !hasNext
-  def nonEmpty: Boolean = hasNext
+  def isEmpty (implicit tx: Tx): Boolean = !hasNext
+  def nonEmpty(implicit tx: Tx): Boolean = hasNext
 
-  def toList: List[A] = {
+  def toList(implicit tx: Tx): List[A] = {
     val b = List.newBuilder[A]
     while (hasNext) b += next()
     b.result()
   }
 
-  def size: Int = ???
+  def size(implicit tx: Tx): Int = ???
 
-  def foreach(fun: A => Unit): Unit =
+  def foreach(fun: A => Unit)(implicit tx: Tx): Unit =
     while (hasNext) fun(next())
 }

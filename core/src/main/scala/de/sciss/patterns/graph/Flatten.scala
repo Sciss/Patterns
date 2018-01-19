@@ -19,39 +19,50 @@ import de.sciss.patterns.Types.Top
 import scala.annotation.tailrec
 
 final case class Flatten[T <: Top](in: Pat[Pat[T]]) extends Pattern[T] {
-  def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
-    private[this] val inStream = in.expand
-    private[this] var hasInner = false
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
+    private[this] val inStream    = in.expand
 
-    private[this] var innerStream : Stream[T#Out] = _
-    private[this] var _hasNext    : Boolean       = _
+    private[this] val hasInner    = ctx.newVar(false)
+    private[this] val innerStream = ctx.newVar[Stream[Tx, T#Out]](null)
+    private[this] val _hasNext    = ctx.newVar(false)
 
-    def reset(): Unit = advance()
+    private[this] val _valid      = ctx.newVar(false)
 
-    @tailrec
-    private def advance(): Unit = {
-      if (hasInner) {
-        hasInner = innerStream.hasNext
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
+
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid() = true
+        advance()
       }
 
-      _hasNext = hasInner
-      if (!_hasNext) {
-        _hasNext = inStream.hasNext
-        if (_hasNext) {
-          innerStream = inStream.next()
-          hasInner = true
+    @tailrec
+    private def advance()(implicit tx: Tx): Unit = {
+      if (hasInner()) {
+        hasInner() = innerStream().hasNext
+      }
+
+      _hasNext() = hasInner()
+      if (!_hasNext()) {
+        _hasNext() = inStream.hasNext
+        if (_hasNext()) {
+          innerStream() = inStream.next()
+          hasInner() = true
           advance()
         }
       }
     }
 
-    reset()
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
+    }
 
-    def hasNext: Boolean = _hasNext
-
-    def next(): T#Out = {
-      if (!_hasNext) Stream.exhausted()
-      val res = innerStream.next()
+    def next()(implicit tx: Tx): T#Out = {
+      validate()
+      if (!_hasNext()) Stream.exhausted()
+      val res = innerStream().next()
       advance()
       res
     }

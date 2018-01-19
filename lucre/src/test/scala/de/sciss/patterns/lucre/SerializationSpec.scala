@@ -50,7 +50,7 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
     }
   }
 
-  "Another Pattern object" should "be serializable" in { cursor =>
+  "Another Pattern object" should "be serializable" in { _ =>
     val g = Graph {
       import graph._
       val b = Brown(lo = 10, hi = 40, step = 4)
@@ -68,7 +68,7 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
     assert(g1.out     ==  g.out    ) // bloody triple-equals macro breaks
   }
 
-  "An Event Pattern" should "be serializable" in { cursor =>
+  "An Event Pattern" should "be serializable" in { _ =>
     val g = Graph {
       import graph._
       val b = Brown(lo = 10, hi = 40, step = 4)

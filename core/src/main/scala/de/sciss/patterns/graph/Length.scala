@@ -17,27 +17,25 @@ package graph
 import de.sciss.patterns.Types.{IntTop, Top}
 
 case class Length[T <: Top](in: Pat[T]) extends Pattern[IntTop] {
-  def iterator(implicit ctx: Context): Stream[Int] = new Stream[Int] {
-    private[this] val inStream = in.expand
-    private[this] var count     : Int = _
-    private[this] var _hasNext  : Boolean = _
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Int] = new Stream[Tx, Int] {
 
-    def reset(): Unit = {
-      count     = 0
-      _hasNext  = true
+    private[this] val inStream  = in.expand
+    private[this] val _hasNext  = ctx.newVar(true)
+
+    def reset()(implicit tx: Tx): Unit = {
+      _hasNext() = true
     }
 
-    reset()
+    def hasNext(implicit tx: Tx): Boolean = _hasNext()
 
-    def hasNext: Boolean = _hasNext
-
-    def next(): Int = {
+    def next()(implicit tx: Tx): Int = {
+      var res = 0
       while (inStream.hasNext) {
         inStream.next()
-        count += 1
+        res += 1
       }
-      _hasNext = false
-      count
+      _hasNext() = false
+      res
     }
   }
 }

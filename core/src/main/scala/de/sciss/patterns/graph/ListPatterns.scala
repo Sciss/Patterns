@@ -26,35 +26,33 @@ import scala.annotation.tailrec
 final case class Pseq[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, offset : Pat.Int = 0)
   extends Pattern[T] {
 
-//  type Out = T2#Index[T1#Out]
-
-  def iterator(implicit ctx: Context): Stream[T#Out] = {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = {
     val repeatsIt = repeats.expand
     val offsetIt  = offset .expand
     val indexed   = list.toIndexedSeq
     val sizeVal   = indexed.size
-    if (repeatsIt.isEmpty || offsetIt.isEmpty || sizeVal == 0) Stream.empty
+    if (??? /* repeatsIt.isEmpty || offsetIt.isEmpty || sizeVal == 0 */) Stream.empty
     else {
-      val repeatsVal  = repeatsIt.next()
-      val offsetVal   = offsetIt .next()
+      val repeatsVal  = ??? : Int // repeatsIt.next()
+      val offsetVal   = ??? : Int // offsetIt .next()
 
-      new Stream[T#Out] {
+      new Stream[Tx, T#Out] {
         private[this] var repeatsCnt  = 0
         private[this] var sizeCnt     = 0
 
-        private def mkListIter(): Stream[T#Out] = {
+        private def mkListIter(): Stream[Tx, T#Out] = {
           import IntFunctions.wrap
           val i = wrap(sizeCnt + offsetVal, 0, sizeVal - 1)
           indexed(i).embed
         }
 
-        private[this] var listIter: Stream[T#Out] = mkListIter()
+        private[this] var listIter: Stream[Tx, T#Out] = mkListIter()
 
-        def reset(): Unit = ???
+        def reset()(implicit tx: Tx): Unit = ???
 
-        def hasNext: Boolean = repeatsCnt < repeatsVal
+        def hasNext(implicit tx: Tx): Boolean = repeatsCnt < repeatsVal
 
-        def next(): T#Out /* T2#Index[T1#Out] */ = {
+        def next()(implicit tx: Tx): T#Out /* T2#Index[T1#Out] */ = {
           val res = listIter.next()
           if (listIter.isEmpty) {
             sizeCnt += 1
@@ -131,7 +129,7 @@ final case class Zip[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1)
 
 //  val tpe: Top.Seq[T] = Top.Seq[T]
 
-  def iterator(implicit ctx: Context): Stream[Seq[T#Out]] = {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Seq[T#Out]] = {
     ???
   }
 }
@@ -146,29 +144,29 @@ final case class Slide[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, size: 
                                  start: Pat.Int = 0, wrap: Boolean = true)
   extends Pattern[T] {
 
-  def iterator(implicit ctx: Context): Stream[T#Out] = {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = {
     val repeatsIt = repeats.expand
     val sizeIt    = size   .expand
     val stepIt    = step   .expand
     val startIt   = start  .expand
     val indexed   = list.toIndexedSeq
     val listSize  = indexed.size
-    if (repeatsIt.isEmpty || sizeIt.isEmpty || stepIt.isEmpty || startIt.isEmpty || listSize == 0) Stream.empty
+    if (??? /* repeatsIt.isEmpty || sizeIt.isEmpty || stepIt.isEmpty || startIt.isEmpty || listSize == 0 */) Stream.empty
     else {
-      val repeatsVal  = repeatsIt.next()
-      val startVal    = startIt  .next()
+      val repeatsVal  = ??? : Int // repeatsIt.next()
+      val startVal    = ??? : Int // startIt  .next()
 
-      new Stream[T#Out] {
+      new Stream[Tx, T#Out] {
         private[this] var pos           = startVal
-        private[this] var sizeVal       = sizeIt.next()
-        private[this] var stepVal       = stepIt.next()
+        private[this] var sizeVal       = ??? : Int // sizeIt.next()
+        private[this] var stepVal       = ??? : Int // stepIt.next()
         private[this] var repeatsCnt    = 0
         private[this] var sizeCnt       = 0
-        private[this] var listIt: Stream[T#Out] = _
+        private[this] var listIt: Stream[Tx, T#Out] = _
         private[this] var elem: T#Out   = _
         private[this] var done          = false
 
-        def reset(): Unit = ???
+        def reset()(implicit tx: Tx): Unit = ???
 
         private def pickIt(): Boolean = {
           val i = pos + sizeCnt
@@ -179,11 +177,11 @@ final case class Slide[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, size: 
         }
 
         @inline
-        private def run(): Unit =
+        private def run()(implicit tx: Tx): Unit =
           if (pickIt()) advance() else done = true
 
         @tailrec
-        private def advance(): Unit =
+        private def advance()(implicit tx: Tx): Unit =
           if (listIt.hasNext) {
             elem = listIt.next()
           } else {
@@ -206,11 +204,15 @@ final case class Slide[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, size: 
             }
           }
 
-        def hasNext: Boolean = !done
+        def hasNext(implicit tx: Tx): Boolean = {
+          ???
+          !done
+        }
 
-        run()
+        ??? // run()
 
-        def next(): T#Out = {
+        def next()(implicit tx: Tx): T#Out = {
+          ???
           if (done) Stream.exhausted()
           val res = elem
           advance()

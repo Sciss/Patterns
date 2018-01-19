@@ -18,13 +18,11 @@ import de.sciss.patterns.Types.Top
 
 /** A glue element to make `map` and `flatMap` work. */
 final case class It[T <: Top](token: Int) extends Pattern[T] {
-  def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
     private def outer = ctx.getOuterStream[T#Out](token)
 
-    def reset(): Unit = ()
-
-    def hasNext: Boolean = outer.hasNext
-
-    def next(): T#Out = outer.next()
+    def reset()(implicit tx: Tx): Unit    = ()
+    def hasNext(implicit tx: Tx): Boolean = outer.hasNext
+    def next ()(implicit tx: Tx): T#Out   = outer.next()
   }
 }

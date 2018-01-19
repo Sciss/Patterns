@@ -19,39 +19,48 @@ import de.sciss.patterns.Types.Top
 import scala.annotation.tailrec
 
 final case class Distinct[T <: Top](in: Pat[T]) extends Pattern[T] {
-  def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
     private[this] val inStream = in.expand
 
-    private[this] var seen    : Set[T#Out]  = _
-    private[this] var _hasNext: Boolean     = _
-    private[this] var _next   : T#Out       = _
+    private[this] val seen     = ctx.newVar[Set[T#Out]](null)
+    private[this] val _hasNext = ctx.newVar[Boolean   ](false)
+    private[this] val _next    = ctx.newVar[T#Out     ](null.asInstanceOf[T#Out])
 
-    def reset(): Unit = {
-      seen = Set.empty
-      advance()
-    }
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
 
     @tailrec
-    private def advance(): Unit = {
-      _hasNext = inStream.hasNext
-      if (_hasNext) {
-        _next     = inStream.next()
-        _hasNext  = !seen.contains(_next)
-        if (_hasNext) {
-          seen += _next
+    private def advance()(implicit tx: Tx): Unit = {
+      _hasNext() = inStream.hasNext
+      if (_hasNext()) {
+        _next()     = inStream.next()
+        _hasNext()  = !seen().contains(_next())
+        if (_hasNext()) {
+          seen() = seen() + _next()
         } else {
           advance()
         }
       }
     }
 
-    reset()
+    private[this] val _valid = ctx.newVar(false)
 
-    def hasNext: Boolean = _hasNext
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid() = true
+        seen() = Set.empty
+        advance()
+      }
 
-    def next(): T#Out = {
-      if (!_hasNext) Stream.exhausted()
-      val res = _next
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
+    }
+
+    def next()(implicit tx: Tx): T#Out = {
+      validate()
+      if (!_hasNext()) Stream.exhausted()
+      val res = _next()
       advance()
       res
     }

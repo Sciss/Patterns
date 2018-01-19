@@ -17,22 +17,36 @@ package graph
 final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
   type EOut = Event#Out
 
-  def iterator(implicit ctx: Context): Stream[EOut] = {
-    val mapE: Map[String, Stream[_]] = entries.map { case (key, value) => key -> value.expand } .toMap  // (breakOut)
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, EOut] = {
+    val mapE: Map[String, Stream[Tx, _]] = entries.map { case (key, value) => key -> value.expand } .toMap  // (breakOut)
 
-    def checkNext(): Boolean = mapE.forall(_._2.hasNext)
+    def checkNext()(implicit tx: Tx): Boolean = mapE.forall(_._2.hasNext)
 
-    new Stream[EOut] {
-      var hasNext: Boolean = checkNext()
+    new Stream[Tx, EOut] {
+      private[this] val _valid   = ctx.newVar(false)
+      private[this] val _hasNext = ctx.newVar(false)
 
-      def reset(): Unit = ???
+      def hasNext(implicit tx: Tx): Boolean = {
+        validate()
+        _hasNext()
+      }
 
-      private def mkState(): EOut = mapE.map { case (key, value) => key -> value.next() }
+      private def validate()(implicit tx: Tx): Unit =
+        if (!_valid()) {
+          _hasNext() = checkNext()
+          _valid() = true
+        }
 
-      def next(): EOut = {
-        if (!hasNext) Stream.exhausted()
+      def reset()(implicit tx: Tx): Unit =
+        _valid() = false
+
+      private def mkState()(implicit tx: Tx): EOut = mapE.map { case (key, value) => key -> value.next() }
+
+      def next()(implicit tx: Tx): EOut = {
+        validate()
+        if (!_hasNext()) Stream.exhausted()
         val res = mkState()
-        hasNext = checkNext()
+        _hasNext() = checkNext()
         res
       }
     }

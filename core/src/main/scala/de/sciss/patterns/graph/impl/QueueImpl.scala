@@ -35,51 +35,52 @@ object QueueImpl {
 //  final case class AdvanceB(stop: Double) extends Blocking
 //  final case object Flush extends Blocking
 }
-final class QueueImpl(implicit val context: Context)
-  extends Spawner.Queue {
+final class QueueImpl[Tx](implicit val context: Context[Tx])
+  extends Spawner.Queue[Tx] {
 
   import QueueImpl._
 
   type Ref = TimeRef
 
-  private[this] var refCnt  = 0
-  private[this] var cmdRev  = List.empty[Cmd]
+  private[this] val refCnt  = context.newVar(0)
+  private[this] val cmdRev  = context.newVar(List.empty[Cmd])
 
   implicit val random: Random = context.mkRandom()
 
-  private def mkRef(): Ref = {
-    val ref = new Ref(refCnt)
-    refCnt += 1
+  private def mkRef()(implicit tx: Tx): Ref = {
+    val c = refCnt()
+    val ref = new Ref(c)
+    refCnt() = c + 1
     ref
   }
 
-  def par(pat: Pat.Event): Ref = {
+  def par(pat: Pat.Event)(implicit tx: Tx): Ref = {
     val ref = mkRef()
-    cmdRev ::= Par(ref, pat)
+    cmdRev() = Par(ref, pat) :: cmdRev()
     ref
   }
 
-  def seq(pat: Pat.Event): Unit = cmdRev ::= Seq(pat)
+  def seq(pat: Pat.Event)(implicit tx: Tx): Unit =
+    cmdRev() = Seq(pat) :: cmdRev()
 
-  def suspend(ref: Ref): Unit = {
-//    pq.remove(ref)
-    cmdRev ::= Suspend(ref)
-  }
+  def suspend(ref: Ref)(implicit tx: Tx): Unit =
+    cmdRev() = Suspend(ref) :: cmdRev()
 
-  def advance(seconds: Double): Unit = cmdRev ::= Advance(seconds)
+  def advance(seconds: Double)(implicit tx: Tx): Unit =
+    cmdRev() = Advance(seconds) :: cmdRev()
 
   type Out = Event#Out
 
-  def iterator: Stream[Out] = new Stream[Out] {
-    private[this] var pq = ISortedMap.empty[Ref, Stream[Either[Out, Cmd]]]
+  def iterator: Stream[Tx, Out] = new Stream[Tx, Out] {
+    private[this] var pq = ISortedMap.empty[Ref, Stream[Tx, Either[Out, Cmd]]]
 
-    if (cmdRev.nonEmpty) pq += mkRef() -> Stream.reverseIterator(cmdRev).map(Right(_))
+    if (cmdRev().nonEmpty) pq += mkRef() -> Stream.reverseIterator(cmdRev()).map(Right(_))
 
 //    private[this] var cmdRef = Map.empty[Ref, Ref]
 
 //    private[this] var now       = 0.0
-    private[this] var elem: Out = _
-    private[this] var done      = false
+    private[this] val elem      = context.newVar[Out](null)
+    private[this] val _hasNext  = context.newVar(false)
 
     /*
 
@@ -102,7 +103,7 @@ final class QueueImpl(implicit val context: Context)
      */
 
     @tailrec
-    private def advance(): Unit =
+    private def advance()(implicit tx: Tx): Unit =
       if (pq.nonEmpty) {
         val (ref, it) = pq.head
         pq            = pq.tail
@@ -114,14 +115,14 @@ final class QueueImpl(implicit val context: Context)
 
         it.next() match {
           case Left(_elem) =>
-            elem      = _elem
+            elem()    = _elem
             val d     = math.max(0.0, Event.delta(_elem))
             val now   = ref.time
             ref.time += d
             putBack()
             if (pq.nonEmpty) {
               val nextTime = pq.firstKey.time
-              elem += Event.keyDelta -> (nextTime - now)
+              elem() = elem() + (Event.keyDelta -> (nextTime - now))
             }
 
           case Right(cmd) =>
@@ -154,18 +155,29 @@ final class QueueImpl(implicit val context: Context)
         }
 
       } else {
-        done = true
+        _hasNext() = false
       }
 
-    advance()
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
+    }
 
-    def hasNext: Boolean = !done
+    private[this] val _valid = context.newVar(false)
 
-    def reset(): Unit = ???
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid() = true
+        advance()
+      }
 
-    def next(): Out = {
-      if (done) Stream.exhausted()
-      val res = elem
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
+
+    def next()(implicit tx: Tx): Out = {
+      validate()
+      if (!_valid()) Stream.exhausted()
+      val res = elem()
       advance()
       res
     }

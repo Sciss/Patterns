@@ -23,41 +23,41 @@ trait Truncate[T <: Top] extends Pattern[T] {
   protected val in: Pat[T]
   protected def length: Pat[IntTop]
 
-  protected def truncate(inStream: Stream[T#Out], n: Int): Stream[T#Out]
+  protected def truncate[Tx](inStream: Stream[Tx, T#Out], n: Int)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out]
 
   // ---- impl ----
 
-  def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
     private[this] val lenStream = length.expand
     private[this] val inStream  = in    .expand
 
-    private[this] var peer    : Stream[T#Out] = _
-    private[this] var _hasNext: Boolean       = _
+    private[this] val peer      = ctx.newVar[Stream[Tx, T#Out]](null)
+    private[this] val _hasNext  = ctx.newVar(false)
 
-    private[this] var IS_VALID  = false
+    private[this] val _valid    = ctx.newVar(false)
 
-    def reset(): Unit = IS_VALID = false
+    def reset()(implicit tx: Tx): Unit = _valid() = false
 
-    private def validate(): Unit = if (!IS_VALID) {
-      IS_VALID = true
-      _hasNext = lenStream.hasNext
-      if (_hasNext) {
+    private def validate()(implicit tx: Tx): Unit = if (!_valid()) {
+      _valid() = true
+      _hasNext() = lenStream.hasNext
+      if (_hasNext()) {
         val lenVal = lenStream.next()
-        peer = truncate(inStream, lenVal)
-        _hasNext = peer.hasNext
+        peer() = truncate(inStream, lenVal)
+        _hasNext() = peer().hasNext
       }
     }
 
-    def hasNext: Boolean = {
+    def hasNext(implicit tx: Tx): Boolean = {
       validate()
-      _hasNext
+      _hasNext()
     }
 
-    def next(): T#Out = {
+    def next()(implicit tx: Tx): T#Out = {
       validate()
-      if (!_hasNext) Stream.exhausted()
-      val res = peer.next()
-      _hasNext = peer.hasNext
+      if (!_hasNext()) Stream.exhausted()
+      val res = peer().next()
+      _hasNext() = peer().hasNext
       res
     }
   }

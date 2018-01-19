@@ -50,7 +50,7 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
     num.plus(cur, num.rand2(step))
   }
 
-  def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
     // println("Brown.iterator")
     // (new Exception).fillInStackTrace().printStackTrace()
 
@@ -60,30 +60,38 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
 
     private[this] implicit val r: Random  = ctx.mkRandom()
 
-    private[this] var state   : T#Out   = _
-    private[this] var _hasNext: Boolean = _
+    private[this] val state     = ctx.newVar[T#Out](null.asInstanceOf[T#Out])
+    private[this] val _hasNext  = ctx.newVar(false)
+    private[this] val _valid    = ctx.newVar(false)
 
-    def hasNext: Boolean = _hasNext
-
-    def reset(): Unit = {
-      _hasNext = loStream.hasNext && hiStream.hasNext
-      if (_hasNext) {
-        state = num.rrand(loStream.next(), hiStream.next())
+    private def validate()(implicit tx: Tx): Unit =
+      if (_valid()) {
+        _valid() = true
+        _hasNext() = loStream.hasNext && hiStream.hasNext
+        if (_hasNext()) {
+          state() = num.rrand(loStream.next(), hiStream.next())
+        }
       }
+
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
     }
 
-    reset()
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
 
-    def next(): T#Out = {
-      if (!_hasNext) Stream.exhausted()
-      val res = state
-      _hasNext = loStream.hasNext && hiStream.hasNext && stepStream.hasNext
-      if (_hasNext) {
+    def next()(implicit tx: Tx): T#Out = {
+      validate()
+      if (!_hasNext()) Stream.exhausted()
+      val res = state()
+      _hasNext() = loStream.hasNext && hiStream.hasNext && stepStream.hasNext
+      if (_hasNext()) {
         val loVal   = loStream.next()
         val hiVal   = hiStream.next()
         val stepVal = stepStream.next()
-        val x       = calcNext(state, br.lift2(stepVal))
-        state       = num.fold(x, loVal, hiVal)
+        val x       = calcNext(res, br.lift2(stepVal))
+        state()     = num.fold(x, loVal, hiVal)
       }
       res
     }
@@ -95,30 +103,44 @@ final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T])
 
   override private[patterns] def aux: List[Aux] = num :: Nil
 
-  def iterator(implicit ctx: Context): Stream[T#Out] = {
-    val loIt = lo.expand
-    val hiIt = hi.expand
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
+    private[this] val loStream  = lo.expand
+    private[this] val hiStream  = hi.expand
 
-    if (loIt.isEmpty || hiIt.isEmpty) Stream.empty
-    else new Stream[T#Out] {
-      private[this] implicit val r: Random = ctx.mkRandom()
+    private[this] implicit val r: Random = ctx.mkRandom()
 
-      private def mkState(): T#Out = num.rrand(loIt.next(), hiIt.next())
+    private def mkState(): T#Out = num.rrand(loStream.next(), hiStream.next())
 
-      private[this] var state: T#Out = mkState()
+    private[this] val state     = ctx.newVar[T#Out](null.asInstanceOf[T#Out])
+    private[this] val _hasNext  = ctx.newVar(false)
+    private[this] val _valid    = ctx.newVar(false)
 
-      var hasNext = true
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
 
-      def reset(): Unit = ???
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
+    }
 
-      def next(): T#Out = {
-        val res = state
-        hasNext = loIt.hasNext && hiIt.hasNext
-        if (hasNext) {
-          state = mkState()
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid() = true
+        _hasNext() = loStream.hasNext && hiStream.hasNext
+        if (_hasNext()) {
+          state() = num.rrand(loStream.next(), hiStream.next())
         }
-        res
       }
+
+    def next()(implicit tx: Tx): T#Out = {
+      validate()
+      if (!_hasNext()) Stream.exhausted()
+      val res = state()
+      _hasNext() = loStream.hasNext && hiStream.hasNext
+      if (_hasNext()) {
+        state() = mkState()
+      }
+      res
     }
   }
 }

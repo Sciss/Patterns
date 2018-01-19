@@ -19,25 +19,25 @@ import de.sciss.patterns.graph.impl.QueueImpl
 import scala.util.Random
 
 object Spawner {
-  trait Queue {
+  trait Queue[Tx] {
     type Ref
 
-    def par(pat: Pat.Event): Ref
-    def seq(pat: Pat.Event): Unit
+    def par(pat: Pat.Event)(implicit tx: Tx): Ref
+    def seq(pat: Pat.Event)(implicit tx: Tx): Unit
 
-    def suspend(ref: Ref): Unit
+    def suspend(ref: Ref)(implicit tx: Tx): Unit
 
-    def advance(seconds: Double): Unit
+    def advance(seconds: Double)(implicit tx: Tx): Unit
 
-    implicit def context: Context
+    implicit def context: Context[Tx]
     implicit def random : Random
   }
 }
-final case class Spawner(fun: Spawner.Queue => Unit) extends Pattern[Event] {
+final case class Spawner(fun: Spawner.Queue[_] => Unit) extends Pattern[Event] {
   type EOut = Event#Out
 
-  def iterator(implicit ctx: Context): Stream[EOut] = {
-    val queue = new QueueImpl
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, EOut] = {
+    val queue = new QueueImpl[Tx]
     fun(queue)
     queue.iterator
   }
