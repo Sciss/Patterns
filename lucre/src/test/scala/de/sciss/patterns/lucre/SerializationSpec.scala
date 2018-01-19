@@ -51,9 +51,12 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
   }
 
   "Another Pattern object" should "be serializable" in { cursor =>
-    val g = Graph[IntTop] {
+    val g = Graph {
       import graph._
-      Brown(lo = 10, hi = 40, step = 4).take(10)
+      val b = Brown(lo = 10, hi = 40, step = 4)
+      Pat.seqFill(4) { _ =>
+        b.take(10).distinct.sorted * 0.5
+      }
     }
     val out = DataOutput()
     GraphObj.valueSerializer.write(g, out)

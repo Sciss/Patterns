@@ -20,9 +20,9 @@ import de.sciss.lucre.expr
 import de.sciss.lucre.expr.Expr
 import de.sciss.lucre.stm.{Copy, Elem, Obj, Sys}
 import de.sciss.model.Change
-import de.sciss.patterns.Types.Top
+import de.sciss.patterns.Types.{Aux, Top}
 import de.sciss.patterns.graph.{Constant, Pseq}
-import de.sciss.patterns.{Graph, Pat, Pattern => _Pattern}
+import de.sciss.patterns.{Graph, Pat, ProductWithAux, Pattern => _Pattern}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
 import scala.annotation.switch
@@ -69,12 +69,18 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
         return
       }
       out.writeByte('P')
+      val aux     = p match {
+        case hasAux: ProductWithAux => hasAux.aux
+        case _ => Nil
+      }
       val pck     = p.getClass.getPackage.getName
       val prefix  = p.productPrefix
       val name    = if (pck == "de.sciss.patterns.graph") prefix else s"$pck.$prefix"
       out.writeUTF(name)
       out.writeShort(p.productArity)
+      out.writeByte(aux.size)
       p.productIterator.foreach(writeElem(_, out, ref))
+      aux.foreach(Aux.write(out, _))
 
       val id     = ref.size() // count
       ref.put(p, id)
@@ -154,10 +160,12 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
     private def readIdentifiedProduct(in: DataInput, ref: RefMapIn): Product = {
       val prefix    = in.readUTF()
       val arity     = in.readShort()
+      val numAux    = in.readByte()
+      val numElem   = arity + numAux
       val className = if (Character.isUpperCase(prefix.charAt(0))) s"de.sciss.patterns.graph.$prefix" else prefix
 
       val res = try {
-        if (arity == 0 && className.charAt(className.length - 1) == '$') {
+        if (numElem == 0 && className.charAt(className.length - 1) == '$') {
           // case object
           val companion = Class.forName(s"$className").getField("MODULE$").get(null)
           companion.asInstanceOf[Product]
@@ -166,10 +174,15 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
 
           // cf. stackoverflow #3039822
           val companion = Class.forName(s"$className$$").getField("MODULE$").get(null)
-          val elems = new Array[AnyRef](arity)
+          val elems = new Array[AnyRef](numElem)
           var i = 0
           while (i < arity) {
             elems(i) = readElem(in, ref).asInstanceOf[AnyRef]
+            i += 1
+          }
+          val i1 = i + numAux
+          while (i < i1) {
+            elems(i) = Aux.read(in)
             i += 1
           }
           //    val m         = companion.getClass.getMethods.find(_.getName == "apply")
@@ -179,7 +192,7 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
           var j = 0
           while (m == null && j < ms.length) {
             val mj = ms(j)
-            if (mj.getName == "apply" && mj.getParameterTypes.length == arity) m = mj
+            if (mj.getName == "apply" && mj.getParameterTypes.length == numElem) m = mj
             j += 1
           }
           if (m == null) sys.error(s"No apply method found on $companion")

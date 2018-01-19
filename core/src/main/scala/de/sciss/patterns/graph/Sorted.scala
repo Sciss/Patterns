@@ -14,9 +14,11 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
+import de.sciss.patterns.Types.{Aux, Ord, Top}
 
-final case class Sorted[T <: Top](in: Pat[T])(implicit ord: Ordering[T#Out]) extends Pattern[T] {
+final case class Sorted[T <: Top](in: Pat[T])(implicit ord: Ord[T]) extends Pattern[T] {
+  override private[patterns] def aux: List[Aux] = ord :: Nil
+
   def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
     private[this] val inStream = in.expand
 

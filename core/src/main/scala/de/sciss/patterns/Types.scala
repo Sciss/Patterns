@@ -15,8 +15,10 @@ package de.sciss.patterns
 
 import java.lang.{String => _String}
 
-import de.sciss.numbers.{DoubleFunctions => rd, IntFunctions}
+import de.sciss.numbers.{IntFunctions, DoubleFunctions => rd}
+import de.sciss.serial.{DataInput, DataOutput}
 
+import scala.annotation.switch
 import scala.language.higherKinds
 import scala.math.Numeric.{DoubleIsFractional, IntIsIntegral}
 import scala.math.Ordering
@@ -39,12 +41,44 @@ object Types {
 //    def lift(x: Out): Out
   }
 
-  trait Bridge[T1 <: Top, T2 <: Top, T <: Top] {
+  object Aux {
+    private val COOKIE = 0x4175   // "Au"
+
+    def read(in: DataInput): Aux = {
+      val cookie  = in.readShort()
+      if (cookie != COOKIE) sys.error(s"Unexpected cookie - found ${cookie.toHexString}, expected ${COOKIE.toHexString}")
+      val id      = in.readShort()
+      (id: @switch) match {
+        case IntTop           .id => IntTop
+        case IntSeqTop        .id => IntSeqTop
+        case DoubleTop        .id => DoubleTop
+        case DoubleSeqTop     .id => DoubleSeqTop
+        case StringTop        .id => StringTop
+        case intSeqBridge1    .id => intSeqBridge1
+        case intSeqBridge2    .id => intSeqBridge2
+        case doubleSeqBridge1 .id => doubleSeqBridge1
+        case doubleSeqBridge2 .id => doubleSeqBridge2
+        case intDoubleBridge1 .id => intDoubleBridge1
+      }
+    }
+
+    def write(out: DataOutput, aux: Aux): Unit = {
+      out.writeShort(COOKIE)
+      out.writeShort(aux.id)
+    }
+  }
+  sealed trait Aux {
+    def id: Int
+  }
+
+  trait Bridge[T1 <: Top, T2 <: Top, T <: Top] extends Aux {
     def lift1(a: T1#Out): T#Out
     def lift2(a: T2#Out): T#Out
   }
 
-  trait Num[T <: Top] {
+  trait Ord[T <: Top] extends Aux with Ordering[T#Out]
+
+  trait Num[T <: Top] extends Aux {
     def plus    (a: T#Out, b: T#Out): T#Out
     def minus   (a: T#Out, b: T#Out): T#Out
     def times   (a: T#Out, b: T#Out): T#Out
@@ -194,16 +228,21 @@ object Types {
     extends IntSeqTop 
       with  IntLikeNum[IntSeqTop]
       with  Bridge[IntSeqTop, IntSeqTop, IntSeqTop] 
-      with  Num[IntSeqTop]
+      with  Num[IntSeqTop] {
+
+    final val id = 1
+  }
 
   sealed trait IntTop extends IntLikeTop with ScalarTop[Int]
   implicit object IntTop 
     extends IntTop 
       with  Bridge[IntTop, IntTop, IntTop] 
       with  Num[IntTop]
-      with  IntIsIntegral 
+      with  Ord[IntTop]
+      with  IntIsIntegral
       with  Ordering.IntOrdering {
 
+    final val id = 0
 
     def roundTo(a: Int, b: Int): Int = if (b == 0) a else math.round(a.toDouble / b).toInt * b
 
@@ -222,15 +261,21 @@ object Types {
     extends DoubleSeqTop
       with  DoubleLikeNum[DoubleSeqTop]
       with  Bridge[DoubleSeqTop, DoubleSeqTop, DoubleSeqTop]
-      with  Num[DoubleSeqTop]
+      with  Num[DoubleSeqTop] {
+
+    final val id = 3
+  }
 
   sealed trait DoubleTop extends DoubleLikeTop with ScalarTop[Double]
   implicit object DoubleTop
     extends DoubleTop
       with  Bridge[DoubleTop, DoubleTop, DoubleTop]
       with  NumFrac[DoubleTop]
+      with  Ord    [DoubleTop]
       with  DoubleIsFractional
       with  Ordering.DoubleOrdering {
+
+    final val id = 2
 
     def roundTo(a: Double, b: Double): Double = rd.roundTo(a, b)
 
@@ -244,26 +289,36 @@ object Types {
   implicit object intSeqBridge1 extends /* IntLikeNum with */ Bridge[IntTop, IntSeqTop, IntSeqTop] {
     def lift1(a: Int     ): Seq[Int] = a :: Nil
     def lift2(a: Seq[Int]): Seq[Int] = a
+
+    final val id = 0x100
   }
 
   implicit object intSeqBridge2 extends /* IntLikeNum with */ Bridge[IntSeqTop, IntTop, IntSeqTop] {
     def lift1(a: Seq[Int]): Seq[Int] = a
     def lift2(a: Int     ): Seq[Int] = a :: Nil
+
+    final val id = 0x101
   }
 
   implicit object doubleSeqBridge1 extends /* DoubleLikeNum with */ Bridge[DoubleTop, DoubleSeqTop, DoubleSeqTop] {
     def lift1(a: Double     ): Seq[Double] = a :: Nil
     def lift2(a: Seq[Double]): Seq[Double] = a
+
+    final val id = 0x102
   }
 
   implicit object doubleSeqBridge2 extends /* DoubleLikeNum with */ Bridge[DoubleSeqTop, DoubleTop, DoubleSeqTop] {
     def lift1(a: Seq[Double]): Seq[Double] = a
     def lift2(a: Double     ): Seq[Double] = a :: Nil
+
+    final val id = 0x103
   }
 
   implicit object intDoubleBridge1 extends Bridge[IntTop, DoubleTop, DoubleTop] {
     def lift1(a: Int    ): Double = a.toDouble
     def lift2(a: Double ): Double = a
+
+    final val id = 0x104
   }
 
   ////////////////////////////
@@ -274,5 +329,7 @@ object Types {
   implicit object StringTop extends StringTop with Bridge[StringTop, StringTop, StringTop] {
     def lift1(a: _String): _String = a
     def lift2(a: _String): _String = a
+
+    final val id = 4
   }
 }

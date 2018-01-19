@@ -16,15 +16,14 @@ package graph
 
 import de.sciss.patterns.Types.Top
 
-import scala.annotation.tailrec
-
 final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], inner: Graph[T])
   extends Pattern[Pat[T]] {
 
   def iterator(implicit ctx: Context): Stream[Stream[T#Out]] = new Stream[Stream[T#Out]] {
-    private[this] val outerStream: Stream[Stream[T1#Out]] = outer.expand
-    private[this] lazy val innerStream: Stream[T#Out]     = inner.expand
-    private[this] var mapStream  : Stream[T#Out]          = _
+    private[this] val       outerStream: Stream[Stream[T1#Out]] = outer.expand
+    private[this] lazy val  innerStream: Stream[T#Out]          = inner.expand
+    private[this] var       mapStream  : Stream[T#Out]          = _
+
     private[this] var hasMapStream = false
 
     private[this] var _hasNext: Boolean = _

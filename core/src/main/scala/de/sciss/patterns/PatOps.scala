@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Bridge, IntTop, Num, NumFrac, Top}
+import de.sciss.patterns.Types.{Bridge, IntTop, Num, NumFrac, Ord, Top}
 import de.sciss.patterns.graph._
 
 final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
@@ -52,7 +52,7 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   def size  : Pat.Int = Length(x)
   def length: Pat.Int = Length(x)
 
-  def sorted(implicit ord: Ordering[T#Out]): Pat[T] = Sorted(x)
+  def sorted(implicit ord: Ord[T]): Pat[T] = Sorted(x)
 
   def map[A <: Top, B <: Top](f: Pat[A] => Pat[B])(implicit ev: T <:< Pat[A]): Pat[Pat[B]] = {
     val token = Graph.builder.allocToken()

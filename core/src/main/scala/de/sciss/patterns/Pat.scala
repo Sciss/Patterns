@@ -14,7 +14,7 @@
 package de.sciss.patterns
 
 import de.sciss.patterns
-import de.sciss.patterns.Types.{DoubleSeqTop, DoubleTop, IntTop, Top}
+import de.sciss.patterns.Types.{Aux, DoubleSeqTop, DoubleTop, IntTop, Top}
 import de.sciss.patterns.graph.SeqFill
 
 object Pat {
@@ -33,7 +33,12 @@ object Pat {
     SeqFill(n, inner)
   }
 }
-trait Pat[T <: Top] extends Top {
+
+trait ProductWithAux extends Product {
+  private[patterns] def aux: List[Aux]
+}
+
+trait Pat[T <: Top] extends Top with ProductWithAux {
   final type Out = Stream[T#Out] // Seq[T#Out]
 
   private[patterns] def expand(implicit ctx: Context): Stream[T#Out]
@@ -48,6 +53,9 @@ abstract class Pattern[T <: Top] extends Pat[T] {
   @transient final private[this] lazy val ref = new AnyRef
 
   Graph.builder.addPattern(this)
+
+  // default is _no aux_
+  private[patterns] def aux: List[Aux] = Nil
 
   /** A final implementation of this method which looks up the current stream graph
     * builder and then performs the expansion just as `force`, returning the

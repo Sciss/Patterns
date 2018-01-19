@@ -13,13 +13,15 @@
 
 package de.sciss.patterns.graph
 
-import de.sciss.patterns.Types.{Bridge, NumFrac, Top}
+import de.sciss.patterns.Types.{Aux, Bridge, NumFrac, Top}
 import de.sciss.patterns.{Context, Pat, Pattern, Stream}
 
 final case class LinLin[T1 <: Top, T2 <: Top, T <: Top](in: Pat[T1], inLo: Pat[T1], inHi: Pat[T1],
                                                         outLo: Pat[T2], outHi: Pat[T2])
                                                        (implicit br: Bridge[T1, T2, T], num: NumFrac[T])
   extends Pattern[T] {
+
+  override private[patterns] def aux: List[Aux] = br :: num :: Nil
 
   def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
     private[this] val inStream    = in    .expand.map(br.lift1)

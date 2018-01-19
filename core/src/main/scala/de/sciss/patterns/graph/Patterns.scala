@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Bridge, Num, Top}
+import de.sciss.patterns.Types.{Aux, Bridge, Num, Top}
 import de.sciss.patterns.graph.impl.SeriesLike
 
 import scala.util.Random
@@ -26,6 +26,8 @@ final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pa
                                                        (implicit protected val br: Bridge[T1, T2, T], num: Num[T])
   extends SeriesLike[T1, T2, T] {
 
+  override private[patterns] def aux: List[Aux] = br :: num :: Nil
+
   protected def op(a: T#Out, b: T#Out): T#Out = num.plus(a, b)
 }
 
@@ -33,12 +35,16 @@ final case class Geom[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[
                                                      (implicit protected val br: Bridge[T1, T2, T], num: Num[T])
   extends SeriesLike[T1, T2, T] {
 
+  override private[patterns] def aux: List[Aux] = br :: num :: Nil
+
   protected def op(a: T#Out, b: T#Out): T#Out = num.times(a, b)
 }
 
 final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1], step: Pat[T2])
                                                       (implicit protected val br: Bridge[T1, T2, T], num: Num[T])
   extends Pattern[T] {
+
+  override private[patterns] def aux: List[Aux] = br :: num :: Nil
 
   protected def calcNext(cur: T#Out, step: T#Out)(implicit r: Random): T#Out = {
     num.plus(cur, num.rand2(step))
@@ -86,6 +92,8 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
 
 final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T])
   extends Pattern[T] {
+
+  override private[patterns] def aux: List[Aux] = num :: Nil
 
   def iterator(implicit ctx: Context): Stream[T#Out] = {
     val loIt = lo.expand

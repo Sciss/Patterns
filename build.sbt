@@ -6,15 +6,16 @@ val deps = new {
   val main = new {
     val numbers             = "0.1.3"
     val optional            = "1.0.0"
+    val serial              = "1.0.3"
     val soundProcesses      = "3.16.1"
   }
 
   val test = new {
-    val scalaCollider       = "1.23.0"
-    val ugens               = "1.17.1"
-    val scalaColliderSwing  = "1.35.0"
     val lucre               = "3.5.0"
+    val scalaCollider       = "1.23.0"
+    val scalaColliderSwing  = "1.35.0"
     val scalaTest           = "3.0.4"
+    val ugens               = "1.17.1"
   }
 }
 
@@ -46,6 +47,7 @@ lazy val core = project.in(file("core"))
     libraryDependencies ++= Seq(
       "de.sciss"      %% "numbers"                      % deps.main.numbers,
       "de.sciss"      %% "optional"                     % deps.main.optional,
+      "de.sciss"      %% "serial"                       % deps.main.serial,
       "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % "test",
       "de.sciss"      %% "scalacolliderswing-plotting"  % deps.test.scalaColliderSwing  % "test",
       "de.sciss"      %% "scalacolliderugens-plugins"   % deps.test.ugens               % "test",

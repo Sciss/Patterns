@@ -14,28 +14,46 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Bridge, Num, Top}
+import de.sciss.patterns.Types.{Aux, Bridge, Num, Top}
 
 object BinaryOp {
-  sealed abstract class Op[T <: Top] {
+  sealed abstract class Op[T <: Top] extends ProductWithAux {
     def apply(a: T#Out, b: T#Out): T#Out
+
+    override final def productPrefix = s"BinaryOp$$$name"
+
+    def name: String
   }
 
   final case class Plus[T <: Top]()(implicit num: Num[T]) extends Op[T] {
     def apply(a: T#Out, b: T#Out): T#Out = num.plus(a, b)
+
+    def name = "Plus"
+
+    private[patterns] def aux: List[Aux] = num :: Nil
   }
 
   final case class Times[T <: Top]()(implicit num: Num[T]) extends Op[T] {
     def apply(a: T#Out, b: T#Out): T#Out = num.times(a, b)
+
+    def name = "Times"
+
+    private[patterns] def aux: List[Aux] = num :: Nil
   }
 
   final case class RoundTo[T <: Top]()(implicit num: Num[T]) extends Op[T] {
     def apply(a: T#Out, b: T#Out): T#Out = num.times(a, b)
+
+    def name = "RoundTo"
+
+    private[patterns] def aux: List[Aux] = num :: Nil
   }
 }
 final case class BinaryOp[T1 <: Top, T2 <: Top, T <: Top](op: BinaryOp.Op[T], a: Pat[T1], b: Pat[T2])
                                                          (implicit br: Bridge[T1, T2, T])
   extends Pattern[T] {
+
+  override private[patterns] def aux: List[Aux] = br :: Nil
 
   def iterator(implicit ctx: Context): Stream[T#Out] = {
     val ai = a.expand.map(br.lift1)

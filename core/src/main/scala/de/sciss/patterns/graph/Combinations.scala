@@ -19,7 +19,6 @@ import de.sciss.patterns.Types.Top
 import scala.collection.mutable
 
 final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[Pat[T]] {
-  List(1, 2).combinations(2)
 
   def iterator(implicit ctx: Context): Stream[Stream[T#Out]] = new Stream[Stream[T#Out]] {
     // Adapted from scala.collection.SeqLike#CombinationsItr
