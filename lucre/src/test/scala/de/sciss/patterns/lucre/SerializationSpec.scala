@@ -54,15 +54,32 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
     val g = Graph {
       import graph._
       val b = Brown(lo = 10, hi = 40, step = 4)
-      Pat.seqFill(4) { _ =>
+      val c = Pat.seqFill(4) { _ =>
         b.take(10).distinct.sorted * 0.5
       }
+      val d = c.drop(4).stutter(2)
+      c ++ d
     }
     val out = DataOutput()
     GraphObj.valueSerializer.write(g, out)
     val in = DataInput(out.toByteArray)
     val g1 = GraphObj.valueSerializer.read(in)
-    assert(g1.sources      === g.sources  )
-    assert(g1.out          ==  g.out      ) // bloody triple-equals macro breaks
+    assert(g1.sources === g.sources)
+    assert(g1.out     ==  g.out    ) // bloody triple-equals macro breaks
+  }
+
+  "An Event Pattern" should "be serializable" in { cursor =>
+    val g = Graph {
+      import graph._
+      val b = Brown(lo = 10, hi = 40, step = 4)
+      val c = b.size
+      Bind("foo" -> b, "bar" -> c)
+    }
+    val out = DataOutput()
+    GraphObj.valueSerializer.write(g, out)
+    val in = DataInput(out.toByteArray)
+    val g1 = GraphObj.valueSerializer.read(in)
+    assert(g1.sources === g.sources)
+    assert(g1.out     ==  g.out    ) // bloody triple-equals macro breaks
   }
 }

@@ -1,7 +1,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Bridge, Num, Top}
+import de.sciss.patterns.Types.{Aux, Bridge, Num, Top}
 
 final case class Add[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
                                                     (implicit protected val br: Bridge[T1, T2, T], num: Num[T])
@@ -29,6 +29,8 @@ final case class Add[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
 final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
                                                     (implicit protected val br: Bridge[T1, T2, T])
   extends Pattern[T] {
+
+  override private[patterns] def aux: List[Aux] = br :: Nil
 
   def iterator(implicit ctx: Context): Stream[T#Out] = {
     val ai = a.expand.map(br.lift1)
