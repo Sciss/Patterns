@@ -231,8 +231,8 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
     }
 
     private def readNew(in: DataInput): Graph[_] = {
-      val ref     = new RefMapIn
-      val b1 = in.readByte()
+      val ref         = new RefMapIn
+      val b1          = in.readByte()
       require(b1 == 'X')    // expecting sequence
       val numSources  = in.readInt()
       val sources     = Vector.fill(numSources) {

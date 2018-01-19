@@ -64,7 +64,7 @@ object Pattern extends Obj.Type {
   // ---- Code ----
 
   object Code extends proc.Code.Type {
-    final val id    = 4
+    final val id    = 5
     final val name  = "Pattern Graph"
     type Repr = Code
 
@@ -74,6 +74,7 @@ object Pattern extends Obj.Type {
         // doesn't work:
         //        "Predef.{any2stringadd => _, _}", // cf. http://stackoverflow.com/questions/7634015/
         "de.sciss.patterns._",
+        "de.sciss.patterns.Types._",
         "de.sciss.patterns.graph._"
       ))
 //      proc.Code.registerImports(proc.Code.Action.id, Vec(
@@ -92,11 +93,13 @@ object Pattern extends Obj.Type {
     def id: Int = Code.id
 
     def compileBody()(implicit compiler: proc.Code.Compiler): Future[Unit] = {
-      ??? // CodeImpl.compileBody[In, Out, Code](this)
+      import Impl.CodeWrapper
+      CodeImpl.compileBody[In, Out, Code](this)
     }
 
     def execute(in: In)(implicit compiler: proc.Code.Compiler): Out = {
-      ??? // CodeImpl.execute[In, Out, Code](this, in)
+      import Impl.CodeWrapper
+      CodeImpl.execute[In, Out, Code](this, in)
     }
 
     def contextName: String = Code.name

@@ -4,6 +4,7 @@ import de.sciss.lucre.stm.Durable
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.patterns.Types.IntTop
 import de.sciss.patterns.{Graph, Pat, graph}
+import de.sciss.serial.{DataInput, DataOutput}
 import de.sciss.synth.proc.SoundProcesses
 import org.scalatest.{Matchers, Outcome, fixture}
 
@@ -32,7 +33,7 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
         in.drop(1)
       }
       Flatten(pat)
-//      Constant[IntTop](1)
+      //      Constant[IntTop](1)
     }
     val (fH, numSources) = cursor.step { implicit tx =>
       val f = Pattern[S]
@@ -47,5 +48,18 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
       assert(g1.sources      === g.sources  )
       assert(g1.out          ==  g.out      ) // bloody triple-equals macro breaks
     }
+  }
+
+  "Another Pattern object" should "be serializable" in { cursor =>
+    val g = Graph[IntTop] {
+      import graph._
+      Brown(lo = 10, hi = 40, step = 4).take(10)
+    }
+    val out = DataOutput()
+    GraphObj.valueSerializer.write(g, out)
+    val in = DataInput(out.toByteArray)
+    val g1 = GraphObj.valueSerializer.read(in)
+    assert(g1.sources      === g.sources  )
+    assert(g1.out          ==  g.out      ) // bloody triple-equals macro breaks
   }
 }

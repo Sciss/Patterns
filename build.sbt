@@ -33,6 +33,7 @@ lazy val lgpl2 = "LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")
 
 lazy val root = project.in(file("."))
   .aggregate(core, lucre)
+  .dependsOn(core, lucre)
   .settings(commonSettings)
   .settings(
     name := baseName
