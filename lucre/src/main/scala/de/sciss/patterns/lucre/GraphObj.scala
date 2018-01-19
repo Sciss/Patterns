@@ -21,7 +21,7 @@ import de.sciss.lucre.expr.Expr
 import de.sciss.lucre.stm.{Copy, Elem, Obj, Sys}
 import de.sciss.model.Change
 import de.sciss.patterns.Types.Top
-import de.sciss.patterns.graph.Pseq
+import de.sciss.patterns.graph.{Constant, Pseq}
 import de.sciss.patterns.{Graph, Pat, Pattern => _Pattern}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
@@ -88,8 +88,9 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
 
     private def writeElem(e: Any, out: DataOutput, ref: RefMapOut): Unit =
       e match {
-//        case c: Constant =>
-//          out.writeByte('C')
+        case c: Constant[_] =>
+          out.writeByte('C')
+          writeElem(c.value, out, ref)
 //          if (c.isDouble) {
 //            out.writeByte('d')
 //            out.writeDouble(c.doubleValue)
@@ -199,7 +200,9 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
 
     private def readElem(in: DataInput, ref: RefMapIn): Any = {
       (in.readByte(): @switch) match {
-//        case 'C' =>
+        case 'C' =>
+          val value = readElem(in, ref)
+          Constant[Top](value.asInstanceOf[Top#Out])
 //          (in.readByte(): @switch) match {
 //            case 'd' => ConstantD(in.readDouble())
 //            case 'i' => ConstantI(in.readInt   ())
