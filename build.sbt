@@ -13,6 +13,7 @@ val deps = new {
     val scalaCollider       = "1.23.0"
     val ugens               = "1.17.1"
     val scalaColliderSwing  = "1.35.0"
+    val lucre               = "3.5.0"
     val scalaTest           = "3.0.4"
   }
 }
@@ -52,12 +53,16 @@ lazy val core = project.in(file("core"))
     mainClass in (Test, run) := Some("de.sciss.patterns.RonWithESP")
   )
 
+lazy val bdb = "bdb"  // either "bdb" or "bdb6"
+
 lazy val lucre = project.in(file("lucre"))
   .dependsOn(core)
   .settings(commonSettings)
   .settings(
     name := s"$baseName-lucre",
     libraryDependencies ++= Seq(
-      "de.sciss" %% "soundprocesses-core" % deps.main.soundProcesses
+      "de.sciss"      %% "soundprocesses-core"  % deps.main.soundProcesses,
+      "de.sciss"      %% s"lucre-$bdb"          % deps.test.lucre           % "test",
+      "org.scalatest" %% "scalatest"            % deps.test.scalaTest       % "test"
     )
   )

@@ -28,11 +28,11 @@ package object patterns {
 
   //  implicit def const[A, T <: Top](x: A)(implicit tpe: T { type Out = A }): Elem[T] = Const(x)
 
-  implicit def constIntPat      (x: Int         ): Pat[IntTop      ] = Constant(x)
-  implicit def constIntSeqPat   (xs: Seq[Int]   ): Pat[IntSeqTop   ] = Constant(xs)
-  implicit def constDoublePat   (x: Double      ): Pat[DoubleTop   ] = Constant(x)
-  implicit def constDoubleSeqPat(xs: Seq[Double]): Pat[DoubleSeqTop] = Constant(xs)
-  implicit def constStringPat   (x: String      ): Pat[StringTop   ] = Constant(x)
+  implicit def constIntPat      (x: Int         ): Pat[IntTop      ] = Constant[IntTop      ](x)
+  implicit def constIntSeqPat   (xs: Seq[Int]   ): Pat[IntSeqTop   ] = Constant[IntSeqTop   ](xs)
+  implicit def constDoublePat   (x: Double      ): Pat[DoubleTop   ] = Constant[DoubleTop   ](x)
+  implicit def constDoubleSeqPat(xs: Seq[Double]): Pat[DoubleSeqTop] = Constant[DoubleSeqTop](xs)
+  implicit def constStringPat   (x: String      ): Pat[StringTop   ] = Constant[StringTop   ](x)
 
   implicit def patSeq[A, T <: Top](xs: Seq[A])(implicit lift: A => Pat[T]): Seq[Pat[T]] =
     xs.map(lift)
