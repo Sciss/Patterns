@@ -27,7 +27,8 @@ lazy val commonSettings = Seq(
   scalaVersion        := "2.12.4",
   crossScalaVersions  := Seq("2.12.4", "2.11.12"),
   licenses            := Seq(lgpl2),
-  scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint")
+  scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint"),
+  resolvers           += "Oracle Repository" at "http://download.oracle.com/maven"  // required for sleepycat
 )
 
 lazy val lgpl2 = "LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")
