@@ -1,0 +1,56 @@
+package de.sciss.patterns.lucre
+
+import de.sciss.lucre.stm
+import de.sciss.lucre.stm.Cursor
+import de.sciss.lucre.synth.Sys
+import de.sciss.patterns.{Event, Graph}
+import de.sciss.synth
+import de.sciss.synth.proc.AuralContext
+
+object AuralPatternTest extends AuralTestLike.Factory {
+  def run[S <: Sys[S]](name: String)(implicit cursor: Cursor[S]): Unit =
+    new AuralPatternTest[S](name)
+}
+class AuralPatternTest[S <: Sys[S]](name: String)(implicit cursor: stm.Cursor[S]) extends AuralTestLike[S] {
+  protected def run()(implicit context: AuralContext[S]): Unit = test1()
+
+  def test1()(implicit context: AuralContext[S]): Unit = {
+    println("----test1----")
+    println(
+      """
+        |Expected behaviour:
+        |A randomly walking pitch sequence is heard
+        |
+        |""".stripMargin)
+
+    val patVal = Graph {
+      import de.sciss.patterns.graph._
+      val b = Brown(lo = 30, hi = 130, step = 6)
+      Bind("value" -> b, Event.keyDur -> 0.5)
+    }
+
+    val view = cursor.step { implicit tx =>
+      val _view = procV {
+        import de.sciss.synth.proc.graph.Ops._
+        import synth._
+        import ugen._
+        val pitch   = "pitch".kr
+        val osc     = SinOsc.ar(pitch.midicps) * 0.25
+        Out.ar(0, Pan2.ar(osc))
+      }
+
+      val pat = Pattern[S]
+      pat.graph() = patVal
+      _view.obj().attr.put("pitch", pat)
+
+      _view
+    }
+
+    cursor.step { implicit tx =>
+      println("--issue play--")
+      view.play()
+    }
+
+    stopAndQuit(8)
+  }
+}

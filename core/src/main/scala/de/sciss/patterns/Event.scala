@@ -14,7 +14,6 @@
 package de.sciss.patterns
 
 import de.sciss.patterns.Types.CTop
-import de.sciss.patterns.graph.Constant
 
 object Event {
 //  type Out = Event#COut
@@ -35,9 +34,9 @@ object Event {
 
   private def getOrElseDouble(out: Out, key: String, default: => Double): Double =
     out.map.get(key).fold(default) {
-      case Some(Constant(d: Double))  => d
-      case Some(Constant(i: Int))     => i.toDouble
-      case _                          => default
+      case Some(d: Double)  => d
+      case Some(i: Int)     => i.toDouble
+      case _                => default
     }
 
   final val keyDelta      = "delta"

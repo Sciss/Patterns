@@ -22,10 +22,9 @@ import de.sciss.patterns.Event
 import de.sciss.serial.Serializer
 import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.proc.AuralAttribute.{Factory, Observer}
-import de.sciss.synth.proc.impl.{AuralScheduledBase, DummySerializerFactory}
+import de.sciss.synth.proc.impl.{AuralGraphemeBase, AuralScheduledBase, DummySerializerFactory}
 import de.sciss.synth.proc.{AuralAttribute, AuralContext, TimeRef}
 
-import scala.annotation.tailrec
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.concurrent.stm.{InTxn, Ref}
 
@@ -63,30 +62,20 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
                                                                  patContext: patterns.Context[InTxn],
                                                                  protected val iSys: S#Tx => I#Tx)
   extends AuralScheduledBase[S, AuralAttribute.Target[S], AuralAttribute[S]]
-    with AuralAttribute[S]
-    with Observer[S] {
+    with AuralAttribute[S] {
   attr =>
 
   import TxnLike.peer
 
-  type Elem = AuralAttribute[S]
+  def typeID: Int = Pattern.typeID
 
-  // we sample the first encountered objects for which temporary views
-  // have to built in order to get the number-of-channels. these
-  // temporary views are here and must be disposed with the parent view.
-  private[this] val prefChansElemRef  = Ref[Vec[Elem]](Vector.empty)
+  type ViewID     = Unit
+  type Elem       = AuralAttribute[S]
+  type ElemHandle = AuralGraphemeBase.ElemHandle[S, Elem]
+
   private[this] val prefChansNumRef   = Ref(-2)   // -2 = cache invalid. across contents of `prefChansElemRef`
 
   private[this] var patObserver: Disposable[S#Tx] = _
-
-  private def makeViewElem(start: Long, child: Obj[S])(implicit tx: S#Tx): Elem = {
-    val view = AuralAttribute(key, child, attr)
-//    view match {
-//      case ga: GraphemeAware[S] => ga.setGrapheme(start, obj())
-//      case _ =>
-//    }
-    view
-  }
 
   def preferredNumChannels(implicit tx: S#Tx): Int = {
     val cache = prefChansNumRef()
@@ -99,78 +88,98 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     val stream  = pat.graph.value.expand[InTxn]
     if (!stream.hasNext) return -1
 
-    val val0 = stream.next() match {
-      case evt: Event.Out => ??? : Obj[S]
+    val res = stream.next() match {
+      case evt: Event.Out => evt.map.get("value").fold(-1) {
+        case xs: Seq[_] => xs.size
+        case _ => 1
+      }
       case _ => return -1
     }
 
-    val view    = makeViewElem(0L, val0 /* stream.next() */)
-    val views   = Vector.empty :+ view
-    prefChansElemRef.swap(views).foreach(_.dispose())
-
-    @tailrec
-    def loop(views: Vec[Elem], res: Int): Int = views match {
-      case head +: tail =>
-        val ch = head.preferredNumChannels
-        // if there is any child with `-1` (undefined), we have to return
-        if (ch == -1) ch else loop(tail, math.max(res, ch))
-      case _ => res
-    }
-
-    val res = loop(views, -1)
     prefChansNumRef() = res
     // println(s"preferredNumChannels - ${views.size} elems yield new: $res")
     res
   }
 
-  // if cache is affected, simply forward, so that cache is rebuilt.
-  def attrNumChannelsChanged(attr: Elem)(implicit tx: S#Tx): Unit =
-    if (prefChansElemRef().contains(attr)) {  // then invalidate, otherwise ignore (what can we do?)
-      prefChansNumRef() = -2
-      observer.attrNumChannelsChanged(this)
-    }
-
-  override def dispose()(implicit tx: S#Tx): Unit = {
-    super.dispose()
-    prefChansElemRef.swap(Vector.empty).foreach(_.dispose())
-  }
-
   def init(pat: Pattern[S])(implicit tx: S#Tx): this.type = {
-    patObserver = pat.changed.react { implicit tx =>upd =>
+    patObserver = pat.changed.react { implicit tx => upd =>
       upd.changes.foreach {
         case Pattern.GraphChange(ch) =>
-          ??? // elemAdded  (upd.pin, time, entry.value)
+          val oldNum = prefChansNumRef.swap(-2)
+          val newNum = preferredNumChannels
+          if (oldNum != newNum) {
+            observer.attrNumChannelsChanged(this)
+          }
       }
     }
     this
   }
 
-  // XXX TODO:
+  type Target = AuralAttribute.Target[S]
+
+  /** Called during preparation of armed elements. This
+    * happens either during initial `prepare` or during grid-events.
+    * Given the `prepareSpan`, the sub-class should
+    *
+    * - find the elements using an `intersect`
+    * - for each build a view and store it somewhere
+    * - for each view call `prepareChild`
+    * - accumulate the results of `prepareChild` into a `Map` that is returned.
+    *
+    * The map will become part of `IPreparing`. (NOT: The returned `Boolean` indicates
+    * if elements were found (`true`) or not (`false`)).
+    *
+    * @param initial  if `true` this is an initial preparation which means the method
+    *                 must include views that start before `prepareSpan` if their span
+    *                 overlaps with `prepareSpan`. If `false` this is a follow up from
+    *                 `gridReached` and the search must be restricted to views that
+    *                 start no earlier than `prepareSpan`.
+    */
   protected def processPrepare(prepareSpan: Span, timeRef: TimeRef, initial: Boolean)
                               (implicit tx: S#Tx): Iterator[PrepareResult] = ???
 
-  type ViewID     = Unit
-  type ElemHandle = Unit
+  // type PrepareResult = (ViewID, SpanLike, Obj[S])
 
-  protected def processPlay(timeRef: TimeRef, target: AuralAttribute.Target[S])(implicit tx: S#Tx): Unit = ???
+  protected def viewEventAfter(offset: Long)(implicit tx: S#Tx): Long =
+    viewTree.ceil(offset + 1)(iSys(tx)).fold(Long.MaxValue)(_._1)
+
+  protected def modelEventAfter(offset: Long)(implicit tx: S#Tx): Long =
+    ??? // obj().eventAfter(offset).getOrElse(Long.MaxValue)
+
+  protected def processPlay(timeRef: TimeRef, target: Target)(implicit tx: S#Tx): Unit = {
+    implicit val itx: I#Tx = iSys(tx)
+    viewTree.floor(timeRef.offset).foreach { case (start, entries) =>
+      playEntry(entries, start = start, timeRef = timeRef, target = target)
+    }
+  }
+
+  private def playEntry(entries: Vec[Elem], start: Long, timeRef: TimeRef, target: Target)
+                       (implicit tx: S#Tx): Unit = {
+    // val start     = timeRef.offset
+    val toStart   = entries.head
+    val stop      = viewEventAfter(start)
+    val span      = if (stop == Long.MaxValue) Span.From(start) else Span(start, stop)
+    val h         = ElemHandle(start, toStart)
+    val childTime = timeRef.child(span)
+    playView(h, childTime, target)
+  }
+
+  protected def ElemHandle(start: Long, view: Elem): ElemHandle =
+    AuralGraphemeBase.ElemHandle(start, view)
 
   protected def processEvent(play: IPlaying, timeRef: TimeRef)(implicit tx: S#Tx): Unit = ???
-
-  protected def viewEventAfter(offset: Long)(implicit tx: S#Tx): Long = ???
-
-  protected def modelEventAfter(offset: Long)(implicit tx: S#Tx): Long = ???
 
   protected def elemFromHandle(h: ElemHandle): AuralAttribute[S] = ???
 
   protected def mkView(vid: ViewID, span: SpanLike, obj: Obj[S])(implicit tx: S#Tx): ElemHandle = ???
 
-  protected def checkReschedule(h: ElemHandle, currentOffset: Long, oldTarget: Long, elemPlays: Boolean)(implicit tx: S#Tx): Boolean = ???
+  protected def checkReschedule(h: ElemHandle, currentOffset: Long, oldTarget: Long, elemPlays: Boolean)
+                               (implicit tx: S#Tx): Boolean = ???
 
-  protected def playView(h: ElemHandle, timeRef: TimeRef.Option, target: AuralAttribute.Target[S])(implicit tx: S#Tx): Unit = ???
+  protected def playView(h: ElemHandle, timeRef: TimeRef.Option, target: AuralAttribute.Target[S])
+                        (implicit tx: S#Tx): Unit = ???
 
   protected def stopView(h: ElemHandle)(implicit tx: S#Tx): Unit = ???
 
   protected def stopViews()(implicit tx: S#Tx): Unit = ???
-
-  def typeID: Int = Pattern.typeID
 }
