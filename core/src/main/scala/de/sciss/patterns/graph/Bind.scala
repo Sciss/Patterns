@@ -44,12 +44,11 @@ final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
       _valid() = false
 
     private def mkState()(implicit tx: Tx): EOut[Tx] = {
-      val b = Event.Out.newBuilder
-      mapE.foreach {
+      val m = mapE.map {
         case (key, value) =>
-          b += key -> value.next()
+          key -> value.next()
       }
-      b.result()
+      Event.Out(m)
     }
 
     def next()(implicit tx: Tx): EOut[Tx] = {

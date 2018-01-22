@@ -108,7 +108,7 @@ object RonWithESP {
             case Left(it) =>
               val evt: Out = ??? // it.next()
               val ctl0 = ctlNames.flatMap { key =>
-                evt.get(key).collect {
+                evt.map.get(key).collect {
                   case d: Double  => key -> d: ControlSet
                   case i: Int     => key -> i: ControlSet
                 }
@@ -117,7 +117,7 @@ object RonWithESP {
               val amp     = Event.amp         (evt)
               val sustain = Event.sustain     (evt) / tempo
               val delta   = Event.delta       (evt) / tempo
-              val defName = evt.get("instrument").fold("default")(_.toString)
+              val defName = evt.map.get("instrument").fold("default")(_.toString)
 
               val ctl     = ctl0 ++ List[ControlSet]("freq" -> freq, "amp" -> amp)
 

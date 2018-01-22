@@ -18,6 +18,7 @@ import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Disposable, Obj, TxnLike}
 import de.sciss.lucre.synth.Sys
 import de.sciss.patterns
+import de.sciss.patterns.Event
 import de.sciss.serial.Serializer
 import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.proc.AuralAttribute.{Factory, Observer}
@@ -78,7 +79,7 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
 
   private[this] var patObserver: Disposable[S#Tx] = _
 
-  protected def makeViewElem(start: Long, child: Obj[S])(implicit tx: S#Tx): Elem = {
+  private def makeViewElem(start: Long, child: Obj[S])(implicit tx: S#Tx): Elem = {
     val view = AuralAttribute(key, child, attr)
 //    view match {
 //      case ga: GraphemeAware[S] => ga.setGrapheme(start, obj())
@@ -98,7 +99,12 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     val stream  = pat.graph.value.expand[InTxn]
     if (!stream.hasNext) return -1
 
-    val view    = makeViewElem(0L, ??? /* stream.next() */)
+    val val0 = stream.next() match {
+      case evt: Event.Out => ??? : Obj[S]
+      case _ => return -1
+    }
+
+    val view    = makeViewElem(0L, val0 /* stream.next() */)
     val views   = Vector.empty :+ view
     prefChansElemRef.swap(views).foreach(_.dispose())
 

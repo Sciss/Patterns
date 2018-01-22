@@ -32,7 +32,7 @@ object RonTuplePure {
         (Event.keySustain     -> Event.sustain    (elem0)) +
         (Event.keyAmp         -> Event.amp        (elem0))
 
-      val elemS = elem.mapValues(mkElemString).mkString("(", ", ", ")")
+      val elemS = elem.map.mapValues(mkElemString).mkString("(", ", ", ")")
       println(f"t = $time%g: $elemS")
       //      println(f"t = $time%g: $elem")
 
