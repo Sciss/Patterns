@@ -79,15 +79,15 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
         numbers() = _numbers
       }
 
-      new Stream[Tx, T#Out] {
-        private[this] val peer = buf.result().iterator
+//      new Stream[Tx, T#Out] {
+//        private[this] val peer = buf.result().iterator
+//
+//        def reset()(implicit tx: Tx): Unit    = ()
+//        def hasNext(implicit tx: Tx): Boolean = peer.hasNext
+//        def next ()(implicit tx: Tx): T#Out   = peer.next()
+//      }
 
-        def reset()(implicit tx: Tx): Unit    = ()
-        def hasNext(implicit tx: Tx): Boolean = peer.hasNext
-        def next ()(implicit tx: Tx): T#Out   = peer.next()
-      }
-
-      ???
+      impl.PatFromSeq(buf.result())
     }
 
     private[this] val inStream: Stream[Tx, T#Out] = in.expand
