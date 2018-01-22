@@ -65,7 +65,7 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
     private[this] val _valid    = ctx.newVar(false)
 
     private def validate()(implicit tx: Tx): Unit =
-      if (_valid()) {
+      if (!_valid()) {
         _valid() = true
         _hasNext() = loStream.hasNext && hiStream.hasNext
         if (_hasNext()) {
