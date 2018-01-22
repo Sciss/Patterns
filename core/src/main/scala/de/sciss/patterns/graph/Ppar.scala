@@ -24,7 +24,7 @@ final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset: Pat.In
   type EOut = Event#Out
 
   def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, EOut] = new Stream[Tx, EOut] {
-    private[this] val listStream: Stream[Tx, Stream[Tx, Map[String, _]]] = ??? // list    .expand[Tx]
+    private[this] val listStream: Stream[Tx, Stream[Tx, Map[String, _]]] = list.expand[Tx]
     private[this] val repeatsStream = repeats .expand[Tx]
     private[this] val offsetStream  = offset  .expand[Tx]
 

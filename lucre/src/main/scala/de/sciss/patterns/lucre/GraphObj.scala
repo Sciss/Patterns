@@ -20,7 +20,7 @@ import de.sciss.lucre.expr
 import de.sciss.lucre.expr.Expr
 import de.sciss.lucre.stm.{Copy, Elem, Obj, Sys}
 import de.sciss.model.Change
-import de.sciss.patterns.Types.{Aux, Top}
+import de.sciss.patterns.Types.{Aux, CTop, Top}
 import de.sciss.patterns.graph.{Constant, Pseq}
 import de.sciss.patterns.{Graph, Pat, ProductWithAux, Pattern => _Pattern}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
@@ -215,7 +215,7 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
       (in.readByte(): @switch) match {
         case 'C' =>
           val value = readElem(in, ref)
-          Constant[Top](value.asInstanceOf[Top#Out])
+          Constant[CTop](value.asInstanceOf[CTop#Out])
 //          (in.readByte(): @switch) match {
 //            case 'd' => ConstantD(in.readDouble())
 //            case 'i' => ConstantI(in.readInt   ())

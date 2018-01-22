@@ -34,7 +34,7 @@ class PatternsSpec extends PatSpec {
     val p1: Pat.Int = Pseq(1 to 4)
     val p2 = p1.combinations(3)
     import ctx.tx
-    val res: List[List[Int]] = p2.expand.map(_.expand.toList).toList
+    val res: List[List[Int]] = p2.expand.map(_.toList).toList
 
     val plain = List(1, 2, 3, 4).combinations(3).toList
 
@@ -48,5 +48,21 @@ class PatternsSpec extends PatSpec {
     val plain = List(1, 2, 3, 4).combinations(3).toList.flatten
 
     assert(values === plain)
+  }
+
+  "Map" should work in {
+    val in = Pseq(1 to 4).combinations(3)
+    val pat = in.map { in: Pat.Int =>
+      in.drop(1)
+    }
+
+    import ctx.tx
+    val res = pat.expand.map(_.toList).toList
+
+    val plain = List(1 to 4: _*).combinations(3)
+      .map(_.drop(1))
+      .toList
+
+    assert(res === plain)
   }
 }

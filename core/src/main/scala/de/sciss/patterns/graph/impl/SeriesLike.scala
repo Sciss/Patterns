@@ -26,15 +26,15 @@ trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pattern[T] {
 
   protected def step: Pat[T2]
 
-  protected def op(a: T#Out, b: T#Out): T#Out
+  protected def op[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
 
   // ---- impl ----
 
-  final def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
+  final def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = new Stream[Tx, T#TOut[Tx]] {
     private[this] val ai = start.expand.map(br.lift1)
     private[this] val bi = step .expand.map(br.lift2)
 
-    private[this] val state     = ctx.newVar[T#Out](null.asInstanceOf[T#Out])
+    private[this] val state     = ctx.newVar[T#TOut[Tx]](null.asInstanceOf[T#TOut[Tx]])
     private[this] val _hasNext  = ctx.newVar(false)
     private[this] val _valid    = ctx.newVar(false)
 
@@ -53,7 +53,7 @@ trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pattern[T] {
         if (_hasNext()) state() = ai.next()
       }
 
-    def next()(implicit tx: Tx): T#Out = {
+    def next()(implicit tx: Tx): T#TOut[Tx] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = state()

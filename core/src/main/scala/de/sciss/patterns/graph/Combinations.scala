@@ -20,14 +20,14 @@ import scala.collection.mutable
 
 final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[Pat[T]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Pat[T] /* Stream[Tx, T#Out] */] = new Stream[Tx, Pat[T] /* Stream[Tx, T#Out] */] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Stream[Tx, T#TOut[Tx]]] = new Stream[Tx, Stream[Tx, T#TOut[Tx]]] {
     // Adapted from scala.collection.SeqLike#CombinationsItr
     // Scala license: BSD 3-clause
 
     // generating all nums such that:
     // (1) nums(0) + .. + nums(length-1) = n
     // (2) 0 <= nums(i) <= cnts(i), where 0 <= i <= cnts.length-1
-    private[this] val elements  = ctx.newVar[IndexedSeq[T#Out]](null)
+    private[this] val elements  = ctx.newVar[IndexedSeq[T#TOut[Tx]]](null)
     private[this] val counts    = ctx.newVar[Vector[Int]](null)
     private[this] val numbers   = ctx.newVar[Vector[Int]](null)
     private[this] val offsets   = ctx.newVar[Vector[Int]](null)
@@ -38,11 +38,11 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Pat[T] /* Stream[Tx, T#Out] */ = {
+    def next()(implicit tx: Tx): Stream[Tx, T#TOut[Tx]] = {
       if (!_hasNext()) Stream.exhausted()
 
       /* Calculate this result. */
-      val buf = List.newBuilder[T#Out]
+      val buf = List.newBuilder[T#TOut[Tx]]
       var _numbers  = numbers()
       val _elements = elements()
       val _offsets  = offsets()
@@ -79,19 +79,17 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
         numbers() = _numbers
       }
 
-//      new Stream[Tx, T#Out] {
-//        private[this] val peer = buf.result().iterator
-//
-//        def reset()(implicit tx: Tx): Unit    = ()
-//        def hasNext(implicit tx: Tx): Boolean = peer.hasNext
-//        def next ()(implicit tx: Tx): T#Out   = peer.next()
-//      }
+      new Stream[Tx, T#TOut[Tx]] {
+        private[this] val peer = buf.result().iterator
 
-      impl.PatFromSeq(buf.result())
+        def reset()(implicit tx: Tx): Unit        = ()
+        def hasNext(implicit tx: Tx): Boolean     = peer.hasNext
+        def next ()(implicit tx: Tx): T#TOut[Tx]  = peer.next()
+      }
     }
 
-    private[this] val inStream: Stream[Tx, T#Out] = in.expand
-    private[this] val nStream : Stream[Tx, Int]   = n .expand
+    private[this] val inStream: Stream[Tx, T#TOut[Tx]]  = in.expand
+    private[this] val nStream : Stream[Tx, Int]         = n .expand
 
     private[this] var nVal: Int = _
 
@@ -110,10 +108,10 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
 
       nVal = nStream.next()
 
-      val m = mutable.Map.empty[T#Out, Int]
+      val m = mutable.Map.empty[T#TOut[Tx], Int]
 
       // e => (e, weight(e))
-      val tup: List[(T#Out, Int)] = inStream.map(e => (e, m.getOrElseUpdate(e, m.size))).toList.sortBy(_._2)
+      val tup: List[(T#TOut[Tx], Int)] = inStream.map(e => (e, m.getOrElseUpdate(e, m.size))).toList.sortBy(_._2)
       val (es, is) = tup.unzip
       var cs = Vector.fill(m.size)(0) //  new Array[Int](m.size)
       is.foreach { i =>

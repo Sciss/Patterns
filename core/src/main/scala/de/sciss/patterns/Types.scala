@@ -20,15 +20,13 @@ import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.annotation.switch
 import scala.language.higherKinds
-import scala.math.Numeric.{DoubleIsFractional, IntIsIntegral}
-import scala.math.Ordering
 import scala.util.Random
 
 object Types {
-  type TopT[A] = Top { type Out = A }
+  type TopT[A] = Top { type TOut[Tx] = A }
 
   object Top {
-    type Seq[T <: Top] = Top { type Out = scala.Seq[T#Out] }
+    type Seq[T <: Top] = Top { type TOut[Tx] = scala.Seq[T#TOut[Tx]] }
 
 //    def Seq[T <: Top](implicit peer: T): Seq[T] = new Seq(peer)
 //    final class Seq[T <: Top](val peer: T) extends Top {
@@ -36,9 +34,13 @@ object Types {
 //    }
   }
   trait Top {
-    type Out
+    type TOut[Tx]
+  }
 
-//    def lift(x: Out): Out
+  trait CTop extends Top {
+    type TOut[Tx] = Out
+
+    type Out
   }
 
   object Aux {
@@ -72,54 +74,55 @@ object Types {
   }
 
   trait Bridge[T1 <: Top, T2 <: Top, T <: Top] extends Aux {
-    def lift1(a: T1#Out): T#Out
-    def lift2(a: T2#Out): T#Out
+    def lift1[Tx](a: T1#TOut[Tx]): T#TOut[Tx]
+    def lift2[Tx](a: T2#TOut[Tx]): T#TOut[Tx]
   }
 
-  trait Ord[T <: Top] extends Aux with Ordering[T#Out]
+  trait Ord[T <: Top] extends Aux {
+    // Ordering[T#Out]
+    def lt[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): Boolean
+  }
 
   trait Num[T <: Top] extends Aux {
-    def plus    (a: T#Out, b: T#Out): T#Out
-    def minus   (a: T#Out, b: T#Out): T#Out
-    def times   (a: T#Out, b: T#Out): T#Out
+    def plus   [Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
+    def minus  [Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
+    def times  [Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
+    def roundTo[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
+    def negate [Tx](a: T#TOut[Tx]               ): T#TOut[Tx]
+    def abs    [Tx](a: T#TOut[Tx]               ): T#TOut[Tx]
 
-    def roundTo (a: T#Out, b: T#Out): T#Out
+    def zero[Tx]: T#TOut[Tx]
+    def one [Tx]: T#TOut[Tx]
 
-    def negate  (a: T#Out): T#Out
-    def abs     (a: T#Out): T#Out
+    def rand2[Tx](a: T#TOut[Tx]               )(implicit r: Random): T#TOut[Tx]
+    def rrand[Tx](a: T#TOut[Tx], b: T#TOut[Tx])(implicit r: Random): T#TOut[Tx]
 
-    def zero: T#Out
-    def one : T#Out
-
-    def rand2(a: T#Out          )(implicit r: Random): T#Out
-    def rrand(a: T#Out, b: T#Out)(implicit r: Random): T#Out
-
-    def fold(a: T#Out, lo: T#Out, hi: T#Out)(implicit r: Random): T#Out
+    def fold[Tx](a: T#TOut[Tx], lo: T#TOut[Tx], hi: T#TOut[Tx])(implicit r: Random): T#TOut[Tx]
   }
 
   trait NumFrac[T <: Top] extends Num[T] {
-    def div(a: T#Out, b: T#Out): T#Out
+    def div[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
   }
   
   trait SeqLikeNum[A, T <: SeqTop[A]] extends Num[T] {
-    type P <: Top { type Out = A }
+    type P <: CTop { type Out = A }
     protected val peer: Num[P]
     
-    final def plus    (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.plus    )
-    final def minus   (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.minus   )
-    final def times   (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.times   )
-    final def roundTo (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.roundTo )
+    final def plus    [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.plus    )
+    final def minus   [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.minus   )
+    final def times   [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.times   )
+    final def roundTo [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.roundTo )
 
-    def negate(a: Seq[A]): Seq[A] = unOp(a)(peer.negate)
-    def abs   (a: Seq[A]): Seq[A] = unOp(a)(peer.abs   )
+    def negate[Tx](a: Seq[A]): Seq[A] = unOp(a)(peer.negate)
+    def abs   [Tx](a: Seq[A]): Seq[A] = unOp(a)(peer.abs   )
 
-    def zero: Seq[A] = peer.zero :: Nil
-    def one : Seq[A] = peer.one  :: Nil
+    def zero[Tx]: Seq[A] = peer.zero :: Nil
+    def one [Tx]: Seq[A] = peer.one  :: Nil
 
-    def rand2(a: Seq[A]           )(implicit r: Random): Seq[A] = unOp (a   )(peer.rand2)
-    def rrand(a: Seq[A], b: Seq[A])(implicit r: Random): Seq[A] = binOp(a, b)(peer.rrand)
+    def rand2[Tx](a: Seq[A]           )(implicit r: Random): Seq[A] = unOp (a   )(peer.rand2)
+    def rrand[Tx](a: Seq[A], b: Seq[A])(implicit r: Random): Seq[A] = binOp(a, b)(peer.rrand)
 
-    def fold(a: Seq[A], lo: Seq[A], hi: Seq[A])(implicit r: Random): Seq[A] = ternOp(a, lo, hi)(peer.fold)
+    def fold[Tx](a: Seq[A], lo: Seq[A], hi: Seq[A])(implicit r: Random): Seq[A] = ternOp(a, lo, hi)(peer.fold)
 
     final protected def unOp(a: Seq[A])(op: A => A): Seq[A] = a.map(op)
 
@@ -146,7 +149,7 @@ object Types {
   trait SeqLikeNumFrac[A, T <: SeqTop[A]] extends SeqLikeNum[A, T] with NumFrac[T] {
     override protected val peer: NumFrac[P]
 
-    final def div(a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.div)
+    final def div[Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.div)
   }
 
   trait IntLikeNum[T <: SeqTop[Int]] extends SeqLikeNum[Int, T] {
@@ -181,7 +184,7 @@ object Types {
     def map2   [A, B, Z](fa: F[A], fb: F[B])(f: (A, B) => Z): F[Z]  = map(product(fa, fb)) { case (a, b) => f(a, b) }
   }
 
-  trait ScalarOrSeqTop[A] extends Top {
+  trait ScalarOrSeqTop[A] extends CTop {
     def lift(in: Out): Seq[A]
 
     type Index[_]
@@ -197,8 +200,8 @@ object Types {
 
     final def lift(in: Seq[A]): Seq[A] = in
 
-    final def lift1(a: Seq[A]): Seq[A] = a
-    final def lift2(a: Seq[A]): Seq[A] = a
+    final def lift1[Tx](a: Seq[A]): Seq[A] = a
+    final def lift2[Tx](a: Seq[A]): Seq[A] = a
 
     final def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C] = i.map(fun)
 
@@ -213,8 +216,8 @@ object Types {
 
     final def lift(in: A): Seq[A] = in :: Nil
 
-    final def lift1(a: A): A = a
-    final def lift2(a: A): A = a
+    final def lift1[Tx](a: A): A = a
+    final def lift2[Tx](a: A): A = a
 
     final def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C] = fun(i)
 
@@ -238,20 +241,29 @@ object Types {
     extends IntTop 
       with  Bridge[IntTop, IntTop, IntTop] 
       with  Num[IntTop]
-      with  Ord[IntTop]
-      with  IntIsIntegral
-      with  Ordering.IntOrdering {
+      with  Ord[IntTop] {
 
     final val id = 0
 
-    def roundTo(a: Int, b: Int): Int = if (b == 0) a else math.round(a.toDouble / b).toInt * b
+    def zero   [Tx]: Int = 0
+    def one    [Tx]: Int = 1
 
-    def rand2(a: Int)(implicit r: Random): Int = r.nextInt(2 * a + 1) - a
+    def negate [Tx](a: Int): Int = -a
+    def abs    [Tx](a: Int): Int = math.abs(a)
 
-    def rrand(a: Int, b: Int)(implicit r: Random): Int =
+    def plus   [Tx](a: Int, b: Int): Int = a + b
+    def minus  [Tx](a: Int, b: Int): Int = a - b
+    def times  [Tx](a: Int, b: Int): Int = a * b
+    def roundTo[Tx](a: Int, b: Int): Int = if (b == 0) a else math.round(a.toDouble / b).toInt * b
+
+    def rand2[Tx](a: Int)(implicit r: Random): Int = r.nextInt(2 * a + 1) - a
+
+    def rrand[Tx](a: Int, b: Int)(implicit r: Random): Int =
       r.nextInt(b - a + 1) + a
 
-    def fold(a: Int, lo: Int, hi: Int)(implicit r: Random): Int = IntFunctions.fold(a, lo, hi)
+    def lt[Tx](a: Int, b: Int): Boolean = a < b
+
+    def fold[Tx](a: Int, lo: Int, hi: Int)(implicit r: Random): Int = IntFunctions.fold(a, lo, hi)
   }
 
   sealed trait DoubleLikeTop extends ScalarOrSeqTop[Double] with Top
@@ -271,64 +283,74 @@ object Types {
     extends DoubleTop
       with  Bridge[DoubleTop, DoubleTop, DoubleTop]
       with  NumFrac[DoubleTop]
-      with  Ord    [DoubleTop]
-      with  DoubleIsFractional
-      with  Ordering.DoubleOrdering {
+      with  Ord    [DoubleTop] {
 
     final val id = 2
 
-    def roundTo(a: Double, b: Double): Double = rd.roundTo(a, b)
+    def zero   [Tx]: Double = 0.0
+    def one    [Tx]: Double = 1.0
 
-    def rand2(a: Double)(implicit r: Random): Double = (r.nextDouble() * 2 - 1) * a
+    def negate [Tx](a: Double): Double = -a
+    def abs    [Tx](a: Double): Double = math.abs(a)
 
-    def rrand(a: Double, b: Double)(implicit r: Random): Double = r.nextDouble() * (b - a) + a
+    def plus   [Tx](a: Double, b: Double): Double = a + b
+    def minus  [Tx](a: Double, b: Double): Double = a - b
+    def times  [Tx](a: Double, b: Double): Double = a * b
+    def div    [Tx](a: Double, b: Double): Double = a / b
+    def roundTo[Tx](a: Double, b: Double): Double = rd.roundTo(a, b)
 
-    def fold(a: Double, lo: Double, hi: Double)(implicit r: Random): Double = rd.fold(a, lo, hi)
+    def rand2[Tx](a: Double)(implicit r: Random): Double = (r.nextDouble() * 2 - 1) * a
+
+    def rrand[Tx](a: Double, b: Double)(implicit r: Random): Double = r.nextDouble() * (b - a) + a
+
+    def lt[Tx](a: Double, b: Double): Boolean = a < b
+
+    def fold[Tx](a: Double, lo: Double, hi: Double)(implicit r: Random): Double = rd.fold(a, lo, hi)
   }
   
   implicit object intSeqBridge1 extends /* IntLikeNum with */ Bridge[IntTop, IntSeqTop, IntSeqTop] {
-    def lift1(a: Int     ): Seq[Int] = a :: Nil
-    def lift2(a: Seq[Int]): Seq[Int] = a
+    def lift1[Tx](a: Int     ): Seq[Int] = a :: Nil
+    def lift2[Tx](a: Seq[Int]): Seq[Int] = a
 
     final val id = 0x100
   }
 
   implicit object intSeqBridge2 extends /* IntLikeNum with */ Bridge[IntSeqTop, IntTop, IntSeqTop] {
-    def lift1(a: Seq[Int]): Seq[Int] = a
-    def lift2(a: Int     ): Seq[Int] = a :: Nil
+    def lift1[Tx](a: Seq[Int]): Seq[Int] = a
+    def lift2[Tx](a: Int     ): Seq[Int] = a :: Nil
 
     final val id = 0x101
   }
 
   implicit object doubleSeqBridge1 extends /* DoubleLikeNum with */ Bridge[DoubleTop, DoubleSeqTop, DoubleSeqTop] {
-    def lift1(a: Double     ): Seq[Double] = a :: Nil
-    def lift2(a: Seq[Double]): Seq[Double] = a
+    def lift1[Tx](a: Double     ): Seq[Double] = a :: Nil
+    def lift2[Tx](a: Seq[Double]): Seq[Double] = a
 
     final val id = 0x102
   }
 
   implicit object doubleSeqBridge2 extends /* DoubleLikeNum with */ Bridge[DoubleSeqTop, DoubleTop, DoubleSeqTop] {
-    def lift1(a: Seq[Double]): Seq[Double] = a
-    def lift2(a: Double     ): Seq[Double] = a :: Nil
+    def lift1[Tx](a: Seq[Double]): Seq[Double] = a
+    def lift2[Tx](a: Double     ): Seq[Double] = a :: Nil
 
     final val id = 0x103
   }
 
   implicit object intDoubleBridge1 extends Bridge[IntTop, DoubleTop, DoubleTop] {
-    def lift1(a: Int    ): Double = a.toDouble
-    def lift2(a: Double ): Double = a
+    def lift1[Tx](a: Int    ): Double = a.toDouble
+    def lift2[Tx](a: Double ): Double = a
 
     final val id = 0x104
   }
 
   ////////////////////////////
 
-  sealed trait StringTop extends Top {
+  sealed trait StringTop extends CTop {
     type Out = _String
   }
   implicit object StringTop extends StringTop with Bridge[StringTop, StringTop, StringTop] {
-    def lift1(a: _String): _String = a
-    def lift2(a: _String): _String = a
+    def lift1[Tx](a: _String): _String = a
+    def lift2[Tx](a: _String): _String = a
 
     final val id = 4
   }

@@ -23,7 +23,7 @@ final case class LinLin[T1 <: Top, T2 <: Top, T <: Top](in: Pat[T1], inLo: Pat[T
 
   override private[patterns] def aux: List[Aux] = br :: num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = new Stream[Tx, T#TOut[Tx]] {
     private[this] val inStream    = in    .expand.map(br.lift1)
     private[this] val inLoStream  = inLo  .expand.map(br.lift1)
     private[this] val inHiStream  = inHi  .expand.map(br.lift1)
@@ -37,7 +37,7 @@ final case class LinLin[T1 <: Top, T2 <: Top, T <: Top](in: Pat[T1], inLo: Pat[T
       inLoStream .hasNext && inHiStream .hasNext &&
       outLoStream.hasNext && outHiStream.hasNext
 
-    def next()(implicit tx: Tx): T#Out = {
+    def next()(implicit tx: Tx): T#TOut[Tx] = {
       if (!hasNext) Stream.exhausted()
       val inVal     = inStream    .next()
       val inLoVal   = inLoStream  .next()
@@ -46,7 +46,7 @@ final case class LinLin[T1 <: Top, T2 <: Top, T <: Top](in: Pat[T1], inLo: Pat[T
       val outHiVal  = outHiStream .next()
 
       // (inVal - inLoVal) / (inHiVal - inLoVal) * (outHiVal - outLoVal) + outLoVal
-      num.plus(num.times(num.div(num.minus(inVal, inLoVal), num.minus(inHiVal, inLoVal)),
+      num.plus[Tx](num.times[Tx](num.div[Tx](num.minus[Tx](inVal, inLoVal), num.minus[Tx](inHiVal, inLoVal)),
         num.minus(outHiVal, outLoVal)), outLoVal)
     }
   }

@@ -24,8 +24,8 @@ object QueueImpl {
   sealed trait Cmd
   final case class Par    (ref: TimeRef, pat: Pat.Event)  extends Cmd
   final case class Suspend(ref: TimeRef)                  extends Cmd
-  final case class Seq    (pat: Pat.Event)            extends Cmd
-  final case class Advance(seconds: Double)           extends Cmd
+  final case class Seq    (pat: Pat.Event)                extends Cmd
+  final case class Advance(seconds: Double)               extends Cmd
 
 //  sealed trait Blocking
 //  final class SeqB(val it: Iterator[Event#Out]) extends Blocking {
@@ -69,7 +69,7 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
   def advance(seconds: Double)(implicit tx: Tx): Unit =
     cmdRev() = Advance(seconds) :: cmdRev()
 
-  type Out = Event#Out
+  type Out = Event#TOut[Tx]
 
   def iterator: Stream[Tx, Out] = new Stream[Tx, Out] {
     private[this] val pq = context.newVar[ISortedMap[Ref, Stream[Tx, Either[Out, Cmd]]]](null)
@@ -127,7 +127,7 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
             cmd match {
               case Par(refP, pat) =>
                 refP.time = ref.time // now
-                val patIt = pat.expand
+                val patIt: Stream[Tx, Event#TOut[Tx]] = pat.expand
                 if (patIt.nonEmpty) pq() = pq() + (refP -> patIt.map(Left(_)))
                 putBack()
                 advance()

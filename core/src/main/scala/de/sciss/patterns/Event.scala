@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.Top
+import de.sciss.patterns.Types.CTop
 
 object Event {
   type Out = Event#Out
@@ -99,6 +99,6 @@ object Event {
   def amp         (m: Out): Double = getOrElseDouble(m, keyAmp        , db(m).dbamp)
   def pan         (m: Out): Double = getOrElseDouble(m, keyPan        , 0.0)
 }
-trait Event extends Top {
+trait Event extends CTop {
   type Out = Map[String, _]
 }

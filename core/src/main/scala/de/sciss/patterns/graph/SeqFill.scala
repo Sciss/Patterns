@@ -27,7 +27,7 @@ import scala.annotation.tailrec
 
  */
 final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T]) extends Pattern[T] {
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = new Stream[Tx, T#TOut[Tx]] {
     private[this] val nStream     = n    .expand
     private[this] val innerStream = inner.expand
 
@@ -69,7 +69,7 @@ final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T]) extends Pattern[
       }
     }
 
-    def next()(implicit tx: Tx): T#Out = {
+    def next()(implicit tx: Tx): T#TOut[Tx] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = innerStream.next()
