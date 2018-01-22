@@ -39,7 +39,8 @@ trait ProductWithAux extends Product {
 }
 
 trait Pat[T <: Top] extends Top with ProductWithAux {
-  final type Out[Tx] = Stream[Tx, T#Out] // Seq[T#Out]
+//  final type Out[Tx] = Stream[Tx, T#Out] // Seq[T#Out]
+  final type Out = Pat[T]
 
   private[patterns] def expand[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out]
 

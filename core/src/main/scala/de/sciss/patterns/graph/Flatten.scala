@@ -20,7 +20,7 @@ import scala.annotation.tailrec
 
 final case class Flatten[T <: Top](in: Pat[Pat[T]]) extends Pattern[T] {
   def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
-    private[this] val inStream    = in.expand
+    private[this] val inStream: Stream[Tx, Stream[Tx, T#Out]] = ??? // in.expand[Tx]
 
     private[this] val hasInner    = ctx.newVar(false)
     private[this] val innerStream = ctx.newVar[Stream[Tx, T#Out]](null)

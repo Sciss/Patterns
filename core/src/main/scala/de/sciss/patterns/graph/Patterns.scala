@@ -109,7 +109,7 @@ final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T])
 
     private[this] implicit val r: Random = ctx.mkRandom()
 
-    private def mkState(): T#Out = num.rrand(loStream.next(), hiStream.next())
+    private def mkState()(implicit tx: Tx): T#Out = num.rrand(loStream.next(), hiStream.next())
 
     private[this] val state     = ctx.newVar[T#Out](null.asInstanceOf[T#Out])
     private[this] val _hasNext  = ctx.newVar(false)

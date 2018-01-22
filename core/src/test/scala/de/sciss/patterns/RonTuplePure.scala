@@ -22,7 +22,8 @@ object RonTuplePure {
 
   def main(args: Array[String]): Unit = {
     val x = spawner()
-    implicit val ctx: Context = Context()
+    implicit val ctx: Context.Plain = Context()
+    import ctx.tx
     val it = x.expand
     println("Done.")
     var time = 0.0

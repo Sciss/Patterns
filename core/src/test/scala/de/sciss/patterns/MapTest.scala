@@ -3,7 +3,8 @@ package de.sciss.patterns
 import de.sciss.patterns.graph._
 
 object MapTest extends App {
-  implicit val ctx: Context = Context()
+  implicit val ctx: Context.Plain = Context()
+  import ctx.tx
 
   val in = Pseq(1 to 4).combinations(3)
   val pat = in.map { in: Pat.Int =>
@@ -11,7 +12,7 @@ object MapTest extends App {
   }
 
   println("-- PAT --")
-  val res = pat.expand.map(_.toList).toList
+  val res = pat.expand.map(_.expand.toList).toList
   res.foreach(println)
 
   val plain = List(1 to 4: _*).combinations(3).map(_.drop(1)).toList

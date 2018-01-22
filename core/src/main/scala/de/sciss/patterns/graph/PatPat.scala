@@ -17,26 +17,28 @@ package graph
 import de.sciss.patterns.Types.Top
 
 final case class PatPat[T <: Top](in: Seq[Pat[T]]) extends Pattern[Pat[T]] {
-  def iterator(implicit ctx: Context): Stream[Stream[T#Out]] = new Stream[Stream[T#Out]] {
-    private[this] val inStreams: Array[Stream[T#Out]] = in.iterator.map(_.expand).toArray
-    private[this] var inIdx: Int = _
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Pat[T] /* Stream[Tx, T#Out] */] = new Stream[Tx, Pat[T] /* Stream[Tx, T#Out] */] {
+    private[this] val inStreams: Array[Stream[Tx, T#Out]] = in.iterator.map(_.expand).toArray
+    private[this] val inIdx = ctx.newVar(0)
 
-    def reset(): Unit = {
-      inIdx = 0
+    def reset()(implicit tx: Tx): Unit = {
+      inIdx() = 0
     }
 
-    def hasNext: Boolean = inIdx < inStreams.length // && inStreams(inIdx).hasNext
+    def hasNext(implicit tx: Tx): Boolean = inIdx() < inStreams.length // && inStreams(inIdx).hasNext
 
-    def next(): Stream[T#Out] = {
+    def next()(implicit tx: Tx): Pat[T] /* Stream[Tx, T#Out] */ = {
       if (!hasNext) Stream.exhausted()
-      val res = inStreams(inIdx)
-      inIdx += 1
+      val _idx = inIdx()
+      val res = inStreams(_idx)
+      inIdx() = _idx + 1
 //      val res   = s.next()
 //      while (!s.hasNext && inIdx < inStreams.length) {
 //        inIdx += 1
 //        s = inStreams(inIdx)
 //      }
       res
+      ???
     }
   }
 }

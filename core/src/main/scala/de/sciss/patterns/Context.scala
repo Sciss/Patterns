@@ -37,11 +37,13 @@ trait Context[Tx] {
 }
 
 object Context {
-  def apply(): Context[Unit] = new PlainImpl
+  def apply(): Plain = new PlainImpl
 
   type Var[Tx, A] = Sink[Tx, A] with Source[Tx, A]
 
-  trait Plain extends Context[Unit]
+  trait Plain extends Context[Unit] {
+    implicit val tx: Unit = ()
+  }
 
   private abstract class Impl[Tx] extends ContextLike[Tx] {
     private[this] lazy val seedRnd = new Random()
@@ -56,7 +58,15 @@ object Context {
   }
 
   private final class PlainImpl extends Impl[Unit] with Plain {
-    def newVar[A](init: A): Var[Unit, A] = ???
+    def newVar[A](init: A): Var[Unit, A] = new PlainVar[A](init)
+  }
+
+  private final class PlainVar[A](private[this] var current: A) extends Sink[Unit, A] with Source[Unit, A] {
+    def apply()(implicit tx: Unit): A =
+      current
+
+    def update(v: A)(implicit tx: Unit): Unit =
+      current = v
   }
 }
 

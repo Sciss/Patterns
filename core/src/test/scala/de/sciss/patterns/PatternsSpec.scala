@@ -33,7 +33,8 @@ class PatternsSpec extends PatSpec {
   "Combinations" should work in {
     val p1: Pat.Int = Pseq(1 to 4)
     val p2 = p1.combinations(3)
-    val res: List[List[Int]] = p2.expand.map(_.toList).toList
+    import ctx.tx
+    val res: List[List[Int]] = p2.expand.map(_.expand.toList).toList
 
     val plain = List(1, 2, 3, 4).combinations(3).toList
 

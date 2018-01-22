@@ -4,7 +4,8 @@ import de.sciss.patterns.Types.Top
 import org.scalatest.{FlatSpec, Matchers}
 
 trait PatSpec extends FlatSpec with Matchers {
-  implicit val ctx: Context = Context()
+  implicit val ctx: Context.Plain = Context()
+  import ctx.tx
 
   def work: String = "produce the expected output"
 

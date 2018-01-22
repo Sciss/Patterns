@@ -13,7 +13,8 @@ import scala.util.Random
 object RonTuple {
   def main(args: Array[String]): Unit = {
     val x = spawner()
-    implicit val ctx: Context = Context()
+    implicit val ctx: Context.Plain = Context()
+    import ctx.tx
     val it = x.expand
     println("Done.")
     var time = 0.0
@@ -141,13 +142,13 @@ object RonTuple {
     val rPat  = Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf).iterator
     for (_ <- 1 to 4) { // original: infinite
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
-      val length    = lPat.next()
-      val cantus0   = ((Brown(-6, 6, 3): Pat.Int) * 2.4).iterator.take(length).toList.map(_ + 4)
-      val numPause: Int = (length * rPat.next()).toInt
+      val length    =  ??? : Int // lPat.next()
+      val cantus0: Seq[Double] = ??? // ((Brown(-6, 6, 3): Pat.Int) * 2.4).iterator.take(length).toList.map(_ + 4)
+      val numPause: Int = ??? // (length * rPat.next()).toInt
       println(numPause)
       val cantus = (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
       println(s"starting $cantus")
-      val catter = sp.par(catPat(cantus))
+      val catter: sp.Ref = ??? // sp.par(catPat(cantus))
 
       val parts = cantus.distinct.combinations(3).toList
       val pats = parts.zipWithIndex.map { case (part, i) =>
@@ -170,14 +171,14 @@ object RonTuple {
           "db"          -> i.linlin(0, parts.size, -40.0, -30.0)
         )
       }
-      sp.seq(Ppar(pats))
+      ??? // sp.seq(Ppar(pats))
       println(s"ending $cantus")
       // at this point, it wouldn't have any effect:
       // { cantus(cantus.size.rand) = 'r }.dup(5)
       val stopTime = length * 2 * 0.2
       println(f"--- stopTime = $stopTime%g")
-      sp.advance(stopTime)
-      sp.suspend(catter)
+      ??? // sp.advance(stopTime)
+      ??? // sp.suspend(catter)
     }
   }
 }

@@ -27,47 +27,55 @@ import scala.annotation.tailrec
 
  */
 final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T]) extends Pattern[T] {
-  def iterator(implicit ctx: Context): Stream[T#Out] = new Stream[T#Out] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
     private[this] val nStream     = n    .expand
     private[this] val innerStream = inner.expand
 
-    private[this] var _hasNext: Boolean = _
+    private[this] val iteration   = ctx.newVar(0)
+    private[this] val nValue      = ctx.newVar(0)
 
-    def hasNext: Boolean = _hasNext
+    private[this] val _hasNext  = ctx.newVar(false)
+    private[this] val _valid    = ctx.newVar(false)
 
-    private[this] var iteration = 0
-    private[this] var nValue: Int = _
-
-    def reset(): Unit = {
-      _hasNext = nStream.hasNext
-      if (_hasNext) {
-        nValue    = nStream.next()
-        iteration = 0
-        nextIteration()
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid()      = true
+        _hasNext()    = nStream.hasNext
+        if (_hasNext()) {
+          nValue()    = nStream.next()
+          iteration() = 0
+          nextIteration()
+        }
       }
+
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
     }
 
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
+
     @tailrec
-    private def nextIteration(): Unit = {
-      _hasNext = iteration < nValue
-      if (_hasNext) {
+    private def nextIteration()(implicit tx: Tx): Unit = {
+      _hasNext() = iteration() < nValue()
+      if (_hasNext()) {
         innerStream.reset()
-        _hasNext = innerStream.hasNext
-        if (!_hasNext) {
-          iteration += 1
+        _hasNext() = innerStream.hasNext
+        if (!_hasNext()) {
+          iteration() = iteration() + 1
           nextIteration()
         }
       }
     }
 
-    reset()
-
-    def next(): T#Out = {
-      if (!_hasNext) Stream.exhausted()
+    def next()(implicit tx: Tx): T#Out = {
+      validate()
+      if (!_hasNext()) Stream.exhausted()
       val res = innerStream.next()
-      _hasNext = innerStream.hasNext
-      if (!_hasNext && iteration < nValue) {
-        iteration += 1
+      _hasNext() = innerStream.hasNext
+      if (!_hasNext() && iteration() < nValue()) {
+        iteration() = iteration() + 1
         nextIteration()
       }
       res

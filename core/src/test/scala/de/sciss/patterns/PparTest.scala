@@ -3,7 +3,8 @@ package de.sciss.patterns
 import graph._
 
 object PparTest extends App {
-  implicit val ctx: Context = Context()
+  implicit val ctx: Context.Plain = Context()
+  import ctx.tx
 
   val p1  = Pseq( 0 to 10)
   val p2  = Pseq(20 to 30)

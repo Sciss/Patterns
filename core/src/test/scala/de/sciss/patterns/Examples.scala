@@ -7,7 +7,8 @@ object Examples {
   def main(args: Array[String]): Unit = run()
 
   def run(): Unit = {
-    implicit val ctx: Context = Context()
+    implicit val ctx: Context.Plain = Context()
+    import ctx.tx
 
     // ok
     val a = Add[IntSeqTop, IntTop, IntSeqTop](Seq(1, 2), 3)
@@ -19,7 +20,7 @@ object Examples {
 
     // ok
     val c = Add(1, 3)
-    c.iterator: Stream[Int] // right
+    c.iterator: Stream[Unit, Int] // right
     println(c.iterator.take(1).toList.mkString("c: ", ", ", ""))
 
     // ok
@@ -36,7 +37,7 @@ object Examples {
 
     // ok
     val g = (Take("foo", 2) ++ "bar").take(5)
-    g.iterator: Stream[String]  // right
+    g.iterator: Stream[Unit, String]  // right
     println(g.iterator.take(7).toList.mkString("g: ", ", ", ""))
 
     //    // ambiguous implicits

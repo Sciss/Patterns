@@ -29,7 +29,7 @@ object Spawner {
 
     def advance(seconds: Double)(implicit tx: Tx): Unit
 
-    implicit def context: Context[Tx]
+    implicit val context: Context[Tx]
     implicit def random : Random
   }
 }

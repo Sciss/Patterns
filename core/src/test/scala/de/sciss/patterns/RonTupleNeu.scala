@@ -23,7 +23,8 @@ object RonTupleNeu {
 
   def main(args: Array[String]): Unit = {
     val x = spawner()
-    implicit val ctx: Context = Context()
+    implicit val ctx: Context.Plain = Context()
+    import ctx.tx
     val it = x.expand
     println("Done.")
     var time = 0.0
@@ -191,13 +192,13 @@ object RonTupleNeu {
     //    lPat.next(); rPat.next()
     for (_ <- 0 until 4) { // original: infinite
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
-      val length    = lPat.next()
-      val cantus0   = ((Brown(-6, 6, 3): Pat.Int) * 2.4).iterator.take(length).toList.map(_ + 4)
-      val numPause: Int = (length * rPat.next()).toInt
+      val length: Int = ??? // lPat.next()
+      val cantus0: Seq[Double] = ??? // ((Brown(-6, 6, 3): Pat.Int) * 2.4).iterator.take(length).toList.map(_ + 4)
+      val numPause: Int = ??? // (length * rPat.next()).toInt
       //      println(numPause)
       val cantus = (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
       if (DEBUG) println(s"starting ${mkElemString(cantus)}")
-      val catter = sp.par(catPat(cantus))
+      val catter: sp.Ref = ??? // sp.par(catPat(cantus))
 
       //      println(s"CANTUS $cantus")
 
@@ -233,13 +234,13 @@ object RonTupleNeu {
 
 //      println(s"DURS IS ${mkElemString(durs)} - MAX ${mkElemString(durs.max)}")
 
-      sp.seq(Ppar(pats))
+      ??? // sp.seq(Ppar(pats))
       //      println(s"ending $cantus")
       // at this point, it wouldn't have any effect:
       // { cantus(cantus.size.rand) = 'r }.dup(5)
       val stopTime = length * 2 * 0.2
-      sp.advance(stopTime)
-      sp.suspend(catter)
+      ??? // sp.advance(stopTime)
+      ??? // sp.suspend(catter)
     }
   }
 }

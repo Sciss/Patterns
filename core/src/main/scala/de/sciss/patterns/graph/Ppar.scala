@@ -23,65 +23,74 @@ final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset: Pat.In
 
   type EOut = Event#Out
 
-  def iterator(implicit ctx: Context): Stream[EOut] = new Stream[EOut] {
-    private[this] val listStream    = list    .expand
-    private[this] val repeatsStream = repeats .expand
-    private[this] val offsetStream  = offset  .expand
-    private[this] var pq: ISortedMap[TimeRef, Stream[EOut]] = _
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, EOut] = new Stream[Tx, EOut] {
+    private[this] val listStream: Stream[Tx, Stream[Tx, Map[String, _]]] = ??? // list    .expand[Tx]
+    private[this] val repeatsStream = repeats .expand[Tx]
+    private[this] val offsetStream  = offset  .expand[Tx]
 
-    private[this] var _hasNext  : Boolean = _
-    private[this] var repeatsVal: Int     = _
-    private[this] var offsetVal : Int     = _
-    private[this] var elem      : EOut    = _
+    private[this] val pq          = ctx.newVar[ISortedMap[TimeRef, Stream[Tx, EOut]]](null)
+    private[this] val _hasNext    = ctx.newVar[Boolean](false)
+    private[this] val repeatsVal  = ctx.newVar[Int    ](0)
+    private[this] val offsetVal   = ctx.newVar[Int    ](0)
+    private[this] val elem        = ctx.newVar[EOut   ](null)
 
-    def reset(): Unit = {
-      pq = ISortedMap.empty
-      _hasNext = repeatsStream.hasNext && offsetStream.hasNext
-      if (!_hasNext) return
+    private[this] val _valid      = ctx.newVar(false)
 
-      repeatsVal = repeatsStream.next()
-      offsetVal  = offsetStream .next()
-      if (repeatsVal != 1) throw new NotImplementedError("Ppar repeats")
-      if (offsetVal  != 0) throw new NotImplementedError("Ppar offset")
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid() = true
+        pq() = ISortedMap.empty
+        _hasNext() = repeatsStream.hasNext && offsetStream.hasNext
+        if (!_hasNext()) return
 
-      var refCnt = 0
-      listStream.foreach { it =>
-        if (it.hasNext) {
-          pq += new TimeRef(refCnt) -> it
-          refCnt += 1
+        repeatsVal() = repeatsStream.next()
+        offsetVal () = offsetStream .next()
+        if (repeatsVal() != 1) throw new NotImplementedError("Ppar repeats")
+        if (offsetVal () != 0) throw new NotImplementedError("Ppar offset")
+
+        var refCnt = 0
+        listStream.foreach { it =>
+          if (it.hasNext) {
+            pq() = pq() + (new TimeRef(refCnt) -> it)
+            refCnt += 1
+          }
         }
+
+        advance()
       }
 
-      advance()
-    }
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
 
-    reset()
-
-    private def advance(): Unit =
-      if (pq.nonEmpty) {
-        val (ref, it) = pq.head
-        pq        = pq.tail
+    private def advance()(implicit tx: Tx): Unit =
+      if (pq().nonEmpty) {
+        val (ref, it) = pq().head
+        pq()      = pq().tail
         val _elem = it.next()
 
-        elem      = _elem
+        elem()    = _elem
         val d     = math.max(0.0, Event.delta(_elem))
         val now   = ref.time
         ref.time += d
-        if (it.hasNext) pq += ref -> it
-        if (pq.nonEmpty) {
-          val nextTime = pq.firstKey.time
-          elem += Event.keyDelta -> (nextTime - now)
+        if (it.hasNext) pq() = pq() + (ref -> it)
+        if (pq().nonEmpty) {
+          val nextTime = pq().firstKey.time
+          elem() = elem() + (Event.keyDelta -> (nextTime - now))
         }
 
       } else {
-        _hasNext = false
+        _hasNext() = false
       }
 
-    def hasNext: Boolean = _hasNext
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
+    }
 
-    def next(): EOut = {
-      if (!_hasNext) Stream.exhausted()
-      val res = elem
+    def next()(implicit tx: Tx): EOut = {
+      validate()
+      if (!_hasNext()) Stream.exhausted()
+      val res = elem()
       advance()
       res
     }

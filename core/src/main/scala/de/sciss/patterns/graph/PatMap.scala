@@ -19,54 +19,63 @@ import de.sciss.patterns.Types.Top
 final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], inner: Graph[T])
   extends Pattern[Pat[T]] {
 
-  def iterator(implicit ctx: Context): Stream[Stream[T#Out]] = new Stream[Stream[T#Out]] {
-    private[this] val       outerStream: Stream[Stream[T1#Out]] = outer.expand
-    private[this] lazy val  innerStream: Stream[T#Out]          = inner.expand
-    private[this] var       mapStream  : Stream[T#Out]          = _
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Pat[T] /* Stream[Tx, T#Out] */] = new Stream[Tx, Pat[T] /* Stream[Tx, T#Out] */] {
+    private[this] val outerStream: Stream[Tx, Stream[Tx, T1#Out]] = ??? // outer.expand[Tx]
+    private[this] val innerStream: Stream[Tx, T#Out]              = inner.expand[Tx]
 
-    private[this] var hasMapStream = false
+    private[this] val mapStream  = ctx.newVar[Stream[Tx, T#Out]](null)
 
-    private[this] var _hasNext: Boolean = _
+    private[this] val hasMapStream  = ctx.newVar(false)
+    private[this] val _valid        = ctx.newVar(false)
+    private[this] val _hasNext      = ctx.newVar(false)
 
-    def reset(): Unit = {
-      _hasNext = outerStream.hasNext
-//      advance()
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid()    = true
+        _hasNext()  = outerStream.hasNext
+//        advance()
+      }
+
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
+
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
     }
 
-    reset()
-
-    def hasNext: Boolean = _hasNext
-
-    private final class MapStream(itStream: Stream[T1#Out]) extends Stream[T#Out] {
+    private final class MapStream(itStream: Stream[Tx, T1#Out]) extends Stream[Tx, T#Out] {
       ctx.setOuterStream[T1#Out](it.token, itStream)
 
-      def reset(): Unit = ()
+      def reset()(implicit tx: Tx): Unit = ()
 
-      def hasNext: Boolean = itStream.hasNext && innerStream.hasNext
+      def hasNext(implicit tx: Tx): Boolean = itStream.hasNext && innerStream.hasNext
 
-      def next(): T#Out = innerStream.next()
+      def next()(implicit tx: Tx): T#Out = innerStream.next()
     }
 
-    private def advance(): Unit = {
-      if (!hasMapStream) {
-        _hasNext = outerStream.hasNext
-        if (_hasNext) {
-          val itStream  = outerStream.next()
-          mapStream     = new MapStream(itStream)
-          hasMapStream  = true
+    private def advance()(implicit tx: Tx): Unit = {
+      if (!hasMapStream()) {
+        _hasNext() = outerStream.hasNext
+        if (_hasNext()) {
+          val itStream    = outerStream.next()
+          mapStream()     = new MapStream(itStream)
+          hasMapStream()  = true
           innerStream.reset()
         }
       }
     }
 
-    def next(): Stream[T#Out] = {
+    def next()(implicit tx: Tx): Pat[T] /* Stream[Tx, T#Out] */ = {
+      validate()
       advance()
-      if (!_hasNext) Stream.exhausted()
-      val res = mapStream
-      hasMapStream = false
-      _hasNext = outerStream.hasNext
+      if (!_hasNext()) Stream.exhausted()
+      val res = mapStream()
+      hasMapStream() = false
+      _hasNext() = outerStream.hasNext
 //      advance()
       res
+      ???
     }
   }
 }

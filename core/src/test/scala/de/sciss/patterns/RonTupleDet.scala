@@ -23,7 +23,8 @@ object RonTupleDet {
 
   def main(args: Array[String]): Unit = {
     val x = spawner()
-    implicit val ctx: Context = Context()
+    implicit val ctx: Context.Plain = Context()
+    import ctx.tx
     val it = x.expand
     println("Done.")
     var time = 0.0
@@ -189,13 +190,13 @@ object RonTupleDet {
 //    lPat.next(); rPat.next()
     for (iter <- 0 until 4) { // original: infinite
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
-      val length    = lPat.next()
-      val cantus0   = ((Pseq(Seq(3, 6, 4, 6, 4, 3, 6, 3, 5, 4, 6, 5, 4, 2, 5, 4, 2), inf): Pat.Int) * 2.4).iterator.take(length).toList.map(_ + 4)
-      val numPause: Int = (length * rPat.next()).toInt
+      val length    = ??? : Int // lPat.next()
+      val cantus0: Seq[Double] = ??? // ((Pseq(Seq(3, 6, 4, 6, 4, 3, 6, 3, 5, 4, 6, 5, 4, 2, 5, 4, 2), inf): Pat.Int) * 2.4).iterator.take(length).toList.map(_ + 4)
+      val numPause: Int = ??? // (length * rPat.next()).toInt
 //      println(numPause)
       val cantus = (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
       if (DEBUG) println(s"starting ${mkElemString(cantus)}")
-      val catter = sp.par(catPat(cantus))
+      val catter: sp.Ref = ??? // sp.par(catPat(cantus))
 
 //      println(s"CANTUS $cantus")
 
@@ -209,7 +210,8 @@ object RonTupleDet {
       val pats = parts.zipWithIndex.map { case (part, i) =>
         val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4)(iter) /* .choose() */)
 
-        durs ::= durPat.iterator.toList.sum
+        val sum: Double = ??? // durPat.iterator.toList.sum
+        durs ::= sum
 
         Bind(
           "instrument"  -> "sine4",
@@ -231,14 +233,14 @@ object RonTupleDet {
 
       println(s"DURS IS ${mkElemString(durs)} - MAX ${mkElemString(durs.max)}")
 
-      sp.seq(Ppar(pats))
+      ??? // sp.seq(Ppar(pats))
 //      println(s"ending $cantus")
       // at this point, it wouldn't have any effect:
       // { cantus(cantus.size.rand) = 'r }.dup(5)
       val stopTime = length * 2 * 0.2
       println(f"--- stopTime = $stopTime%g")
-      sp.advance(stopTime)
-      sp.suspend(catter)
+      ??? // sp.advance(stopTime)
+      ??? // sp.suspend(catter)
     }
   }
 }

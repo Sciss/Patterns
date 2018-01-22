@@ -72,9 +72,7 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
   type Out = Event#Out
 
   def iterator: Stream[Tx, Out] = new Stream[Tx, Out] {
-    private[this] var pq = ISortedMap.empty[Ref, Stream[Tx, Either[Out, Cmd]]]
-
-    if (cmdRev().nonEmpty) pq += mkRef() -> Stream.reverseIterator(cmdRev()).map(Right(_))
+    private[this] val pq = context.newVar[ISortedMap[Ref, Stream[Tx, Either[Out, Cmd]]]](null)
 
 //    private[this] var cmdRef = Map.empty[Ref, Ref]
 
@@ -103,14 +101,14 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
      */
 
     @tailrec
-    private def advance()(implicit tx: Tx): Unit =
-      if (pq.nonEmpty) {
-        val (ref, it) = pq.head
-        pq            = pq.tail
+    private def advance()(implicit tx: Tx): Unit = {
+      if (pq().nonEmpty) {
+        val (ref, it) = pq().head
+        pq()          = pq().tail
 
         def putBack(): Unit =
           if (it.hasNext) {
-            pq += (ref -> it)
+            pq() = pq() + (ref -> it)
           }
 
         it.next() match {
@@ -120,8 +118,8 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
             val now   = ref.time
             ref.time += d
             putBack()
-            if (pq.nonEmpty) {
-              val nextTime = pq.firstKey.time
+            if (pq().nonEmpty) {
+              val nextTime = pq().firstKey.time
               elem() = elem() + (Event.keyDelta -> (nextTime - now))
             }
 
@@ -130,12 +128,12 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
               case Par(refP, pat) =>
                 refP.time = ref.time // now
                 val patIt = pat.expand
-                if (patIt.nonEmpty) pq += refP -> patIt.map(Left(_))
+                if (patIt.nonEmpty) pq() = pq() + (refP -> patIt.map(Left(_)))
                 putBack()
                 advance()
 
               case Suspend(refP) =>
-                pq -= refP
+                pq() = pq() - refP
                 putBack()
                 advance()
 
@@ -143,7 +141,7 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
                 val patIt = pat.expand
                 val cat   = patIt.map(Left(_)) ++ it
                 if (patIt.nonEmpty) {
-                  pq += ref -> cat
+                  pq() = pq() + (ref -> cat)
                 }
                 advance()
 
@@ -157,6 +155,7 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
       } else {
         _hasNext() = false
       }
+    }
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()
@@ -167,6 +166,9 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
+        val pqVal: ISortedMap[Ref, Stream[Tx, Either[Out, Cmd]]] =
+          if (cmdRev().isEmpty) ISortedMap.empty else ISortedMap(mkRef() -> Stream.reverseIterator(cmdRev()).map(Right(_)))
+        pq() = pqVal
         _valid() = true
         advance()
       }

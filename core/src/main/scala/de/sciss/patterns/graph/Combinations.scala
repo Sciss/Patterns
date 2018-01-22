@@ -20,7 +20,7 @@ import scala.collection.mutable
 
 final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[Pat[T]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Stream[Tx, T#Out]] = new Stream[Tx, Stream[Tx, T#Out]] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Pat[T] /* Stream[Tx, T#Out] */] = new Stream[Tx, Pat[T] /* Stream[Tx, T#Out] */] {
     // Adapted from scala.collection.SeqLike#CombinationsItr
     // Scala license: BSD 3-clause
 
@@ -38,7 +38,7 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Stream[Tx, T#Out] = {
+    def next()(implicit tx: Tx): Pat[T] /* Stream[Tx, T#Out] */ = {
       if (!_hasNext()) Stream.exhausted()
 
       /* Calculate this result. */
@@ -86,6 +86,8 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
         def hasNext(implicit tx: Tx): Boolean = peer.hasNext
         def next ()(implicit tx: Tx): T#Out   = peer.next()
       }
+
+      ???
     }
 
     private[this] val inStream: Stream[Tx, T#Out] = in.expand

@@ -26,45 +26,67 @@ import scala.annotation.tailrec
 final case class Pseq[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, offset : Pat.Int = 0)
   extends Pattern[T] {
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = {
-    val repeatsIt = repeats.expand
-    val offsetIt  = offset .expand
-    val indexed   = list.toIndexedSeq
-    val sizeVal   = indexed.size
-    if (??? /* repeatsIt.isEmpty || offsetIt.isEmpty || sizeVal == 0 */) Stream.empty
-    else {
-      val repeatsVal  = ??? : Int // repeatsIt.next()
-      val offsetVal   = ??? : Int // offsetIt .next()
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = new Stream[Tx, T#Out] {
+    private[this] val repeatsIt   = repeats.expand[Tx]
+    private[this] val offsetIt    = offset .expand[Tx]
+    private[this] val indexed     = list.toIndexedSeq
+    private[this] val sizeVal     = indexed.size
 
-      new Stream[Tx, T#Out] {
-        private[this] var repeatsCnt  = 0
-        private[this] var sizeCnt     = 0
+    private[this] val repeatsVal  = ctx.newVar(0)
+    private[this] val offsetVal   = ctx.newVar(0)
 
-        private def mkListIter(): Stream[Tx, T#Out] = {
-          import IntFunctions.wrap
-          val i = wrap(sizeCnt + offsetVal, 0, sizeVal - 1)
-          indexed(i).embed
-        }
+    private[this] val listIter    = ctx.newVar[Stream[Tx, T#Out]](null)
 
-        private[this] var listIter: Stream[Tx, T#Out] = mkListIter()
+    private[this] val repeatsCnt  = ctx.newVar(0)
+    private[this] val sizeCnt     = ctx.newVar(0)
 
-        def reset()(implicit tx: Tx): Unit = ???
+    private[this] val _hasNext  = ctx.newVar(false)
+    private[this] val _valid    = ctx.newVar(false)
 
-        def hasNext(implicit tx: Tx): Boolean = repeatsCnt < repeatsVal
+    private def mkListIter()(implicit tx: Tx): Stream[Tx, T#Out] = {
+      import IntFunctions.wrap
+      val i = wrap(sizeCnt() + offsetVal(), 0, sizeVal - 1)
+      indexed(i).embed
+    }
 
-        def next()(implicit tx: Tx): T#Out /* T2#Index[T1#Out] */ = {
-          val res = listIter.next()
-          if (listIter.isEmpty) {
-            sizeCnt += 1
-            if (sizeCnt == sizeVal) {
-              repeatsCnt += 1
-              sizeCnt     = 0
-            }
-            if (hasNext) listIter = mkListIter()
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
+
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid()      = true
+        repeatsCnt()  = 0
+        sizeCnt()     = 0
+        _hasNext()    = repeatsIt.hasNext && offsetIt.hasNext
+        if (_hasNext()) {
+          repeatsVal() = repeatsIt.next()
+          offsetVal () = offsetIt .next()
+          _hasNext() = repeatsCnt() < repeatsVal()
+          if (_hasNext()) {
+            listIter() = mkListIter()
           }
-          res
         }
       }
+
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
+    }
+
+    def next()(implicit tx: Tx): T#Out = {
+      validate()
+      if (!_hasNext()) Stream.exhausted()
+      val res = listIter().next()
+      if (listIter().isEmpty) {
+        sizeCnt() = sizeCnt() + 1
+        if (sizeCnt() == sizeVal) {
+          repeatsCnt()  = repeatsCnt() + 1
+          sizeCnt()     = 0
+          _hasNext()    = repeatsCnt() < repeatsVal()
+        }
+        if (_hasNext()) listIter() = mkListIter()
+      }
+      res
     }
   }
 }

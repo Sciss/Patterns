@@ -31,8 +31,8 @@ object ResetExample {
       }
     }
 
-    implicit val ctx: Context = Context()
-//    outer.iterator.foreach(println)
+    implicit val ctx: Context.Plain = Context()
+    import ctx.tx
 
     def plot(g: Pat.Int, title: String): Unit =
       g.iterator.toList.plot(title = title, discrete = true)

@@ -64,20 +64,21 @@ object RonWithESP {
     }
   }
 
-  def player(s: Server): Unit = {
+  def player[Tx](s: Server): Unit = {
     val g = Group.tail(s)
     Synth.head(g, "filter1")
     Synth.tail(g, "filter2")
 
     val pat = RonTupleNeu.spawner()
-    implicit val ctx: Context = Context()
+    implicit val ctx: Context.Plain = Context()
+    import ctx.tx
     val it0  = pat.expand
 
     new Thread {
       override def run(): Unit = {
         val tempo   = 0.25
         type Out    = Event#Out
-        var pq      = ISortedMap.empty[TimeRef, Either[Stream[Out], osc.Message]]
+        var pq      = ISortedMap.empty[TimeRef, Either[Stream[Tx, Out], osc.Message]]
         var now     = 0.0
         var refCnt  = 0
 
@@ -87,7 +88,7 @@ object RonWithESP {
           res
         }
 
-        if (it0.hasNext) pq += mkRef() -> Left(it0)
+        if (it0.hasNext) ??? // pq += mkRef() -> Left(it0)
         refCnt += 1
         val t0      = System.currentTimeMillis()
         val latency = 100
@@ -105,7 +106,7 @@ object RonWithESP {
 
           obj match {
             case Left(it) =>
-              val evt: Out = it.next()
+              val evt: Out = ??? // it.next()
               val ctl0 = ctlNames.flatMap { key =>
                 evt.get(key).collect {
                   case d: Double  => key -> d: ControlSet
@@ -125,7 +126,7 @@ object RonWithESP {
               s ! osc.Bundle.millis(t2 + latency, m)
 
               ref.time += delta
-              if (it.hasNext) pq += ref -> Left(it)
+              ??? // if (it.hasNext) pq += ref -> Left(it)
 
               val refGate   = mkRef()
               refGate.time  = now + sustain
