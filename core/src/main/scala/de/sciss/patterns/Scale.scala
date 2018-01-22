@@ -78,6 +78,8 @@ object Scale {
   val hexMajor6       = Scale(Vec(0,2,4,5,7, 9), 12, name = "Hex Major 6" )
   val hexAeolian      = Scale(Vec(0,3,5,7,8,10), 12, name = "Hex Aeolian" )
 
+  def default: Scale = major
+
   // 7 note scales
   val major           = Scale(Vec(0,2,4,5,7,9,11), 12, name = "Major"         )
   val ionian          = Scale(Vec(0,2,4,5,7,9,11), 12, name = "Ionian"        )

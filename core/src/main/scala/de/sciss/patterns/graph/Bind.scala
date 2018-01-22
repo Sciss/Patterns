@@ -15,11 +15,11 @@ package de.sciss.patterns
 package graph
 
 final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
-  type EOut = Event#COut
+  type EOut[Tx] = Event#Out[Tx]
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, EOut] = new StreamImpl(tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, EOut[Tx]] = new StreamImpl(tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, EOut] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, EOut[Tx]] {
     val mapE: Map[String, Stream[Tx, _]] = entries.map {
       case (key, value) => key -> value.expand(ctx, tx0)
     } .toMap  // (breakOut)
@@ -43,9 +43,16 @@ final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
     def reset()(implicit tx: Tx): Unit =
       _valid() = false
 
-    private def mkState()(implicit tx: Tx): EOut = mapE.map { case (key, value) => key -> value.next() }
+    private def mkState()(implicit tx: Tx): EOut[Tx] = {
+      val b = Event.Out.newBuilder
+      mapE.foreach {
+        case (key, value) =>
+          b += key -> value.next()
+      }
+      b.result()
+    }
 
-    def next()(implicit tx: Tx): EOut = {
+    def next()(implicit tx: Tx): EOut[Tx] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = mkState()

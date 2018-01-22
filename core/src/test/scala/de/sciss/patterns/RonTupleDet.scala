@@ -1,7 +1,7 @@
 package de.sciss.patterns
 
 import de.sciss.numbers.Implicits._
-import de.sciss.patterns.Types.{DoubleTop, IntTop, TopT}
+import de.sciss.patterns.Types.TopT
 import de.sciss.patterns.graph._
 
 object RonTupleDet {
@@ -166,7 +166,7 @@ object RonTupleDet {
   }
 
   def spawner(): Pat.Event = Spawner { sp =>
-    import sp.context
+
     val inf = Int.MaxValue
     def catPat(cantus: Seq[Double]): Pat.Event =
       Bind(

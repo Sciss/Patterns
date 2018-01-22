@@ -14,15 +14,28 @@
 package de.sciss.patterns
 
 import de.sciss.patterns.Types.CTop
+import de.sciss.patterns.graph.Constant
+
+import scala.collection.mutable
 
 object Event {
-  type Out = Event#COut
+//  type Out = Event#COut
+
+  object Out {
+    def newBuilder: mutable.Builder[(String, Any), Out] = ???
+  }
+  trait Out extends Map[String, Any] {
+    type K = String
+    type V = Any // Stream[Tx, Any]
+
+    override def + [V1 >: V](kv: (K, V1)): Out
+  }
 
   private def getOrElseDouble(m: Out, key: String, default: => Double): Double =
-    m.get(key) match {
-      case Some(d: Double)  => d
-      case Some(i: Int)     => i.toDouble
-      case _                => default
+    m.get(key).fold(default) {
+      case Some(Constant(d: Double))  => d
+      case Some(Constant(i: Int))     => i.toDouble
+      case _                          => default
     }
 
   final val keyDelta      = "delta"
@@ -53,10 +66,11 @@ object Event {
   final val keyAmp        = "amp"
   final val keyPan        = "pan"
 
-  def scale(m: Out): Scale = m.get(keyScale) match {
-    case Some(s: Scale)  => s
-    case _                => Scale.major
-  }
+  def scale(m: Out): Scale =
+    m.get(keyScale).fold(Scale.default) {
+      case Some(s: Scale) => s
+      case _              => Scale.default
+    }
 
   import de.sciss.numbers.Implicits._
 
@@ -100,5 +114,5 @@ object Event {
   def pan         (m: Out): Double = getOrElseDouble(m, keyPan        , 0.0)
 }
 trait Event extends CTop {
-  type COut = Map[String, _]
+  type COut = Event.Out // Map[String, _]
 }

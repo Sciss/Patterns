@@ -21,20 +21,20 @@ import scala.collection.immutable.{SortedMap => ISortedMap}
 final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset: Pat.Int = 0)
   extends Pattern[Event] {
 
-  type EOut = Event#COut
+  type EOut[Tx] = Event#Out[Tx]
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, EOut] = new StreamImpl(tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, EOut[Tx]] = new StreamImpl(tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, EOut] {
-    private[this] val listStream: Stream[Tx, Stream[Tx, Map[String, _]]] = list.expand(ctx, tx0)
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, EOut[Tx]] {
+    private[this] val listStream: Stream[Tx, Stream[Tx, Event.Out]] = list.expand(ctx, tx0)
     private[this] val repeatsStream = repeats .expand(ctx, tx0)
     private[this] val offsetStream  = offset  .expand(ctx, tx0)
 
-    private[this] val pq          = ctx.newVar[ISortedMap[TimeRef, Stream[Tx, EOut]]](null)
-    private[this] val _hasNext    = ctx.newVar[Boolean](false)
-    private[this] val repeatsVal  = ctx.newVar[Int    ](0)
-    private[this] val offsetVal   = ctx.newVar[Int    ](0)
-    private[this] val elem        = ctx.newVar[EOut   ](null)
+    private[this] val pq          = ctx.newVar[ISortedMap[TimeRef, Stream[Tx, EOut[Tx]]]](null)
+    private[this] val _hasNext    = ctx.newVar[Boolean ](false)
+    private[this] val repeatsVal  = ctx.newVar[Int     ](0)
+    private[this] val offsetVal   = ctx.newVar[Int     ](0)
+    private[this] val elem        = ctx.newVar[EOut[Tx]](null)
 
     private[this] val _valid      = ctx.newVar(false)
 
@@ -89,7 +89,7 @@ final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset: Pat.In
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): EOut = {
+    def next()(implicit tx: Tx): EOut[Tx] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = elem()

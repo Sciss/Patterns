@@ -52,22 +52,7 @@ object Context {
     def nextInt(n: Int)(implicit tx: Unit): Int = peer.nextInt(n)
   }
 
-  private abstract class Impl[Tx] extends ContextLike[Tx] {
-//    protected def seedRnd: Random[Tx]
-
-//    private[this] var tokenMap = Map.empty[Int, Stream[Tx, _]]
-    private[this] val tokenMap = newVar(Map.empty[Int, Stream[Tx, _]])
-
-    def setOuterStream[A](token: Int, outer: Stream[Tx, A])(implicit tx: Tx): Unit =
-      tokenMap() = tokenMap() + (token -> outer)
-
-    def getOuterStream[A](token: Int)(implicit tx: Tx): Stream[Tx, A] =
-      tokenMap().apply(token).asInstanceOf[Stream[Tx, A]]
-
-//    def mkRandom(): Random[Tx] = new PlainRandom(seedRnd.nextLong())
-  }
-
-  private final class PlainImpl extends Impl[Unit] with Plain {
+  private final class PlainImpl extends ContextLike[Unit] with Plain {
     def newVar[A](init: A): Var[Unit, A] = new PlainVar[A](init)
 
     private[this] lazy val seedRnd = new PlainRandom(System.currentTimeMillis())
@@ -86,6 +71,7 @@ object Context {
 
 private[patterns] abstract class ContextLike[Tx] extends Context[Tx] {
   private[this] var streamMap = Map.empty[AnyRef, List[Stream[Tx, _]]]
+  private[this] val tokenMap  = newVar(Map.empty[Int, Stream[Tx, _]])
 
   def addStream[A](ref: AnyRef, stream: Stream[Tx, A]): Stream[Tx, A] = {
     streamMap += ref -> (stream :: streamMap.getOrElse(ref, Nil))
@@ -93,4 +79,10 @@ private[patterns] abstract class ContextLike[Tx] extends Context[Tx] {
   }
 
   def getStreams(ref: AnyRef): List[Stream[Tx, _]] = streamMap.getOrElse(ref, Nil)
+
+  def setOuterStream[A](token: Int, outer: Stream[Tx, A])(implicit tx: Tx): Unit =
+    tokenMap() = tokenMap() + (token -> outer)
+
+  def getOuterStream[A](token: Int)(implicit tx: Tx): Stream[Tx, A] =
+    tokenMap().apply(token).asInstanceOf[Stream[Tx, A]]
 }
