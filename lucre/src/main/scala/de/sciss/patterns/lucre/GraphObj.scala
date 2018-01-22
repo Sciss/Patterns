@@ -215,7 +215,7 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
       (in.readByte(): @switch) match {
         case 'C' =>
           val value = readElem(in, ref)
-          Constant[CTop](value.asInstanceOf[CTop#Out])
+          Constant[CTop](value.asInstanceOf[CTop#COut])
 //          (in.readByte(): @switch) match {
 //            case 'd' => ConstantD(in.readDouble())
 //            case 'i' => ConstantI(in.readInt   ())

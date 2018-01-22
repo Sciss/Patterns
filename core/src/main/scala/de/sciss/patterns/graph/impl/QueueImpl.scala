@@ -69,7 +69,7 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
   def advance(seconds: Double)(implicit tx: Tx): Unit =
     cmdRev() = Advance(seconds) :: cmdRev()
 
-  type Out = Event#TOut[Tx]
+  type Out = Event#Out[Tx]
 
   def iterator: Stream[Tx, Out] = new Stream[Tx, Out] {
     private[this] val pq = context.newVar[ISortedMap[Ref, Stream[Tx, Either[Out, Cmd]]]](null)
@@ -127,7 +127,7 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
             cmd match {
               case Par(refP, pat) =>
                 refP.time = ref.time // now
-                val patIt: Stream[Tx, Event#TOut[Tx]] = pat.expand
+                val patIt: Stream[Tx, Event#Out[Tx]] = pat.expand
                 if (patIt.nonEmpty) pq() = pq() + (refP -> patIt.map(Left(_)))
                 putBack()
                 advance()

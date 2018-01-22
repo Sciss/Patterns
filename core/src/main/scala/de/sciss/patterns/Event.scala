@@ -16,7 +16,7 @@ package de.sciss.patterns
 import de.sciss.patterns.Types.CTop
 
 object Event {
-  type Out = Event#Out
+  type Out = Event#COut
 
   private def getOrElseDouble(m: Out, key: String, default: => Double): Double =
     m.get(key) match {
@@ -100,5 +100,5 @@ object Event {
   def pan         (m: Out): Double = getOrElseDouble(m, keyPan        , 0.0)
 }
 trait Event extends CTop {
-  type Out = Map[String, _]
+  type COut = Map[String, _]
 }

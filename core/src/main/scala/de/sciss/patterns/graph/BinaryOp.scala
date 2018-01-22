@@ -18,7 +18,7 @@ import de.sciss.patterns.Types.{Aux, Bridge, Num, Top}
 
 object BinaryOp {
   sealed abstract class Op[T <: Top] extends ProductWithAux {
-    def apply[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
 
     override final def productPrefix = s"BinaryOp$$$name"
 
@@ -26,7 +26,7 @@ object BinaryOp {
   }
 
   final case class Plus[T <: Top]()(implicit num: Num[T]) extends Op[T] {
-    def apply[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx] = num.plus(a, b)
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.plus(a, b)
 
     def name = "Plus"
 
@@ -34,7 +34,7 @@ object BinaryOp {
   }
 
   final case class Times[T <: Top]()(implicit num: Num[T]) extends Op[T] {
-    def apply[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx] = num.times(a, b)
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.times(a, b)
 
     def name = "Times"
 
@@ -42,7 +42,7 @@ object BinaryOp {
   }
 
   final case class RoundTo[T <: Top]()(implicit num: Num[T]) extends Op[T] {
-    def apply[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx] = num.times(a, b)
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.times(a, b)
 
     def name = "RoundTo"
 
@@ -55,7 +55,7 @@ final case class BinaryOp[T1 <: Top, T2 <: Top, T <: Top](op: BinaryOp.Op[T], a:
 
   override private[patterns] def aux: List[Aux] = br :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = {
     val ai = a.expand.map(br.lift1)
     val bi = b.expand.map(br.lift2)
     (ai zip bi).map { case (av, bv) => op(av, bv) }

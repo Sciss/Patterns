@@ -28,7 +28,7 @@ final case class Series[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pa
 
   override private[patterns] def aux: List[Aux] = br :: num :: Nil
 
-  protected def op[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx] = num.plus(a, b)
+  protected def op[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.plus(a, b)
 }
 
 final case class Geom[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[T2])
@@ -37,7 +37,7 @@ final case class Geom[T1 <: Top, T2 <: Top, T <: Top](start: Pat[T1], step: Pat[
 
   override private[patterns] def aux: List[Aux] = br :: num :: Nil
 
-  protected def op[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx] = num.times(a, b)
+  protected def op[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.times(a, b)
 }
 
 final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1], step: Pat[T2])
@@ -46,11 +46,11 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
 
   override private[patterns] def aux: List[Aux] = br :: num :: Nil
 
-  protected def calcNext[Tx](cur: T#TOut[Tx], step: T#TOut[Tx])(implicit r: Random): T#TOut[Tx] = {
+  protected def calcNext[Tx](cur: T#Out[Tx], step: T#Out[Tx])(implicit r: Random): T#Out[Tx] = {
     num.plus(cur, num.rand2(step))
   }
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = new Stream[Tx, T#TOut[Tx]] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
     // println("Brown.iterator")
     // (new Exception).fillInStackTrace().printStackTrace()
 
@@ -60,7 +60,7 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
 
     private[this] implicit val r: Random  = ctx.mkRandom()
 
-    private[this] val state     = ctx.newVar[T#TOut[Tx]](null.asInstanceOf[T#TOut[Tx]])
+    private[this] val state     = ctx.newVar[T#Out[Tx]](null.asInstanceOf[T#Out[Tx]])
     private[this] val _hasNext  = ctx.newVar(false)
     private[this] val _valid    = ctx.newVar(false)
 
@@ -81,7 +81,7 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
     def reset()(implicit tx: Tx): Unit =
       _valid() = false
 
-    def next()(implicit tx: Tx): T#TOut[Tx] = {
+    def next()(implicit tx: Tx): T#Out[Tx] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = state()
@@ -103,15 +103,15 @@ final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T])
 
   override private[patterns] def aux: List[Aux] = num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = new Stream[Tx, T#TOut[Tx]] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
     private[this] val loStream  = lo.expand
     private[this] val hiStream  = hi.expand
 
     private[this] implicit val r: Random = ctx.mkRandom()
 
-    private def mkState()(implicit tx: Tx): T#TOut[Tx] = num.rrand(loStream.next(), hiStream.next())
+    private def mkState()(implicit tx: Tx): T#Out[Tx] = num.rrand(loStream.next(), hiStream.next())
 
-    private[this] val state     = ctx.newVar[T#TOut[Tx]](null.asInstanceOf[T#TOut[Tx]])
+    private[this] val state     = ctx.newVar[T#Out[Tx]](null.asInstanceOf[T#Out[Tx]])
     private[this] val _hasNext  = ctx.newVar(false)
     private[this] val _valid    = ctx.newVar(false)
 
@@ -132,7 +132,7 @@ final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T])
         }
       }
 
-    def next()(implicit tx: Tx): T#TOut[Tx] = {
+    def next()(implicit tx: Tx): T#Out[Tx] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = state()

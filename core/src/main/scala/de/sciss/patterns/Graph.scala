@@ -89,7 +89,7 @@ final case class Graph[T <: Top](sources: Vec[Pattern[_]], out: Pat[T]) extends 
   def isEmpty : Boolean = sources.isEmpty // && controlProxies.isEmpty
   def nonEmpty: Boolean = !isEmpty
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = new Stream[Tx, T#TOut[Tx]] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
 //    private[this] val sourceStreams = sources.map(_.expand)
     private[this] val peer = out.expand
 
@@ -97,6 +97,6 @@ final case class Graph[T <: Top](sources: Vec[Pattern[_]], out: Pat[T]) extends 
       sources.foreach(_.reset())
 
     def hasNext(implicit tx: Tx): Boolean     = peer.hasNext
-    def next ()(implicit tx: Tx): T#TOut[Tx]  = peer.next()
+    def next ()(implicit tx: Tx): T#Out[Tx]  = peer.next()
   }
 }

@@ -19,11 +19,11 @@ import de.sciss.patterns.Types.Top
 import scala.annotation.tailrec
 
 final case class Flatten[T <: Top](in: Pat[Pat[T]]) extends Pattern[T] {
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = new Stream[Tx, T#TOut[Tx]] {
-    private[this] val inStream: Stream[Tx, Stream[Tx, T#TOut[Tx]]] = in.expand[Tx]
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
+    private[this] val inStream: Stream[Tx, Stream[Tx, T#Out[Tx]]] = in.expand[Tx]
 
     private[this] val hasInner    = ctx.newVar(false)
-    private[this] val innerStream = ctx.newVar[Stream[Tx, T#TOut[Tx]]](null)
+    private[this] val innerStream = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
     private[this] val _hasNext    = ctx.newVar(false)
 
     private[this] val _valid      = ctx.newVar(false)
@@ -59,7 +59,7 @@ final case class Flatten[T <: Top](in: Pat[Pat[T]]) extends Pattern[T] {
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): T#TOut[Tx] = {
+    def next()(implicit tx: Tx): T#Out[Tx] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = innerStream().next()

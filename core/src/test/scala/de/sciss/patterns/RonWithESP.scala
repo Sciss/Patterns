@@ -77,7 +77,7 @@ object RonWithESP {
     new Thread {
       override def run(): Unit = {
         val tempo   = 0.25
-        type Out    = Event#Out
+        type Out    = Event#COut
         var pq      = ISortedMap.empty[TimeRef, Either[Stream[Tx, Out], osc.Message]]
         var now     = 0.0
         var refCnt  = 0

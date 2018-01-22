@@ -23,15 +23,15 @@ trait Truncate[T <: Top] extends Pattern[T] {
   protected val in: Pat[T]
   protected def length: Pat[IntTop]
 
-  protected def truncate[Tx](inStream: Stream[Tx, T#TOut[Tx]], n: Int)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#TOut[Tx]]
+  protected def truncate[Tx](inStream: Stream[Tx, T#Out[Tx]], n: Int)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]]
 
   // ---- impl ----
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = new Stream[Tx, T#TOut[Tx]] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
     private[this] val lenStream = length.expand
     private[this] val inStream  = in    .expand
 
-    private[this] val peer      = ctx.newVar[Stream[Tx, T#TOut[Tx]]](null)
+    private[this] val peer      = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
     private[this] val _hasNext  = ctx.newVar(false)
 
     private[this] val _valid    = ctx.newVar(false)
@@ -53,7 +53,7 @@ trait Truncate[T <: Top] extends Pattern[T] {
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): T#TOut[Tx] = {
+    def next()(implicit tx: Tx): T#Out[Tx] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = peer().next()

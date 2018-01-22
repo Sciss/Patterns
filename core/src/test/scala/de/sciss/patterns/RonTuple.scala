@@ -18,7 +18,7 @@ object RonTuple {
     val it = x.expand
     println("Done.")
     var time = 0.0
-    it.foreach { elem: Event#Out =>
+    it.foreach { elem: Event#COut =>
 //      val elemS = elem.map {
 //        case (k, d: Double) => f"$k -> $d%g"
 //        case (k, a)         => s"$k -> $a"

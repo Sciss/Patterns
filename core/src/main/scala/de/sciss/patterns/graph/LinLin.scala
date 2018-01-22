@@ -23,7 +23,7 @@ final case class LinLin[T1 <: Top, T2 <: Top, T <: Top](in: Pat[T1], inLo: Pat[T
 
   override private[patterns] def aux: List[Aux] = br :: num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = new Stream[Tx, T#TOut[Tx]] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
     private[this] val inStream    = in    .expand.map(br.lift1)
     private[this] val inLoStream  = inLo  .expand.map(br.lift1)
     private[this] val inHiStream  = inHi  .expand.map(br.lift1)
@@ -37,7 +37,7 @@ final case class LinLin[T1 <: Top, T2 <: Top, T <: Top](in: Pat[T1], inLo: Pat[T
       inLoStream .hasNext && inHiStream .hasNext &&
       outLoStream.hasNext && outHiStream.hasNext
 
-    def next()(implicit tx: Tx): T#TOut[Tx] = {
+    def next()(implicit tx: Tx): T#Out[Tx] = {
       if (!hasNext) Stream.exhausted()
       val inVal     = inStream    .next()
       val inLoVal   = inLoStream  .next()

@@ -23,7 +23,7 @@ object Pat {
   type DoubleSeq  = Pat[DoubleSeqTop  ]
   type Event      = Pat[patterns.Event]
 
-  type $[T <: Top, A] = Pat[T { type TOut[Tx] = A }]
+  type $[T <: Top, A] = Pat[T { type Out[Tx] = A }]
 
   def seqFill[T <: Top](n: Pat.Int)(body: Pat.Int => Pat[T]): Pat[T] = {
     // val i = Series(start = 0, step = 1).take(n)
@@ -40,13 +40,13 @@ trait ProductWithAux extends Product {
 
 trait Pat[T <: Top] extends Top with ProductWithAux {
 //  final type Out[Tx] = Stream[Tx, T#Out] // Seq[T#Out]
-  final type TOut[Tx] = Stream[Tx, T#TOut[Tx]] // Seq[T#Out]
+  final type Out[Tx] = Stream[Tx, T#Out[Tx]] // Seq[T#Out]
 //  final type Out = Pat[T]
 
-  private[patterns] def expand[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]]
+  private[patterns] def expand[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]]
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]]
-  def embed   [Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]]
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]]
+  def embed   [Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]]
 }
 
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */
@@ -66,7 +66,7 @@ abstract class Pattern[T <: Top] extends Pat[T] {
     * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
     *          or a single stream, or a group of streams)
     */
-  final private[patterns] def expand[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = {
+  final private[patterns] def expand[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = {
 //    ctx.visit(ref, iterator)
     ctx.addStream(ref, iterator)
   }
@@ -74,5 +74,5 @@ abstract class Pattern[T <: Top] extends Pat[T] {
   final private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit =
     ctx.getStreams(ref).foreach(_.reset())
 
-  final def embed[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = iterator
+  final def embed[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = iterator
 }

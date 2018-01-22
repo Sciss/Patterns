@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
-  type EOut = Event#Out
+  type EOut = Event#COut
 
   def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, EOut] = {
     val mapE: Map[String, Stream[Tx, _]] = entries.map { case (key, value) => key -> value.expand } .toMap  // (breakOut)

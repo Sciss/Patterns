@@ -27,7 +27,7 @@ object RonTuplePure {
     val it = x.expand
     println("Done.")
     var time = 0.0
-    it.foreach { elem0: Event#Out =>
+    it.foreach { elem0: Event#COut =>
       val elem  = elem0 +
         (Event.keyDetunedFreq -> Event.detunedFreq(elem0)) +
         (Event.keySustain     -> Event.sustain    (elem0)) +

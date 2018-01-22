@@ -21,7 +21,7 @@ import scala.collection.immutable.{SortedMap => ISortedMap}
 final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset: Pat.Int = 0)
   extends Pattern[Event] {
 
-  type EOut = Event#Out
+  type EOut = Event#COut
 
   def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, EOut] = new Stream[Tx, EOut] {
     private[this] val listStream: Stream[Tx, Stream[Tx, Map[String, _]]] = list.expand[Tx]

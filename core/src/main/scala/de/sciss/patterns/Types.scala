@@ -23,10 +23,10 @@ import scala.language.higherKinds
 import scala.util.Random
 
 object Types {
-  type TopT[A] = Top { type TOut[Tx] = A }
+  type TopT[A] = Top { type Out[Tx] = A }
 
   object Top {
-    type Seq[T <: Top] = Top { type TOut[Tx] = scala.Seq[T#TOut[Tx]] }
+    type Seq[T <: Top] = Top { type Out[Tx] = scala.Seq[T#Out[Tx]] }
 
 //    def Seq[T <: Top](implicit peer: T): Seq[T] = new Seq(peer)
 //    final class Seq[T <: Top](val peer: T) extends Top {
@@ -34,13 +34,13 @@ object Types {
 //    }
   }
   trait Top {
-    type TOut[Tx]
+    type Out[Tx]
   }
 
   trait CTop extends Top {
-    type TOut[Tx] = Out
+    type Out[Tx] = COut
 
-    type Out
+    type COut
   }
 
   object Aux {
@@ -74,38 +74,38 @@ object Types {
   }
 
   trait Bridge[T1 <: Top, T2 <: Top, T <: Top] extends Aux {
-    def lift1[Tx](a: T1#TOut[Tx]): T#TOut[Tx]
-    def lift2[Tx](a: T2#TOut[Tx]): T#TOut[Tx]
+    def lift1[Tx](a: T1#Out[Tx]): T#Out[Tx]
+    def lift2[Tx](a: T2#Out[Tx]): T#Out[Tx]
   }
 
   trait Ord[T <: Top] extends Aux {
     // Ordering[T#Out]
-    def lt[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): Boolean
+    def lt[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean
   }
 
   trait Num[T <: Top] extends Aux {
-    def plus   [Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
-    def minus  [Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
-    def times  [Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
-    def roundTo[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
-    def negate [Tx](a: T#TOut[Tx]               ): T#TOut[Tx]
-    def abs    [Tx](a: T#TOut[Tx]               ): T#TOut[Tx]
+    def plus   [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+    def minus  [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+    def times  [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+    def roundTo[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+    def negate [Tx](a: T#Out[Tx]               ): T#Out[Tx]
+    def abs    [Tx](a: T#Out[Tx]               ): T#Out[Tx]
 
-    def zero[Tx]: T#TOut[Tx]
-    def one [Tx]: T#TOut[Tx]
+    def zero[Tx]: T#Out[Tx]
+    def one [Tx]: T#Out[Tx]
 
-    def rand2[Tx](a: T#TOut[Tx]               )(implicit r: Random): T#TOut[Tx]
-    def rrand[Tx](a: T#TOut[Tx], b: T#TOut[Tx])(implicit r: Random): T#TOut[Tx]
+    def rand2[Tx](a: T#Out[Tx]               )(implicit r: Random): T#Out[Tx]
+    def rrand[Tx](a: T#Out[Tx], b: T#Out[Tx])(implicit r: Random): T#Out[Tx]
 
-    def fold[Tx](a: T#TOut[Tx], lo: T#TOut[Tx], hi: T#TOut[Tx])(implicit r: Random): T#TOut[Tx]
+    def fold[Tx](a: T#Out[Tx], lo: T#Out[Tx], hi: T#Out[Tx])(implicit r: Random): T#Out[Tx]
   }
 
   trait NumFrac[T <: Top] extends Num[T] {
-    def div[Tx](a: T#TOut[Tx], b: T#TOut[Tx]): T#TOut[Tx]
+    def div[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
   }
   
   trait SeqLikeNum[A, T <: SeqTop[A]] extends Num[T] {
-    type P <: CTop { type Out = A }
+    type P <: CTop { type COut = A }
     protected val peer: Num[P]
     
     final def plus    [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.plus    )
@@ -185,10 +185,10 @@ object Types {
   }
 
   trait ScalarOrSeqTop[A] extends CTop {
-    def lift(in: Out): Seq[A]
+    def lift(in: COut): Seq[A]
 
     type Index[_]
-    type Out = Index[A]
+    type COut = Index[A]
 
     def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C]
 
@@ -346,7 +346,7 @@ object Types {
   ////////////////////////////
 
   sealed trait StringTop extends CTop {
-    type Out = _String
+    type COut = _String
   }
   implicit object StringTop extends StringTop with Bridge[StringTop, StringTop, StringTop] {
     def lift1[Tx](a: _String): _String = a

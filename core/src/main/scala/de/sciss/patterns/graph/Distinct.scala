@@ -19,12 +19,12 @@ import de.sciss.patterns.Types.Top
 import scala.annotation.tailrec
 
 final case class Distinct[T <: Top](in: Pat[T]) extends Pattern[T] {
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#TOut[Tx]] = new Stream[Tx, T#TOut[Tx]] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
     private[this] val inStream = in.expand
 
-    private[this] val seen     = ctx.newVar[Set[T#TOut[Tx]]](null)
+    private[this] val seen     = ctx.newVar[Set[T#Out[Tx]]](null)
     private[this] val _hasNext = ctx.newVar[Boolean        ](false)
-    private[this] val _next    = ctx.newVar[T#TOut[Tx]     ](null.asInstanceOf[T#TOut[Tx]])
+    private[this] val _next    = ctx.newVar[T#Out[Tx]     ](null.asInstanceOf[T#Out[Tx]])
 
     def reset()(implicit tx: Tx): Unit =
       _valid() = false
@@ -57,7 +57,7 @@ final case class Distinct[T <: Top](in: Pat[T]) extends Pattern[T] {
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): T#TOut[Tx] = {
+    def next()(implicit tx: Tx): T#Out[Tx] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = _next()

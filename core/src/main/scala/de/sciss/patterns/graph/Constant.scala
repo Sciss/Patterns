@@ -16,11 +16,11 @@ package graph
 
 import de.sciss.patterns.Types.{Aux, CTop}
 
-final case class Constant[T <: CTop](value: T#Out) extends Pat[T] {
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = Stream.continually(value)
-  def embed   [Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = Stream.single     (value)
+final case class Constant[T <: CTop](value: T#COut) extends Pat[T] {
+  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#COut] = Stream.continually(value)
+  def embed   [Tx](implicit ctx: Context[Tx]): Stream[Tx, T#COut] = Stream.single     (value)
 
   private[patterns] def aux: List[Aux] = Nil
 
-  private[patterns] def expand[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out] = iterator
+  private[patterns] def expand[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#COut] = iterator
 }
