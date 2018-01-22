@@ -16,8 +16,6 @@ package graph
 
 import de.sciss.patterns.graph.impl.QueueImpl
 
-import scala.util.Random
-
 object Spawner {
   trait Queue[Tx] {
     type Ref
@@ -30,14 +28,14 @@ object Spawner {
     def advance(seconds: Double)(implicit tx: Tx): Unit
 
     implicit val context: Context[Tx]
-    implicit def random : Random
+    implicit def random : Random [Tx]
   }
 }
 final case class Spawner(fun: Spawner.Queue[_] => Unit) extends Pattern[Event] {
   type EOut[Tx] = Event#Out[Tx]
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, EOut[Tx]] = {
-    val queue = new QueueImpl[Tx]
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, EOut[Tx]] = {
+    val queue = new QueueImpl[Tx](tx)
     fun(queue)
     queue.iterator
   }

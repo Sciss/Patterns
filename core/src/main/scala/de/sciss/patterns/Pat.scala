@@ -43,10 +43,10 @@ trait Pat[T <: Top] extends Top with ProductWithAux {
   final type Out[Tx] = Stream[Tx, T#Out[Tx]] // Seq[T#Out]
 //  final type Out = Pat[T]
 
-  private[patterns] def expand[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]]
+  private[patterns] def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]]
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]]
-  def embed   [Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]]
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]]
+  def embed   [Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]]
 }
 
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */
@@ -66,7 +66,7 @@ abstract class Pattern[T <: Top] extends Pat[T] {
     * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
     *          or a single stream, or a group of streams)
     */
-  final private[patterns] def expand[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = {
+  final private[patterns] def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = {
 //    ctx.visit(ref, iterator)
     ctx.addStream(ref, iterator)
   }
@@ -74,5 +74,5 @@ abstract class Pattern[T <: Top] extends Pat[T] {
   final private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit =
     ctx.getStreams(ref).foreach(_.reset())
 
-  final def embed[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = iterator
+  final def embed[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = iterator
 }

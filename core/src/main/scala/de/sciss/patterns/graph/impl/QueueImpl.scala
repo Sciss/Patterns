@@ -17,7 +17,6 @@ package impl
 
 import scala.annotation.tailrec
 import scala.collection.immutable.{SortedMap => ISortedMap}
-import scala.util.Random
 
 object QueueImpl {
 
@@ -35,7 +34,7 @@ object QueueImpl {
 //  final case class AdvanceB(stop: Double) extends Blocking
 //  final case object Flush extends Blocking
 }
-final class QueueImpl[Tx](implicit val context: Context[Tx])
+final class QueueImpl[Tx](tx0: Tx)(implicit val context: Context[Tx])
   extends Spawner.Queue[Tx] {
 
   import QueueImpl._
@@ -45,7 +44,7 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
   private[this] val refCnt  = context.newVar(0)
   private[this] val cmdRev  = context.newVar(List.empty[Cmd])
 
-  implicit val random: Random = context.mkRandom()
+  implicit val random: Random[Tx] = context.mkRandom()(tx0)
 
   private def mkRef()(implicit tx: Tx): Ref = {
     val c = refCnt()
@@ -167,7 +166,7 @@ final class QueueImpl[Tx](implicit val context: Context[Tx])
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
         val pqVal: ISortedMap[Ref, Stream[Tx, Either[Out, Cmd]]] =
-          if (cmdRev().isEmpty) ISortedMap.empty else ISortedMap(mkRef() -> Stream.reverseIterator(cmdRev()).map(Right(_)))
+          if (cmdRev().isEmpty) ISortedMap.empty else ISortedMap(mkRef() -> ???) // Stream.reverseIterator(cmdRev()).map(Right(_)))
         pq() = pqVal
         _valid() = true
         advance()

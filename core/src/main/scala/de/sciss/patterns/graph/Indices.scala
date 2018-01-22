@@ -17,8 +17,10 @@ package graph
 import de.sciss.patterns.Types.{IntTop, Top}
 
 case class Indices[T <: Top](in: Pat[T]) extends Pattern[IntTop] {
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Int] = new Stream[Tx, Int] {
-    private[this] val inStream = in.expand
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl(tx)
+
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Int] {
+    private[this] val inStream = in.expand(ctx, tx0)
 
     private[this] val count = ctx.newVar(0)
 

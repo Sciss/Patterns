@@ -20,7 +20,11 @@ import scala.collection.mutable
 
 final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[Pat[T]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new Stream[Tx, Stream[Tx, T#Out[Tx]]] {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new StreamImpl(tx)
+
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
+    extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
+
     // Adapted from scala.collection.SeqLike#CombinationsItr
     // Scala license: BSD 3-clause
 
@@ -32,6 +36,11 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
     private[this] val numbers   = ctx.newVar[Vector[Int]](null)
     private[this] val offsets   = ctx.newVar[Vector[Int]](null)
     private[this] val _hasNext  = ctx.newVar(false)
+
+    private[this] val inStream: Stream[Tx, T#Out[Tx]] = in.expand(ctx, tx0)
+    private[this] val nStream : Stream[Tx, Int]       = n .expand(ctx, tx0)
+
+    private[this] val _valid = ctx.newVar(false)
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()
@@ -88,13 +97,6 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
       }
     }
 
-    private[this] val inStream: Stream[Tx, T#Out[Tx]]  = in.expand
-    private[this] val nStream : Stream[Tx, Int]         = n .expand
-
-    private[this] var nVal: Int = _
-
-    private[this] val _valid = ctx.newVar(false)
-
     def reset()(implicit tx: Tx): Unit =
       _valid() = false
 
@@ -106,7 +108,7 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
       _hasNext() = nStream.hasNext
       if (!_hasNext()) return
 
-      nVal = nStream.next()
+      val nVal = nStream.next()
 
       val m = mutable.Map.empty[T#Out[Tx], Int]
 

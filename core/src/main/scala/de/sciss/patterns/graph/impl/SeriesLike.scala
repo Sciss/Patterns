@@ -30,9 +30,11 @@ trait SeriesLike[T1 <: Top, T2 <: Top, T <: Top] extends Pattern[T] {
 
   // ---- impl ----
 
-  final def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
-    private[this] val ai = start.expand.map(br.lift1)
-    private[this] val bi = step .expand.map(br.lift2)
+  final def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
+
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+    private[this] val ai = start.expand(ctx, tx0).map(br.lift1)
+    private[this] val bi = step .expand(ctx, tx0).map(br.lift2)
 
     private[this] val state     = ctx.newVar[T#Out[Tx]](null.asInstanceOf[T#Out[Tx]])
     private[this] val _hasNext  = ctx.newVar(false)

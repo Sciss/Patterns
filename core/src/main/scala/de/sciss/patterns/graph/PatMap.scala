@@ -19,9 +19,11 @@ import de.sciss.patterns.Types.Top
 final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], inner: Graph[T])
   extends Pattern[Pat[T]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new Stream[Tx, Stream[Tx, T#Out[Tx]]] {
-    private[this] val outerStream: Stream[Tx, Stream[Tx, T1#Out[Tx]]]  = outer.expand[Tx]
-    private[this] val innerStream: Stream[Tx, T#Out[Tx]]               = inner.expand[Tx]
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new StreamImpl(tx)
+
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
+    private[this] val outerStream: Stream[Tx, Stream[Tx, T1#Out[Tx]]]  = outer.expand(ctx, tx0)
+    private[this] val innerStream: Stream[Tx, T#Out[Tx]]               = inner.expand(ctx, tx0)
 
     private[this] val itMapInner    = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
 
@@ -45,7 +47,10 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
     }
 
     private final class InnerStream(itStream: Stream[Tx, T1#Out[Tx]]) extends Stream[Tx, T#Out[Tx]] {
-      ctx.setOuterStream[T1#Out[Tx]](it.token, itStream)
+      def init()(implicit tx: Tx): this.type = {
+        ctx.setOuterStream[T1#Out[Tx]](it.token, itStream)
+        this
+      }
 
       def reset()(implicit tx: Tx): Unit = ()
 
@@ -59,7 +64,7 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
         _hasNext() = outerStream.hasNext
         if (_hasNext()) {
           val itStream    = outerStream.next()
-          itMapInner()   = new InnerStream(itStream)
+          itMapInner()    = new InnerStream(itStream).init()
           hasMapStream()  = true
           innerStream.reset()
         }

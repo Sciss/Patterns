@@ -17,8 +17,10 @@ package graph
 import de.sciss.patterns.Types.Top
 
 final case class PatPat[T <: Top](in: Seq[Pat[T]]) extends Pattern[Pat[T]] {
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new Stream[Tx, Stream[Tx, T#Out[Tx]]] {
-    private[this] val inStreams: Array[Stream[Tx, T#Out[Tx]]] = in.iterator.map(_.expand).toArray
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new StreamImpl(tx)
+
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
+    private[this] val inStreams: Array[Stream[Tx, T#Out[Tx]]] = in.iterator.map(_.expand(ctx, tx0)).toArray
     private[this] val inIdx = ctx.newVar(0)
 
     def reset()(implicit tx: Tx): Unit = {

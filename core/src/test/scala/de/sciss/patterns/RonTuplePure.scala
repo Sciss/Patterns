@@ -3,8 +3,6 @@ package de.sciss.patterns
 import de.sciss.patterns.Types.{DoubleTop, IntTop, Top, TopT}
 import de.sciss.patterns.graph._
 
-import scala.util.Random
-
 object RonTuplePure {
   def mkElemString(in: Any): String = in match {
     case ch: Seq[_] => ch.map(mkElemString).mkString("[ ", ", ", " ]")
@@ -21,9 +19,10 @@ object RonTuplePure {
   }
 
   def main(args: Array[String]): Unit = {
-    val x = spawner()
     implicit val ctx: Context.Plain = Context()
     import ctx.tx
+    implicit val r: Random[Unit] = ctx.mkRandom()
+    val x = spawner[Unit]()
     val it = x.expand
     println("Done.")
     var time = 0.0
@@ -55,7 +54,7 @@ object RonTuplePure {
 
     def mirror: Seq[A] = if (xs.isEmpty) xs else xs ++ xs.reverse.tail
 
-    def choose()(implicit r: Random): A = xs(r.nextInt(xs.size))
+    def choose[Tx]()(implicit r: Random[Tx], tx: Tx): A = xs(r.nextInt(xs.size))
   }
 
   // all pairs from two arrays
@@ -174,8 +173,7 @@ object RonTuplePure {
     (Pseq(ptrnOut), Pseq(durs.map(_ * 0.02)))
   }
 
-  def spawner(): Pat.Event = {
-    implicit val random: Random = new Random()
+  def spawner[Tx]()(implicit random: Random[Tx]): Pat.Event = {
     val inf = Int.MaxValue
     def catPat(cantus: Pat.Double): Pat.Event =
       Bind(

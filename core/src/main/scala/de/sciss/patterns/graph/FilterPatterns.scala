@@ -35,7 +35,7 @@ final case class Drop[T <: Top](in: Pat[T], length: Pat.Int)
 final case class Stutter[T <: Top](n: Pat.Int, in: Pat[T])
   extends Pattern[T] {
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = {
     val nIt  = n .expand
     val inIt = in.expand
     (inIt zip nIt).flatMap { case (xi, ni) => Stream.fill(ni)(xi) }

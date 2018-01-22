@@ -22,21 +22,17 @@ object Stream {
     continually(elem).take(n) // XXX TODO -- more efficient
 
   def empty[Tx, A]: Stream[Tx, A] = new Stream[Tx, A] {
-    def reset()(implicit tx: Tx): Unit = ()
-
+    def reset()(implicit tx: Tx): Unit    = ()
     def hasNext(implicit tx: Tx): Boolean = false
-
-    def next()(implicit tx: Tx): A = Stream.exhausted()
+    def next ()(implicit tx: Tx): A       = Stream.exhausted()
   }
 
-  def reverseIterator[Tx, A](that: Iterable[A]): Stream[Tx, A] = ???
+//  def reverseIterator[Tx, A](that: Iterable[A]): Stream[Tx, A] = ...
 
   def continually[Tx, A](elem: => A): Stream[Tx, A] = new Stream[Tx, A] {
-    def reset()(implicit tx: Tx): Unit = ()
-
+    def reset()(implicit tx: Tx): Unit    = ()
     def hasNext(implicit tx: Tx): Boolean = true
-
-    def next()(implicit tx: Tx): A = elem
+    def next ()(implicit tx: Tx): A       = elem
   }
 
   def single[Tx, A](elem: A)(implicit ctx: Context[Tx]): Stream[Tx, A] = new Stream[Tx, A] {
@@ -154,7 +150,14 @@ abstract class Stream[Tx, +A] { outer =>
     b.result()
   }
 
-  def size(implicit tx: Tx): Int = ???
+  def size(implicit tx: Tx): Int = {
+    var res = 0
+    while (hasNext) {
+      next()
+      res += 1
+    }
+    res
+  }
 
   def foreach(fun: A => Unit)(implicit tx: Tx): Unit =
     while (hasNext) fun(next())

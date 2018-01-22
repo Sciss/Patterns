@@ -19,8 +19,10 @@ import de.sciss.patterns.Types.{Aux, Ord, Top}
 final case class Sorted[T <: Top](in: Pat[T])(implicit ord: Ord[T]) extends Pattern[T] {
   override private[patterns] def aux: List[Aux] = ord :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
-    private[this] val inStream  = in.expand
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
+
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+    private[this] val inStream  = in.expand(ctx, tx0)
     private[this] val _valid    = ctx.newVar(false)
 
     private[this] val sortedIt  = ctx.newVar[Iterator[T#Out[Tx]]](null)

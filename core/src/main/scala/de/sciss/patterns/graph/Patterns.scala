@@ -17,8 +17,6 @@ package graph
 import de.sciss.patterns.Types.{Aux, Bridge, Num, Top}
 import de.sciss.patterns.graph.impl.SeriesLike
 
-import scala.util.Random
-
 /** A pattern that generates an arithmetic series. Corresponds to `Pseries` in SuperCollider,
   * but does not have a `length` arguments. Use `.take(N)` instead.
   */
@@ -46,19 +44,23 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
 
   override private[patterns] def aux: List[Aux] = br :: num :: Nil
 
-  protected def calcNext[Tx](cur: T#Out[Tx], step: T#Out[Tx])(implicit r: Random): T#Out[Tx] = {
+  protected def calcNext[Tx](cur: T#Out[Tx], step: T#Out[Tx])(implicit r: Random[Tx], tx: Tx): T#Out[Tx] = {
     num.plus(cur, num.rand2(step))
   }
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
+
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
+    extends Stream[Tx, T#Out[Tx]] {
+
     // println("Brown.iterator")
     // (new Exception).fillInStackTrace().printStackTrace()
 
-    private[this] val loStream    = lo  .expand.map(br.lift1)
-    private[this] val hiStream    = hi  .expand.map(br.lift1)
-    private[this] val stepStream  = step.expand
+    private[this] val loStream    = lo  .expand(ctx, tx0).map(br.lift1)
+    private[this] val hiStream    = hi  .expand(ctx, tx0).map(br.lift1)
+    private[this] val stepStream  = step.expand(ctx, tx0)
 
-    private[this] implicit val r: Random  = ctx.mkRandom()
+    private[this] implicit val r: Random[Tx] = ctx.mkRandom()(tx0)
 
     private[this] val state     = ctx.newVar[T#Out[Tx]](null.asInstanceOf[T#Out[Tx]])
     private[this] val _hasNext  = ctx.newVar(false)
@@ -103,11 +105,13 @@ final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T])
 
   override private[patterns] def aux: List[Aux] = num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
-    private[this] val loStream  = lo.expand
-    private[this] val hiStream  = hi.expand
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl[Tx](tx)
 
-    private[this] implicit val r: Random = ctx.mkRandom()
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+    private[this] val loStream  = lo.expand(ctx, tx0)
+    private[this] val hiStream  = hi.expand(ctx, tx0)
+
+    private[this] implicit val r: Random[Tx] = ctx.mkRandom()(tx0)
 
     private def mkState()(implicit tx: Tx): T#Out[Tx] = num.rrand(loStream.next(), hiStream.next())
 

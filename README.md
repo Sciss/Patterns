@@ -27,5 +27,3 @@ Please see the file [CONTRIBUTING.md](CONTRIBUTING.md)
 Useful links:
 
 - [Patterns in SuperCollider](http://doc.sccode.org/Tutorials/A-Practical-Guide/PG_01_Introduction.html)
-
-Current testing demo: `sbt test:run` (have have SuperCollider installed and `scsynth` on the `PATH`!)

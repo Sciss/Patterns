@@ -20,7 +20,6 @@ import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.annotation.switch
 import scala.language.higherKinds
-import scala.util.Random
 
 object Types {
   type TopT[A] = Top { type Out[Tx] = A }
@@ -94,10 +93,10 @@ object Types {
     def zero[Tx]: T#Out[Tx]
     def one [Tx]: T#Out[Tx]
 
-    def rand2[Tx](a: T#Out[Tx]               )(implicit r: Random): T#Out[Tx]
-    def rrand[Tx](a: T#Out[Tx], b: T#Out[Tx])(implicit r: Random): T#Out[Tx]
+    def rand2[Tx](a: T#Out[Tx]              )(implicit r: Random[Tx], tx: Tx): T#Out[Tx]
+    def rrand[Tx](a: T#Out[Tx], b: T#Out[Tx])(implicit r: Random[Tx], tx: Tx): T#Out[Tx]
 
-    def fold[Tx](a: T#Out[Tx], lo: T#Out[Tx], hi: T#Out[Tx])(implicit r: Random): T#Out[Tx]
+    def fold[Tx](a: T#Out[Tx], lo: T#Out[Tx], hi: T#Out[Tx]): T#Out[Tx]
   }
 
   trait NumFrac[T <: Top] extends Num[T] {
@@ -119,10 +118,10 @@ object Types {
     def zero[Tx]: Seq[A] = peer.zero :: Nil
     def one [Tx]: Seq[A] = peer.one  :: Nil
 
-    def rand2[Tx](a: Seq[A]           )(implicit r: Random): Seq[A] = unOp (a   )(peer.rand2)
-    def rrand[Tx](a: Seq[A], b: Seq[A])(implicit r: Random): Seq[A] = binOp(a, b)(peer.rrand)
+    def rand2[Tx](a: Seq[A]           )(implicit r: Random[Tx], tx: Tx): Seq[A] = unOp (a   )(peer.rand2[Tx])
+    def rrand[Tx](a: Seq[A], b: Seq[A])(implicit r: Random[Tx], tx: Tx): Seq[A] = binOp(a, b)(peer.rrand[Tx])
 
-    def fold[Tx](a: Seq[A], lo: Seq[A], hi: Seq[A])(implicit r: Random): Seq[A] = ternOp(a, lo, hi)(peer.fold)
+    def fold[Tx](a: Seq[A], lo: Seq[A], hi: Seq[A]): Seq[A] = ternOp(a, lo, hi)(peer.fold)
 
     final protected def unOp(a: Seq[A])(op: A => A): Seq[A] = a.map(op)
 
@@ -256,14 +255,14 @@ object Types {
     def times  [Tx](a: Int, b: Int): Int = a * b
     def roundTo[Tx](a: Int, b: Int): Int = if (b == 0) a else math.round(a.toDouble / b).toInt * b
 
-    def rand2[Tx](a: Int)(implicit r: Random): Int = r.nextInt(2 * a + 1) - a
+    def rand2[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int = r.nextInt(2 * a + 1) - a
 
-    def rrand[Tx](a: Int, b: Int)(implicit r: Random): Int =
+    def rrand[Tx](a: Int, b: Int)(implicit r: Random[Tx], tx: Tx): Int =
       r.nextInt(b - a + 1) + a
 
     def lt[Tx](a: Int, b: Int): Boolean = a < b
 
-    def fold[Tx](a: Int, lo: Int, hi: Int)(implicit r: Random): Int = IntFunctions.fold(a, lo, hi)
+    def fold[Tx](a: Int, lo: Int, hi: Int): Int = IntFunctions.fold(a, lo, hi)
   }
 
   sealed trait DoubleLikeTop extends ScalarOrSeqTop[Double] with Top
@@ -299,13 +298,15 @@ object Types {
     def div    [Tx](a: Double, b: Double): Double = a / b
     def roundTo[Tx](a: Double, b: Double): Double = rd.roundTo(a, b)
 
-    def rand2[Tx](a: Double)(implicit r: Random): Double = (r.nextDouble() * 2 - 1) * a
+    def rand2[Tx](a: Double)(implicit r: Random[Tx], tx: Tx): Double =
+      (r.nextDouble() * 2 - 1) * a
 
-    def rrand[Tx](a: Double, b: Double)(implicit r: Random): Double = r.nextDouble() * (b - a) + a
+    def rrand[Tx](a: Double, b: Double)(implicit r: Random[Tx], tx: Tx): Double =
+      r.nextDouble() * (b - a) + a
 
     def lt[Tx](a: Double, b: Double): Boolean = a < b
 
-    def fold[Tx](a: Double, lo: Double, hi: Double)(implicit r: Random): Double = rd.fold(a, lo, hi)
+    def fold[Tx](a: Double, lo: Double, hi: Double): Double = rd.fold(a, lo, hi)
   }
   
   implicit object intSeqBridge1 extends /* IntLikeNum with */ Bridge[IntTop, IntSeqTop, IntSeqTop] {

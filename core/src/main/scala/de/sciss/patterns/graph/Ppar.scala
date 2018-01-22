@@ -23,10 +23,12 @@ final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset: Pat.In
 
   type EOut = Event#COut
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, EOut] = new Stream[Tx, EOut] {
-    private[this] val listStream: Stream[Tx, Stream[Tx, Map[String, _]]] = list.expand[Tx]
-    private[this] val repeatsStream = repeats .expand[Tx]
-    private[this] val offsetStream  = offset  .expand[Tx]
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, EOut] = new StreamImpl(tx)
+
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, EOut] {
+    private[this] val listStream: Stream[Tx, Stream[Tx, Map[String, _]]] = list.expand(ctx, tx0)
+    private[this] val repeatsStream = repeats .expand(ctx, tx0)
+    private[this] val offsetStream  = offset  .expand(ctx, tx0)
 
     private[this] val pq          = ctx.newVar[ISortedMap[TimeRef, Stream[Tx, EOut]]](null)
     private[this] val _hasNext    = ctx.newVar[Boolean](false)

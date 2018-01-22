@@ -27,9 +27,11 @@ trait Truncate[T <: Top] extends Pattern[T] {
 
   // ---- impl ----
 
-  def iterator[Tx](implicit ctx: Context[Tx]): Stream[Tx, T#Out[Tx]] = new Stream[Tx, T#Out[Tx]] {
-    private[this] val lenStream = length.expand
-    private[this] val inStream  = in    .expand
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
+
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+    private[this] val lenStream = length.expand(ctx, tx0)
+    private[this] val inStream  = in    .expand(ctx, tx0)
 
     private[this] val peer      = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
     private[this] val _hasNext  = ctx.newVar(false)

@@ -4,8 +4,6 @@ import de.sciss.numbers.Implicits._
 import de.sciss.patterns.Types.{DoubleTop, IntTop, TopT}
 import de.sciss.patterns.graph._
 
-import scala.util.Random
-
 object RonTupleDet {
   def mkElemString(in: Any): String = in match {
     case ch: Seq[_] => ch.map(mkElemString).mkString("[ ", ", ", " ]")
@@ -56,7 +54,7 @@ object RonTupleDet {
 
     def mirror: Seq[A] = if (xs.isEmpty) xs else xs ++ xs.reverse.tail
 
-    def choose()(implicit r: Random): A = xs(r.nextInt(xs.size))
+    def choose[Tx]()(implicit r: Random[Tx], tx: Tx): A = xs(r.nextInt(xs.size))
   }
 
   // all pairs from two arrays
@@ -185,8 +183,8 @@ object RonTupleDet {
         "dr"          -> 0.1,
         "stretch"     -> 1
       )
-    val lPat  = Pseq[IntTop   ]((8 to 12).mirror            , inf).iterator
-    val rPat  = Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf).iterator
+    val lPat: Stream[Any, Int]    = ??? // Pseq[IntTop   ]((8 to 12).mirror            , inf).iterator
+    val rPat: Stream[Any, Double] = ??? // Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf).iterator
 //    lPat.next(); rPat.next()
     for (iter <- 0 until 4) { // original: infinite
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;

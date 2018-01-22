@@ -1,10 +1,8 @@
 package de.sciss.patterns
 
+import de.sciss.numbers.Implicits._
 import de.sciss.patterns.Types.{DoubleTop, IntTop, TopT}
 import de.sciss.patterns.graph._
-import de.sciss.numbers.Implicits._
-
-import scala.util.Random
 
 /**
   * Almat: work in progress, seeing how
@@ -44,7 +42,7 @@ object RonTuple {
 
     def mirror: Seq[A] = if (xs.isEmpty) xs else xs ++ xs.reverse.tail
 
-    def choose()(implicit r: Random): A = xs(r.nextInt(xs.size))
+    def choose[Tx]()(implicit r: Random[Tx], tx: Tx): A = xs(r.nextInt(xs.size))
   }
 
   // all pairs from two arrays
@@ -121,7 +119,7 @@ object RonTuple {
   }
 
   def spawner(): Pat.Event = Spawner { sp =>
-    import sp.{context, random}
+    import sp.context
     val inf = Int.MaxValue
     def catPat(cantus: Seq[Double]): Pat.Event =
       Bind(
@@ -138,8 +136,8 @@ object RonTuple {
         "dr"          -> 0.1,
         "stretch"     -> 1
       )
-    val lPat  = Pseq[IntTop   ]((8 to 12).mirror            , inf).iterator
-    val rPat  = Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf).iterator
+    val lPat: Stream[Any, Int]    = ??? // Pseq[IntTop   ]((8 to 12).mirror            , inf).iterator
+    val rPat: Stream[Any, Double] = ??? // Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf).iterator
     for (_ <- 1 to 4) { // original: infinite
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
       val length    =  ??? : Int // lPat.next()
@@ -152,7 +150,7 @@ object RonTuple {
 
       val parts = cantus.distinct.combinations(3).toList
       val pats = parts.zipWithIndex.map { case (part, i) =>
-        val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
+        val (notePat, durPat) = makePart(part, cantus, 0, ??? /* Seq(1,1,2,2,4).choose() */)
 
         Bind(
           "instrument"  -> "sine4",
