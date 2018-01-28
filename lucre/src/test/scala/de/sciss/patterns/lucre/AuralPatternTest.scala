@@ -8,6 +8,8 @@ import de.sciss.synth
 import de.sciss.synth.proc.AuralContext
 
 object AuralPatternTest extends AuralTestLike.Factory {
+  def main(args: Array[String]): Unit = init(args)
+
   def run[S <: Sys[S]](name: String)(implicit cursor: Cursor[S]): Unit =
     new AuralPatternTest[S](name)
 }
@@ -25,7 +27,7 @@ class AuralPatternTest[S <: Sys[S]](name: String)(implicit cursor: stm.Cursor[S]
 
     val patVal = Graph {
       import de.sciss.patterns.graph._
-      val b = Brown(lo = 30, hi = 130, step = 6)
+      val b = Brown(lo = 60, hi = 110, step = 5)
       Bind("value" -> b, Event.keyDur -> 0.5)
     }
 
@@ -49,8 +51,16 @@ class AuralPatternTest[S <: Sys[S]](name: String)(implicit cursor: stm.Cursor[S]
     cursor.step { implicit tx =>
       println("--issue play--")
       view.play()
-    }
 
-    stopAndQuit(8)
+      after(8.0) { implicit tx =>
+        println("--issue stop--")
+        view.stop()
+        after(1.0) { implicit tx =>
+          println("--issue play--")
+          view.play()
+          stopAndQuit(8)
+        }
+      }
+    }
   }
 }

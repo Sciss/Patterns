@@ -32,12 +32,14 @@ object Event {
     def + (kv: (String, Any)): Out = copy(map = map + kv)
   }
 
-  private def getOrElseDouble(out: Out, key: String, default: => Double): Double =
-    out.map.get(key).fold(default) {
+  private def getOrElseDouble(out: Out, key: String, default: => Double): Double = {
+    val opt = out.map.get(key)
+    opt match {
       case Some(d: Double)  => d
       case Some(i: Int)     => i.toDouble
       case _                => default
     }
+  }
 
   final val keyDelta      = "delta"
   final val keyStretch    = "stretch"

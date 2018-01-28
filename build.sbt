@@ -7,7 +7,7 @@ val deps = new {
     val numbers             = "0.1.3"
     val optional            = "1.0.0"
     val serial              = "1.0.3"
-    val soundProcesses      = "3.16.2-SNAPSHOT"
+    val soundProcesses      = "3.17.0-SNAPSHOT"
     val lucre               = "3.5.0"
   }
 

@@ -37,6 +37,7 @@ object Pattern extends Obj.Type {
 //    Output  .init()
     GraphObj.init()
     Code    .init()
+    AuralPatternAttribute.init()
   }
 
   def apply[S <: Sys[S]](implicit tx: S#Tx): Pattern[S] = Impl[S]

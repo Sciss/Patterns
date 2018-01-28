@@ -17,6 +17,7 @@ object AuralTestLike {
 
     def init(args: Array[String]): Unit = {
       SoundProcesses.init()
+      Pattern       .init()
 
       val name = args.headOption.getOrElse("?")
 
