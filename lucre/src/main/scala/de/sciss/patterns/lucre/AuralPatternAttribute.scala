@@ -32,6 +32,10 @@ import de.sciss.synth.proc.{AuralAttribute, AuralContext, AuralView, AuralViewBa
 import scala.annotation.tailrec
 import scala.concurrent.stm.{InTxn, Ref}
 
+/*
+  XXX TODO: some DRY with AuralGraphemeBase
+
+ */
 object AuralPatternAttribute extends Factory {
   type Repr[S <: stm.Sys[S]] = Pattern[S]
 
@@ -119,6 +123,7 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
 
   private[this] val prefChansNumRef = Ref(-2)   // -2 = cache invalid. across contents of `prefChansElemRef`
   private[this] val playingRef      = Ref(Option.empty[ElemHandle])
+  private[this] val isEmptyRef      = Ref(false)
 
   private[this] var patObserver: Disposable[S#Tx] = _
 
@@ -189,27 +194,35 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     loop(0)
   }
 
-  private def setGraph(g: Graph[_])(implicit tx: S#Tx): Unit = {
+  private def setGraph(g: Graph[_])(implicit tx: S#Tx): Boolean = {
     // println("setGraph")
     val _pr = playingRef()
-    viewTree.iterator(iSys(tx)).toList.foreach { case (_, entry) =>
-      val elemPlays = _pr.contains(entry)
-      elemRemoved(entry, elemPlays = elemPlays)
-    }
-
-    assert(viewTree.isEmpty(iSys(tx)))
+    _pr.foreach(elemRemoved(_, elemPlays = true))
+//    viewTree.iterator(iSys(tx)).toList.foreach { case (_, entry) =>
+//      val elemPlays = _pr.contains(entry)
+//      elemRemoved(entry, elemPlays = elemPlays)
+//    }
+//
+//    assert(viewTree.isEmpty(iSys(tx)))
+    viewTree.clear()(iSys(tx))
 
     implicit val _ctx: Context.InMemory = patterns.lucre.Context.InMemory()
     patContext() = _ctx
     val stream = g.expand[InTxn]
     streamRef() = stream
 
-    val headElem = nextElemFromStream(0L)
-    val numCh = headElem.fold(-1)(_.value.numChannels)
-    prefChansNumRef() = numCh
+    val headElem  = nextElemFromStream(0L)
+    val isEmpty   = headElem.isEmpty
+    isEmptyRef()  = isEmpty
+    val numCh     = if (isEmpty) -1 else headElem.get.value.numChannels
+    val oldCh     = prefChansNumRef.swap(numCh)
+    if (oldCh != -2 && oldCh != numCh) {
+      observer.attrNumChannelsChanged(this)
+    }
 
     // println(s"---- prefChansNumRef() = $numCh; headElem = $headElem")
     // headElem.foreach(elem => elemAdded((), elem.span, elem.value))
+    !isEmpty
   }
 
   def preferredNumChannels(implicit tx: S#Tx): Int =
@@ -220,13 +233,8 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     setGraph(graph0)
     patObserver = pat.changed.react { implicit tx => upd =>
       upd.changes.foreach {
-        case Pattern.GraphChange(ch) =>
-          val oldNum = prefChansNumRef.swap(-2)
-          setGraph(ch.now)
-          val newNum = preferredNumChannels
-          if (oldNum != newNum) {
-            observer.attrNumChannelsChanged(this)
-          }
+        case Pattern.GraphChange(ch) => setGraph(ch.now)
+        case _ =>
       }
     }
     this
@@ -252,35 +260,46 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     */
   protected def processPrepare(spanP: Span, timeRef: TimeRef, initial: Boolean)
                               (implicit tx: S#Tx): Iterator[PrepareResult] = {
-    viewTree.floor(spanP.start)(iSys(tx)).fold[Iterator[PrepareResult]](Iterator.empty) { case (_, view0) =>
-      val it0 = new Iterator[PrepareResult] {
-        private[this] var _next     = view0
-        private[this] var _hasNext  = true
+    val start0 = math.max(0L, spanP.start)
+    viewTree.floor(start0)(iSys(tx)) match {
+      case Some((_, view0)) =>
+        val it0 = new Iterator[PrepareResult] {
+          private[this] var _next     = view0
+          private[this] var _hasNext  = true
 
-        def hasNext: Boolean = _hasNext
+          def hasNext: Boolean = _hasNext
 
-        private def advance(): Unit =
-          if (_next.stop >= spanP.stop) {
-            _hasNext = false
-          } else {
-            viewTree.get(_next.stop)(iSys(tx)) match {
-              case Some(succ) => _next = succ
-              case None =>
-                nextElemFromStream(_next.stop) match {
-                  case Some(succ) => _next    = succ
-                  case None       => _hasNext = false
-                }
+          private def advance(): Unit =
+            if (_next.stop >= spanP.stop) {
+              _hasNext = false
+            } else {
+              viewTree.get(_next.stop)(iSys(tx)) match {
+                case Some(succ) => _next = succ
+                case None =>
+                  nextElemFromStream(_next.stop) match {
+                    case Some(succ) => _next    = succ
+                    case None       => _hasNext = false
+                  }
+              }
             }
-          }
 
-        def next(): (Unit, SpanLike, Elem) = {
-          if (!_hasNext) Iterator.empty.next
-          val res = _next
-          advance()
-          ((), res.span, res)
+          def next(): (Unit, SpanLike, Elem) = {
+            if (!_hasNext) Iterator.empty.next
+            val res = _next
+            advance()
+            ((), res.span, res)
+          }
         }
-      }
-      if (initial) it0.dropWhile(_._3.stop < spanP.start) else it0.dropWhile(_._3.start < spanP.start)
+        if (initial) it0.dropWhile(_._3.stop < start0) else it0.dropWhile(_._3.start < start0)
+
+      case None =>
+        if (isEmptyRef()) Iterator.empty
+        else {    // we lost the cache
+          val graph = obj().graph.value
+          // println("RESETTING GRAPH [1]")
+          if (!setGraph(graph)) Iterator.empty  // became empty
+          else processPrepare(spanP, timeRef, initial = initial) // repeat
+        }
     }
   }
 
@@ -292,22 +311,33 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     * If no such event exists, the method must return `Long.MaxValue`.
     */
   protected def modelEventAfter(offset: Long)(implicit tx: S#Tx): Long = {
-    val existing = viewEventAfter(offset)
-    if (existing != Long.MaxValue) existing else {
-      // if there is no `pred0`, we can short-cut because it means
-      // the pattern is empty (a head element would have been created in `setGraph`).
-      viewTree.floor(offset + 1)(iSys(tx)).fold(Long.MaxValue) { case (_, pred0) =>
-        @tailrec
-        def loop(pred: Elem): Long =
-          nextElemFromStream(pred.stop) match {
-            case Some(succ) =>
-              if (succ.start >= offset) succ.start
-              else loop(succ)
-            case None => Long.MaxValue
-          }
+    val offsetC = math.max(-1L, offset)
+    viewTree.floor(offsetC + 1)(iSys(tx)) match {
+      case Some((time0, pred0)) =>
+        if (time0 > offset) time0   // i.e. time0 == offset + 1
+        else {
+          val existing = viewEventAfter(offset)
+          if (existing != Long.MaxValue) existing else {
+            @tailrec
+            def loop(pred: Elem): Long =
+              nextElemFromStream(pred.stop) match {
+                case Some(succ) =>
+                  if (succ.start >= offset) succ.start
+                  else loop(succ)
+                case None => Long.MaxValue
+              }
 
-        loop(pred0)
-      }
+            loop(pred0)
+          }
+        }
+      case None =>
+        if (isEmptyRef()) Long.MaxValue
+        else {    // we lost the cache
+          val graph = obj().graph.value
+          // println("RESETTING GRAPH [0]")
+          if (!setGraph(graph)) Long.MaxValue // became empty
+          else modelEventAfter(offset)  // repeat
+        }
     }
   }
 
@@ -323,9 +353,6 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     val childTime = timeRef.child(entry.span)
     playView(entry, childTime, target)
   }
-
-//  private def ElemHandle(start: Long, view: Elem): ElemHandle =
-//    AuralGraphemeBase.ElemHandle(start, view)
 
   protected def processEvent(play: IPlaying, timeRef: TimeRef)(implicit tx: S#Tx): Unit = {
     val start = timeRef.offset
