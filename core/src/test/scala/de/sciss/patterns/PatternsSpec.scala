@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{IntTop, Top}
+import de.sciss.patterns.Types.IntTop
 import de.sciss.patterns.graph._
 
 class PatternsSpec extends PatSpec {
@@ -34,12 +34,10 @@ class PatternsSpec extends PatSpec {
   "Combinations" should work in {
     val p1: Pat.Int = Pseq(1 to 4)
     val p2 = p1.combinations(3)
-    import ctx.tx
-    val res: List[List[Int]] = p2.expand.map(_.toList).toList
 
     val plain = List(1, 2, 3, 4).combinations(3).toList
 
-    assert(res === plain)
+    evalH(p2) shouldBe plain
   }
 
   "Flatten" should work in {
@@ -59,14 +57,11 @@ class PatternsSpec extends PatSpec {
       }
     }
 
-    import ctx.tx
-    val res = pat.expand.map(_.toList).toList
-
     val plain = List(1 to 4: _*).combinations(3)
       .map(_.drop(1))
       .toList
 
-    assert(res === plain)
+    evalH(pat) shouldBe plain
   }
 
   "Copy" should work in {
@@ -81,16 +76,16 @@ class PatternsSpec extends PatSpec {
   "Grouped" should work in {
     val in    = Series(1, 3).take(5)
     val res1  = in.bubble
-    eval(res1) shouldBe List(List(1), List(4), List(7), List(10), List(13))
+    evalH(res1) shouldBe List(List(1), List(4), List(7), List(10), List(13))
 
     val res2  = in.grouped(2)
-    eval(res2) shouldBe List(List(1, 4), List(7, 10), List(13))
+    evalH(res2) shouldBe List(List(1, 4), List(7, 10), List(13))
 
     val res3  = in.grouped(5)
-    eval(res3) shouldBe List(List(1, 4, 7, 10, 13))
+    evalH(res3) shouldBe List(List(1, 4, 7, 10, 13))
 
     val res4  = in.grouped(6)
-    eval(res4) shouldBe List(List(1, 4, 7, 10, 13))
+    evalH(res4) shouldBe List(List(1, 4, 7, 10, 13))
   }
 
   "BubbleMap" should work in {

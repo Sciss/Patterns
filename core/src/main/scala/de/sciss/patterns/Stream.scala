@@ -53,6 +53,25 @@ object Stream {
       elem
     }
   }
+
+  def apply[Tx, A](elems: A*)(implicit ctx: Context[Tx]): Stream[Tx, A] = new Stream[Tx, A] {
+    private[this] val count = ctx.newVar(0)
+    private[this] val xs    = elems.toIndexedSeq
+
+    // override def toString = s"$simpleString; count = $count"
+
+    def reset()(implicit tx: Tx): Unit    = count() = 0
+    def hasNext(implicit tx: Tx): Boolean = count() < xs.size
+
+    def next ()(implicit tx: Tx): A = {
+      if (!hasNext) Stream.exhausted()
+      val i = count()
+      count() = i + 1
+      val res = elems(i)
+      // logStream(s"$simpleString.next(); count = $i; res = $res")
+      res
+    }
+  }
 }
 abstract class Stream[Tx, +A] { outer =>
   def reset()(implicit tx: Tx): Unit

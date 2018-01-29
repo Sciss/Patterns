@@ -20,16 +20,19 @@ final case class Grouped[T <: Top](in: Pat[T], size: Pat.Int) extends Pattern[Pa
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new StreamImpl(tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
-    private[this] val inStream  : Stream[Tx, T#Out[Tx]] = pat.in  .expand(ctx, tx0)
-    private[this] val sizeStream: Stream[Tx, Int]       = pat.size.expand(ctx, tx0)
+    private type A = T#Out[Tx]
 
-    private[this] val innerStream = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
+    private[this] val inStream  : Stream[Tx, A]   = pat.in  .expand(ctx, tx0)
+    private[this] val sizeStream: Stream[Tx, Int] = pat.size.expand(ctx, tx0)
+
+    private[this] val innerStream = ctx.newVar[Stream[Tx, A]](null)
     private[this] val _hasNext    = ctx.newVar(false)
 
     private[this] val _valid      = ctx.newVar(false)
 
-    def reset()(implicit tx: Tx): Unit =
+    def reset()(implicit tx: Tx): Unit = {
       _valid() = false
+    }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
@@ -37,30 +40,24 @@ final case class Grouped[T <: Top](in: Pat[T], size: Pat.Int) extends Pattern[Pa
         advance()
       }
 
-    private final class InnerStream(sizeVal: Int) extends Stream[Tx, T#Out[Tx]] {
-      private[this] val count = ctx.newVar(0)
-
-      def reset()(implicit tx: Tx): Unit =
-        count() = 0
-
-      def hasNext(implicit tx: Tx): Boolean =
-        count() < sizeVal && inStream.hasNext
-
-      def next()(implicit tx: Tx): T#Out[Tx] = {
-        val i = count()
-        if (i >= sizeVal) Stream.exhausted()
-        val res = inStream.next()
-        count() = i + 1
-        res
-      }
-    }
-
     private def advance()(implicit tx: Tx): Unit = {
-      _hasNext() = sizeStream.hasNext
+      _hasNext() = sizeStream.hasNext && inStream.hasNext
       if (_hasNext()) {
-        val sizeVal = sizeStream.next()
-        val inner   = new InnerStream(sizeVal)
-        _hasNext()  = inner.hasNext
+        val sizeVal = math.max(0, sizeStream.next())
+        val b       = Vector.newBuilder[A]
+        b.sizeHint(sizeVal)
+        var i = 0
+        // there is _no_ reasonable way to provide the
+        // stream than to eagerly collect the values here,
+        // because of the order of execution between inner and outer
+        // `next`!
+        while (i < sizeVal && inStream.hasNext) {
+          b += inStream.next()
+          i += 1
+        }
+        val inner     = Stream[Tx, A](b.result: _*)
+        innerStream() = inner
+        _hasNext()    = sizeVal > 0
       }
     }
 
@@ -69,11 +66,11 @@ final case class Grouped[T <: Top](in: Pat[T], size: Pat.Int) extends Pattern[Pa
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Stream[Tx, T#Out[Tx]] = {
+    def next()(implicit tx: Tx): Stream[Tx, A] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = innerStream()
-      reset() // advance()
+      advance()
       res
     }
   }
