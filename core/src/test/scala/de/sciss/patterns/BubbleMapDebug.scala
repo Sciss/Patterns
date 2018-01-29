@@ -13,7 +13,7 @@ class BubbleMapDebug extends PatSpec {
       a.map { v: Pat[A] =>
         val bc = b.copy()
         bc.bubbleMap { w =>
-          v.copy() ++ w
+          v ++ w
           // bc.take(1) // v.copy() ++ bc.take(1) // w
         }
       }
@@ -25,7 +25,7 @@ class BubbleMapDebug extends PatSpec {
 
     val aInPat: Pat[Pat.Int]  = aInSeq.map(xs => Pat[IntTop](xs: _*))
     val bInPat: Pat.Int       = Pat[IntTop](bInSeq: _*)
-    val outPat = directProduct_Pat(aInPat, bInPat)
+    val outPat = Graph { directProduct_Pat(aInPat, bInPat) }
     import ctx.tx
     val res = outPat.expand.map { in =>
       val i = in.toList

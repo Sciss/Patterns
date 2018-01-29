@@ -19,7 +19,10 @@ import de.sciss.patterns.Types.Top
 final case class BubbleMap[T1 <: Top, T <: Top](outer: Pat[T1], it: It[T1], inner: Graph[T])
   extends Pattern[T] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = {
+    logStream("BubbleMap.iterator")
+    new StreamImpl(tx)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
     private[this] val outerStream: Stream[Tx, T1#Out[Tx]]  = outer.expand(ctx, tx0)
@@ -31,6 +34,7 @@ final case class BubbleMap[T1 <: Top, T <: Top](outer: Pat[T1], it: It[T1], inne
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
         _valid() = true
+        logStream("BubbleMap.iterator.validate()")
         advance()
       }
 
@@ -45,13 +49,18 @@ final case class BubbleMap[T1 <: Top, T <: Top](outer: Pat[T1], it: It[T1], inne
     }
 
     private def advance()(implicit tx: Tx): Unit = {
-      _hasNext() = outerStream.hasNext
-      if (_hasNext()) {
+      val ohn = outerStream.hasNext
+      _hasNext() = ohn
+      logStream(s"BubbleMap.iterator.advance(); outerStream.hasNext = $ohn")
+      if (ohn) {
         val itValue     = outerStream.next()
+        logStream(s"BubbleMap.iterator.advance(); itValue = $itValue; token = ${it.token}")
         val itStream    = Stream.single(itValue)
         ctx.setOuterStream[T1#Out[Tx]](it.token, itStream)
         innerStream.reset()
-        _hasNext() = innerStream.hasNext
+        val ihn = innerStream.hasNext
+        _hasNext() = ihn
+        logStream(s"BubbleMap.iterator.advance(); innerStream.hasNext = $ihn")
       }
     }
 
@@ -59,7 +68,9 @@ final case class BubbleMap[T1 <: Top, T <: Top](outer: Pat[T1], it: It[T1], inne
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res     = innerStream.next()
-      _hasNext()  = innerStream.hasNext
+      val ihn     = innerStream.hasNext
+      logStream(s"BubbleMap.iterator.next(); hasNext = $ihn; res = $res")
+      _hasNext()  = ihn
       if (!_hasNext()) advance()
       res
     }
