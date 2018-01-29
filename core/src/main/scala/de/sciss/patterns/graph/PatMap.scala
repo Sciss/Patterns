@@ -19,7 +19,10 @@ import de.sciss.patterns.Types.Top
 final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], inner: Graph[T])
   extends Pattern[Pat[T]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new StreamImpl(tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = {
+    logStream("PatMap.iterator")
+    new StreamImpl(tx)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
     private[this] val outerStream: Stream[Tx, Stream[Tx, T1#Out[Tx]]]  = outer.expand(ctx, tx0)
@@ -35,12 +38,13 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
       if (!_valid()) {
         _valid()    = true
         _hasNext()  = outerStream.hasNext
+        logStream(s"PatMap.iterator.validate(); hasNext = $hasNext")
 //        advance()
       }
 
     def reset()(implicit tx: Tx): Unit = {
       _valid() = false
-      // innerStream.reset()
+      logStream("PatMap.iterator.reset()")
     }
 
     def hasNext(implicit tx: Tx): Boolean = {
@@ -50,22 +54,33 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
 
     private final class InnerStream(itStream: Stream[Tx, T1#Out[Tx]]) extends Stream[Tx, T#Out[Tx]] {
       def init()(implicit tx: Tx): this.type = {
+        logStream(s"PatMap.iterator#InnerStream.init(); token = ${it.token}")
         ctx.setOuterStream[T1#Out[Tx]](it.token, itStream)
         this
       }
 
       def reset()(implicit tx: Tx): Unit = ()
 
-      // XXX TODO --- how to get rid of the casting?
-      def hasNext(implicit tx: Tx): Boolean   = itStream.hasNext && innerStream.hasNext
-      def next ()(implicit tx: Tx): T#Out[Tx] = innerStream.next()(tx.asInstanceOf[Tx])
+      def hasNext(implicit tx: Tx): Boolean = itStream.hasNext && innerStream.hasNext
+
+      def next ()(implicit tx: Tx): T#Out[Tx] = {
+        // XXX TODO --- how to get rid of the casting?
+        val res = innerStream.next()(tx.asInstanceOf[Tx])
+        logStream(s"PatMap.iterator#InnerStream.next() = $res")
+        res
+      }
     }
 
     private def advance()(implicit tx: Tx): Unit = {
-      if (!hasMapStream()) {
-        _hasNext() = outerStream.hasNext
-        if (_hasNext()) {
+      val hm = hasMapStream()
+      logStream(s"PatMap.iterator.advance(); hasMapStream = $hm")
+      if (!hm) {
+        val hn = outerStream.hasNext
+        _hasNext() = hn
+        logStream(s"PatMap.iterator.advance(); hasNext = $hn")
+        if (hn) {
           val itStream    = outerStream.next()
+          logStream(s"PatMap.iterator.advance(); itStream = $itStream")
           itMapInner()    = new InnerStream(itStream).init()
           hasMapStream()  = true
           innerStream.reset()
@@ -78,6 +93,7 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
       advance()
       if (!_hasNext()) Stream.exhausted()
       val res = itMapInner()
+      logStream(s"PatMap.iterator.next() = $res")
       hasMapStream() = false
       _hasNext() = outerStream.hasNext
       res

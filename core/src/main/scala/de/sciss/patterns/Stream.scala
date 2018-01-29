@@ -146,7 +146,9 @@ abstract class Stream[Tx, +A] { outer =>
 
   def toList(implicit tx: Tx): List[A] = {
     val b = List.newBuilder[A]
-    while (hasNext) b += next()
+    while (hasNext) {
+      b += next()
+    }
     b.result()
   }
 

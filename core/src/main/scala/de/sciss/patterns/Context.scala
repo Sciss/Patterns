@@ -61,6 +61,8 @@ object Context {
   }
 
   private final class PlainVar[A](private[this] var current: A) extends Sink[Unit, A] with Source[Unit, A] {
+    override def toString = s"PlainVar($current)"
+
     def apply()(implicit tx: Unit): A =
       current
 

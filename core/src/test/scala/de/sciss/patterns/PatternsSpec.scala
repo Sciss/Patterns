@@ -105,17 +105,19 @@ class PatternsSpec extends PatSpec {
     val bInPat: Pat.Int       = Pat[IntTop](bInSeq: _*)
     val outPat = directProduct_Pat(aInPat, bInPat)
     import ctx.tx
-    val res = outPat.expand.map(_.toList).toList
+    val res = outPat.expand.map { in =>
+      in.toList
+    }.toList
 
-    {
-      val v: Pat.Int = Pat[IntTop](aInSeq(0): _*)
-      val res22 = bInPat.bubbleMap { w =>
-        v.copy() ++ w
-        // bc.take(1) // v.copy() ++ bc.take(1) // w
-      }
-      val res23 = res22.expand.toList
-      println(res23)
-    }
+//    {
+//      val v: Pat.Int = Pat[IntTop](aInSeq(0): _*)
+//      val res22 = bInPat.bubbleMap { w =>
+//        v.copy() ++ w
+//        // bc.take(1) // v.copy() ++ bc.take(1) // w
+//      }
+//      val res23 = res22.expand.toList
+//      println(res23)
+//    }
 
     assert(res === plain)  // XXX TODO fails
   }

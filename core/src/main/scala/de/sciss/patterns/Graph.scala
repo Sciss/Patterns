@@ -38,7 +38,7 @@ object Graph {
 
     def addPattern(p: Pattern[_]): Unit = ()
 
-    def allocToken(): Int = -1
+    def allocToken(): Int = outOfContext
 
     def visit[P](ref: AnyRef, init: => P): P = outOfContext
   }
