@@ -66,8 +66,7 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     * the element type must be a (nested) pattern.
     */
   def map[A <: Top, B <: Top](f: Pat[A] => Pat[B])(implicit ev: T <:< Pat[A]): Pat[Pat[B]] = {
-    val token = Graph.builder.allocToken()
-    val it    = It[A](token)
+    val it    = Graph.builder.allocToken[A]()
     val inner = Graph {
       f(it)
     }
@@ -77,7 +76,13 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   /** Similar to a monadic `flatMap` but with the constraint
     * the element type must be a (nested) pattern.
     */
-  def flatMap[A <: Top, B <: Top](f: T => Pat[B])(implicit ev: T <:< Pat[A]): Pat[B] = ???
+  def flatMap[A <: Top, B <: Top](f: Pat[A] => Pat[B])(implicit ev: T <:< Pat[A]): Pat[B] = {
+    val it    = Graph.builder.allocToken[A]()
+    val inner = Graph {
+      f(it)
+    }
+    FlatMap(x.asInstanceOf[Pat[Pat[A]]], it, inner)
+  }
 
   /** The "counter" operation to `flatMap`. It bubbles each
     * element of the receiver pattern as a singleton pattern itself,
@@ -98,8 +103,7 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     * }}}
     */
   def bubbleMap[A <: Top](f: Pat[T] => Pat[A]): Pat[A] = {
-    val token = Graph.builder.allocToken()
-    val it    = It[T](token)
+    val it    = Graph.builder.allocToken[T]()
     val inner = Graph {
       f(it)
     }

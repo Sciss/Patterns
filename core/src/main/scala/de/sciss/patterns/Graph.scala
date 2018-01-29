@@ -14,6 +14,7 @@
 package de.sciss.patterns
 
 import de.sciss.patterns.Types.Top
+import de.sciss.patterns.graph.It
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
@@ -21,7 +22,7 @@ object Graph {
   trait Builder {
     def addPattern(p: Pattern[_]): Unit
 
-    def allocToken(): Int
+    def allocToken[T <: Top](): It[T]
 
     def isOutside: Boolean
 
@@ -42,7 +43,7 @@ object Graph {
 
     def addPattern(p: Pattern[_]): Unit = ()
 
-    def allocToken(): Int = outOfContext
+    def allocToken[T <: Top](): It[T] = outOfContext
 
     def visit[P](ref: AnyRef, init: => P): P = outOfContext
   }
@@ -72,11 +73,11 @@ object Graph {
 
     def addPattern(p: Pattern[_]): Unit = lazies += p
 
-    def allocToken(): Int =
+    def allocToken[U <: Top](): It[U] =
       if (parent.isOutside) {
         val res = tokenId
         tokenId += 1
-        res
+        It(res)
       } else {
         parent.allocToken()
       }
