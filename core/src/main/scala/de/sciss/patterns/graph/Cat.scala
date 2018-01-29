@@ -20,7 +20,11 @@ final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
 
     def reset()(implicit tx: Tx): Unit = ()
 
-    def hasNext(implicit tx: Tx): Boolean = ai.hasNext || bi.hasNext
+    def hasNext(implicit tx: Tx): Boolean = {
+      val res = ai.hasNext || bi.hasNext
+//      logStream(s"Cat.iterator.hasNext = $res")
+      res
+    }
 
     def next()(implicit tx: Tx): T#Out[Tx] = {
       val ahn = ai.hasNext
