@@ -71,7 +71,7 @@ final case class BubbleMap[T1 <: Top, T <: Top](outer: Pat[T1], it: It[T1], inne
       val ihn     = innerStream.hasNext
       logStream(s"BubbleMap.iterator.next(); hasNext = $ihn; res = $res")
       _hasNext()  = ihn
-      if (!_hasNext()) advance()
+      if (!ihn) reset() // advance()
       res
     }
   }

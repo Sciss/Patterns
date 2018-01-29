@@ -61,7 +61,7 @@ object Context {
   }
 
   private final class PlainVar[A](private[this] var current: A) extends Sink[Unit, A] with Source[Unit, A] {
-    override def toString = s"PlainVar($current)"
+    override def toString: String = s"Var($current)"
 
     def apply()(implicit tx: Unit): A =
       current
@@ -82,9 +82,14 @@ private[patterns] abstract class ContextLike[Tx] extends Context[Tx] {
 
   def getStreams(ref: AnyRef): List[Stream[Tx, _]] = streamMap.getOrElse(ref, Nil)
 
-  def setOuterStream[A](token: Int, outer: Stream[Tx, A])(implicit tx: Tx): Unit =
+  def setOuterStream[A](token: Int, outer: Stream[Tx, A])(implicit tx: Tx): Unit = {
+    logStream(s"Context.setOuterStream($token, $outer)")
     tokenMap() = tokenMap() + (token -> outer)
+  }
 
-  def getOuterStream[A](token: Int)(implicit tx: Tx): Stream[Tx, A] =
-    tokenMap().apply(token).asInstanceOf[Stream[Tx, A]]
+  def getOuterStream[A](token: Int)(implicit tx: Tx): Stream[Tx, A] = {
+    val res = tokenMap().apply(token).asInstanceOf[Stream[Tx, A]]
+    logStream(s"Context.getOuterStream($token) = $res")
+    res
+  }
 }

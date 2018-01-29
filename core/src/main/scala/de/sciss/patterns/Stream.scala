@@ -45,6 +45,7 @@ object Stream {
     def next()(implicit tx: Tx): A = {
       if (!_hasNext()) Stream.exhausted()
       _hasNext() = false
+      logStream(s"Stream.single($elem).next()")
       elem
     }
   }

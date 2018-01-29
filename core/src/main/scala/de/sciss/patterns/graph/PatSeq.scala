@@ -4,9 +4,19 @@ package graph
 import de.sciss.patterns.Types.CTop
 
 final case class PatSeq[T <: CTop](elems: Seq[T#COut]) extends Pattern[T] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#COut] = new Stream[Tx, T#COut] {
+  private def simpleString: String =
+    s"PatSeq(${elems.iterator.take(4).mkString(", ")}).iterator"
+
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#COut] = {
+    logStream(simpleString)
+    new StreamImpl[Tx]
+  }
+
+  private final class StreamImpl[Tx](implicit ctx: Context[Tx]) extends Stream[Tx, T#COut] {
     private[this] val count = ctx.newVar(0)
     private[this] val xs    = elems.toIndexedSeq
+
+    override def toString = s"$simpleString; count = $count"
 
     def reset()(implicit tx: Tx): Unit    = count() = 0
     def hasNext(implicit tx: Tx): Boolean = count() < xs.size
@@ -15,7 +25,9 @@ final case class PatSeq[T <: CTop](elems: Seq[T#COut]) extends Pattern[T] {
       if (!hasNext) Stream.exhausted()
       val i = count()
       count() = i + 1
-      elems(i)
+      val res = elems(i)
+      logStream(s"$simpleString.next(); count = $i; res = $res")
+      res
     }
   }
 }

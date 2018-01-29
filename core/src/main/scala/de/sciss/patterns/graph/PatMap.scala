@@ -53,6 +53,8 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
     }
 
     private final class InnerStream(itStream: Stream[Tx, T1#Out[Tx]]) extends Stream[Tx, T#Out[Tx]] {
+      override def toString = s"PatMap.iterator#InnerStream($itStream)"
+
       def init()(implicit tx: Tx): this.type = {
         logStream(s"PatMap.iterator#InnerStream.init(); token = ${it.token}")
         ctx.setOuterStream[T1#Out[Tx]](it.token, itStream)
