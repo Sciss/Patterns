@@ -88,7 +88,13 @@ class PatternsSpec extends PatSpec {
       a.flatMap { v => b.map { w => v :+ w } }
 
     def directProduct_Pat[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
-      a.map { v: Pat[A] => b.bubbleMap(be => v.copy() ++ be) }
+      a.map { v: Pat[A] =>
+        val bc = b.copy()
+        bc.bubbleMap { w =>
+          v.copy() ++ w
+          // bc.take(1) // v.copy() ++ bc.take(1) // w
+        }
+      }
 
     val aInSeq  = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
     val bInSeq  = Seq(7, 8)
@@ -101,6 +107,16 @@ class PatternsSpec extends PatSpec {
     import ctx.tx
     val res = outPat.expand.map(_.toList).toList
 
-    assert(res === plain)
+    {
+      val v: Pat.Int = Pat[IntTop](aInSeq(0): _*)
+      val res22 = bInPat.bubbleMap { w =>
+        v.copy() ++ w
+        // bc.take(1) // v.copy() ++ bc.take(1) // w
+      }
+      val res23 = res22.expand.toList
+      println(res23)
+    }
+
+    assert(res === plain)  // XXX TODO fails
   }
 }
