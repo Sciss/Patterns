@@ -14,11 +14,12 @@
 package de.sciss.patterns
 
 import de.sciss.patterns
-import de.sciss.patterns.Types.{Aux, CTop, DoubleSeqTop, DoubleTop, IntTop, Top}
+import de.sciss.patterns.Types.{Aux, CTop, DoubleSeqTop, DoubleTop, IntSeqTop, IntTop, Top}
 import de.sciss.patterns.graph.{PatSeq, SeqFill}
 
 object Pat {
   type Int        = Pat[IntTop        ]
+  type IntSeq     = Pat[IntSeqTop     ]
   type Double     = Pat[DoubleTop     ]
   type DoubleSeq  = Pat[DoubleSeqTop  ]
   type Event      = Pat[patterns.Event]

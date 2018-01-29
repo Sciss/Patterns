@@ -29,10 +29,10 @@ final case class It[T <: Top](token: Int) extends Pattern[T] { pat =>
     def reset()(implicit tx: Tx): Unit       = ()
     def hasNext(implicit tx: Tx): Boolean    = {
       val res = outer.hasNext
-      logStream(s"$pat.iterator.hasNext = $res")
-      if (token == 1) {
-        new Exception().fillInStackTrace().printStackTrace()
-      }
+//      logStream(s"$pat.iterator.hasNext = $res")
+//      if (token == 1) {
+//        new Exception().fillInStackTrace().printStackTrace()
+//      }
       res
     }
 

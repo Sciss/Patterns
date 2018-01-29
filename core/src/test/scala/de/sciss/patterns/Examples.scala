@@ -11,24 +11,24 @@ object Examples {
     import ctx.tx
 
     // ok
-    val a = Add[IntSeqTop, IntTop, IntSeqTop](Seq(1, 2), 3)
+    val a = (Seq(1, 2): Pat.IntSeq) + 3
     println(a.iterator.take(1).toList.mkString("a: ", ", ", ""))
 
     // ok
-    val b = Add(Seq(1, 2), 3)
+    val b = (Seq(1, 2): Pat.IntSeq) + 3
     println(b.iterator.take(1).toList.mkString("b: ", ", ", ""))
 
     // ok
-    val c = Add(1, 3)
+    val c = Pat.Int(1) + 3
     c.iterator: Stream[Unit, Int] // right
     println(c.iterator.take(1).toList.mkString("c: ", ", ", ""))
 
     // ok
-    val d = Add(1, Seq(2, 3))
+    val d = (1: Pat.Int) + (Seq(2, 3): Pat.IntSeq)
     println(d.iterator.take(1).toList.mkString("d: ", ", ", ""))
 
     // ok
-    val e = Add(Seq(1, 2), Seq(3, 4))
+    val e = (Seq(1, 2): Pat.IntSeq) + Seq(3, 4)
     println(e.iterator.take(1).toList.mkString("e: ", ", ", ""))
 
     // ok

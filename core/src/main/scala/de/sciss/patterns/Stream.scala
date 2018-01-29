@@ -38,6 +38,10 @@ object Stream {
   def single[Tx, A](elem: A)(implicit ctx: Context[Tx]): Stream[Tx, A] = new Stream[Tx, A] {
     private[this] val _hasNext = ctx.newVar(true)
 
+    private def simpleString = s"Stream.single($elem)"
+
+    override def toString = s"$simpleString; hasNext = ${_hasNext}"
+
     def hasNext(implicit tx: Tx): Boolean = _hasNext()
 
     def reset()(implicit tx: Tx): Unit = _hasNext() = true
@@ -45,7 +49,7 @@ object Stream {
     def next()(implicit tx: Tx): A = {
       if (!_hasNext()) Stream.exhausted()
       _hasNext() = false
-      logStream(s"Stream.single($elem).next()")
+      logStream(s"$simpleString.next()")
       elem
     }
   }

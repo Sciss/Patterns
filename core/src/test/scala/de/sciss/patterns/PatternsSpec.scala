@@ -52,9 +52,11 @@ class PatternsSpec extends PatSpec {
   }
 
   "Map" should work in {
-    val in = Pseq(1 to 4).combinations(3)
-    val pat = in.map { in: Pat.Int =>
-      in.drop(1)
+    val pat = Graph {
+      val in = Pseq(1 to 4).combinations(3)
+      in.map { in: Pat.Int =>
+        in.drop(1)
+      }
     }
 
     import ctx.tx
@@ -77,7 +79,7 @@ class PatternsSpec extends PatSpec {
   }
 
   "BubbleMap" should work in {
-    val resSimple = Pat.Int(1, 2, 3).bubbleMap(x => x ++ Pat.Int(4))
+    val resSimple = Graph { Pat.Int(1, 2, 3).bubbleMap(x => x ++ Pat.Int(4)) }
     eval(resSimple) shouldBe List(1, 4, 2, 4, 3, 4)
 
 // XXX TODO
@@ -101,9 +103,11 @@ class PatternsSpec extends PatSpec {
     val plain   = directProduct_Seq(aInSeq, bInSeq)
     assert(plain === Seq(Seq(1, 2, 3, 7), Seq(1, 2, 3, 8), Seq(4, 5, 6, 7), Seq(4, 5, 6, 8)))
 
-    val aInPat: Pat[Pat.Int]  = aInSeq.map(xs => Pat[IntTop](xs: _*))
-    val bInPat: Pat.Int       = Pat[IntTop](bInSeq: _*)
-    val outPat = directProduct_Pat(aInPat, bInPat)
+    val outPat = Graph {
+      val aInPat: Pat[Pat.Int]  = aInSeq.map(xs => Pat[IntTop](xs: _*))
+      val bInPat: Pat.Int       = Pat[IntTop](bInSeq: _*)
+      directProduct_Pat(aInPat, bInPat)
+    }
     import ctx.tx
     val res = outPat.expand.map { in =>
       in.toList
