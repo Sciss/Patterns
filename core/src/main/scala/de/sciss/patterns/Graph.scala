@@ -23,6 +23,8 @@ object Graph {
 
     def allocToken(): Int
 
+    def isOutside: Boolean
+
     def visit[P](ref: AnyRef, init: => P): P
   }
 
@@ -36,6 +38,8 @@ object Graph {
   private[this] object BuilderDummy extends Builder {
     private def outOfContext: Nothing = sys.error("Out of context")
 
+    def isOutside = true
+
     def addPattern(p: Pattern[_]): Unit = ()
 
     def allocToken(): Int = outOfContext
@@ -44,8 +48,8 @@ object Graph {
   }
 
   def apply[T <: Top](thunk: => Pat[T]): Graph[T] = {
-    val b   = new BuilderImpl[T]
     val old = builderRef.get()
+    val b   = new BuilderImpl[T](old)
     builderRef.set(b)
     try {
       val out = thunk
@@ -55,10 +59,12 @@ object Graph {
     }
   }
 
-  private[this] final class BuilderImpl[T <: Top] extends Builder {
+  private[this] final class BuilderImpl[T <: Top](val parent: Builder) extends Builder {
     private[this] val lazies    = Vec.newBuilder[Pattern[_]]
     private[this] var sourceMap = Map.empty[AnyRef, Any]
     private[this] var tokenId   = 0
+
+    def isOutside = false
 
     override def toString = s"patterns.Graph.Builder@${hashCode.toHexString}"
 
@@ -66,11 +72,14 @@ object Graph {
 
     def addPattern(p: Pattern[_]): Unit = lazies += p
 
-    def allocToken(): Int = {
-      val res = tokenId
-      tokenId += 1
-      res
-    }
+    def allocToken(): Int =
+      if (parent.isOutside) {
+        val res = tokenId
+        tokenId += 1
+        res
+      } else {
+        parent.allocToken()
+      }
 
     def visit[P](ref: AnyRef, init: => P): P = {
       // log(s"visit  ${ref.hashCode.toHexString}")
