@@ -55,6 +55,7 @@ object Types {
         case DoubleTop        .id => DoubleTop
         case DoubleSeqTop     .id => DoubleSeqTop
         case StringTop        .id => StringTop
+        case Bridge.idIdentity    => Bridge.identity[Top]
         case intSeqBridge1    .id => intSeqBridge1
         case intSeqBridge2    .id => intSeqBridge2
         case doubleSeqBridge1 .id => doubleSeqBridge1
@@ -70,6 +71,21 @@ object Types {
   }
   sealed trait Aux {
     def id: Int
+  }
+
+  object Bridge {
+    implicit def identity[A <: Top]: Bridge[A, A, A] = anyBridge.asInstanceOf[Identity[A]]
+
+    private[Types] final val idIdentity = 0xFF
+
+    private val anyBridge = new Identity[Top]
+
+    private final class Identity[A <: Top] extends Bridge[A, A, A] {
+      def lift1[Tx](a: A#Out[Tx]): A#Out[Tx] = a
+      def lift2[Tx](a: A#Out[Tx]): A#Out[Tx] = a
+
+      def id: Int = idIdentity
+    }
   }
 
   trait Bridge[T1 <: Top, T2 <: Top, T <: Top] extends Aux {

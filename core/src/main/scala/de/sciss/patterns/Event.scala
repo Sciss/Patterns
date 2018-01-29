@@ -69,6 +69,9 @@ object Event {
   final val keyAmp        = "amp"
   final val keyPan        = "pan"
 
+  /** SoundProcesses specific */
+  final val keyValue      = "value"
+
   def scale(out: Out): Scale =
     out.map.get(keyScale).fold(Scale.default) {
       case Some(s: Scale) => s

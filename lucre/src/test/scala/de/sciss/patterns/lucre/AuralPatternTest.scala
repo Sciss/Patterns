@@ -3,7 +3,7 @@ package de.sciss.patterns.lucre
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Cursor
 import de.sciss.lucre.synth.Sys
-import de.sciss.patterns.{Event, Graph}
+import de.sciss.patterns.Graph
 import de.sciss.synth
 import de.sciss.synth.proc.AuralContext
 
@@ -26,9 +26,11 @@ class AuralPatternTest[S <: Sys[S]](name: String)(implicit cursor: stm.Cursor[S]
         |""".stripMargin)
 
     val patVal = Graph {
-      import de.sciss.patterns.graph._
-      val b = Brown(lo = 60, hi = 110, step = 5)
-      Bind("value" -> b, Event.keyDur -> 0.5)
+      import de.sciss.patterns._
+      import graph._
+      val b = Brown(lo = 60, hi = 100, step = 5)
+//      Bind("value" -> b, Event.keyDur -> 0.5)
+      Output(0.5, b)
     }
 
     val view = cursor.step { implicit tx =>

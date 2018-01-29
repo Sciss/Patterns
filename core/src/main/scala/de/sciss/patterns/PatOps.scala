@@ -23,7 +23,8 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   def head: Pat[T] = take(1)
   def tail: Pat[T] = drop(1)
 
-  def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2]): Cat[T, T1, T2] = Cat(x, that)
+  def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2]): Pat[T2] /* Cat[T, T1, T2] */ =
+    Cat(x, that)
 
   def + [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): BinaryOp[T, T1, T2] = {
     val op = BinaryOp.Plus[T2]()
@@ -54,6 +55,9 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
 
   def sorted(implicit ord: Ord[T]): Pat[T] = Sorted(x)
 
+  /** Similar to a monadic `map` but with the constraint
+    * the element type must be a (nested) pattern.
+    */
   def map[A <: Top, B <: Top](f: Pat[A] => Pat[B])(implicit ev: T <:< Pat[A]): Pat[Pat[B]] = {
     val token = Graph.builder.allocToken()
     val it    = It[A](token)
@@ -63,10 +67,41 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     PatMap(x.asInstanceOf[Pat[Pat[A]]], it, inner)
   }
 
-  def flatMap  [A <: Top, B <: Top](f:     T  => Pat[B])(implicit ev: T <:< Pat[A]): Pat[B]       = ???
-  def bubbleMap[          B <: Top](f: Pat[T] => Pat[B])                           : Pat[B]       = ???
+  /** Similar to a monadic `flatMap` but with the constraint
+    * the element type must be a (nested) pattern.
+    */
+  def flatMap[A <: Top, B <: Top](f: T => Pat[B])(implicit ev: T <:< Pat[A]): Pat[B] = ???
+
+  /** The "counter" operation to `flatMap`. It bubbles each
+    * element of the receiver pattern as a singleton pattern itself,
+    * then applies the function, and flattens the result.
+    *
+    * This way, we can translate `p.flatMap(_.map)` into
+    * `p.map(_.bubbleMap)` when `T` is not a (nested) pattern.
+    * For example an operation on collections
+    *
+    * {{{
+    *   a.flatMap { v => b.map { w => v :+ w }}
+    * }}}
+    *
+    * can be rewritten for patterns as
+    *
+    * {{{
+    *   a.map { v: Pat[A] => b.bubbleMap { w => v ++ w }}
+    * }}}
+    */
+  def bubbleMap[A <: Top](f: Pat[T] => Pat[A]): Pat[A] = {
+    val token = Graph.builder.allocToken()
+    val it    = It[T](token)
+    val inner = Graph {
+      f(it)
+    }
+    BubbleMap[T, A](x, it, inner)
+  }
 
   def flatten[A <: Top](implicit ev: T <:< Pat[A]): Pat[A] = Flatten(x.asInstanceOf[Pat[Pat[A]]])
 
   def combinations(n: Pat.Int): Pat[Pat[T]] = Combinations(x, n)
+
+  def copy(): Pat[T] = Copy(x)
 }

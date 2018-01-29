@@ -137,7 +137,7 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     case _          => None
   }
 
-  private def getValue(evt: Event.Out): Option[AuralAttribute.Scalar] = evt.map.get("value").flatMap { v =>
+  private def getValue(evt: Event.Out): Option[AuralAttribute.Scalar] = evt.map.get(Event.keyValue).flatMap { v =>
     (getSingleFloat(v), v) match {
       case (Some(f), _) => Some(AuralAttribute.ScalarValue(f))
       case (None, xs: Seq[_]) =>

@@ -1,5 +1,6 @@
 package de.sciss.patterns
 
+import de.sciss.patterns.Types.{IntTop, Top}
 import de.sciss.patterns.graph._
 
 class PatternsSpec extends PatSpec {
@@ -62,6 +63,43 @@ class PatternsSpec extends PatSpec {
     val plain = List(1 to 4: _*).combinations(3)
       .map(_.drop(1))
       .toList
+
+    assert(res === plain)
+  }
+
+  "Copy" should work in {
+    val a     = Pat.Int(1, 2, 3)
+    val res1  = Pat.seqFill(3) { _ => a }
+    eval(res1) shouldBe List(1, 2, 3)
+
+    val res2  = Pat.seqFill(3) { _ => a.copy() }
+    eval(res2) shouldBe List(1, 2, 3, 1, 2, 3, 1, 2, 3)
+  }
+
+  "BubbleMap" should work in {
+    val resSimple = Pat.Int(1, 2, 3).bubbleMap(x => x ++ Pat.Int(4))
+    eval(resSimple) shouldBe List(1, 4, 2, 4, 3, 4)
+
+// XXX TODO
+//    val resDup = Pat.Int(1, 2, 3).bubbleMap(x => x ++ x)
+//    eval(resDup) shouldBe List(1, 1, 2, 2, 3, 3)
+
+    def directProduct_Seq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] =
+      a.flatMap { v => b.map { w => v :+ w } }
+
+    def directProduct_Pat[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
+      a.map { v: Pat[A] => b.bubbleMap(be => v.copy() ++ be) }
+
+    val aInSeq  = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
+    val bInSeq  = Seq(7, 8)
+    val plain   = directProduct_Seq(aInSeq, bInSeq)
+    assert(plain === Seq(Seq(1, 2, 3, 7), Seq(1, 2, 3, 8), Seq(4, 5, 6, 7), Seq(4, 5, 6, 8)))
+
+    val aInPat: Pat[Pat.Int]  = aInSeq.map(xs => Pat[IntTop](xs: _*))
+    val bInPat: Pat.Int       = Pat[IntTop](bInSeq: _*)
+    val outPat = directProduct_Pat(aInPat, bInPat)
+    import ctx.tx
+    val res = outPat.expand.map(_.toList).toList
 
     assert(res === plain)
   }

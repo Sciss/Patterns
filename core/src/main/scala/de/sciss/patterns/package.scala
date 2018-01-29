@@ -17,7 +17,7 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
 import de.sciss.patterns.Types.{DoubleSeqTop, DoubleTop, IntSeqTop, IntTop, StringTop, Top}
-import de.sciss.patterns.graph.{Constant, PatPat}
+import de.sciss.patterns.graph.{Bind, Constant, PatPat}
 
 import scala.annotation.elidable
 import scala.annotation.elidable.CONFIG
@@ -51,4 +51,8 @@ package object patterns {
 
   @elidable(CONFIG) private[patterns] def logGraph(what: => String): Unit =
     if (showGraphLog) Console.out.println(s"${logHeader.format(new Date())}graph $what")
+
+  /** A shortcut for `Bind` with time/value pairs. */
+  def Output[T <: Top](delta: Pat.Double, value: Pat[T]): Pat.Event =
+    Bind(Event.keyDelta -> delta, Event.keyValue -> value)
 }

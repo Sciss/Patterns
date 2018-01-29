@@ -14,14 +14,17 @@
 package de.sciss.patterns
 
 import de.sciss.patterns
-import de.sciss.patterns.Types.{Aux, DoubleSeqTop, DoubleTop, IntTop, Top}
-import de.sciss.patterns.graph.SeqFill
+import de.sciss.patterns.Types.{Aux, CTop, DoubleSeqTop, DoubleTop, IntTop, Top}
+import de.sciss.patterns.graph.{PatSeq, SeqFill}
 
 object Pat {
   type Int        = Pat[IntTop        ]
   type Double     = Pat[DoubleTop     ]
   type DoubleSeq  = Pat[DoubleSeqTop  ]
   type Event      = Pat[patterns.Event]
+
+  def Int   (elems: scala.Int*    ): Pat.Int    = apply[IntTop    ](elems: _*)
+  def Double(elems: scala.Double* ): Pat.Double = apply[DoubleTop ](elems: _*)
 
   type $[T <: Top, A] = Pat[T { type Out[Tx] = A }]
 
@@ -32,6 +35,8 @@ object Pat {
     }
     SeqFill(n, inner)
   }
+
+  def apply[T <: CTop](elems: T#COut*): Pat[T] = PatSeq(elems)
 }
 
 trait ProductWithAux extends Product {

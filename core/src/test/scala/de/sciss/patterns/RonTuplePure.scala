@@ -64,13 +64,13 @@ object RonTuplePure {
     res
   }
 
+//  // all pairs from two arrays
+//  def directProduct[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
+//    a.map { v: Pat[A] => v ++ b }
+
   // all pairs from two arrays
-  def directProduct[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] = {
-    ???
-//    val res = a.flatMap { v => b.map { w => v :+ w } }
-//    log("directProduct", a, b, " => ", res)
-//    res
-  }
+  def directProduct[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
+    a.map { v: Pat[A] => b.bubbleMap(be => v ++ be) }
 
   // collects the indices of every occurrence of elements of t in s
   def extract[A](s: Seq[A], t: Seq[A]): Seq[Seq[Int]] = {
@@ -217,6 +217,7 @@ object RonTuplePure {
       val partsIdx = Indices(parts)
       val pats: Pat[Pat.Event] = parts.map { part: Pat.Double =>
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
+        val noteDurTup = ??? // makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
         val notePat: Pat.Double = ???
         val durPat : Pat.Double = ???
 

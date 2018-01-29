@@ -38,8 +38,10 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
 //        advance()
       }
 
-    def reset()(implicit tx: Tx): Unit =
+    def reset()(implicit tx: Tx): Unit = {
       _valid() = false
+      // innerStream.reset()
+    }
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()
@@ -55,8 +57,8 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
       def reset()(implicit tx: Tx): Unit = ()
 
       // XXX TODO --- how to get rid of the casting?
-      def hasNext(implicit tx: Tx): Boolean     = itStream.hasNext && innerStream.hasNext
-      def next ()(implicit tx: Tx): T#Out[Tx]  = innerStream.next()(tx.asInstanceOf[Tx])
+      def hasNext(implicit tx: Tx): Boolean   = itStream.hasNext && innerStream.hasNext
+      def next ()(implicit tx: Tx): T#Out[Tx] = innerStream.next()(tx.asInstanceOf[Tx])
     }
 
     private def advance()(implicit tx: Tx): Unit = {
