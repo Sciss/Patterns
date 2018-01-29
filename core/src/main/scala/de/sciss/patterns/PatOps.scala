@@ -17,8 +17,8 @@ import de.sciss.patterns.Types.{Bridge, IntTop, Num, NumFrac, Ord, Top}
 import de.sciss.patterns.graph._
 
 final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
-  def take(length: Pat[IntTop]): Take[T] = Take(x, length)
-  def drop(length: Pat[IntTop]): Drop[T] = Drop(x, length)
+  def take(length: Pat[IntTop]): Pat[T] = Take(x, length)
+  def drop(length: Pat[IntTop]): Pat[T] = Drop(x, length)
 
   def head: Pat[T] = take(1)
   def tail: Pat[T] = drop(1)
@@ -26,17 +26,17 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2]): Pat[T2] /* Cat[T, T1, T2] */ =
     Cat(x, that)
 
-  def + [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): BinaryOp[T, T1, T2] = {
+  def + [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
     val op = BinaryOp.Plus[T2]()
     BinaryOp(op, x, that)
   }
 
-  def * [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): BinaryOp[T, T1, T2] = {
+  def * [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
     val op = BinaryOp.Times[T2]()
     BinaryOp(op, x, that)
   }
 
-  def roundTo[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): BinaryOp[T, T1, T2] = {
+  def roundTo[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
     val op = BinaryOp.RoundTo[T2]()
     BinaryOp(op, x, that)
   }
@@ -54,6 +54,13 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   def length: Pat.Int = Length(x)
 
   def sorted(implicit ord: Ord[T]): Pat[T] = Sorted(x)
+
+  /** Short-cut for `grouped(1)`. For example,
+    * `Pat(1, 2, 3)` becomes `Pat(Pat(1), Pat(2), Pat(3))`.
+    */
+  def bubble: Pat[Pat[T]] = grouped(1)
+
+  def grouped(size: Pat.Int): Pat[Pat[T]] = Grouped(x, size)
 
   /** Similar to a monadic `map` but with the constraint
     * the element type must be a (nested) pattern.

@@ -45,7 +45,9 @@ final case class BubbleMap[T1 <: Top, T <: Top](outer: Pat[T1], it: It[T1], inne
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()
-      _hasNext()
+      val res = _hasNext()
+      logStream(s"BubbleMap.iterator.hasNext = $res")
+      res
     }
 
     private def advance()(implicit tx: Tx): Unit = {

@@ -22,7 +22,7 @@
 //  }
 //
 //  final case class ToInt[T <: ScalarTop]()(implicit num: Num[T]) extends Op[T, IntTop] {
-//    def apply(a: T#Out): Int = ??? // num.abs()
+//    def apply(a: T#Out): Int = ... // num.abs()
 //  }
 //}
 //final case class UnaryOp[T1 <: Top, T <: Top](op: UnaryOp.Op[T1, T], a: Pat[T1])

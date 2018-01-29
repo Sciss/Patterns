@@ -9,10 +9,19 @@ class BubbleMapDebug extends PatSpec {
     def directProduct_Seq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] =
       a.flatMap { v => b.map { w => v :+ w } }
 
+//    def directProduct_Pat_NO_WAY_JOSÉ[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
+//      a.map { v: Pat[A] =>
+//        val bc = b.copy()
+//        bc.bubbleMap { w =>
+//          v ++ w
+//          // bc.take(1) // v.copy() ++ bc.take(1) // w
+//        }
+//      }
+
     def directProduct_Pat[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
-      a.map { v: Pat[A] =>
+      a.flatMap { v: Pat[A] =>
         val bc = b.copy()
-        bc.bubbleMap { w =>
+        bc.bubble.map { w: Pat[A] =>
           v ++ w
           // bc.take(1) // v.copy() ++ bc.take(1) // w
         }

@@ -16,18 +16,6 @@ package de.sciss.patterns
 import de.sciss.patterns.Types.CTop
 
 object Event {
-//  type Out = Event#COut
-
-//  object Out {
-//    def newBuilder: mutable.Builder[(String, Any), Out] = ???
-//  }
-//  trait Out extends Map[String, Any] {
-//    type K = String
-//    type V = Any // Stream[Tx, Any]
-//
-//    override def + [V1 >: V](kv: (K, V1)): Out
-//  }
-
   final case class Out(map: Map[String, Any]) {
     def + (kv: (String, Any)): Out = copy(map = map + kv)
   }

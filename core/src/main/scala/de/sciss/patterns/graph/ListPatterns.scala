@@ -144,18 +144,18 @@ final case class Pseq[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, offset 
 //
 //  protected def makeStreams(implicit b: StreamGraph.Builder) = ...
 //}
-
-/** aka Ptuple */
-final case class Zip[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1)
-  extends Pattern[Top.Seq[T]] {
-
-//  val tpe: Top.Seq[T] = Top.Seq[T]
-
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Seq[T#Out[Tx]]] = {
-    ???
-  }
-}
-
+//
+///** aka Ptuple */
+//final case class Zip[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1)
+//  extends Pattern[Top.Seq[T]] {
+//
+////  val tpe: Top.Seq[T] = Top.Seq[T]
+//
+//  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Seq[T#Out[Tx]]] = {
+//      ...
+//  }
+//}
+//
 //final case class Lace(list: PE, repeats: PE = 1) extends Pattern {
 //  protected def makeStream(args: Vec[StreamIn])(implicit b: StreamGraph.Builder) = ...
 //
@@ -173,22 +173,22 @@ final case class Zip[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1)
 //    val startIt   = start  .expand
 //    val indexed   = list.toIndexedSeq
 //    val listSize  = indexed.size
-//    if (??? /* repeatsIt.isEmpty || sizeIt.isEmpty || stepIt.isEmpty || startIt.isEmpty || listSize == 0 */) Stream.empty
+//    if (... /* repeatsIt.isEmpty || sizeIt.isEmpty || stepIt.isEmpty || startIt.isEmpty || listSize == 0 */) Stream.empty
 //    else {
-//      val repeatsVal  = ??? : Int // repeatsIt.next()
-//      val startVal    = ??? : Int // startIt  .next()
+//      val repeatsVal  = ... : Int // repeatsIt.next()
+//      val startVal    = ... : Int // startIt  .next()
 //
 //      new Stream[Tx, T#Out[Tx]] {
 //        private[this] var pos           = startVal
-//        private[this] var sizeVal       = ??? : Int // sizeIt.next()
-//        private[this] var stepVal       = ??? : Int // stepIt.next()
+//        private[this] var sizeVal       = ... : Int // sizeIt.next()
+//        private[this] var stepVal       = ... : Int // stepIt.next()
 //        private[this] var repeatsCnt    = 0
 //        private[this] var sizeCnt       = 0
 //        private[this] var listIt: Stream[Tx, T#Out[Tx]] = _
 //        private[this] var elem: T#Out[Tx]   = _
 //        private[this] var done          = false
 //
-//        def reset()(implicit tx: Tx): Unit = ???
+//        def reset()(implicit tx: Tx): Unit = ...
 //
 //        private def pickIt(): Boolean = {
 //          val i = pos + sizeCnt
@@ -227,14 +227,14 @@ final case class Zip[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1)
 //          }
 //
 //        def hasNext(implicit tx: Tx): Boolean = {
-//          ???
+//          ...
 //          !done
 //        }
 //
-//        ??? // run()
+//        ... // run()
 //
 //        def next()(implicit tx: Tx): T#Out[Tx] = {
-//          ???
+//          ...
 //          if (done) Stream.exhausted()
 //          val res = elem
 //          advance()
