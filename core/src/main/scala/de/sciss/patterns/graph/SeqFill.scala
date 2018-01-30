@@ -47,6 +47,8 @@ final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T], it: It[IntTop]) 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
     @transient final private[this] lazy val ref = new AnyRef
 
+    private[this] val iteration = ctx.newVar(0)
+
     private def mkItStream(implicit tx: Tx) = {
       val res = new ItStreamImpl(iteration)
       ctx.addStream(ref, res)
@@ -58,7 +60,6 @@ final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T], it: It[IntTop]) 
     private[this] val nStream     = n    .expand(ctx, tx0)
     private[this] val innerStream = inner.expand(ctx, tx0)
 
-    private[this] val iteration   = ctx.newVar(0)
     private[this] val nValue      = ctx.newVar(0)
 
     private[this] val _hasNext    = ctx.newVar(false)

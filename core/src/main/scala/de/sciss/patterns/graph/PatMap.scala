@@ -49,23 +49,34 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
-        _valid() = true
         logStream("PatMap.iterator.validate()")
-        advance()
+        _valid() = true
+        buildNext() // advance()
       }
 
     def reset()(implicit tx: Tx): Unit = {
-      _valid() = false
       logStream("PatMap.iterator.reset()")
+      _valid() = false
+      ctx.getStreams(ref).foreach {
+        case m: MapIterationStream[Tx, _] => m.resetOuter()
+        // case _ =>
+      }
     }
 
     private def advance()(implicit tx: Tx): Unit = {
-      ctx.getStreams(ref).foreach(_.reset())
+      ctx.getStreams(ref).foreach {
+        case m: MapIterationStream[Tx, _] => m.advance()
+        // case _ =>
+      }
       innerStream.reset()
+      buildNext()
+    }
+
+    private def buildNext()(implicit tx: Tx): Unit = {
       val hn = itStream.hasNext && innerStream.hasNext
       _hasNext() = hn
       if (hn) {
-        itStream.next()
+        // itStream.next()
         val b = Vector.newBuilder[T#Out[Tx]]
         var i = 0
         // there is _no_ reasonable way to provide the

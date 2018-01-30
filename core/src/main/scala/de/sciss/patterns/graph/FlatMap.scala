@@ -43,46 +43,29 @@ final case class FlatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], i
     // as an additional constraint to determine `hasNext`!
     private[this] val itStream      = mkItStream(tx0)
 
-//    private[this] val _valid        = ctx.newVar(false)
-//    private[this] val _hasNext      = ctx.newVar(false)
-//
-//    private def validate()(implicit tx: Tx): Unit =
-//      if (!_valid()) {
-//        _valid() = true
-//        logStream("FlatMap.iterator.validate()")
-//        advance()
-//      }
-
     def reset()(implicit tx: Tx): Unit =
       ctx.getStreams(ref).foreach {
         case m: MapIterationStream[Tx, _] => m.resetOuter()
         // case _ =>
       }
 
-    def hasNext(implicit tx: Tx): Boolean = itStream.hasNext && innerStream.hasNext
+    def hasNext(implicit tx: Tx): Boolean =
+      itStream.hasNext && innerStream.hasNext
 
     private def advance()(implicit tx: Tx): Unit = {
       logStream("FlatMap.iterator.advance()")
-//      itStream.next()
       ctx.getStreams(ref).foreach {
         case m: MapIterationStream[Tx, _] => m.advance()
         // case _ =>
       }
       innerStream.reset()
-//      val hn = itStream.hasNext && innerStream.hasNext
-//      _hasNext() = hn
-//      if (hn) {
-//      }
     }
 
     def next()(implicit tx: Tx): T#Out[Tx] = {
-//      validate()
       if (!hasNext) Stream.exhausted()
-//      itStream.next()
       val res = innerStream.next()
       logStream(s"FlatMap.iterator.next() = $res; innerStream.hasNext = ${innerStream.hasNext}; itStream.hasNext = ${itStream.hasNext}")
-      if (!innerStream.hasNext && itStream.hasNext) advance() // innerStream.reset()
-      // if (!innerStream.hasNext) advance()
+      if (!innerStream.hasNext && itStream.hasNext) advance()
       res
     }
   }

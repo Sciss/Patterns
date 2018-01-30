@@ -63,7 +63,7 @@ class PatternsSpec extends PatSpec {
 
     evalH(pat1) shouldBe plain1
 
-    // it must be possible to ignore the function argument
+    // it must be possible t
     val pat2 = Graph {
       val in = Pseq(1 to 4).combinations(3)
       in.map { _: Pat.Int =>
