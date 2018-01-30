@@ -25,7 +25,7 @@ trait Context[Tx] {
 
   def mkOuterStream[A](token: Int)(implicit tx: Tx): Stream[Tx, A]
 
-  def provideOuterStream[A](token: Int, outer: () => Stream[Tx, A])(implicit tx: Tx): Unit
+  def provideOuterStream[A](token: Int, outer: Tx => Stream[Tx, A])(implicit tx: Tx): Unit
 
   def mkRandom()(implicit tx: Tx): Random[Tx]
 
@@ -73,7 +73,7 @@ object Context {
 
 private[patterns] abstract class ContextLike[Tx] extends Context[Tx] {
   private[this] var streamMap = Map.empty[AnyRef, List[Stream[Tx, _]]]
-  private[this] val tokenMap  = newVar(Map.empty[Int, () => Stream[Tx, _]])
+  private[this] val tokenMap  = newVar(Map.empty[Int, Tx => Stream[Tx, _]])
 
   def addStream[A](ref: AnyRef, stream: Stream[Tx, A]): Stream[Tx, A] = {
     streamMap += ref -> (stream :: streamMap.getOrElse(ref, Nil))
@@ -82,14 +82,14 @@ private[patterns] abstract class ContextLike[Tx] extends Context[Tx] {
 
   def getStreams(ref: AnyRef): List[Stream[Tx, _]] = streamMap.getOrElse(ref, Nil)
 
-  def provideOuterStream[A](token: Int, outer: () => Stream[Tx, A])(implicit tx: Tx): Unit = {
+  def provideOuterStream[A](token: Int, outer: Tx => Stream[Tx, A])(implicit tx: Tx): Unit = {
     logStream(s"Context.provideOuterStream($token, $outer)")
     tokenMap() = tokenMap() + (token -> outer)
   }
 
   def mkOuterStream[A](token: Int)(implicit tx: Tx): Stream[Tx, A] = {
     val fun                 = tokenMap().apply(token)
-    val res0: Stream[Tx, _] = fun()
+    val res0: Stream[Tx, _] = fun(tx)
     val res                 = res0.asInstanceOf[Stream[Tx, A]]
     logStream(s"Context.mkOuterStream($token) = $res")
     res

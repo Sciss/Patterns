@@ -91,9 +91,9 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
       new Stream[Tx, T#Out[Tx]] {
         private[this] val peer = buf.result().iterator
 
-        def reset()(implicit tx: Tx): Unit        = ()
-        def hasNext(implicit tx: Tx): Boolean     = peer.hasNext
-        def next ()(implicit tx: Tx): T#Out[Tx]  = peer.next()
+        def reset()(implicit tx: Tx): Unit      = ()
+        def hasNext(implicit tx: Tx): Boolean   = peer.hasNext
+        def next ()(implicit tx: Tx): T#Out[Tx] = peer.next()
       }
     }
 

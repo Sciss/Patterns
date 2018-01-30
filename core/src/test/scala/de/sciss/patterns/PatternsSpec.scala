@@ -52,8 +52,8 @@ class PatternsSpec extends PatSpec {
   "Map" should work in {
     val pat = Graph {
       val in = Pseq(1 to 4).combinations(3)
-      in.map { in: Pat.Int =>
-        in.drop(1)
+      in.map { x: Pat.Int =>
+        x.drop(1)
       }
     }
 
@@ -65,11 +65,16 @@ class PatternsSpec extends PatSpec {
   }
 
   "Copy" should work in {
-    val a     = Pat.Int(1, 2, 3)
-    val res1  = Pat.seqFill(3) { _ => a }
+    val res1 = Graph {
+      val a = Pat.Int(1, 2, 3)
+      Pat.seqFill(3) { _ => a }
+    }
     eval(res1) shouldBe List(1, 2, 3)
 
-    val res2  = Pat.seqFill(3) { _ => a.copy() }
+    val res2  = Graph {
+      val a = Pat.Int(1, 2, 3)
+      Pat.seqFill(3) { _ => a.copy() }
+    }
     eval(res2) shouldBe List(1, 2, 3, 1, 2, 3, 1, 2, 3)
   }
 
