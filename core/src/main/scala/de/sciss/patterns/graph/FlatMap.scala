@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.patterns.Types.Top
+import de.sciss.patterns.graph.impl.MapIterationStream
 
 final case class FlatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], inner: Graph[T])
   extends Pattern[T] {
@@ -25,21 +26,26 @@ final case class FlatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], i
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
-    private[this] val outerStream: Stream[Tx, Stream[Tx, T1#Out[Tx]]]  = outer.expand(ctx, tx0)
-    private[this] val innerStream: Stream[Tx, T#Out[Tx]]               = inner.expand(ctx, tx0)
+    @transient final private[this] lazy val ref = new AnyRef
 
-    private[this] val itMapInner    = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
+    private def mkItStream(implicit tx: Tx) = {
+      val res = new MapIterationStream(outer, tx)
+      ctx.addStream(ref, res)
+      res
+    }
 
-    private[this] val hasMapStream  = ctx.newVar(false)
+    ctx.provideOuterStream(it.token, mkItStream(_))(tx0)
+
+    private[this] val innerStream: Stream[Tx, T#Out[Tx]] = inner.expand(ctx, tx0)
+
     private[this] val _valid        = ctx.newVar(false)
     private[this] val _hasNext      = ctx.newVar(false)
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
-        _valid()    = true
-        _hasNext()  = outerStream.hasNext
-        logStream(s"FlatMap.iterator.validate(); hasNext = $hasNext")
-        // advance()
+        _valid() = true
+        logStream("FlatMap.iterator.validate()")
+        advance()
       }
 
     def reset()(implicit tx: Tx): Unit = {
@@ -52,53 +58,18 @@ final case class FlatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], i
       _hasNext()
     }
 
-    private final class InnerStream(itStream: Stream[Tx, T1#Out[Tx]]) extends Stream[Tx, T#Out[Tx]] {
-      override def toString = s"FlatMap.iterator#InnerStream($itStream)"
-
-      def init()(implicit tx: Tx): this.type = {
-        logStream(s"FlatMap.iterator#InnerStream.init(); token = ${it.token}")
-        ctx.provideOuterStream[T1#Out[Tx]](it.token, ??? /* itStream */)
-        this
-      }
-
-      def reset()(implicit tx: Tx): Unit = ()
-
-      def hasNext(implicit tx: Tx): Boolean = itStream.hasNext && innerStream.hasNext
-
-      def next()(implicit tx: Tx): T#Out[Tx] = {
-        // XXX TODO --- how to get rid of the casting?
-        val res = innerStream.next()(tx.asInstanceOf[Tx])
-        logStream(s"FlatMap.iterator#InnerStream.next() = $res")
-        res
-      }
-    }
-
     private def advance()(implicit tx: Tx): Unit = {
-      val hm = hasMapStream()
-      logStream(s"FlatMap.iterator.advance(); hasMapStream = $hm")
-      if (!hm) {
-        val hn = outerStream.hasNext
-        _hasNext() = hn
-        logStream(s"FlatMap.iterator.advance(); hasNext = $hn")
-        if (hn) {
-          val itStream    = outerStream.next()
-          logStream(s"FlatMap.iterator.advance(); itStream = $itStream")
-          itMapInner()    = new InnerStream(itStream).init()
-          hasMapStream()  = true
-          innerStream.reset()
-        }
-      }
+      ctx.getStreams(ref).foreach(_.reset())
+      innerStream.reset()
+      _hasNext() = innerStream.hasNext
     }
 
     def next()(implicit tx: Tx): T#Out[Tx] = {
       validate()
-      advance()
       if (!_hasNext()) Stream.exhausted()
-      val mi  = itMapInner()
-      val res = mi.next()
+      val res = innerStream.next()
       logStream(s"FlatMap.iterator.next() = $res")
-      hasMapStream() = false
-      _hasNext() = outerStream.hasNext
+      if (!innerStream.hasNext) advance()
       res
     }
   }

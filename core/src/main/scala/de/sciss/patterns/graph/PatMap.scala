@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.patterns.Types.Top
+import de.sciss.patterns.graph.impl.MapIterationStream
 
 final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], inner: Graph[T])
   extends Pattern[Pat[T]] {
@@ -24,48 +25,11 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
     new StreamImpl(tx)
   }
 
-  private final class ItStreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T1#Out[Tx]] {
-    private[this] val outerStream: Stream[Tx, Stream[Tx, T1#Out[Tx]]] = outer.expand(ctx, tx0)
-
-    private[this] val inStream    = ctx.newVar[Stream[Tx, T1#Out[Tx]]](null)
-    private[this] val _valid      = ctx.newVar(false)
-    private[this] val _hasNext    = ctx.newVar(false)
-
-    private def validate()(implicit tx: Tx): Unit =
-      if (!_valid()) {
-        _valid()    = true
-        val ohn     = outerStream.hasNext
-        _hasNext()  = ohn
-        if (ohn) {
-          val inValue   = outerStream.next()
-          inStream()    = inValue
-          _hasNext()    = inValue.hasNext
-        }
-      }
-
-    def reset()(implicit tx: Tx): Unit =
-      _valid() = false
-
-    def hasNext(implicit tx: Tx): Boolean = {
-      validate()
-      _hasNext()
-    }
-
-    def next()(implicit tx: Tx): T1#Out[Tx] = {
-      validate()
-      if (!_hasNext()) Stream.exhausted()
-      val in      = inStream()
-      val res     = in.next()
-      _hasNext()  = in.hasNext
-      res
-    }
-  }
-
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
     @transient final private[this] lazy val ref = new AnyRef
 
     private def mkItStream(implicit tx: Tx) = {
-      val res = new ItStreamImpl(tx)
+      val res = new MapIterationStream(outer, tx)
       ctx.addStream(ref, res)
       res
     }
@@ -80,9 +44,8 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
-        _valid()    = true
-//        _hasNext()  = outerStream.hasNext
-        logStream(s"PatMap.iterator.validate(); hasNext = $hasNext")
+        _valid() = true
+        logStream("PatMap.iterator.validate()")
         advance()
       }
 
@@ -117,7 +80,7 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
       _hasNext()
     }
 
-  def next()(implicit tx: Tx): Stream[Tx, T#Out[Tx]] = {
+    def next()(implicit tx: Tx): Stream[Tx, T#Out[Tx]] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = mapStream()

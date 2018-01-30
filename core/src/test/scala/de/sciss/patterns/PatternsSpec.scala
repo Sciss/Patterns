@@ -93,6 +93,29 @@ class PatternsSpec extends PatSpec {
     evalH(res4) shouldBe List(List(1, 4, 7, 10, 13))
   }
 
+  "SeqFill" should work in {
+    // must be possible to use iteration variable multiple times
+    val pat1 = Graph {
+      Pat.seqFill(4) { i =>
+        i + i
+      }
+    }
+
+    val plain1 = (0 until 4).map(i => i + i)
+
+    eval(pat1) shouldBe plain1
+
+    // must be possible to ignore iteration variable
+    val pat2 = Graph {
+      Pat.seqFill(4) { _ =>
+        Pat.Int(6)
+      }
+    }
+
+    val plain2 = Seq.fill(4)(6)
+
+    eval(pat2) shouldBe plain2  }
+
   "BubbleMap" should work in {
     val resSimple = Graph { Pat.Int(1, 2, 3).bubbleMap(x => x ++ Pat.Int(4)) }
     eval(resSimple) shouldBe List(1, 4, 2, 4, 3, 4)

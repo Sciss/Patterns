@@ -2,8 +2,8 @@ package de.sciss.patterns
 
 import de.sciss.patterns.Types.{IntTop, Top}
 
-class BubbleMapDebug extends PatSpec {
-  "BubbleMap" should work in {
+class DirectProductDebug extends PatSpec {
+  "The directProduct example" should work in {
     showStreamLog = true
 
     def directProduct_Seq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] =
