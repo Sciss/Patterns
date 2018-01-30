@@ -57,8 +57,8 @@ final case class BubbleMap[T1 <: Top, T <: Top](outer: Pat[T1], it: It[T1], inne
       if (ohn) {
         val itValue     = outerStream.next()
         logStream(s"BubbleMap.iterator.advance(); itValue = $itValue; token = ${it.token}")
-        val itStream    = Stream.single(itValue)
-        ctx.setOuterStream[T1#Out[Tx]](it.token, itStream)
+        val itStream    = () => Stream.single(itValue)
+        ctx.provideOuterStream[T1#Out[Tx]](it.token, itStream)
         innerStream.reset()
         val ihn = innerStream.hasNext
         _hasNext() = ihn

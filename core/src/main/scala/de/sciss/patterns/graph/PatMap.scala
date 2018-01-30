@@ -57,7 +57,7 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
 
       def init()(implicit tx: Tx): this.type = {
         logStream(s"PatMap.iterator#InnerStream.init(); token = ${it.token}")
-        ctx.setOuterStream[T1#Out[Tx]](it.token, itStream)
+        ctx.provideOuterStream[T1#Out[Tx]](it.token, ??? /* itStream */)
         this
       }
 

@@ -24,12 +24,23 @@ final case class It[T <: Top](token: Int) extends Pattern[T] { pat =>
   }
 
   private final class StreamImpl[Tx](implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
-    private def outer(implicit tx: Tx) = ctx.getOuterStream[T#Out[Tx]](token)
+    private[this] val _outer = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
 
-    def reset()(implicit tx: Tx): Unit       = ()
-    def hasNext(implicit tx: Tx): Boolean    = {
-      val res = outer.hasNext
-//      logStream(s"$pat.iterator.hasNext = $res")
+    private[this] val _valid = ctx.newVar(false)
+
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid() = true
+        _outer() = ctx.mkOuterStream(token)
+      }
+
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
+
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      val res = _outer().hasNext
+      logStream(s"$pat.iterator.hasNext = $res")
 //      if (token == 1) {
 //        new Exception().fillInStackTrace().printStackTrace()
 //      }
@@ -37,7 +48,8 @@ final case class It[T <: Top](token: Int) extends Pattern[T] { pat =>
     }
 
     def next ()(implicit tx: Tx): T#Out[Tx]  = {
-      val res = outer.next()
+      validate()
+      val res = _outer().next()
       logStream(s"$pat.iterator.next() = $res")
       res
     }

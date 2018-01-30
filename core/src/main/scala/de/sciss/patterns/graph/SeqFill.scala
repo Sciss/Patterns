@@ -30,14 +30,37 @@ final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T], it: It[IntTop]) 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+    @transient final private[this] lazy val ref = new AnyRef
+
+    private[this] val mkItStream = { () =>
+      val res = new ItStreamImpl
+      ctx.addStream(ref, res)
+      res
+    }
+
+    ctx.provideOuterStream(it.token, mkItStream)(tx0)
+
     private[this] val nStream     = n    .expand(ctx, tx0)
     private[this] val innerStream = inner.expand(ctx, tx0)
 
     private[this] val iteration   = ctx.newVar(0)
     private[this] val nValue      = ctx.newVar(0)
 
-    private[this] val _hasNext  = ctx.newVar(false)
-    private[this] val _valid    = ctx.newVar(false)
+    private[this] val _hasNext    = ctx.newVar(false)
+    private[this] val _valid      = ctx.newVar(false)
+
+    private final class ItStreamImpl extends Stream[Tx, Int] {
+      private[this] val _hasNext = ctx.newVar(true)
+
+      def reset()(implicit tx: Tx): Unit    = _hasNext() = true
+      def hasNext(implicit tx: Tx): Boolean = _hasNext()
+
+      def next()(implicit tx: Tx): Int = {
+        if (!hasNext) Stream.exhausted()
+        _hasNext() = false
+        iteration()
+      }
+    }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
@@ -63,7 +86,9 @@ final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T], it: It[IntTop]) 
       val i = iteration()
       _hasNext() = i < nValue()
       if (_hasNext()) {
-        ctx.setOuterStream(it.token, Stream.single(i))
+//        val itStream = () => Stream.single(i)
+//        ctx.provideOuterStream(it.token, itStream)
+        ctx.getStreams(ref).foreach(_.reset())
         innerStream.reset()
         _hasNext() = innerStream.hasNext
         if (!_hasNext()) {
