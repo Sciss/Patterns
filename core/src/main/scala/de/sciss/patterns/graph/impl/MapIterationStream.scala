@@ -63,7 +63,9 @@ final class MapIterationStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implic
     val hi = _hasIn()
     logStream(s"$simpleString.reset(); hasIn = $hi")
     if (hi) {
-      inStream().reset()
+      val inValue = inStream()
+      inValue.reset()
+      _hasNext() = inValue.hasNext
     }
   }
 

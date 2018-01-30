@@ -1,6 +1,6 @@
 package de.sciss.patterns.lucre
 
-import de.sciss.patterns.Pat
+import de.sciss.patterns.{Graph, Pat}
 import de.sciss.patterns.graph._
 
 class PatternsSpec extends PatSpec {
@@ -53,9 +53,11 @@ class PatternsSpec extends PatSpec {
   }
 
   "Map" should work in {
-    val in = Pseq(1 to 4).combinations(3)
-    val pat = in.map { in: Pat.Int =>
-      in.drop(1)
+    val pat = Graph {
+      val in = Pseq(1 to 4).combinations(3)
+      in.map { in: Pat.Int =>
+        in.drop(1)
+      }
     }
 
     val res = ctx.step { implicit tx =>
