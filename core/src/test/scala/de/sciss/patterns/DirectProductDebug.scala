@@ -9,14 +9,19 @@ class DirectProductDebug extends PatSpec {
     def directProduct_Seq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] =
       a.flatMap { v => b.map { w => v :+ w } }
 
-//    def directProduct_Pat_NO_WAY_JOSÉ[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
-//      a.map { v: Pat[A] =>
-//        val bc = b.copy()
-//        bc.bubbleMap { w =>
-//          v ++ w
-//          // bc.take(1) // v.copy() ++ bc.take(1) // w
-//        }
-//      }
+    //    def directProduct_Pat_NO_WAY_JOSÉ[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
+    //      a.map { v: Pat[A] =>
+    //        val bc = b.copy()
+    //        bc.bubbleMap { w =>
+    //          v ++ w
+    //          // bc.take(1) // v.copy() ++ bc.take(1) // w
+    //        }
+    //      }
+
+    val aInSeq = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
+    val bInSeq = Seq(7, 8)
+    val plain = directProduct_Seq(aInSeq, bInSeq)
+    assert(plain === Seq(Seq(1, 2, 3, 7), Seq(1, 2, 3, 8), Seq(4, 5, 6, 7), Seq(4, 5, 6, 8)))
 
     def directProduct_Pat[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
       a.flatMap { v: Pat[A] =>
@@ -27,14 +32,27 @@ class DirectProductDebug extends PatSpec {
         }
       }
 
-    val aInSeq  = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
-    val bInSeq  = Seq(7, 8)
-    val plain   = directProduct_Seq(aInSeq, bInSeq)
-    assert(plain === Seq(Seq(1, 2, 3, 7), Seq(1, 2, 3, 8), Seq(4, 5, 6, 7), Seq(4, 5, 6, 8)))
+    def directProduct_Pat1() = {
+      val a: Pat[Pat.Int] = aInSeq.map(xs => Pat[IntTop](xs: _*))
+      a.flatMap { v: Pat.Int =>
+        val bc: Pat.Int = Pat[IntTop](bInSeq: _*)
+        bc.bubble.map { w: Pat.Int =>
+          w // v // ++ w
+          // bc.take(1) // v.copy() ++ bc.take(1) // w
+        }
+      }
+    }
 
-    val aInPat: Pat[Pat.Int]  = aInSeq.map(xs => Pat[IntTop](xs: _*))
-    val bInPat: Pat.Int       = Pat[IntTop](bInSeq: _*)
-    val outPat = Graph { directProduct_Pat(aInPat, bInPat) }
+//    val outPat = Graph {
+//      val aInPat: Pat[Pat.Int]  = aInSeq.map(xs => Pat[IntTop](xs: _*))
+//      val bInPat: Pat.Int       = Pat[IntTop](bInSeq: _*)
+//      directProduct_Pat(aInPat, bInPat)
+//    }
+
+    val outPat = Graph {
+      directProduct_Pat1()
+    }
+
     import ctx.tx
     val res = outPat.expand.map { in =>
       val i = in.toList
