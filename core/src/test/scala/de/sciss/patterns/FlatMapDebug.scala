@@ -1,11 +1,11 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{IntTop, Top}
-import graph._
+import de.sciss.patterns.Types.IntTop
+import de.sciss.patterns.graph._
 
 class FlatMapDebug extends PatSpec {
   "FlatMap" should work in {
-    // showStreamLog = true
+//    showStreamLog = true
 
     val pat1 = Graph {
       val in = Series(1, 2).take(10).grouped(2)
