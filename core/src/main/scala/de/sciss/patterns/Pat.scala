@@ -31,10 +31,11 @@ object Pat {
 
   def seqFill[T <: Top](n: Pat.Int)(body: Pat.Int => Pat[T]): Pat[T] = {
     // val i = Series(start = 0, step = 1).take(n)
+    val it    = Graph.builder.allocToken[IntTop]()
     val inner = Graph {
-      body(0) // XXX TODO
+      body(it) // XXX TODO
     }
-    SeqFill(n, inner)
+    SeqFill(n, inner, it)
   }
 
   def apply[T <: CTop](elems: T#COut*): Pat[T] = PatSeq(elems)

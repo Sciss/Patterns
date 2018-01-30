@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
+import de.sciss.patterns.Types.{IntTop, Top}
 
 import scala.annotation.tailrec
 
@@ -26,7 +26,7 @@ import scala.annotation.tailrec
     }
 
  */
-final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T]) extends Pattern[T] {
+final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T], it: It[IntTop]) extends Pattern[T] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
@@ -60,12 +60,14 @@ final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T]) extends Pattern[
 
     @tailrec
     private def nextIteration()(implicit tx: Tx): Unit = {
-      _hasNext() = iteration() < nValue()
+      val i = iteration()
+      _hasNext() = i < nValue()
       if (_hasNext()) {
+        ctx.setOuterStream(it.token, Stream.single(i))
         innerStream.reset()
         _hasNext() = innerStream.hasNext
         if (!_hasNext()) {
-          iteration() = iteration() + 1
+          iteration() = i + 1
           nextIteration()
         }
       }
