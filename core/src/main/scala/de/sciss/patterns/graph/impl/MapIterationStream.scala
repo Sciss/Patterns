@@ -20,6 +20,14 @@ import de.sciss.patterns.Types.Top
 final class MapIterationStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implicit ctx: Context[Tx])
   extends Stream[Tx, T#Out[Tx]] {
 
+  private[this] lazy val simpleString = {
+    val os0 = outer.toString
+    val os  = if (os0.length <= 24) os0 else s"${os0.substring(0, 23)}..."
+    s"MapIterationStream($os)"
+  }
+
+  override def toString: String = simpleString
+
   private[this] val outerStream: Stream[Tx, Stream[Tx, T#Out[Tx]]] = outer.expand(ctx, tx0)
 
   private[this] val inStream    = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
@@ -31,8 +39,10 @@ final class MapIterationStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implic
     val ohn     = outerStream.hasNext
     _hasNext()  = ohn
     _hasIn()    = ohn
+    logStream(s"$simpleString.advance(): outerStream.hasNext = $ohn")
     if (ohn) {
       val inValue   = outerStream.next()
+      logStream(s"$simpleString.advance(): inValue.hasNext = $ohn")
       inStream()    = inValue
       _hasNext()    = inValue.hasNext
     }
@@ -44,13 +54,18 @@ final class MapIterationStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implic
       advance()
     }
 
-  def resetOuter()(implicit tx: Tx): Unit =
+  def resetOuter()(implicit tx: Tx): Unit = {
+    logStream(s"$simpleString.resetOuter()")
     _valid() = false
+  }
 
-  def reset()(implicit tx: Tx): Unit =
-    if (_hasIn()) {
+  def reset()(implicit tx: Tx): Unit = {
+    val hi = _hasIn()
+    logStream(s"$simpleString.reset(); hasIn = $hi")
+    if (hi) {
       inStream().reset()
     }
+  }
 
   def hasNext(implicit tx: Tx): Boolean = {
     validate()
@@ -63,6 +78,7 @@ final class MapIterationStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implic
     val in      = inStream()
     val res     = in.next()
     _hasNext()  = in.hasNext
+    logStream(s"$simpleString.next() = $res; hasNext = ${in.hasNext}")
     res
   }
 }

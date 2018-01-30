@@ -7,6 +7,8 @@ final case class PatSeq[T <: CTop](elems: Seq[T#COut]) extends Pattern[T] {
   private def simpleString: String =
     s"PatSeq(${elems.iterator.take(4).mkString(", ")}).iterator"
 
+  override def toString: String = simpleString
+
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#COut] = {
     logStream(simpleString)
     Stream(elems: _*)

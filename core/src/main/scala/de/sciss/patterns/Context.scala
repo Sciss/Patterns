@@ -83,7 +83,7 @@ private[patterns] abstract class ContextLike[Tx] extends Context[Tx] {
   def getStreams(ref: AnyRef): List[Stream[Tx, _]] = streamMap.getOrElse(ref, Nil)
 
   def provideOuterStream[A](token: Int, outer: Tx => Stream[Tx, A])(implicit tx: Tx): Unit = {
-    logStream(s"Context.provideOuterStream($token, $outer)")
+    logStream(s"Context.provideOuterStream($token, ...)")
     tokenMap() = tokenMap() + (token -> outer)
   }
 
