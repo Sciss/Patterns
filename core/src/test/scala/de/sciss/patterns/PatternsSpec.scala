@@ -50,18 +50,32 @@ class PatternsSpec extends PatSpec {
   }
 
   "Map" should work in {
-    val pat = Graph {
+    val pat1 = Graph {
       val in = Pseq(1 to 4).combinations(3)
       in.map { x: Pat.Int =>
         x.drop(1)
       }
     }
 
-    val plain = List(1 to 4: _*).combinations(3)
+    val plain1 = List(1 to 4: _*).combinations(3)
       .map(_.drop(1))
       .toList
 
-    evalH(pat) shouldBe plain
+    evalH(pat1) shouldBe plain1
+
+    // it must be possible to ignore the function argument
+    val pat2 = Graph {
+      val in = Pseq(1 to 4).combinations(3)
+      in.map { _: Pat.Int =>
+        Pat.Int(6)
+      }
+    }
+
+    val plain2 = List(1 to 4: _*).combinations(3)
+      .map(_ => Seq(6))
+      .toList
+
+    evalH(pat2) shouldBe plain2
   }
 
   "Copy" should work in {

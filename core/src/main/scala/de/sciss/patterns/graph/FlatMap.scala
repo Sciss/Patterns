@@ -38,6 +38,11 @@ final case class FlatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], i
 
     private[this] val innerStream: Stream[Tx, T#Out[Tx]] = inner.expand(ctx, tx0)
 
+    // because `inner` is not guaranteed to depend on `It`, we must
+    // pro-active create one instance of the it-stream which is used
+    // as an additional constraint to determine `hasNext`!
+    private[this] val itStream      = mkItStream(tx0)
+
     private[this] val _valid        = ctx.newVar(false)
     private[this] val _hasNext      = ctx.newVar(false)
 
@@ -61,7 +66,11 @@ final case class FlatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], i
     private def advance()(implicit tx: Tx): Unit = {
       ctx.getStreams(ref).foreach(_.reset())
       innerStream.reset()
-      _hasNext() = innerStream.hasNext
+      val hn = itStream.hasNext && innerStream.hasNext
+      _hasNext() = hn
+      if (hn) {
+        itStream.next()
+      }
     }
 
     def next()(implicit tx: Tx): T#Out[Tx] = {
