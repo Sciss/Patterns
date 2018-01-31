@@ -41,6 +41,11 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     BinaryOp(op, x, that)
   }
 
+  def <  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = ???
+  def <= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = ???
+  def >  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = ???
+  def >= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = ???
+
   def linlin[T1 <: Top, T2 <: Top](inLo: Pat[T], inHi: Pat[T], outLo: Pat[T1], outHi: Pat[T1])
                                   (implicit br: Bridge[T, T1, T2], num: NumFrac[T2]): Pat[T2] =
     LinLin[T, T1, T2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
@@ -84,35 +89,58 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     FlatMap(x.asInstanceOf[Pat[Pat[A]]], it, inner)
   }
 
-  /** The "counter" operation to `flatMap`. It bubbles each
-    * element of the receiver pattern as a singleton pattern itself,
-    * then applies the function, and flattens the result.
+  def filter[A <: Top](f: Pat[A] => Pat.Boolean)(implicit ev: T <:< Pat[A]): Pat[Pat[A]] = ???
+
+  def bubbleFilter[A <: Top](f: Pat[T] => Pat.Boolean): Pat[T] =
+    bubble.filter(f).flatten
+
+  def indexOfSlice[A >: T <: Top](that: Pat[A]): Pat.Int = indexOfSlice(that, 0)
+
+  /** Finds first index after or at a start index where this pattern
+    * contains a given other pattern as a slice.
     *
-    * This way, we can translate `p.flatMap(_.map)` into
-    * `p.map(_.bubbleMap)` when `T` is not a (nested) pattern.
-    * For example an operation on collections
-    *
-    * {{{
-    *   a.flatMap { v => b.map { w => v :+ w }}
-    * }}}
-    *
-    * can be rewritten for patterns as
-    *
-    * {{{
-    *   a.map { v: Pat[A] => b.bubbleMap { w => v ++ w }}
-    * }}}
+    *  @param  that    the sequence to test
+    *  @param  from    the start index
+    *  @return  the first index `>= from` such that the elements of this pattern starting at this index
+    *           match the elements of pattern `that`, or `-1` of no such subsequence exists.
     */
-  def bubbleMap[A <: Top](f: Pat[T] => Pat[A]): Pat[A] = {
-    val it    = Graph.builder.allocToken[T]()
-    val inner = Graph {
-      f(it)
-    }
-    BubbleMap[T, A](x, it, inner)
-  }
+  def indexOfSlice[A >: T <: Top](that: Pat[A], from: Pat.Int): Pat.Int = ???
+
+//  /** currently broken
+//    *
+//    * The "counter" operation to `flatMap`. It bubbles each
+//    * element of the receiver pattern as a singleton pattern itself,
+//    * then applies the function, and flattens the result.
+//    *
+//    * This way, we can translate `p.flatMap(_.map)` into
+//    * `p.map(_.bubbleMap)` when `T` is not a (nested) pattern.
+//    * For example an operation on collections
+//    *
+//    * {{{
+//    *   a.flatMap { v => b.map { w => v :+ w }}
+//    * }}}
+//    *
+//    * can be rewritten for patterns as
+//    *
+//    * {{{
+//    *   a.map { v: Pat[A] => b.bubbleMap { w => v ++ w }}
+//    * }}}
+//    */
+//  def bubbleMap[A <: Top](f: Pat[T] => Pat[A]): Pat[A] = {
+//    val it    = Graph.builder.allocToken[T]()
+//    val inner = Graph {
+//      f(it)
+//    }
+//    BubbleMap[T, A](x, it, inner)
+//  }
+
+  /** Short-hand for `.bubble.map.flatten` */
+  def bubbleMap[A <: Top](f: Pat[T] => Pat[A]): Pat[A] =
+    bubble.map(f).flatten
 
   def flatten[A <: Top](implicit ev: T <:< Pat[A]): Pat[A] = Flatten(x.asInstanceOf[Pat[Pat[A]]])
 
   def combinations(n: Pat.Int): Pat[Pat[T]] = Combinations(x, n)
 
-  def copy(): Pat[T] = Copy(x)
+  def recur(): Pat[T] = Recur(x)
 }

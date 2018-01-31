@@ -59,7 +59,9 @@ object RonTuplePure {
 
   // all pairs from two arrays
   def directProduct_Sq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] = {
-    val res = a.flatMap { v => b.map { w => v :+ w } }
+    val res = a.flatMap { v =>
+      b.map { w => v :+ w }
+    }
     log("directProduct", a, b, " => ", res)
     res
   }
@@ -70,10 +72,12 @@ object RonTuplePure {
 
   // all pairs from two arrays
   def directProduct[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
-    a.map { v: Pat[A] => b.bubbleMap(be => v ++ be) }
+    a.flatMap { v: Pat[A] =>
+      b.recur().bubble.map { w: Pat[A] => v.recur() ++ w }
+    }
 
   // collects the indices of every occurrence of elements of t in s
-  def extract[A](s: Seq[A], t: Seq[A]): Seq[Seq[Int]] = {
+  def extract_Sq[A](s: Seq[A], t: Seq[A]): Seq[Seq[Int]] = {
     val res = t.map { tj =>
       s.zipWithIndex.collect {
         case (b, i) if b == tj => i
@@ -82,6 +86,14 @@ object RonTuplePure {
     log("extract", s, t, " => ", res)
     res
   }
+
+  // collects the indices of every occurrence of elements of t in s
+  def extract[A <: Top](s: Pat[A], t: Pat[A]): Pat[Pat.Int] =
+    t.bubble.map { tj: Pat[A] =>
+      val indices = s.recur().indexOfSlice(tj)
+      val indicesF: Pat.Int = indices.bubbleFilter(_ >= 0)
+      indicesF
+    }
 
   // generates all tuplets from within x, an array
   // where each element is an array of occurrences of a value
@@ -125,7 +137,7 @@ object RonTuplePure {
 
   // computes and sorts all possible sub patterns of a pattern
   def computeDurs[A](pattern: Seq[A], cantus: Seq[A], start: Int = 0): Seq[Int] = {
-    val positions = extract(cantus, pattern)
+    val positions = extract_Sq(cantus, pattern)
     val tuples0   = allTuples(positions)
     //    val tuples    = tuples0.sortWith { (a, b) => computeDur(a, 7) > computeDur(b, 7) }
     val tuples    = tuples0.sortWith { (a, b) =>

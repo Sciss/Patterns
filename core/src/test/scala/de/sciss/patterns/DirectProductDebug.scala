@@ -25,10 +25,10 @@ class DirectProductDebug extends PatSpec {
 
     def directProduct_Pat[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
       a.flatMap { v: Pat[A] =>
-        val bc = b.copy()
-        bc.bubble.map { w: Pat[A] =>
-          val vc = v.copy()
-          vc ++ w
+        val br = b.recur()
+        br.bubble.map { w: Pat[A] =>
+          val vr = v.recur()
+          vr ++ w
         }
       }
 

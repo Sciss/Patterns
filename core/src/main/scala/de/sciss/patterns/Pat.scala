@@ -14,18 +14,24 @@
 package de.sciss.patterns
 
 import de.sciss.patterns
-import de.sciss.patterns.Types.{Aux, CTop, DoubleSeqTop, DoubleTop, IntSeqTop, IntTop, Top}
+import de.sciss.patterns.Types.{Aux, BooleanSeqTop, BooleanTop, CTop, DoubleSeqTop, DoubleTop, IntSeqTop, IntTop, Top}
 import de.sciss.patterns.graph.{PatSeq, SeqFill}
 
 object Pat {
+  // XXX TODO -- this might be larger constrained than necessary
+  // e.g. could be
+  // type Int = Pat[CTop { type Out = Int }] ?
   type Int        = Pat[IntTop        ]
   type IntSeq     = Pat[IntSeqTop     ]
   type Double     = Pat[DoubleTop     ]
   type DoubleSeq  = Pat[DoubleSeqTop  ]
+  type Boolean    = Pat[BooleanTop    ]
+  type BooleanSeq = Pat[BooleanSeqTop ]
   type Event      = Pat[patterns.Event]
 
-  def Int   (elems: scala.Int*    ): Pat.Int    = apply[IntTop    ](elems: _*)
-  def Double(elems: scala.Double* ): Pat.Double = apply[DoubleTop ](elems: _*)
+  def Int    (elems: scala.Int*    ): Pat.Int     = apply[IntTop    ](elems: _*)
+  def Double (elems: scala.Double* ): Pat.Double  = apply[DoubleTop ](elems: _*)
+  def Boolean(elems: scala.Boolean*): Pat.Boolean = apply[BooleanTop](elems: _*)
 
   type $[T <: Top, A] = Pat[T { type Out[Tx] = A }]
 

@@ -54,7 +54,9 @@ object Types {
         case IntSeqTop        .id => IntSeqTop
         case DoubleTop        .id => DoubleTop
         case DoubleSeqTop     .id => DoubleSeqTop
-        case StringTop        .id => StringTop
+//        case BooleanTop       .id => BooleanTop
+//        case BooleanSeqTop    .id => BooleanSeqTop
+//        case StringTop        .id => StringTop
         case Bridge.idIdentity    => Bridge.identity[Top]
         case intSeqBridge1    .id => intSeqBridge1
         case intSeqBridge2    .id => intSeqBridge2
@@ -118,11 +120,11 @@ object Types {
   trait NumFrac[T <: Top] extends Num[T] {
     def div[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
   }
-  
+
   trait SeqLikeNum[A, T <: SeqTop[A]] extends Num[T] {
     type P <: CTop { type COut = A }
     protected val peer: Num[P]
-    
+
     final def plus    [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.plus    )
     final def minus   [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.minus   )
     final def times   [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.times   )
@@ -243,18 +245,18 @@ object Types {
 
   sealed trait IntSeqTop extends IntLikeTop with SeqTop[Int]
   implicit object IntSeqTop
-    extends IntSeqTop 
+    extends IntSeqTop
       with  IntLikeNum[IntSeqTop]
-      with  Bridge[IntSeqTop, IntSeqTop, IntSeqTop] 
+//      with  Bridge[IntSeqTop, IntSeqTop, IntSeqTop]
       with  Num[IntSeqTop] {
 
     final val id = 1
   }
 
   sealed trait IntTop extends IntLikeTop with ScalarTop[Int]
-  implicit object IntTop 
-    extends IntTop 
-      with  Bridge[IntTop, IntTop, IntTop] 
+  implicit object IntTop
+    extends IntTop
+//      with  Bridge[IntTop, IntTop, IntTop]
       with  Num[IntTop]
       with  Ord[IntTop] {
 
@@ -287,7 +289,7 @@ object Types {
   implicit object DoubleSeqTop
     extends DoubleSeqTop
       with  DoubleLikeNum[DoubleSeqTop]
-      with  Bridge[DoubleSeqTop, DoubleSeqTop, DoubleSeqTop]
+//      with  Bridge[DoubleSeqTop, DoubleSeqTop, DoubleSeqTop]
       with  Num[DoubleSeqTop] {
 
     final val id = 3
@@ -296,7 +298,7 @@ object Types {
   sealed trait DoubleTop extends DoubleLikeTop with ScalarTop[Double]
   implicit object DoubleTop
     extends DoubleTop
-      with  Bridge[DoubleTop, DoubleTop, DoubleTop]
+//      with  Bridge[DoubleTop, DoubleTop, DoubleTop]
       with  NumFrac[DoubleTop]
       with  Ord    [DoubleTop] {
 
@@ -324,7 +326,27 @@ object Types {
 
     def fold[Tx](a: Double, lo: Double, hi: Double): Double = rd.fold(a, lo, hi)
   }
-  
+
+  sealed trait BooleanLikeTop extends ScalarOrSeqTop[Boolean] with Top
+
+  sealed trait BooleanSeqTop extends BooleanLikeTop with SeqTop[Boolean]
+  implicit object BooleanSeqTop
+    extends BooleanSeqTop
+//      with  Bridge[IntSeqTop, IntSeqTop, IntSeqTop]
+      {
+
+    final val id = 5
+  }
+
+  sealed trait BooleanTop extends BooleanLikeTop with ScalarTop[Boolean]
+  implicit object BooleanTop
+    extends BooleanTop
+      //      with  Bridge[IntTop, IntTop, IntTop]
+  {
+
+    final val id = 4
+  }
+
   implicit object intSeqBridge1 extends /* IntLikeNum with */ Bridge[IntTop, IntSeqTop, IntSeqTop] {
     def lift1[Tx](a: Int     ): Seq[Int] = a :: Nil
     def lift2[Tx](a: Seq[Int]): Seq[Int] = a
@@ -365,10 +387,12 @@ object Types {
   sealed trait StringTop extends CTop {
     type COut = _String
   }
-  implicit object StringTop extends StringTop with Bridge[StringTop, StringTop, StringTop] {
+  implicit object StringTop extends StringTop
+//    with Bridge[StringTop, StringTop, StringTop]
+  {
     def lift1[Tx](a: _String): _String = a
     def lift2[Tx](a: _String): _String = a
 
-    final val id = 4
+    final val id = 10
   }
 }

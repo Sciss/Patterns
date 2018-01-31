@@ -87,7 +87,7 @@ class PatternsSpec extends PatSpec {
 
     val res2  = Graph {
       val a = Pat.Int(1, 2, 3)
-      Pat.seqFill(3) { _ => a.copy() }
+      Pat.seqFill(3) { _ => a.recur() }
     }
     eval(res2) shouldBe List(1, 2, 3, 1, 2, 3, 1, 2, 3)
   }
