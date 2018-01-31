@@ -97,7 +97,10 @@ object Types {
 
   trait Ord[T <: Top] extends Aux {
     // Ordering[T#Out]
-    def lt[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean
+    def lt [Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean
+    def leq[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean
+    def gt [Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean
+    def geq[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean
   }
 
   trait Num[T <: Top] extends Aux {
@@ -278,7 +281,10 @@ object Types {
     def rrand[Tx](a: Int, b: Int)(implicit r: Random[Tx], tx: Tx): Int =
       r.nextInt(b - a + 1) + a
 
-    def lt[Tx](a: Int, b: Int): Boolean = a < b
+    def lt [Tx](a: Int, b: Int): Boolean = a <  b
+    def leq[Tx](a: Int, b: Int): Boolean = a <= b
+    def gt [Tx](a: Int, b: Int): Boolean = a >  b
+    def geq[Tx](a: Int, b: Int): Boolean = a >= b
 
     def fold[Tx](a: Int, lo: Int, hi: Int): Int = IntFunctions.fold(a, lo, hi)
   }
@@ -322,7 +328,10 @@ object Types {
     def rrand[Tx](a: Double, b: Double)(implicit r: Random[Tx], tx: Tx): Double =
       r.nextDouble() * (b - a) + a
 
-    def lt[Tx](a: Double, b: Double): Boolean = a < b
+    def lt [Tx](a: Double, b: Double): Boolean = a <  b
+    def leq[Tx](a: Double, b: Double): Boolean = a <= b
+    def gt [Tx](a: Double, b: Double): Boolean = a >  b
+    def geq[Tx](a: Double, b: Double): Boolean = a >= b
 
     def fold[Tx](a: Double, lo: Double, hi: Double): Double = rd.fold(a, lo, hi)
   }

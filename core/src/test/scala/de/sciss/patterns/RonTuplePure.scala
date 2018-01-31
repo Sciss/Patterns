@@ -90,14 +90,14 @@ object RonTuplePure {
   // collects the indices of every occurrence of elements of t in s
   def extract[A <: Top](s: Pat[A], t: Pat[A]): Pat[Pat.Int] =
     t.bubble.map { tj: Pat[A] =>
-      val indices = s.recur().indexOfSlice(tj)
-      val indicesF: Pat.Int = indices.bubbleFilter(_ >= 0)
+      val indices   = s.recur().indexOfSlice(tj)
+      val indicesF  = indices.bubbleFilter(_ >= 0)
       indicesF
     }
 
   // generates all tuplets from within x, an array
   // where each element is an array of occurrences of a value
-  def allTuples[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
+  def allTuples_Sq[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
     val size = x.size
     var res: Seq[Seq[A]] = x.head.map(Seq(_))
     for (i <- 1 until size) {
@@ -105,6 +105,21 @@ object RonTuplePure {
     }
     log("allTuples", x, " => ", res)
     res
+  }
+
+  def allTuples_Sq2[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
+    val hd +: tl = x
+    val res = tl.foldLeft(hd.map(Seq(_)))((ys, xi) => directProduct_Sq(ys, xi))
+    log("allTuples", x, " => ", res)
+    res
+  }
+
+  // generates all tuplets from within x, an array
+  // where each element is an array of occurrences of a value
+  def allTuples[A <: Top](x: Pat[Pat[A]]): Pat[Pat[A]] = {
+    val hd = x.head
+    val tl = x.tail
+    ???
   }
 
   // N.B. SuperCollider `mod` is different from `%` for negative numbers!
@@ -138,7 +153,7 @@ object RonTuplePure {
   // computes and sorts all possible sub patterns of a pattern
   def computeDurs[A](pattern: Seq[A], cantus: Seq[A], start: Int = 0): Seq[Int] = {
     val positions = extract_Sq(cantus, pattern)
-    val tuples0   = allTuples(positions)
+    val tuples0   = allTuples_Sq(positions)
     //    val tuples    = tuples0.sortWith { (a, b) => computeDur(a, 7) > computeDur(b, 7) }
     val tuples    = tuples0.sortWith { (a, b) =>
       val ad = computeDur(a, 7)

@@ -176,6 +176,14 @@ abstract class Stream[Tx, +A] { outer =>
     b.result()
   }
 
+  def toVector(implicit tx: Tx): Vector[A] = {
+    val b = Vector.newBuilder[A]
+    while (hasNext) {
+      b += next()
+    }
+    b.result()
+  }
+
   def size(implicit tx: Tx): Int = {
     var res = 0
     while (hasNext) {

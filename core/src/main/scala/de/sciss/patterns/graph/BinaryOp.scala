@@ -14,18 +14,20 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Bridge, Num, Top}
+import de.sciss.patterns.Types.{Aux, BooleanTop, Bridge, Num, Ord, Top}
 
 object BinaryOp {
-  sealed abstract class Op[T <: Top] extends ProductWithAux {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+  sealed abstract class Op[T1 <: Top, T2 <: Top] extends ProductWithAux {
+    def apply[Tx](a: T1#Out[Tx], b: T1#Out[Tx]): T2#Out[Tx]
 
     override final def productPrefix = s"BinaryOp$$$name"
 
     def name: String
   }
 
-  final case class Plus[T <: Top]()(implicit num: Num[T]) extends Op[T] {
+  // ---- (Num, Num) -> Num ----
+
+  final case class Plus[T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
     def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.plus(a, b)
 
     def name = "Plus"
@@ -33,7 +35,7 @@ object BinaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Times[T <: Top]()(implicit num: Num[T]) extends Op[T] {
+  final case class Times[T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
     def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.times(a, b)
 
     def name = "Times"
@@ -41,16 +43,54 @@ object BinaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class RoundTo[T <: Top]()(implicit num: Num[T]) extends Op[T] {
+  final case class RoundTo[T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
     def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.times(a, b)
 
     def name = "RoundTo"
 
     private[patterns] def aux: List[Aux] = num :: Nil
   }
+
+  // ---- (Ord, Ord) -> Boolean ----
+
+  /** Less than or equal */
+  final case class Leq[T <: Top]()(implicit ord: Ord[T]) extends Op[T, BooleanTop] {
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = ord.leq(a, b)
+
+    def name = "Leq"
+
+    private[patterns] def aux: List[Aux] = ord :: Nil
+  }
+
+  /** Less than */
+  final case class Lt[T <: Top]()(implicit ord: Ord[T]) extends Op[T, BooleanTop] {
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = ord.lt(a, b)
+
+    def name = "Lt"
+
+    private[patterns] def aux: List[Aux] = ord :: Nil
+  }
+
+  /** Greater than or equal */
+  final case class Geq[T <: Top]()(implicit ord: Ord[T]) extends Op[T, BooleanTop] {
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = ord.geq(a, b)
+
+    def name = "Geq"
+
+    private[patterns] def aux: List[Aux] = ord :: Nil
+  }
+
+  /** Greater than */
+  final case class Gt[T <: Top]()(implicit ord: Ord[T]) extends Op[T, BooleanTop] {
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = ord.gt(a, b)
+
+    def name = "Gt"
+
+    private[patterns] def aux: List[Aux] = ord :: Nil
+  }
 }
-final case class BinaryOp[T1 <: Top, T2 <: Top, T <: Top](op: BinaryOp.Op[T], a: Pat[T1], b: Pat[T2])
-                                                         (implicit br: Bridge[T1, T2, T])
+final case class BinaryOp[T1 <: Top, T2 <: Top, T3 <: Top, T <: Top](op: BinaryOp.Op[T3, T], a: Pat[T1], b: Pat[T2])
+                                                                    (implicit br: Bridge[T1, T2, T3])
   extends Pattern[T] {
 
   override private[patterns] def aux: List[Aux] = br :: Nil

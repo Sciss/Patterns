@@ -41,10 +41,26 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     BinaryOp(op, x, that)
   }
 
-  def <  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = ???
-  def <= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = ???
-  def >  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = ???
-  def >= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = ???
+  def <  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
+    val op = BinaryOp.Lt[T2]()
+    BinaryOp(op, x, that)
+  }
+
+  def <= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
+    val op = BinaryOp.Leq[T2]()
+    BinaryOp(op, x, that)
+  }
+
+  def >  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
+    val op = BinaryOp.Gt[T2]()
+    BinaryOp(op, x, that)
+  }
+
+  def >= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
+    val op = BinaryOp.Geq[T2]()
+    BinaryOp(op, x, that)
+  }
+
 
   def linlin[T1 <: Top, T2 <: Top](inLo: Pat[T], inHi: Pat[T], outLo: Pat[T1], outHi: Pat[T1])
                                   (implicit br: Bridge[T, T1, T2], num: NumFrac[T2]): Pat[T2] =
@@ -89,12 +105,18 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     FlatMap(x.asInstanceOf[Pat[Pat[A]]], it, inner)
   }
 
-  def filter[A <: Top](f: Pat[A] => Pat.Boolean)(implicit ev: T <:< Pat[A]): Pat[Pat[A]] = ???
+  def filter[A <: Top](f: Pat[A] => Pat.Boolean)(implicit ev: T <:< Pat[A]): Pat[Pat[A]] = {
+    val it    = Graph.builder.allocToken[A]()
+    val inner = Graph {
+      f(it)
+    }
+    Filter(x.asInstanceOf[Pat[Pat[A]]], it, inner)
+  }
 
   def bubbleFilter[A <: Top](f: Pat[T] => Pat.Boolean): Pat[T] =
     bubble.filter(f).flatten
 
-  def indexOfSlice[A >: T <: Top](that: Pat[A]): Pat.Int = indexOfSlice(that, 0)
+  def indexOfSlice[A <: Top](that: Pat[A]): Pat.Int = indexOfSlice(that, 0)
 
   /** Finds first index after or at a start index where this pattern
     * contains a given other pattern as a slice.
@@ -104,7 +126,8 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     *  @return  the first index `>= from` such that the elements of this pattern starting at this index
     *           match the elements of pattern `that`, or `-1` of no such subsequence exists.
     */
-  def indexOfSlice[A >: T <: Top](that: Pat[A], from: Pat.Int): Pat.Int = ???
+  def indexOfSlice[A <: Top](that: Pat[A], from: Pat.Int): Pat.Int =
+    IndexOfSlice(x, that, from)
 
 //  /** currently broken
 //    *
