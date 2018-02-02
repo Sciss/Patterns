@@ -27,7 +27,9 @@ object Types {
   object Top {
     type Seq[T <: Top] = Top { type Out[Tx] = scala.Seq[T#Out[Tx]] }
 
-//    def Seq[T <: Top](implicit peer: T): Seq[T] = new Seq(peer)
+    type CSeq[T <: CTop] = CTop { type COut = scala.Seq[T#COut] }
+
+    //    def Seq[T <: Top](implicit peer: T): Seq[T] = new Seq(peer)
 //    final class Seq[T <: Top](val peer: T) extends Top {
 //      type Out = scala.Seq[T#Out]
 //    }
@@ -114,6 +116,9 @@ object Types {
     def zero[Tx]: T#Out[Tx]
     def one [Tx]: T#Out[Tx]
 
+    def zeroPat: Pat[T]
+    def onePat : Pat[T]
+
     def rand2[Tx](a: T#Out[Tx]              )(implicit r: Random[Tx], tx: Tx): T#Out[Tx]
     def rrand[Tx](a: T#Out[Tx], b: T#Out[Tx])(implicit r: Random[Tx], tx: Tx): T#Out[Tx]
 
@@ -138,6 +143,9 @@ object Types {
 
     def zero[Tx]: Seq[A] = peer.zero :: Nil
     def one [Tx]: Seq[A] = peer.one  :: Nil
+
+    def zeroPat : Pat[T] = ??? // Pat[Top.CSeq[A]](peer.zero :: Nil)
+    def onePat  : Pat[T] = ??? // Pat[Top.CSeq[A]](peer.one  :: Nil)
 
     def rand2[Tx](a: Seq[A]           )(implicit r: Random[Tx], tx: Tx): Seq[A] = unOp (a   )(peer.rand2[Tx])
     def rrand[Tx](a: Seq[A], b: Seq[A])(implicit r: Random[Tx], tx: Tx): Seq[A] = binOp(a, b)(peer.rrand[Tx])
@@ -268,6 +276,9 @@ object Types {
     def zero   [Tx]: Int = 0
     def one    [Tx]: Int = 1
 
+    def zeroPat: Pat.Int = 0
+    def onePat : Pat.Int = 1
+
     def negate [Tx](a: Int): Int = -a
     def abs    [Tx](a: Int): Int = math.abs(a)
 
@@ -312,6 +323,9 @@ object Types {
 
     def zero   [Tx]: Double = 0.0
     def one    [Tx]: Double = 1.0
+
+    def zeroPat: Pat.Double = 0.0
+    def onePat : Pat.Double = 1.0
 
     def negate [Tx](a: Double): Double = -a
     def abs    [Tx](a: Double): Double = math.abs(a)

@@ -17,11 +17,21 @@ import de.sciss.patterns.Types.{Bridge, IntTop, Num, NumFrac, Ord, Top}
 import de.sciss.patterns.graph._
 
 final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
-  def take(length: Pat[IntTop]): Pat[T] = Take(x, length)
-  def drop(length: Pat[IntTop]): Pat[T] = Drop(x, length)
+  def take(length: Pat.Int): Pat[T] = Take(x, length)
+  def drop(length: Pat.Int): Pat[T] = Drop(x, length)
 
   def head: Pat[T] = take(1)
   def tail: Pat[T] = drop(1)
+
+  def splitAt(index: Pat.Int): (Pat[T], Pat[T]) = (take(index), drop(index))
+
+  // unary
+
+  def differentiate(implicit num: Num[T]): Pat[T] =  ???
+
+  def sum(implicit num: Num[T]): Pat[T] =  ???
+
+  // binary
 
   def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2]): Pat[T2] /* Cat[T, T1, T2] */ =
     Cat(x, that)
@@ -31,8 +41,18 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     BinaryOp(op, x, that)
   }
 
+  def - [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
+    val op = ??? // BinaryOp.Plus[T2]()
+    BinaryOp(op, x, that)
+  }
+
   def * [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
     val op = BinaryOp.Times[T2]()
+    BinaryOp(op, x, that)
+  }
+
+  def % [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
+    val op = ??? // BinaryOp.Times[T2]()
     BinaryOp(op, x, that)
   }
 
@@ -60,7 +80,6 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     val op = BinaryOp.Geq[T2]()
     BinaryOp(op, x, that)
   }
-
 
   def linlin[T1 <: Top, T2 <: Top](inLo: Pat[T], inHi: Pat[T], outLo: Pat[T1], outHi: Pat[T1])
                                   (implicit br: Bridge[T, T1, T2], num: NumFrac[T2]): Pat[T2] =
@@ -113,6 +132,15 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     Filter(x.asInstanceOf[Pat[Pat[A]]], it, inner)
   }
 
+  def foldLeft[A <: Top, B <: Top](z: Pat[B])(op: (Pat[B], Pat[A]) => Pat[B])
+                                  (implicit ev: T <:< Pat[A]): Pat[B] = {
+    val it    = Graph.builder.allocToken[A]()
+    val inner = Graph {
+      ??? // op(it)
+    }
+    ??? // Filter(x.asInstanceOf[Pat[Pat[A]]], it, inner)
+  }
+
   def bubbleFilter[A <: Top](f: Pat[T] => Pat.Boolean): Pat[T] =
     bubble.filter(f).flatten
 
@@ -128,6 +156,10 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     */
   def indexOfSlice[A <: Top](that: Pat[A], from: Pat.Int): Pat.Int =
     IndexOfSlice(x, that, from)
+
+  def sliding(size: Pat.Int): Pat[Pat[T]] = sliding(size, step = 1)
+
+  def sliding(size: Pat.Int, step: Pat.Int): Pat[Pat[T]] = ???
 
 //  /** currently broken
 //    *
