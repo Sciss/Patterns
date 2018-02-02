@@ -73,7 +73,7 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
     }
 
     private def buildNext()(implicit tx: Tx): Unit = {
-      val hn = itStream.hasNext && innerStream.hasNext
+      val hn = itStream.hasNext // && innerStream.hasNext
       _hasNext() = hn
       if (hn) {
         // itStream.next()
@@ -89,7 +89,7 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
         }
         val inner   = Stream[Tx, T#Out[Tx]](b.result: _*)
         mapStream() = inner
-        _hasNext()  = inner.hasNext
+        _hasNext()  = true // inner.hasNext
       }
     }
 
