@@ -23,9 +23,9 @@ class ExtractDebug extends PatSpec {
       }
 
     val as  = Seq(1, 5, 2, 3, 4)
-    val bs  = Seq(4, 5)
+    val bs  = Seq(4, 5, 6)
     val plain = extract_Sq(as, bs)
-    assert(plain === List(List(4), List(1)))
+    assert(plain === List(List(4), List(1), List()))
 
     val pat = Graph {
       extract_Pat(Pat.Int(as: _*), Pat.Int(bs: _*))

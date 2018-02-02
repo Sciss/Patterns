@@ -16,7 +16,7 @@ package de.sciss
 import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
-import de.sciss.patterns.Types.{DoubleSeqTop, DoubleTop, IntSeqTop, IntTop, StringTop, Top}
+import de.sciss.patterns.Types.{BooleanSeqTop, BooleanTop, DoubleSeqTop, DoubleTop, IntSeqTop, IntTop, StringTop, Top}
 import de.sciss.patterns.graph.{Bind, Constant, PatPat}
 
 import scala.annotation.elidable
@@ -28,11 +28,13 @@ package object patterns {
 
   //  implicit def const[A, T <: Top](x: A)(implicit tpe: T { type Out = A }): Elem[T] = Const(x)
 
-  implicit def constIntPat      (x: Int         ): Pat[IntTop      ] = Constant[IntTop      ](x)
-  implicit def constIntSeqPat   (xs: Seq[Int]   ): Pat[IntSeqTop   ] = Constant[IntSeqTop   ](xs)
-  implicit def constDoublePat   (x: Double      ): Pat[DoubleTop   ] = Constant[DoubleTop   ](x)
-  implicit def constDoubleSeqPat(xs: Seq[Double]): Pat[DoubleSeqTop] = Constant[DoubleSeqTop](xs)
-  implicit def constStringPat   (x: String      ): Pat[StringTop   ] = Constant[StringTop   ](x)
+  implicit def constIntPat        (x: Int           ): Pat[IntTop       ] = Constant[IntTop       ](x)
+  implicit def constIntSeqPat     (xs: Seq[Int]     ): Pat[IntSeqTop    ] = Constant[IntSeqTop    ](xs)
+  implicit def constDoublePat     (x: Double        ): Pat[DoubleTop    ] = Constant[DoubleTop    ](x)
+  implicit def constDoubleSeqPat  (xs: Seq[Double]  ): Pat[DoubleSeqTop ] = Constant[DoubleSeqTop ](xs)
+  implicit def constBooleanPat    (x: Boolean       ): Pat[BooleanTop   ] = Constant[BooleanTop   ](x)
+  implicit def constBooleanSeqPat (xs: Seq[Boolean] ): Pat[BooleanSeqTop] = Constant[BooleanSeqTop](xs)
+  implicit def constStringPat     (x: String        ): Pat[StringTop    ] = Constant[StringTop    ](x)
 
   implicit def patSeq[A, T <: Top](xs: Seq[A])(implicit lift: A => Pat[T]): Seq[Pat[T]] =
     xs.map(lift)

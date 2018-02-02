@@ -47,6 +47,7 @@ final case class FilterSeq[T <: Top](in: Pat[T], gate: Pat.Boolean) extends Patt
           val gateVal = gateStream.next()
           if (gateVal) {
             _nextElem() = inVal
+            _hasNext()  = true
           } else {
             advance()
           }
