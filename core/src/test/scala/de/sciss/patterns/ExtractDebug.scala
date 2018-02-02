@@ -1,6 +1,7 @@
 package de.sciss.patterns
 
 import de.sciss.patterns.Types.Top
+import graph._
 
 class ExtractDebug extends PatSpec {
   "The directProduct example" should work in {
@@ -15,8 +16,9 @@ class ExtractDebug extends PatSpec {
     // collects the indices of every occurrence of elements of t in s
     def extract_Pat[A <: Top](s: Pat[A], t: Pat[A]): Pat[Pat.Int] =
       t.bubble.map { tj: Pat[A] =>
-        val indices = s.recur().indexOfSlice(tj)
-        val indicesF = indices // .bubbleFilter(_ >= 0)
+        val indices   = s.recur().indexOfSlice(tj)
+//        val indicesF  = indices.bubbleFilter(_ >= 0)
+        val indicesF  = FilterSeq(indices, indices >= 0)
         indicesF
       }
 
