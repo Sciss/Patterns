@@ -245,8 +245,7 @@ object RonTuplePure {
     (Pseq(ptrnOut), Pseq(durs.map(_ * 0.02)))
   }
 
-  def makePart[A <: Top](pattern: Pat[A], cantus: Pat[A], start: Int = 0, stutter: Int = 1): (Pat[A], Pat.Double) = {
-    log("makePart", pattern, cantus, start, stutter)
+  def makePart[A <: Top](pattern: Pat[A], cantus: Pat[A], start: Pat.Int = 0, stutter: Pat.Int = 1): (Pat[A], Pat.Double) = {
     val durs: Pat.Int = {
       val durs0 = computeDurs(pattern, cantus, start) // .map(_.toDouble)
       durs0 // if (stutter == 1) durs0 else durs0.stutter(stutter).map(_ / stutter)
@@ -285,6 +284,9 @@ object RonTuplePure {
       )
     val lPat  = Pseq[IntTop   ]((8 to 12).mirror            , inf) // .iterator
     val rPat  = Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf) // .iterator
+
+    val startPat: Pat.Int = White(1, 4)
+
     //    lPat.next(); rPat.next()
     Pat.seqFill(4) { _ => // original: infinite
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
@@ -310,9 +312,9 @@ object RonTuplePure {
       val partsIdx = Indices(parts)
       val pats: Pat[Pat.Event] = parts.map { part: Pat.Double =>
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-        val noteDurTup = ??? // makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-        val notePat: Pat.Double = ???
-        val durPat : Pat.Double = ???
+        val noteDurTup = makePart(part, cantus, 0, startPat.take(1))
+        val notePat: Pat.Double = noteDurTup._1
+        val durPat : Pat.Double = noteDurTup._2
 
           //        durs ::= durPat.iterator.sum
 
