@@ -1,5 +1,5 @@
 /*
- *  MapIterationStream.scala
+ *  MapItStream.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
@@ -17,13 +17,13 @@ package impl
 
 import de.sciss.patterns.Types.Top
 
-final class MapIterationStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implicit ctx: Context[Tx])
+final class MapItStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implicit ctx: Context[Tx])
   extends Stream[Tx, T#Out[Tx]] {
 
   private[this] lazy val simpleString = {
     val os0 = outer.toString
     val os  = if (os0.length <= 24) os0 else s"${os0.substring(0, 23)}..."
-    s"MapIterationStream($os)"
+    s"MapItStream($os)"
   }
 
   override def toString: String = simpleString

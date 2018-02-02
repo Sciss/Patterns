@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.patterns.Types.Top
-import de.sciss.patterns.graph.impl.MapIterationStream
+import de.sciss.patterns.graph.impl.MapItStream
 
 final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], inner: Graph[T])
   extends Pattern[Pat[T]] {
@@ -29,7 +29,7 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
     @transient final private[this] lazy val ref = new AnyRef
 
     private def mkItStream(implicit tx: Tx): Stream[Tx, T1#Out[Tx]] = {
-      val res = new MapIterationStream(outer, tx)
+      val res = new MapItStream(outer, tx)
       ctx.addStream(ref, res)
       res
     }
@@ -58,14 +58,14 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
       logStream("PatMap.iterator.reset()")
       _valid() = false
       ctx.getStreams(ref).foreach {
-        case m: MapIterationStream[Tx, _] => m.resetOuter()
+        case m: MapItStream[Tx, _] => m.resetOuter()
         // case _ =>
       }
     }
 
     private def advance()(implicit tx: Tx): Unit = {
       ctx.getStreams(ref).foreach {
-        case m: MapIterationStream[Tx, _] => m.advance()
+        case m: MapItStream[Tx, _] => m.advance()
         // case _ =>
       }
       innerStream.reset()

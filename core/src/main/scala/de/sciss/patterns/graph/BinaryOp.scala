@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, BooleanTop, Bridge, Num, Ord, Top}
+import de.sciss.patterns.Types.{Aux, BooleanTop, Bridge, Num, NumFrac, NumIntegral, Ord, Top}
 
 object BinaryOp {
   sealed abstract class Op[T1 <: Top, T2 <: Top] extends ProductWithAux {
@@ -35,6 +35,14 @@ object BinaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
+  final case class Minus[T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.minus(a, b)
+
+    def name = "Minus"
+
+    private[patterns] def aux: List[Aux] = num :: Nil
+  }
+
   final case class Times[T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
     def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.times(a, b)
 
@@ -47,6 +55,14 @@ object BinaryOp {
     def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.times(a, b)
 
     def name = "RoundTo"
+
+    private[patterns] def aux: List[Aux] = num :: Nil
+  }
+
+  final case class Modulus[T <: Top]()(implicit num: NumIntegral[T]) extends Op[T, T] {
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.rem(a, b)
+
+    def name = "Modulus"
 
     private[patterns] def aux: List[Aux] = num :: Nil
   }

@@ -129,6 +129,11 @@ object Types {
     def div[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
   }
 
+  trait NumIntegral[T <: Top] extends Num[T] {
+    def quot[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+    def rem [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+  }
+
   trait SeqLikeNum[A, T <: SeqTop[A]] extends Num[T] {
     type P <: CTop { type COut = A }
     protected val peer: Num[P]
@@ -268,7 +273,7 @@ object Types {
   implicit object IntTop
     extends IntTop
 //      with  Bridge[IntTop, IntTop, IntTop]
-      with  Num[IntTop]
+      with  NumIntegral[IntTop]
       with  Ord[IntTop] {
 
     final val id = 0
@@ -286,6 +291,9 @@ object Types {
     def minus  [Tx](a: Int, b: Int): Int = a - b
     def times  [Tx](a: Int, b: Int): Int = a * b
     def roundTo[Tx](a: Int, b: Int): Int = if (b == 0) a else math.round(a.toDouble / b).toInt * b
+
+    def rem    [Tx](a: Int, b: Int): Int = ???
+    def quot   [Tx](a: Int, b: Int): Int = ???
 
     def rand2[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int = r.nextInt(2 * a + 1) - a
 

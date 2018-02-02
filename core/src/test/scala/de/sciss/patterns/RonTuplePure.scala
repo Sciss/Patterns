@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{DoubleTop, IntTop, Num, Top, TopT}
+import de.sciss.patterns.Types.{DoubleTop, IntTop, Num, NumIntegral, Top, TopT}
 import de.sciss.patterns.graph._
 
 object RonTuplePure {
@@ -22,7 +22,7 @@ object RonTuplePure {
     implicit val ctx: Context.Plain = Context()
     import ctx.tx
     implicit val r: Random[Unit] = ctx.mkRandom()
-    val x = spawner[Unit]()
+    val x = Graph { spawner[Unit]() }
     val it = x.expand
     println("Done.")
     var time = 0.0
@@ -145,7 +145,7 @@ object RonTuplePure {
   }
 
   // computes the duration of a set of time points relative to a cycle.
-  def computeDur[A <: Top](tps: Pat[A], cycle: Pat[A])(implicit num: Num[A]): Pat[A] = {
+  def computeDur[A <: Top](tps: Pat[A], cycle: Pat[A])(implicit num: NumIntegral[A]): Pat[A] = {
     val one  = num.onePat
     val dur0 = tps.differentiate
     val dur1 = dur0 % cycle
@@ -200,10 +200,9 @@ object RonTuplePure {
   def computeDurs[A <: Top](pattern: Pat[A], cantus: Pat[A], start: Pat.Int = 0): Pat.Int = {
     val positions : Pat[Pat.Int] = extract(cantus, pattern)
     val tuples0   : Pat[Pat.Int] = allTuples(positions)
-    val tuples    : Pat[Pat.Int] = ???
-//      tuples0.sortWith { (a, b) =>
-//        val ad = computeDur_Sq(a, 7)
-//        val bd = computeDur_Sq(b, 7)
+    val tuples    : Pat[Pat.Int] = tuples0.sortWith { (a, b) =>
+      val ad = computeDur(a, 7)
+      val bd = computeDur(b, 7)
 //        // handle algorithmic ambiguity
 //        if (ad == bd) {
 //          (a zip b).collectFirst {
@@ -211,14 +210,14 @@ object RonTuplePure {
 //            case (ai, bi) if ai > bi => false
 //          } .get // OrElse(true)
 //        } else {
-//          ad > bd
+        ad > bd
 //        }
-//      }
+    }
     val clump: Pat[Pat.Int] = ((start % cantus.size) ++ tuples.flatten).sliding(2)
     val durs      = clump.flatMap { pr: Pat.Int =>
       val (pr0, pr1) = pr.splitAt(1)
-      val dur0 = (pr1 - pr0) % cantus.size
-      ??? : Pat.Int // if (dur0 == 0) { cantus.size } else dur0
+      val dur0 = ((pr1 - pr0 - 1) % cantus.size) + 1
+      dur0: Pat.Int // if (dur0 == 0) { cantus.size } else dur0
     }
     durs
   }
@@ -312,7 +311,7 @@ object RonTuplePure {
       val partsIdx = Indices(parts)
       val pats: Pat[Pat.Event] = parts.map { part: Pat.Double =>
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-        val noteDurTup = makePart(part, cantus, 0, startPat.take(1))
+        val noteDurTup = makePart(part, cantus, 0, startPat.head)
         val notePat: Pat.Double = noteDurTup._1
         val durPat : Pat.Double = noteDurTup._2
 
@@ -342,14 +341,16 @@ object RonTuplePure {
 
       val patsF: Pat.Event = Ppar(pats)
 
-      ??? // sp.seq(patsF) // Ppar(patsF))
-      //      println(s"ending $cantus")
-      // at this point, it wouldn't have any effect:
-      // { cantus(cantus.size.rand) = 'r }.dup(5)
-      val stopTime = length * 2 * 0.2
-      ??? // sp.advance(stopTime)
-      ??? // sp.suspend(catter)
-      ???
+println("TODO")
+patsF
+//      ??? // sp.seq(patsF) // Ppar(patsF))
+//      //      println(s"ending $cantus")
+//      // at this point, it wouldn't have any effect:
+//      // { cantus(cantus.size.rand) = 'r }.dup(5)
+//      val stopTime = length * 2 * 0.2
+//      ??? // sp.advance(stopTime)
+//      ??? // sp.suspend(catter)
+//      ???
     }
   }
 }
