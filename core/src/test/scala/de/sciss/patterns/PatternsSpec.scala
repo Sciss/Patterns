@@ -107,6 +107,21 @@ class PatternsSpec extends PatSpec {
     evalH(res4) shouldBe List(List(1, 4, 7, 10, 13))
   }
 
+  "Sliding" should work in {
+    val in    = Series(1, 3).take(5)
+    val res1  = in.sliding(2)
+    evalH(res1) shouldBe List(List(1, 4), List(4, 7), List(7, 10), List(10, 13))
+
+    val res2  = in.sliding(2, 2)
+    evalH(res2) shouldBe List(List(1, 4), List(7, 10), List(13))
+
+    val res3  = in.sliding(3, 2)
+    evalH(res3) shouldBe List(List(1, 4, 7), List(7, 10, 13))
+
+    val res4  = in.sliding(2, 3)
+    evalH(res4) shouldBe List(List(1, 4), List(10, 13))
+  }
+
   "SeqFill" should work in {
     // must be possible to use iteration variable multiple times
     val pat1 = Graph {
