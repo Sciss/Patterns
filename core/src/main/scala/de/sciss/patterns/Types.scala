@@ -15,7 +15,7 @@ package de.sciss.patterns
 
 import java.lang.{String => _String}
 
-import de.sciss.numbers.{IntFunctions => ri, DoubleFunctions => rd}
+import de.sciss.numbers.{DoubleFunctions => rd, IntFunctions => ri}
 import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.annotation.switch
@@ -36,12 +36,18 @@ object Types {
   }
   trait Top {
     type Out[Tx]
+
+//    private[patterns] implicit def classTag[Tx]: ClassTag[Out[Tx]]
   }
 
   trait CTop extends Top {
     type Out[Tx] = COut
 
     type COut
+
+//    private[patterns] final implicit def classTag[Tx]: ClassTag[Out[Tx]] = cClassTag
+//
+//    private[patterns] implicit def cClassTag: ClassTag[COut]
   }
 
   object Aux {
@@ -275,6 +281,8 @@ object Types {
       with  Num[IntSeqTop] {
 
     final val id = 1
+
+//    private[patterns] val cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
   }
 
   sealed trait IntTop extends IntLikeTop with ScalarTop[Int]
@@ -315,6 +323,8 @@ object Types {
     def geq[Tx](a: Int, b: Int): Boolean = a >= b
 
     def fold[Tx](a: Int, lo: Int, hi: Int): Int = ri.fold(a, lo, hi)
+
+//    private[patterns] val cClassTag: ClassTag[COut] = ClassTag.Int
   }
 
   sealed trait DoubleLikeTop extends ScalarOrSeqTop[Double] with Top
@@ -327,6 +337,8 @@ object Types {
       with  Num[DoubleSeqTop] {
 
     final val id = 3
+
+//    private[patterns] val cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
   }
 
   sealed trait DoubleTop extends DoubleLikeTop with ScalarTop[Double]
@@ -368,6 +380,8 @@ object Types {
     def geq[Tx](a: Double, b: Double): Boolean = a >= b
 
     def fold[Tx](a: Double, lo: Double, hi: Double): Double = rd.fold(a, lo, hi)
+
+//    private[patterns] val cClassTag: ClassTag[COut] = ClassTag.Double
   }
 
   sealed trait BooleanLikeTop extends ScalarOrSeqTop[Boolean] with Top
@@ -379,6 +393,8 @@ object Types {
       {
 
     final val id = 5
+
+//    private[patterns] val cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
   }
 
   sealed trait BooleanTop extends BooleanLikeTop with ScalarTop[Boolean]
@@ -388,6 +404,8 @@ object Types {
   {
 
     final val id = 4
+
+//    private[patterns] val cClassTag: ClassTag[COut] = ClassTag.Boolean
   }
 
   implicit object intSeqBridge1 extends /* IntLikeNum with */ Bridge[IntTop, IntSeqTop, IntSeqTop] {
@@ -437,6 +455,8 @@ object Types {
     def lift2[Tx](a: _String): _String = a
 
     final val id = 10
+
+//    private[patterns] val cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
   }
 
   trait Tuple2Top[T1 <: Top, T2 <: Top] extends Top {

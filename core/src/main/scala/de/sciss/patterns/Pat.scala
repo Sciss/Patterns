@@ -69,6 +69,8 @@ abstract class Pattern[T <: Top] extends Pat[T] {
   // this acts now as a fast unique reference
   @transient final private[this] lazy val ref = new AnyRef
 
+//  private[patterns] final def classTag[Tx]: ClassTag[Out[Tx]] = ClassTag(classOf[Out[Tx]])
+
   Graph.builder.addPattern(this)
 
   // default is _no aux_
