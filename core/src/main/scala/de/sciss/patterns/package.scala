@@ -24,7 +24,8 @@ import scala.annotation.elidable.CONFIG
 import scala.language.implicitConversions
 
 package object patterns {
-  implicit def patOps[T <: Top](p: Pat[T]): PatOps[T] = new PatOps(p)
+  implicit def patOps      [T <: Top](p: Pat[T]     ): PatOps      [T] = new PatOps(p)
+  implicit def patNestedOps[T <: Top](p: Pat[Pat[T]]): PatNestedOps[T] = new PatNestedOps(p)
 
   //  implicit def const[A, T <: Top](x: A)(implicit tpe: T { type Out = A }): Elem[T] = Const(x)
 

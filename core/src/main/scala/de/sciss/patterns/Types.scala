@@ -15,7 +15,7 @@ package de.sciss.patterns
 
 import java.lang.{String => _String}
 
-import de.sciss.numbers.{IntFunctions, DoubleFunctions => rd}
+import de.sciss.numbers.{IntFunctions => ri, DoubleFunctions => rd}
 import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.annotation.switch
@@ -106,10 +106,15 @@ object Types {
   }
 
   trait Num[T <: Top] extends Aux {
+    // binary
     def plus   [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
     def minus  [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
     def times  [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
     def roundTo[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+    def %      [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+    def mod    [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+
+    // unary
     def negate [Tx](a: T#Out[Tx]               ): T#Out[Tx]
     def abs    [Tx](a: T#Out[Tx]               ): T#Out[Tx]
 
@@ -129,10 +134,11 @@ object Types {
     def div[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
   }
 
-  trait NumIntegral[T <: Top] extends Num[T] {
-    def quot[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
-    def rem [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
-  }
+//  trait NumIntegral[T <: Top] extends Num[T] {
+//    def %   [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+//    def quot[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+//    def rem [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+//  }
 
   trait SeqLikeNum[A, T <: SeqTop[A]] extends Num[T] {
     type P <: CTop { type COut = A }
@@ -142,6 +148,8 @@ object Types {
     final def minus   [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.minus   )
     final def times   [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.times   )
     final def roundTo [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.roundTo )
+    final def %       [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.%       )
+    final def mod     [Tx](a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.mod     )
 
     def negate[Tx](a: Seq[A]): Seq[A] = unOp(a)(peer.negate)
     def abs   [Tx](a: Seq[A]): Seq[A] = unOp(a)(peer.abs   )
@@ -273,7 +281,7 @@ object Types {
   implicit object IntTop
     extends IntTop
 //      with  Bridge[IntTop, IntTop, IntTop]
-      with  NumIntegral[IntTop]
+      with  Num /* NumIntegral */[IntTop]
       with  Ord[IntTop] {
 
     final val id = 0
@@ -292,8 +300,9 @@ object Types {
     def times  [Tx](a: Int, b: Int): Int = a * b
     def roundTo[Tx](a: Int, b: Int): Int = if (b == 0) a else math.round(a.toDouble / b).toInt * b
 
-    def rem    [Tx](a: Int, b: Int): Int = ???
-    def quot   [Tx](a: Int, b: Int): Int = ???
+    def %      [Tx](a: Int, b: Int): Int = a % b
+    def mod    [Tx](a: Int, b: Int): Int = ri.mod(a, b)
+//    def quot   [Tx](a: Int, b: Int): Int = a / b
 
     def rand2[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int = r.nextInt(2 * a + 1) - a
 
@@ -305,7 +314,7 @@ object Types {
     def gt [Tx](a: Int, b: Int): Boolean = a >  b
     def geq[Tx](a: Int, b: Int): Boolean = a >= b
 
-    def fold[Tx](a: Int, lo: Int, hi: Int): Int = IntFunctions.fold(a, lo, hi)
+    def fold[Tx](a: Int, lo: Int, hi: Int): Int = ri.fold(a, lo, hi)
   }
 
   sealed trait DoubleLikeTop extends ScalarOrSeqTop[Double] with Top
@@ -343,6 +352,9 @@ object Types {
     def times  [Tx](a: Double, b: Double): Double = a * b
     def div    [Tx](a: Double, b: Double): Double = a / b
     def roundTo[Tx](a: Double, b: Double): Double = rd.roundTo(a, b)
+
+    def %      [Tx](a: Double, b: Double): Double = a % b
+    def mod    [Tx](a: Double, b: Double): Double = rd.mod(a, b)
 
     def rand2[Tx](a: Double)(implicit r: Random[Tx], tx: Tx): Double =
       (r.nextDouble() * 2 - 1) * a
@@ -425,5 +437,9 @@ object Types {
     def lift2[Tx](a: _String): _String = a
 
     final val id = 10
+  }
+
+  trait Tuple2Top[T1 <: Top, T2 <: Top] extends Top {
+    type Out[Tx] = (T1#Out[Tx], T2#Out[Tx])
   }
 }

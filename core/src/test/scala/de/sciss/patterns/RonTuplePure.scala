@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{DoubleTop, IntTop, Num, NumIntegral, Top, TopT}
+import de.sciss.patterns.Types.{DoubleTop, IntTop, Num, Top, TopT}
 import de.sciss.patterns.graph._
 
 object RonTuplePure {
@@ -22,11 +22,11 @@ object RonTuplePure {
     implicit val ctx: Context.Plain = Context()
     import ctx.tx
     implicit val r: Random[Unit] = ctx.mkRandom()
-    val x = Graph { spawner[Unit]() }
+    val x = Graph { mkGraph[Unit]() }
     val it = x.expand
     println("Done.")
     var time = 0.0
-    it.foreach { elem0: Event#COut =>
+    it.foreach { elem0: Event.Out =>
       val elem  = elem0 +
         (Event.keyDetunedFreq -> Event.detunedFreq(elem0)) +
         (Event.keySustain     -> Event.sustain    (elem0)) +
@@ -43,11 +43,10 @@ object RonTuplePure {
 
   // some extra operations
   implicit class SeqOps[A](xs: Seq[A]) {
-    // like Kollflitz' `differentiate` but keeps first value
+    // like Kollflitz' `differentiate`
     def differentiate(implicit num: Numeric[A]): Seq[A] = {
       import num._
-      if (xs.isEmpty) Seq.empty
-      else xs.head +: xs.sliding(2).map { case Seq(a, b) => b - a }.toList
+      xs.sliding(2).map { case Seq(a, b) => b - a }.toList
     }
 
     def stutter(n: Int): Seq[A] = xs.flatMap(a => Seq.fill(n)(a))
@@ -135,7 +134,7 @@ object RonTuplePure {
   // computes the duration of a set of time points relative to a cycle.
   def computeDur_Sq[A](tps: Seq[A], cycle: A)(implicit num: Integral[A]): A = {
     import num._
-    val dur0  = tps.differentiate.tail
+    val dur0  = tps.differentiate
     //    val dur1  = dur0.map(_ % cycle)
     val dur1  = dur0.map(mod(_, cycle))
     val dur   = dur1.map { v => if (v == zero) cycle else v }
@@ -145,7 +144,7 @@ object RonTuplePure {
   }
 
   // computes the duration of a set of time points relative to a cycle.
-  def computeDur[A <: Top](tps: Pat[A], cycle: Pat[A])(implicit num: NumIntegral[A]): Pat[A] = {
+  def computeDur[A <: Top](tps: Pat[A], cycle: Pat[A])(implicit num: Num[A]): Pat[A] = {
     val one  = num.onePat
     val dur0 = tps.differentiate
     val dur1 = dur0 % cycle
@@ -158,14 +157,6 @@ object RonTuplePure {
     array.sortWith { (a, b) =>
       num.lteq(computeDur_Sq[A](a, cycle), computeDur_Sq[A](b, cycle))
     }
-  }
-
-  // function to sort groups of time points based on their total duration
-  def sortTuples[A <: Top](array: Pat[Pat[A]], cycle: Pat[A])(implicit num: Num[A]): Pat[Pat[A]] = {
-    ???
-//    array.sortWith { (a, b) =>
-//      num.lteq(computeDur[A](a, cycle), computeDur[A](b, cycle))
-//    }
   }
 
   // computes and sorts all possible sub patterns of a pattern
@@ -264,7 +255,7 @@ object RonTuplePure {
     (ptrnOut, durs * 0.02)
   }
 
-  def spawner[Tx]()(implicit random: Random[Tx]): Pat.Event = {
+  def mkGraph[Tx]()(implicit random: Random[Tx]): Pat.Event = {
     val inf = Int.MaxValue
     def catPat(cantus: Pat.Double): Pat.Event =
       Bind(
@@ -284,7 +275,7 @@ object RonTuplePure {
     val lPat  = Pseq[IntTop   ]((8 to 12).mirror            , inf) // .iterator
     val rPat  = Pseq[DoubleTop]((5 to  9).mirror.map(_/25.0), inf) // .iterator
 
-    val startPat: Pat.Int = White(1, 4)
+    val stutterPat: Pat.Int = White(1, 4)
 
     //    lPat.next(); rPat.next()
     Pat.seqFill(4) { _ => // original: infinite
@@ -311,7 +302,7 @@ object RonTuplePure {
       val partsIdx = Indices(parts)
       val pats: Pat[Pat.Event] = parts.map { part: Pat.Double =>
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-        val noteDurTup = makePart(part, cantus, 0, startPat.head)
+        val noteDurTup = makePart(part, cantus, stutter = stutterPat.head)
         val notePat: Pat.Double = noteDurTup._1
         val durPat : Pat.Double = noteDurTup._2
 
@@ -341,7 +332,7 @@ object RonTuplePure {
 
       val patsF: Pat.Event = Ppar(pats)
 
-println("TODO")
+println("RonTuplePure: TODO")
 patsF
 //      ??? // sp.seq(patsF) // Ppar(patsF))
 //      //      println(s"ending $cantus")

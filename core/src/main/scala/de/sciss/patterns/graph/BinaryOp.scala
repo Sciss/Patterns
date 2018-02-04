@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, BooleanTop, Bridge, Num, NumFrac, NumIntegral, Ord, Top}
+import de.sciss.patterns.Types.{Aux, BooleanTop, Bridge, Num, Ord, Top}
 
 object BinaryOp {
   sealed abstract class Op[T1 <: Top, T2 <: Top] extends ProductWithAux {
@@ -59,10 +59,18 @@ object BinaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Modulus[T <: Top]()(implicit num: NumIntegral[T]) extends Op[T, T] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.rem(a, b)
+  final case class % [T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.%(a, b)
 
-    def name = "Modulus"
+    def name = "%"
+
+    private[patterns] def aux: List[Aux] = num :: Nil
+  }
+
+  final case class Mod[T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.mod(a, b)
+
+    def name = "Mod"
 
     private[patterns] def aux: List[Aux] = num :: Nil
   }

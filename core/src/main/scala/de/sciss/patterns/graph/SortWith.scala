@@ -14,9 +14,9 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{BooleanTop, Top}
+import de.sciss.patterns.Types.{BooleanTop, Top, Tuple2Top}
 
-final case class SortWith[T <: Top](outer: Pat[Pat[T]], it1: It[T], it2: It[T], inner: Graph[BooleanTop])
+final case class SortWith[T <: Top](outer: Pat[Pat[T]], it: It[Tuple2Top[T, T]], inner: Graph[BooleanTop])
   extends Pattern[Pat[T]] {
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] =

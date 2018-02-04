@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Bridge, IntTop, Num, NumFrac, NumIntegral, Ord, Top}
+import de.sciss.patterns.Types.{Bridge, Num, NumFrac, Ord, Top, Tuple2Top}
 import de.sciss.patterns.graph._
 
 final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
@@ -51,8 +51,13 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     BinaryOp(op, x, that)
   }
 
-  def % [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: NumIntegral[T2]): Pat[T2] = {
-    val op = BinaryOp.Modulus[T2]()
+  def % [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
+    val op = BinaryOp.%[T2]()
+    BinaryOp(op, x, that)
+  }
+
+  def mod[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
+    val op = BinaryOp.Mod[T2]()
     BinaryOp(op, x, that)
   }
 
@@ -101,57 +106,6 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   def bubble: Pat[Pat[T]] = grouped(1)
 
   def grouped(size: Pat.Int): Pat[Pat[T]] = Grouped(x, size)
-
-  /** Similar to a monadic `map` but with the constraint
-    * the element type must be a (nested) pattern.
-    */
-  def map[A <: Top, B <: Top](f: Pat[A] => Pat[B])(implicit ev: T <:< Pat[A]): Pat[Pat[B]] = {
-    val it    = Graph.builder.allocToken[A]()
-    val inner = Graph {
-      f(it)
-    }
-    PatMap(x.asInstanceOf[Pat[Pat[A]]], it, inner)
-  }
-
-  /** Similar to a monadic `flatMap` but with the constraint
-    * the element type must be a (nested) pattern.
-    */
-  def flatMap[A <: Top, B <: Top](f: Pat[A] => Pat[B])(implicit ev: T <:< Pat[A]): Pat[B] = {
-    val it    = Graph.builder.allocToken[A]()
-    val inner = Graph {
-      f(it)
-    }
-    FlatMap(x.asInstanceOf[Pat[Pat[A]]], it, inner)
-  }
-
-  def filter[A <: Top](f: Pat[A] => Pat.Boolean)(implicit ev: T <:< Pat[A]): Pat[Pat[A]] = {
-    val it    = Graph.builder.allocToken[A]()
-    val inner = Graph {
-      f(it)
-    }
-    Filter(x.asInstanceOf[Pat[Pat[A]]], it, inner)
-  }
-
-  def foldLeft[A <: Top, B <: Top](z: Pat[B])(op: (Pat[B], Pat[A]) => Pat[B])
-                                  (implicit ev: T <:< Pat[A]): Pat[B] = {
-    val b     = Graph.builder
-    val itB   = b.allocToken[B]()
-    val itA   = b.allocToken[A]()
-    val inner = Graph {
-      op(itB, itA)
-    }
-    FoldLeft(x.asInstanceOf[Pat[Pat[A]]], z, itA, itB, inner)
-  }
-
-  def sortWith[A <: Top](lt: (Pat[A], Pat[A]) => Pat.Boolean)(implicit ev: T <:< Pat[A]): Pat[Pat[A]] = {
-    val b     = Graph.builder
-    val it1   = b.allocToken[A]()
-    val it2   = b.allocToken[A]()
-    val inner = Graph {
-      lt(it1, it2)
-    }
-    SortWith(x.asInstanceOf[Pat[Pat[A]]], it1, it2, inner)
-  }
 
   def bubbleFilter[A <: Top](f: Pat[T] => Pat.Boolean): Pat[T] =
     bubble.filter(f).flatten
@@ -205,9 +159,68 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   def bubbleMap[A <: Top](f: Pat[T] => Pat[A]): Pat[A] =
     bubble.map(f).flatten
 
-  def flatten[A <: Top](implicit ev: T <:< Pat[A]): Pat[A] = Flatten(x.asInstanceOf[Pat[Pat[A]]])
-
   def combinations(n: Pat.Int): Pat[Pat[T]] = Combinations(x, n)
 
   def recur(): Pat[T] = Recur(x)
+
+  def zip[A <: Top](that: Pat[A]): Pat.Tuple2[T, A] = Zip2(x, that)
+
+  def unzip[A <: Top, B <: Top](implicit ev: T <:< Tuple2Top[A, B]): (Pat[A], Pat[B]) = {
+    val tup = x.asInstanceOf[Pat.Tuple2[A, B]]
+    (Tuple2_1(tup), Tuple2_2(tup))
+  }
+}
+
+final class PatNestedOps[T <: Top](private val x: Pat[Pat[T]]) extends AnyVal {
+  /** Similar to a monadic `map` but with the constraint
+    * the element type must be a (nested) pattern.
+    */
+  def map[B <: Top](f: Pat[T] => Pat[B]): Pat[Pat[B]] = {
+    val it    = Graph.builder.allocToken[T]()
+    val inner = Graph {
+      f(it)
+    }
+    PatMap(x, it, inner)
+  }
+
+  /** Similar to a monadic `flatMap` but with the constraint
+    * the element type must be a (nested) pattern.
+    */
+  def flatMap[B <: Top](f: Pat[T] => Pat[B]): Pat[B] = {
+    val it    = Graph.builder.allocToken[T]()
+    val inner = Graph {
+      f(it)
+    }
+    FlatMap(x, it, inner)
+  }
+
+  def flatten: Pat[T] = Flatten(x)
+
+  def filter(f: Pat[T] => Pat.Boolean): Pat[Pat[T]] = {
+    val it    = Graph.builder.allocToken[T]()
+    val inner = Graph {
+      f(it)
+    }
+    Filter(x, it, inner)
+  }
+
+  def foldLeft[B <: Top](z: Pat[B])(op: (Pat[B], Pat[T]) => Pat[B]): Pat[B] = {
+    val b     = Graph.builder
+    val it    = b.allocToken[Tuple2Top[T, B]]()
+    val inner = Graph {
+      val (itT, itB) = it.unzip
+      op(itB, itT)
+    }
+    FoldLeft[T, B](x, z, it, inner)
+  }
+
+  def sortWith(lt: (Pat[T], Pat[T]) => Pat.Boolean): Pat[Pat[T]] = {
+    val b     = Graph.builder
+    val it    = b.allocToken[Tuple2Top[T, T]]()
+    val inner = Graph {
+      val (it1, it2) = it.unzip
+      lt(it1, it2)
+    }
+    SortWith(x, it, inner)
+  }
 }

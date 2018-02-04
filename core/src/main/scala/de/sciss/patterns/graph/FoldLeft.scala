@@ -14,9 +14,9 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
+import de.sciss.patterns.Types.{Top, Tuple2Top}
 
-final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], it1: It[T1], it2: It[T],
+final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], it: It[Tuple2Top[T1, T]],
                                                inner: Graph[T])
   extends Pattern[T] {
 

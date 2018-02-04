@@ -4,7 +4,7 @@ lazy val projectVersion       = "0.1.0-SNAPSHOT"
 
 val deps = new {
   val main = new {
-    val numbers             = "0.1.3"
+    val numbers             = "0.1.4"
     val optional            = "1.0.0"
     val serial              = "1.0.3"
     val soundProcesses      = "3.17.0"

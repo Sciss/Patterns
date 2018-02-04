@@ -145,17 +145,6 @@ final case class Pseq[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, offset 
 //  protected def makeStreams(implicit b: StreamGraph.Builder) = ...
 //}
 //
-///** aka Ptuple */
-//final case class Zip[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1)
-//  extends Pattern[Top.Seq[T]] {
-//
-////  val tpe: Top.Seq[T] = Top.Seq[T]
-//
-//  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Seq[T#Out[Tx]]] = {
-//      ...
-//  }
-//}
-//
 //final case class Lace(list: PE, repeats: PE = 1) extends Pattern {
 //  protected def makeStream(args: Vec[StreamIn])(implicit b: StreamGraph.Builder) = ...
 //

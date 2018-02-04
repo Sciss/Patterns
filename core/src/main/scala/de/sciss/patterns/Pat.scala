@@ -14,7 +14,7 @@
 package de.sciss.patterns
 
 import de.sciss.patterns
-import de.sciss.patterns.Types.{Aux, BooleanSeqTop, BooleanTop, CTop, DoubleSeqTop, DoubleTop, IntSeqTop, IntTop, Top}
+import de.sciss.patterns.Types.{Aux, BooleanSeqTop, BooleanTop, CTop, DoubleSeqTop, DoubleTop, IntSeqTop, IntTop, Top, Tuple2Top}
 import de.sciss.patterns.graph.{PatSeq, SeqFill}
 
 object Pat {
@@ -28,6 +28,8 @@ object Pat {
   type Boolean    = Pat[BooleanTop    ]
   type BooleanSeq = Pat[BooleanSeqTop ]
   type Event      = Pat[patterns.Event]
+
+  type Tuple2[A <: Top, B <: Top] = Pat[Tuple2Top[A, B]]
 
   def Int    (elems: scala.Int*    ): Pat.Int     = apply[IntTop    ](elems: _*)
   def Double (elems: scala.Double* ): Pat.Double  = apply[DoubleTop ](elems: _*)
