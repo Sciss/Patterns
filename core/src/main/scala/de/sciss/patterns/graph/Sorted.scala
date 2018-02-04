@@ -25,13 +25,13 @@ final case class Sorted[T <: Top](in: Pat[T])(implicit ord: Ord[T]) extends Patt
     private[this] val inStream  = in.expand(ctx, tx0)
     private[this] val _valid    = ctx.newVar(false)
 
-    private[this] val sortedIt  = ctx.newVar[Iterator[T#Out[Tx]]](null)
+    private[this] val sortedIt  = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
         _valid()    = true
         val xs      = inStream.toList
-        sortedIt()  = xs.sortWith(ord.lt).iterator
+        sortedIt()  = Stream(xs.sortWith(ord.lt): _*)
       }
 
     def reset()(implicit tx: Tx): Unit =
