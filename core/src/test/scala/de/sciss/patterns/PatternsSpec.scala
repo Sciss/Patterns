@@ -129,6 +129,13 @@ class PatternsSpec extends PatSpec {
     eval(sum) shouldBe List(inL.sum)
   }
 
+  "SortWith" should work in {
+    val inL     = List(1, 4, 7, 10, 13)
+    val in      = Series(1, 3).take(5)
+    val sorted  = Graph { in.bubble.sortWith((a, b) => a >= b).flatten }
+    eval(sorted) shouldBe inL.sorted.reverse
+  }
+
   "SeqFill" should work in {
     // must be possible to use iteration variable multiple times
     val pat1 = Graph {

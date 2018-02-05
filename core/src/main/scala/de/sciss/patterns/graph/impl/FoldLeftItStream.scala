@@ -75,7 +75,8 @@ final class FoldLeftItStream[Tx, T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pa
   }
 
   def reset()(implicit tx: Tx): Unit = {
-    ???
+    println("FoldLeftInStream. TODO: reset")
+    ()
     //      val hi = _hasIn()
     //      logStream(s"$simpleString.reset(); hasIn = $hi")
     //      if (hi) {

@@ -293,18 +293,17 @@ object RonTuplePure {
 
       val parts: Pat[Pat.Double] = cantus.distinct  .sorted /* ! */ .combinations(3) // .toList
 
-      if (DEBUG) println("PARTS:")
+//      if (DEBUG) println("PARTS:")
       // if (DEBUG) parts.foreach(p => println(mkElemString(p)))
 
       //      var durs = List.empty[Double]
 
       // val numParts = parts.size
-      val partsIdx = Indices(parts)
+      val partsIndices = Indices(parts)
       val pats: Pat[Pat.Event] = parts.map { part: Pat.Double =>
+        val partsIdx = partsIndices.head
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-        val noteDurTup = makePart(part, cantus, stutter = stutterPat.head)
-        val notePat: Pat.Double = noteDurTup._1
-        val durPat : Pat.Double = noteDurTup._2
+        val (notePat, durPat) = makePart(part, cantus, stutter = stutterPat.head)
 
           //        durs ::= durPat.iterator.sum
 
