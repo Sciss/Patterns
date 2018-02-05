@@ -204,7 +204,7 @@ object RonTuplePure {
         ad > bd
 //        }
     }
-    val clump: Pat[Pat.Int] = ((start % cantus.size) ++ tuples.flatten).sliding(2)
+    val clump: Pat[Pat.Int] = ((start % cantus.size.poll(label = "cantus.size")) ++ tuples.flatten).sliding(2)
     val durs      = clump.flatMap { pr: Pat.Int =>
       val (pr0, pr1) = pr.splitAt(1)
       val dur0 = ((pr1 - pr0 - 1) % cantus.size) + 1
@@ -284,7 +284,7 @@ object RonTuplePure {
       val cantus0: Pat.Double = ((Brown(-6, 6, 3): Pat.Int) * 2.4 + 4.0).take(length) // .iterator.take(length).toList
       val numPause  = (length * rPat /* .next() */).roundTo(1.0) // .toInt
       //      println(numPause)
-      val cantus = cantus0.poll(label = Format("cantus %d", it)) // (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
+      val cantus = cantus0 // .poll(label = Format("cantus %d", it)) // (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
       if (DEBUG) println(s"starting ${mkElemString(cantus)}")
       val cantusEvt = catPat(cantus)
       //      val catter = sp.par(cantusEvt)
@@ -303,7 +303,7 @@ object RonTuplePure {
       val pats: Pat[Pat.Event] = parts.map { part: Pat.Double =>
         val partsIdx = partsIndices.head
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-        val (notePat, durPat) = makePart(part, cantus, stutter = stutterPat.head)
+        val (notePat, durPat) = makePart(part, cantus.recur(), stutter = stutterPat.head)
 
           //        durs ::= durPat.iterator.sum
 
