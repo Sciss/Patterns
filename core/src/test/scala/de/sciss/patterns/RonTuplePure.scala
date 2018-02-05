@@ -278,13 +278,13 @@ object RonTuplePure {
     val stutterPat: Pat.Int = White(1, 4)
 
     //    lPat.next(); rPat.next()
-    Pat.seqFill(4) { _ => // original: infinite
+    Pat.seqFill(4) { it => // original: infinite
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
       val length    = lPat // .next()
       val cantus0: Pat.Double = ((Brown(-6, 6, 3): Pat.Int) * 2.4 + 4.0).take(length) // .iterator.take(length).toList
       val numPause  = (length * rPat /* .next() */).roundTo(1.0) // .toInt
       //      println(numPause)
-      val cantus = cantus0 // (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
+      val cantus = cantus0.poll(label = Format("cantus %d", it)) // (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
       if (DEBUG) println(s"starting ${mkElemString(cantus)}")
       val cantusEvt = catPat(cantus)
       //      val catter = sp.par(cantusEvt)

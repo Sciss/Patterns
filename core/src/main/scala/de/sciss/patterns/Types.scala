@@ -20,6 +20,7 @@ import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.annotation.switch
 import scala.language.higherKinds
+import scala.reflect.ClassTag
 
 object Types {
   type TopT[A] = Top { type Out[Tx] = A }

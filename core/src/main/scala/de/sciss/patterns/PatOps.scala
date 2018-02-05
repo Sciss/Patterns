@@ -169,6 +169,9 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     val tup = x.asInstanceOf[Pat.Tuple2[A, B]]
     (Tuple2_1(tup), Tuple2_2(tup))
   }
+
+  def poll(gate: Pat.Boolean = true, label: Pat.String = "poll"): Pat[T] =
+    Poll(x, gate = gate, label = label)
 }
 
 final class PatNestedOps[T <: Top](private val x: Pat[Pat[T]]) extends AnyVal {
