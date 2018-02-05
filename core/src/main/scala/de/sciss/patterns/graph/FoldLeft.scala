@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.patterns.Types.{Top, Tuple2Top}
+import de.sciss.patterns.graph.impl.FoldLeftItStream
 
 final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], it: It[Tuple2Top[T1, T]],
                                                inner: Graph[T])
@@ -24,10 +25,69 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
     new StreamImpl[Tx](tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
-    def reset()(implicit tx: Tx): Unit = ???
+    @transient final private[this] lazy val ref = new AnyRef
 
-    def hasNext(implicit tx: Tx): Boolean = ???
+    private def mkItStream(implicit tx: Tx) = {
+      val res = new FoldLeftItStream[Tx, T1, T](outer, z, tx)
+      ctx.addStream(ref, res)
+      res
+    }
 
-    def next()(implicit tx: Tx): T#Out[Tx] = ???
+    ctx.provideOuterStream[(T1#Out[Tx], T#Out[Tx])](it.token, mkItStream(_))(tx0)
+
+//    private[this] val outerStream = outer.expand(ctx, tx0)
+//    private[this] val zStream     = z    .expand(ctx, tx0)
+    private[this] val innerStream: Stream[Tx, T#Out[Tx]] = inner.expand(ctx, tx0)
+
+    // because `inner` is not guaranteed to depend on `It`, we must
+    // pro-active create one instance of the it-stream which is used
+    // as an additional constraint to determine `hasNext`!
+    private[this] val itStream    = mkItStream(tx0)
+
+    private[this] val _valid        = ctx.newVar(false)
+    private[this] val _hasNext      = ctx.newVar(false)
+
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        logStream("FoldLeft.iterator.validate()")
+        _valid() = true
+        advance()
+      }
+
+    private def advance()(implicit tx: Tx): Unit = {
+      val hn = itStream.hasNext
+      _hasNext() = hn
+      if (hn) {
+        val itStreams = ctx.getStreams(ref)
+        while (innerStream.hasNext) {
+          val x = innerStream.next()
+          itStreams.foreach {
+            case m: FoldLeftItStream[Tx, T1, T] => m.advance(x)
+          }
+        }
+        _hasNext() = true
+      }
+    }
+
+    def reset()(implicit tx: Tx): Unit = {
+      logStream("FoldLeft.iterator.reset()")
+      _valid() = false
+      ctx.getStreams(ref).foreach {
+        case m: FoldLeftItStream[Tx, T1, T] => m.resetOuter()
+      }
+    }
+
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
+    }
+
+    def next()(implicit tx: Tx): T#Out[Tx] = {
+      if (!hasNext) Stream.exhausted()
+      val res = itStream.result
+      logStream(s"FoldLeft.iterator.next() = $res")
+      _hasNext() = false
+      res
+    }
   }
 }

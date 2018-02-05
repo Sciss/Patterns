@@ -48,11 +48,11 @@ object TimSort {
    * the entire API of this class.  Each of these methods obeys the contract
    * of the public method with the same signature in java.util.Arrays.
    */
-  def sort[T](a: Array[T])(implicit ord: Ordering[T], ct: ClassTag[T]): Unit = {
+  def sort[A](a: Array[A])(implicit ord: Ordering[A], ct: ClassTag[A]): Unit = {
     sort(a, 0, a.length, ord)
   }
 
-  private def sort[T: ClassTag](a: Array[T], lo0: Int, hi: Int, c: Comparator[T]): Unit = {
+  private def sort[A: ClassTag](a: Array[A], lo0: Int, hi: Int, c: Comparator[A]): Unit = {
     require (lo0 >= 0 && hi <= a.length)
     var nRemaining  = hi - lo0
     if (nRemaining < 2) return  // Arrays of size 0 and 1 are always sorted
@@ -69,7 +69,7 @@ object TimSort {
       * extending short natural runs to minRun elements, and merging runs
       * to maintain stack invariant.
       */
-    val ts = new TimSort[T](a, c)
+    val ts = new TimSort[A](a, c)
     val minRun = minRunLength(nRemaining)
     var lo = lo0
     do {
@@ -110,7 +110,7 @@ object TimSort {
     *        not already known to be sorted (@code lo <= start <= hi}
     * @param c comparator to used for the sort
     */
-  private def binarySort[T](a: Array[T], lo: Int, hi: Int, start0: Int, c: Comparator[T]): Unit = {
+  private def binarySort[A](a: Array[A], lo: Int, hi: Int, start0: Int, c: Comparator[A]): Unit = {
     var start = start0
     if (start == lo) start += 1
     while (start < hi) {
@@ -178,7 +178,7 @@ object TimSort {
     * @return  the length of the run beginning at the specified position in
     *          the specified array
     */
-  private def countRunAndMakeAscending[T](a: Array[T], lo: Int, hi: Int, c: Comparator[T]): Int = {
+  private def countRunAndMakeAscending[A](a: Array[A], lo: Int, hi: Int, c: Comparator[A]): Int = {
     var runHi = lo + 1
     if (runHi == hi)
       return 1
@@ -202,7 +202,7 @@ object TimSort {
     * @param lo0 the index of the first element in the range to be reversed
     * @param hi0 the index after the last element in the range to be reversed
     */
-  private def reverseRange[T](a: Array[T], lo0: Int, hi0: Int): Unit = {
+  private def reverseRange[A](a: Array[A], lo0: Int, hi0: Int): Unit = {
     var lo = lo0
     var hi = hi0 - 1
     while (lo < hi) {
@@ -259,7 +259,7 @@ object TimSort {
     *    the first k elements of a should precede key, and the last n - k
     *    should follow it.
     */
-  private def gallopLeft[T](key: T, a: Array[T], base: Int, len: Int, hint: Int, c: Comparator[T]): Int = {
+  private def gallopLeft[A](key: A, a: Array[A], base: Int, len: Int, hint: Int, c: Comparator[A]): Int = {
     var lastOfs = 0
     var ofs     = 1
     if (c.compare(key, a(base + hint)) > 0) {
@@ -322,7 +322,7 @@ object TimSort {
     * @param c    the comparator used to order the range, and to search
     * @return the int k,  0 &lt;= k &lt;= n such that a[b + k - 1] &lt;= key &lt; a[b + k]
     */
-  private def gallopRight[T](key: T, a: Array[T], base: Int, len: Int, hint: Int, c: Comparator[T]): Int = {
+  private def gallopRight[A](key: A, a: Array[A], base: Int, len: Int, hint: Int, c: Comparator[A]): Int = {
     var ofs     = 1
     var lastOfs = 0
     if (c.compare(key, a(base + hint)) < 0) {
@@ -403,7 +403,7 @@ object TimSort {
   * sort, assuming the input array is large enough to warrant the full-blown
   * TimSort. Small arrays are sorted in place, using a binary insertion sort.
   */
-class TimSort[T: ClassTag](a: Array[T], c: Comparator[T]) {
+class TimSort[A: ClassTag](a: Array[A], c: Comparator[A]) {
 
   import TimSort._
 
@@ -434,9 +434,9 @@ class TimSort[T: ClassTag](a: Array[T], c: Comparator[T]) {
   /**
    * Temp storage for merges.
    */
-  private[this] var tmp: Array[T] = { // Actual runtime type will be Object[], regardless of T
+  private[this] var tmp: Array[A] = { // Actual runtime type will be Object[], regardless of T
     val len = a.length
-    new Array[T](if (len < 2 * INITIAL_TMP_STORAGE_LENGTH) len >>> 1 else INITIAL_TMP_STORAGE_LENGTH)
+    new Array[A](if (len < 2 * INITIAL_TMP_STORAGE_LENGTH) len >>> 1 else INITIAL_TMP_STORAGE_LENGTH)
   }
 
   /**
@@ -873,7 +873,7 @@ class TimSort[T: ClassTag](a: Array[T], c: Comparator[T]) {
    * @param minCapacity the minimum required capacity of the tmp array
    * @return tmp, whether or not it grew
    */
-  private def ensureCapacity(minCapacity: Int): Array[T] = {
+  private def ensureCapacity(minCapacity: Int): Array[A] = {
     if (tmp.length < minCapacity) {
       // Compute smallest power of 2 > minCapacity
       var newSize = minCapacity
@@ -888,7 +888,7 @@ class TimSort[T: ClassTag](a: Array[T], c: Comparator[T]) {
       else
         newSize = Math.min(newSize, a.length >>> 1)
 
-      tmp = new Array[T](newSize)
+      tmp = new Array[A](newSize)
     }
     tmp
   }

@@ -122,6 +122,13 @@ class PatternsSpec extends PatSpec {
     evalH(res4) shouldBe List(List(1, 4), List(10, 13))
   }
 
+  "FoldLeft" should work in {
+    val inL   = List(1, 4, 7, 10, 13)
+    val in    = Series(1, 3).take(5)
+    val sum   = Graph { in.bubble.foldLeft(0)(_ + _) }
+    eval(sum) shouldBe List(inL.sum)
+  }
+
   "SeqFill" should work in {
     // must be possible to use iteration variable multiple times
     val pat1 = Graph {
