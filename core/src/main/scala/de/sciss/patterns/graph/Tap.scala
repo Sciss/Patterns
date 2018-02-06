@@ -1,5 +1,5 @@
 /*
- *  Sum.scala
+ *  Tap.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
@@ -14,27 +14,24 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Num, Top}
+import de.sciss.patterns.Types.Top
 
-final case class Sum[T <: Top](in: Pat[T])(implicit num: Num[T]) extends Pattern[T] {
-  override private[patterns] def aux: List[Aux] = num :: Nil
-
+final case class Tap[T <: Top, T1 <: Top](in: Pat[T], side: Pat[T1]) extends Pattern[T] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl[Tx](tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
-    def reset()(implicit tx: Tx): Unit = {
-      println("Sum. TODO: reset")
-      ???
-    }
+    private[this] val inStream    = in  .expand(ctx, tx0)
+    private[this] val sideStream  = side.expand(ctx, tx0)
 
-    def hasNext(implicit tx: Tx): Boolean = {
-      println("Sum. TODO: hasNext")
-      ???
-    }
+    def reset()(implicit tx: Tx): Unit = ()
+
+    def hasNext(implicit tx: Tx): Boolean =
+      inStream.hasNext
 
     def next()(implicit tx: Tx): T#Out[Tx] = {
-      println("Sum. TODO: next")
-      ???
+      val res = inStream.next()
+      if (sideStream.hasNext) sideStream.next()
+      res
     }
   }
 }

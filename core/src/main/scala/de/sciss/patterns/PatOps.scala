@@ -172,6 +172,15 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
 
   def poll(gate: Pat.Boolean = true, label: Pat.String = "poll"): Pat[T] =
     Poll(x, gate = gate, label = label)
+
+  /** "Taps" into this pattern by appending a side-effect. The returned
+    * pattern will invoke both the input stream and the stream
+    * produced from the side-effecting pattern produced by `f`,
+    * and then pass through the input stream's value.
+    * The side-effecting stream may end early, the compound stream keeps
+    * producing while the input stream has elements.
+    */
+  def <| [A <: Top](f: Pat[T] => Pat[A]): Pat[T] = Tap(x, f(x))
 }
 
 final class PatNestedOps[T <: Top](private val x: Pat[Pat[T]]) extends AnyVal {

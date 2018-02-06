@@ -189,7 +189,7 @@ object RonTuplePure {
   // computes and sorts all possible sub patterns of a pattern
   def computeDurs[A <: Top](pattern: Pat[A], cantus: Pat[A], start: Pat.Int = 0): Pat.Int = {
     val positions : Pat[Pat.Int] = extract(cantus, pattern)
-    val tuples0   : Pat[Pat.Int] = allTuples(positions)
+    val tuples0   : Pat[Pat.Int] = allTuples(positions) <| (_.size.poll(label = "tuple0.size"))
     val tuples    : Pat[Pat.Int] = tuples0.sortWith { (a, b) =>
       val ad = computeDur(a, 7)
       val bd = computeDur(b, 7)
