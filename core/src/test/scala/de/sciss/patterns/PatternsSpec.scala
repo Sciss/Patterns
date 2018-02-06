@@ -5,7 +5,7 @@ import de.sciss.patterns.graph._
 
 class PatternsSpec extends PatSpec {
   "A Series" should "produce the expected output for the 'pattern guide' examples" in {
-    val pat1 = Series(start = 0, step = 1)
+    val pat1 = ArithmSeq(start = 0, step = 1)
     eval(pat1, 10) shouldBe (0 until 10)
   }
 
@@ -17,14 +17,22 @@ class PatternsSpec extends PatSpec {
 
   "Brown" should work in {
     val pat1 = Brown(lo = 2, hi = 10, step = 4)
-    val values: Seq[Int] = eval(pat1, 30)
-    val diff = values.sliding(2).map { case Seq(x, y) => y - x } .toList
-    values.foreach { v => assert(v >=  2 && v <= 10) }
-    diff  .foreach { v => assert(v >= -4 && v <=  4) }
+    val values1: Seq[Int] = eval(pat1, 30)
+    val diff = values1.sliding(2).map { case Seq(x, y) => y - x } .toList
+    values1.foreach { v => assert(v >=  2 && v <= 10) }
+    diff   .foreach { v => assert(v >= -4 && v <=  4) }
+
+    // Brown should yield the same sequence from two streams
+    val pat2 = Graph {
+      val b = Brown(lo = 2, hi = 10, step = 4).take(100)
+      b + b // thus all values must thus be even
+    }
+    val values2: Seq[Int] = eval(pat2)
+    assert(values2.forall(x => x >= 4 && x <= 20 && (x % 2 == 0)))
   }
 
   "Diamond use of a pattern" should "allow multiple stream expansion" in {
-    val a = Series(9, -1).take(6)
+    val a = ArithmSeq(9, -1).take(6)
     val b = a.sorted
     val c = a ++ b
     val values: Seq[Int] = eval(c)
@@ -93,7 +101,7 @@ class PatternsSpec extends PatSpec {
   }
 
   "Grouped" should work in {
-    val in    = Series(1, 3).take(5)
+    val in    = ArithmSeq(1, 3).take(5)
     val res1  = in.bubble
     evalH(res1) shouldBe List(List(1), List(4), List(7), List(10), List(13))
 
@@ -108,7 +116,7 @@ class PatternsSpec extends PatSpec {
   }
 
   "Sliding" should work in {
-    val in    = Series(1, 3).take(5)
+    val in    = ArithmSeq(1, 3).take(5)
     val res1  = in.sliding(2)
     evalH(res1) shouldBe List(List(1, 4), List(4, 7), List(7, 10), List(10, 13))
 
@@ -124,14 +132,14 @@ class PatternsSpec extends PatSpec {
 
   "FoldLeft" should work in {
     val inL   = List(1, 4, 7, 10, 13)
-    val in    = Series(1, 3).take(5)
+    val in    = ArithmSeq(1, 3).take(5)
     val sum   = Graph { in.bubble.foldLeft(0)(_ + _) }
     eval(sum) shouldBe List(inL.sum)
   }
 
   "SortWith" should work in {
     val inL     = List(1, 4, 7, 10, 13)
-    val in      = Series(1, 3).take(5)
+    val in      = ArithmSeq(1, 3).take(5)
     val sorted  = Graph { in.bubble.sortWith((a, b) => a >= b).flatten }
     eval(sorted) shouldBe inL.sorted.reverse
   }

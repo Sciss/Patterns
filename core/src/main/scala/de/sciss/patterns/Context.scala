@@ -27,7 +27,8 @@ trait Context[Tx] {
 
   def provideOuterStream[A](token: Int, outer: Tx => Stream[Tx, A])(implicit tx: Tx): Unit
 
-  def mkRandom()(implicit tx: Tx): Random[Tx]
+  /** Creates a new pseudo-random number generator. */
+  def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: Tx): Random[Tx]
 
   def newVar[A](init: A): Var[Tx, A]
 //  def newVar[A](init: A): Var[A]
@@ -57,7 +58,10 @@ object Context {
 
     private[this] lazy val seedRnd = new PlainRandom(System.currentTimeMillis())
 
-    def mkRandom()(implicit tx: Unit): Random[Unit] = new PlainRandom(seedRnd.nextLong())
+    protected def nextSeed()(implicit tx: Unit): Long = seedRnd.nextLong()
+
+    def mkRandomWithSeed(seed: Long)(implicit tx: Unit): Random[Unit] =
+      new PlainRandom(seed)
   }
 
   private final class PlainVar[A](private[this] var current: A) extends Sink[Unit, A] with Source[Unit, A] {
@@ -74,6 +78,11 @@ object Context {
 private[patterns] abstract class ContextLike[Tx] extends Context[Tx] {
   private[this] var streamMap = Map.empty[AnyRef, List[Stream[Tx, _]]]
   private[this] val tokenMap  = newVar(Map.empty[Int, Tx => Stream[Tx, _]])
+  private[this] val seedMap   = newVar(Map.empty[AnyRef, Long])
+
+  protected def nextSeed()(implicit tx: Tx): Long
+
+  protected def mkRandomWithSeed(seed: Long)(implicit tx: Tx): Random[Tx]
 
   def addStream[A](ref: AnyRef, stream: Stream[Tx, A]): Stream[Tx, A] = {
     streamMap += ref -> (stream :: streamMap.getOrElse(ref, Nil))
@@ -93,5 +102,16 @@ private[patterns] abstract class ContextLike[Tx] extends Context[Tx] {
     val res                 = res0.asInstanceOf[Stream[Tx, A]]
     logStream(s"Context.mkOuterStream($token) = $res")
     res
+  }
+
+  def mkRandom(ref: AnyRef)(implicit tx: Tx): Random[Tx] = {
+    val m0 = seedMap()
+    val seed = m0.getOrElse(ref, {
+      val res = nextSeed()
+      val m1 = m0 + (ref -> res)
+      seedMap() = m1
+      res
+    })
+    mkRandomWithSeed(seed)
   }
 }

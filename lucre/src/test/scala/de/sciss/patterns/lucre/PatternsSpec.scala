@@ -5,7 +5,7 @@ import de.sciss.patterns.graph._
 
 class PatternsSpec extends PatSpec {
   "A Series" should "produce the expected output for the 'pattern guide' examples" in {
-    val pat1 = Series(start = 0, step = 1)
+    val pat1 = ArithmSeq(start = 0, step = 1)
     eval(pat1, 10) shouldBe (0 until 10)
   }
 
@@ -24,7 +24,7 @@ class PatternsSpec extends PatSpec {
   }
 
   "Diamond use of a pattern" should "allow multiple stream expansion" in {
-    val a = Series(9, -1).take(6)
+    val a = ArithmSeq(9, -1).take(6)
     val b = a.sorted
     val c = a ++ b
     val values: Seq[Int] = eval(c)

@@ -1,13 +1,13 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Bridge, Top}
+import de.sciss.patterns.Types.{Aux, Widen, Top}
 
 final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
-                                                    (implicit protected val br: Bridge[T1, T2, T])
+                                                    (implicit protected val widen: Widen[T1, T2, T])
   extends Pattern[T] {
 
-  override private[patterns] def aux: List[Aux] = br :: Nil
+  override private[patterns] def aux: List[Aux] = widen :: Nil
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = {
     logStream("Cat.iterator")
@@ -15,8 +15,8 @@ final case class Cat[T1 <: Top, T2 <: Top, T <: Top](a: Pat[T1], b: Pat[T2])
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
-    private[this] val ai = a.expand(ctx, tx0).map(br.lift1)
-    private[this] val bi = b.expand(ctx, tx0).map(br.lift2)
+    private[this] val ai = a.expand(ctx, tx0).map(widen.lift1)
+    private[this] val bi = b.expand(ctx, tx0).map(widen.lift2)
 
     def reset()(implicit tx: Tx): Unit = ()
 

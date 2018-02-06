@@ -46,7 +46,10 @@ object Context {
   private final class InMemoryImpl extends ContextLike[InTxn] with InMemory {
     private[this] val seedRnd = TxnRandom.plain()
 
-    def mkRandom()(implicit tx: InTxn): Random[InTxn] = new RandomImpl(TxnRandom.plain(seedRnd.nextLong()))
+    protected def nextSeed()(implicit tx: InTxn): Long = seedRnd.nextLong()
+
+    protected def mkRandomWithSeed(seed: Long)(implicit tx: InTxn): Random[InTxn] =
+      new RandomImpl(TxnRandom.plain(seed))
 
     def newVar[A](init: A): Var[InTxn, A] = new VarImpl[A](init)
   }

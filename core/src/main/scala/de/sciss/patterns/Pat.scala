@@ -68,11 +68,13 @@ trait Pat[T <: Top] extends Top with ProductWithAux {
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */
 abstract class Pattern[T <: Top] extends Pat[T] {
   // this acts now as a fast unique reference
-  @transient final private[this] lazy val ref = new AnyRef
+  @transient final private[this] lazy val _ref = new AnyRef
 
 //  private[patterns] final def classTag[Tx]: ClassTag[Out[Tx]] = ClassTag(classOf[Out[Tx]])
 
   Graph.builder.addPattern(this)
+
+  protected final def ref: AnyRef = _ref
 
   // default is _no aux_
   private[patterns] def aux: List[Aux] = Nil
@@ -86,11 +88,11 @@ abstract class Pattern[T <: Top] extends Pat[T] {
     */
   final private[patterns] def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = {
 //    ctx.visit(ref, iterator)
-    ctx.addStream(ref, iterator)
+    ctx.addStream(_ref, iterator)
   }
 
   final private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit =
-    ctx.getStreams(ref).foreach(_.reset())
+    ctx.getStreams(_ref).foreach(_.reset())
 
   final def embed[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = iterator
 }

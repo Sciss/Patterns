@@ -41,10 +41,12 @@ final class QueueImpl[Tx](tx0: Tx)(implicit val context: Context[Tx])
 
   type Ref = TimeRef
 
+  @transient final private[this] lazy val _ref = new AnyRef
+
   private[this] val refCnt  = context.newVar(0)
   private[this] val cmdRev  = context.newVar(List.empty[Cmd])
 
-  implicit val random: Random[Tx] = context.mkRandom()(tx0)
+  implicit val random: Random[Tx] = context.mkRandom(_ref)(tx0)
 
   private def mkRef()(implicit tx: Tx): Ref = {
     val c = refCnt()

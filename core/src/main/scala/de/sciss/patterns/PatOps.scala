@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Bridge, Num, NumFrac, Ord, Top, Tuple2Top}
+import de.sciss.patterns.Types.{Widen, Num, NumFrac, Ord, Top, Tuple2Top}
 import de.sciss.patterns.graph._
 
 final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
@@ -33,61 +33,61 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
 
   // binary
 
-  def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2]): Pat[T2] /* Cat[T, T1, T2] */ =
+  def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2]): Pat[T2] /* Cat[T, T1, T2] */ =
     Cat(x, that)
 
-  def + [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
+  def + [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
     val op = BinaryOp.Plus[T2]()
     BinaryOp(op, x, that)
   }
 
-  def - [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
+  def - [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
     val op = BinaryOp.Minus[T2]()
     BinaryOp(op, x, that)
   }
 
-  def * [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
+  def * [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
     val op = BinaryOp.Times[T2]()
     BinaryOp(op, x, that)
   }
 
-  def % [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
+  def % [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
     val op = BinaryOp.%[T2]()
     BinaryOp(op, x, that)
   }
 
-  def mod[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
+  def mod[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
     val op = BinaryOp.Mod[T2]()
     BinaryOp(op, x, that)
   }
 
-  def roundTo[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], num: Num[T2]): Pat[T2] = {
+  def roundTo[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
     val op = BinaryOp.RoundTo[T2]()
     BinaryOp(op, x, that)
   }
 
-  def <  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
+  def <  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
     val op = BinaryOp.Lt[T2]()
     BinaryOp(op, x, that)
   }
 
-  def <= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
+  def <= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
     val op = BinaryOp.Leq[T2]()
     BinaryOp(op, x, that)
   }
 
-  def >  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
+  def >  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
     val op = BinaryOp.Gt[T2]()
     BinaryOp(op, x, that)
   }
 
-  def >= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Bridge[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
+  def >= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
     val op = BinaryOp.Geq[T2]()
     BinaryOp(op, x, that)
   }
 
   def linlin[T1 <: Top, T2 <: Top](inLo: Pat[T], inHi: Pat[T], outLo: Pat[T1], outHi: Pat[T1])
-                                  (implicit br: Bridge[T, T1, T2], num: NumFrac[T2]): Pat[T2] =
+                                  (implicit br: Widen[T, T1, T2], num: NumFrac[T2]): Pat[T2] =
     LinLin[T, T1, T2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
 
   def stutter(n: Pat.Int): Pat[T] = Stutter(n, x)

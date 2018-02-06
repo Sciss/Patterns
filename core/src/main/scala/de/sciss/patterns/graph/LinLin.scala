@@ -13,24 +13,24 @@
 
 package de.sciss.patterns.graph
 
-import de.sciss.patterns.Types.{Aux, Bridge, NumFrac, Top}
+import de.sciss.patterns.Types.{Aux, Widen, NumFrac, Top}
 import de.sciss.patterns.{Context, Pat, Pattern, Stream}
 
 final case class LinLin[T1 <: Top, T2 <: Top, T <: Top](in: Pat[T1], inLo: Pat[T1], inHi: Pat[T1],
                                                         outLo: Pat[T2], outHi: Pat[T2])
-                                                       (implicit br: Bridge[T1, T2, T], num: NumFrac[T])
+                                                       (implicit widen: Widen[T1, T2, T], num: NumFrac[T])
   extends Pattern[T] {
 
-  override private[patterns] def aux: List[Aux] = br :: num :: Nil
+  override private[patterns] def aux: List[Aux] = widen :: num :: Nil
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
-    private[this] val inStream    = in    .expand(ctx, tx0).map(br.lift1)
-    private[this] val inLoStream  = inLo  .expand(ctx, tx0).map(br.lift1)
-    private[this] val inHiStream  = inHi  .expand(ctx, tx0).map(br.lift1)
-    private[this] val outLoStream = outLo .expand(ctx, tx0).map(br.lift2)
-    private[this] val outHiStream = outHi .expand(ctx, tx0).map(br.lift2)
+    private[this] val inStream    = in    .expand(ctx, tx0).map(widen.lift1)
+    private[this] val inLoStream  = inLo  .expand(ctx, tx0).map(widen.lift1)
+    private[this] val inHiStream  = inHi  .expand(ctx, tx0).map(widen.lift1)
+    private[this] val outLoStream = outLo .expand(ctx, tx0).map(widen.lift2)
+    private[this] val outHiStream = outHi .expand(ctx, tx0).map(widen.lift2)
 
     def reset()(implicit tx: Tx): Unit = ()
 

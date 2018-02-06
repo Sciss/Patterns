@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, BooleanTop, Bridge, Num, Ord, Top}
+import de.sciss.patterns.Types.{Aux, BooleanTop, Widen, Num, Ord, Top}
 
 object BinaryOp {
   sealed abstract class Op[T1 <: Top, T2 <: Top] extends ProductWithAux {
@@ -114,14 +114,14 @@ object BinaryOp {
   }
 }
 final case class BinaryOp[T1 <: Top, T2 <: Top, T3 <: Top, T <: Top](op: BinaryOp.Op[T3, T], a: Pat[T1], b: Pat[T2])
-                                                                    (implicit br: Bridge[T1, T2, T3])
+                                                                    (implicit widen: Widen[T1, T2, T3])
   extends Pattern[T] {
 
-  override private[patterns] def aux: List[Aux] = br :: Nil
+  override private[patterns] def aux: List[Aux] = widen :: Nil
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = {
-    val ai = a.expand.map(br.lift1)
-    val bi = b.expand.map(br.lift2)
+    val ai = a.expand.map(widen.lift1)
+    val bi = b.expand.map(widen.lift2)
     (ai zip bi).map { case (av, bv) => op(av, bv) }
   }
 }

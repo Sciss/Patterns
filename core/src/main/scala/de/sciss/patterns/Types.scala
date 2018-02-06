@@ -20,7 +20,6 @@ import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.annotation.switch
 import scala.language.higherKinds
-import scala.reflect.ClassTag
 
 object Types {
   type TopT[A] = Top { type Out[Tx] = A }
@@ -66,12 +65,12 @@ object Types {
 //        case BooleanTop       .id => BooleanTop
 //        case BooleanSeqTop    .id => BooleanSeqTop
 //        case StringTop        .id => StringTop
-        case Bridge.idIdentity    => Bridge.identity[Top]
-        case intSeqBridge1    .id => intSeqBridge1
-        case intSeqBridge2    .id => intSeqBridge2
-        case doubleSeqBridge1 .id => doubleSeqBridge1
-        case doubleSeqBridge2 .id => doubleSeqBridge2
-        case intDoubleBridge1 .id => intDoubleBridge1
+        case Widen.idIdentity    => Widen.identity[Top]
+        case intSeqWiden1$    .id => intSeqWiden1$
+        case intSeqWiden2$    .id => intSeqWiden2$
+        case doubleSeqWiden1$ .id => doubleSeqWiden1$
+        case doubleSeqWiden2$ .id => doubleSeqWiden2$
+        case intDoubleWiden1$ .id => intDoubleWiden1$
       }
     }
 
@@ -84,14 +83,14 @@ object Types {
     def id: Int
   }
 
-  object Bridge {
-    implicit def identity[A <: Top]: Bridge[A, A, A] = anyBridge.asInstanceOf[Identity[A]]
+  object Widen {
+    implicit def identity[A <: Top]: Widen[A, A, A] = anyWiden.asInstanceOf[Identity[A]]
 
     private[Types] final val idIdentity = 0xFF
 
-    private val anyBridge = new Identity[Top]
+    private val anyWiden = new Identity[Top]
 
-    private final class Identity[A <: Top] extends Bridge[A, A, A] {
+    private final class Identity[A <: Top] extends Widen[A, A, A] {
       def lift1[Tx](a: A#Out[Tx]): A#Out[Tx] = a
       def lift2[Tx](a: A#Out[Tx]): A#Out[Tx] = a
 
@@ -99,7 +98,7 @@ object Types {
     }
   }
 
-  trait Bridge[T1 <: Top, T2 <: Top, T <: Top] extends Aux {
+  trait Widen[T1 <: Top, T2 <: Top, T <: Top] extends Aux {
     def lift1[Tx](a: T1#Out[Tx]): T#Out[Tx]
     def lift2[Tx](a: T2#Out[Tx]): T#Out[Tx]
   }
@@ -278,7 +277,6 @@ object Types {
   implicit object IntSeqTop
     extends IntSeqTop
       with  IntLikeNum[IntSeqTop]
-//      with  Bridge[IntSeqTop, IntSeqTop, IntSeqTop]
       with  Num[IntSeqTop] {
 
     final val id = 1
@@ -289,7 +287,6 @@ object Types {
   sealed trait IntTop extends IntLikeTop with ScalarTop[Int]
   implicit object IntTop
     extends IntTop
-//      with  Bridge[IntTop, IntTop, IntTop]
       with  Num /* NumIntegral */[IntTop]
       with  Ord[IntTop] {
 
@@ -334,7 +331,6 @@ object Types {
   implicit object DoubleSeqTop
     extends DoubleSeqTop
       with  DoubleLikeNum[DoubleSeqTop]
-//      with  Bridge[DoubleSeqTop, DoubleSeqTop, DoubleSeqTop]
       with  Num[DoubleSeqTop] {
 
     final val id = 3
@@ -345,7 +341,6 @@ object Types {
   sealed trait DoubleTop extends DoubleLikeTop with ScalarTop[Double]
   implicit object DoubleTop
     extends DoubleTop
-//      with  Bridge[DoubleTop, DoubleTop, DoubleTop]
       with  NumFrac[DoubleTop]
       with  Ord    [DoubleTop] {
 
@@ -388,10 +383,7 @@ object Types {
   sealed trait BooleanLikeTop extends ScalarOrSeqTop[Boolean] with Top
 
   sealed trait BooleanSeqTop extends BooleanLikeTop with SeqTop[Boolean]
-  implicit object BooleanSeqTop
-    extends BooleanSeqTop
-//      with  Bridge[IntSeqTop, IntSeqTop, IntSeqTop]
-      {
+  implicit object BooleanSeqTop extends BooleanSeqTop {
 
     final val id = 5
 
@@ -399,45 +391,42 @@ object Types {
   }
 
   sealed trait BooleanTop extends BooleanLikeTop with ScalarTop[Boolean]
-  implicit object BooleanTop
-    extends BooleanTop
-      //      with  Bridge[IntTop, IntTop, IntTop]
-  {
+  implicit object BooleanTop extends BooleanTop {
 
     final val id = 4
 
 //    private[patterns] val cClassTag: ClassTag[COut] = ClassTag.Boolean
   }
 
-  implicit object intSeqBridge1 extends /* IntLikeNum with */ Bridge[IntTop, IntSeqTop, IntSeqTop] {
+  implicit object intSeqWiden1$ extends /* IntLikeNum with */ Widen[IntTop, IntSeqTop, IntSeqTop] {
     def lift1[Tx](a: Int     ): Seq[Int] = a :: Nil
     def lift2[Tx](a: Seq[Int]): Seq[Int] = a
 
     final val id = 0x100
   }
 
-  implicit object intSeqBridge2 extends /* IntLikeNum with */ Bridge[IntSeqTop, IntTop, IntSeqTop] {
+  implicit object intSeqWiden2$ extends /* IntLikeNum with */ Widen[IntSeqTop, IntTop, IntSeqTop] {
     def lift1[Tx](a: Seq[Int]): Seq[Int] = a
     def lift2[Tx](a: Int     ): Seq[Int] = a :: Nil
 
     final val id = 0x101
   }
 
-  implicit object doubleSeqBridge1 extends /* DoubleLikeNum with */ Bridge[DoubleTop, DoubleSeqTop, DoubleSeqTop] {
+  implicit object doubleSeqWiden1$ extends /* DoubleLikeNum with */ Widen[DoubleTop, DoubleSeqTop, DoubleSeqTop] {
     def lift1[Tx](a: Double     ): Seq[Double] = a :: Nil
     def lift2[Tx](a: Seq[Double]): Seq[Double] = a
 
     final val id = 0x102
   }
 
-  implicit object doubleSeqBridge2 extends /* DoubleLikeNum with */ Bridge[DoubleSeqTop, DoubleTop, DoubleSeqTop] {
+  implicit object doubleSeqWiden2$ extends /* DoubleLikeNum with */ Widen[DoubleSeqTop, DoubleTop, DoubleSeqTop] {
     def lift1[Tx](a: Seq[Double]): Seq[Double] = a
     def lift2[Tx](a: Double     ): Seq[Double] = a :: Nil
 
     final val id = 0x103
   }
 
-  implicit object intDoubleBridge1 extends Bridge[IntTop, DoubleTop, DoubleTop] {
+  implicit object intDoubleWiden1$ extends Widen[IntTop, DoubleTop, DoubleTop] {
     def lift1[Tx](a: Int    ): Double = a.toDouble
     def lift2[Tx](a: Double ): Double = a
 
@@ -449,9 +438,7 @@ object Types {
   sealed trait StringTop extends CTop {
     type COut = _String
   }
-  implicit object StringTop extends StringTop
-//    with Bridge[StringTop, StringTop, StringTop]
-  {
+  implicit object StringTop extends StringTop {
     def lift1[Tx](a: _String): _String = a
     def lift2[Tx](a: _String): _String = a
 

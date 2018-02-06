@@ -32,7 +32,7 @@ object Examples {
     println(e.iterator.take(1).toList.mkString("e: ", ", ", ""))
 
     // ok
-    val f = Series(Seq(2, 3), 4)
+    val f = ArithmSeq(Seq(2, 3), 4)
     println(f.iterator.take(3).toList.mkString("f: ", ", ", ""))
 
     // ok

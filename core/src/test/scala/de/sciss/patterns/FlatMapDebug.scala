@@ -8,7 +8,7 @@ class FlatMapDebug extends PatSpec {
 //    showStreamLog = true
 
     val pat1 = Graph {
-      val in = Series(1, 2).take(10).grouped(2)
+      val in = ArithmSeq(1, 2).take(10).grouped(2)
       in.flatMap { x: Pat.Int => x }
     }
 
@@ -18,7 +18,7 @@ class FlatMapDebug extends PatSpec {
     eval(pat1) shouldBe plain1
 
     val pat2 = Graph {
-      val in = Series(1, 2).take(10).grouped(2)
+      val in = ArithmSeq(1, 2).take(10).grouped(2)
       in.flatMap { x: Pat.Int => x ++ x }
     }
 
