@@ -29,7 +29,15 @@ object Stream {
     def next(): A = Stream.exhausted()
   }
 
-  def reverseIterator[A](that: Iterable[A]): Stream[A] = ???
+  def reverseIterator[A](that: Iterable[A]): Stream[A] = new Stream[A] {
+    val peer = that.toList.reverseIterator
+
+    def reset(): Unit = ()
+
+    def hasNext: Boolean = peer.hasNext
+
+    def next(): A = peer.next()
+  }
 
   def continually[A](elem: => A): Stream[A] = new Stream[A] {
     def reset(): Unit = ()

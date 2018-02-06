@@ -14,7 +14,7 @@ object RonTupleNeu {
   }
 
   final val DEBUG = false
-  final val LOG   = false
+  final val LOG   = true
 
   def log(elems: Any*): Unit = {
     val s = mkElemString(elems)
