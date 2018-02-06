@@ -170,7 +170,7 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     (Tuple2_1(tup), Tuple2_2(tup))
   }
 
-  def poll(gate: Pat.Boolean = true, label: Pat.String = "poll"): Pat[T] =
+  def poll(label: Pat.String = "poll", gate: Pat.Boolean = true): Pat[T] =
     Poll(x, gate = gate, label = label)
 
   /** "Taps" into this pattern by appending a side-effect. The returned
