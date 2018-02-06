@@ -21,7 +21,6 @@ object RonTuplePure {
   def main(args: Array[String]): Unit = {
     implicit val ctx: Context.Plain = Context()
     import ctx.tx
-    implicit val r: Random[Unit] = ctx.mkRandom("rnd")
     val x = Graph { mkGraph[Unit]() }
     val it = x.expand
     println("Done.")
@@ -255,7 +254,7 @@ object RonTuplePure {
     (ptrnOut, durs * 0.02)
   }
 
-  def mkGraph[Tx]()(implicit random: Random[Tx]): Pat.Event = {
+  def mkGraph[Tx](): Pat.Event = {
     val inf = Int.MaxValue
     def catPat(cantus: Pat.Double): Pat.Event =
       Bind(
