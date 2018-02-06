@@ -12,7 +12,7 @@ class ListPatternsSpec extends PatSpec {
     eval(pat2) shouldBe Seq(3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2)
   }
 
-  "Pseq and Pstutter" should "produce the expected output" in {
+  "Pseq and Stutter" should "produce the expected output" in {
     val pat1 = Stutter(2, Pseq(Seq(1, 2, 3), 66))
     eval(pat1, 9) shouldBe Seq(1, 1, 2, 2, 3, 3, 1, 1, 2)
   }

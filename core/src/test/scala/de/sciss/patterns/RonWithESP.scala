@@ -69,8 +69,8 @@ object RonWithESP {
     Synth.head(g, "filter1")
     Synth.tail(g, "filter2")
 
-    val pat = RonTupleNeu.spawner()
     implicit val ctx: Context.Plain = Context()
+    val pat = RonTupleNeu.spawner()
     import ctx.tx
     val it0  = pat.expand
 

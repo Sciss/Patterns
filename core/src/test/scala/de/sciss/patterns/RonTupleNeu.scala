@@ -20,8 +20,8 @@ object RonTupleNeu {
   }
 
   def main(args: Array[String]): Unit = {
-    val x = spawner()
     implicit val ctx: Context.Plain = Context()
+    val x = spawner()
     import ctx.tx
     val it = x.expand
     println("Done.")
@@ -165,8 +165,11 @@ object RonTupleNeu {
     (Pseq(ptrnOut), Pseq(durs.map(_ * 0.02)))
   }
 
-  def spawner(): Pat.Event = Spawner { sp =>
-    implicit val random: Random[Unit] = ??? // new Random()
+  def spawner()(implicit ctx: Context.Plain): Pat.Event = Spawner { sp =>
+    implicit val random: Random[Unit] = {
+      import ctx.tx
+      ctx.mkRandom("rnd")
+    }
 
     import sp.context
     val inf = Int.MaxValue
