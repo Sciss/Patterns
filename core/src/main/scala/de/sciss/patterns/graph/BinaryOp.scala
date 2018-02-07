@@ -112,6 +112,24 @@ object BinaryOp {
 
     private[patterns] def aux: List[Aux] = ord :: Nil
   }
+
+  /** Equal */
+  final case class Eq[T <: Top]() extends Op[T, BooleanTop] {
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = a == b
+
+    def name = "Eq"
+
+    private[patterns] def aux: List[Aux] = Nil
+  }
+
+  /** Not equal */
+  final case class Neq[T <: Top]() extends Op[T, BooleanTop] {
+    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = a != b
+
+    def name = "Neq"
+
+    private[patterns] def aux: List[Aux] = Nil
+  }
 }
 final case class BinaryOp[T1 <: Top, T2 <: Top, T3 <: Top, T <: Top](op: BinaryOp.Op[T3, T], a: Pat[T1], b: Pat[T2])
                                                                     (implicit widen: Widen[T1, T2, T3])

@@ -65,9 +65,12 @@ class RonTupleSpec extends PatSpec {
     // collects the indices of every occurrence of elements of t in s
     def extract_Pat[A <: Top](s: Pat[A], t: Pat[A]): Pat[Pat.Int] =
       t.bubble.map { tj: Pat[A] =>
-        val indices   = s.recur().indexOfSlice(tj)
-//        val indicesF  = indices.bubbleFilter(_ >= 0)
-        val indicesF  = FilterSeq(indices, indices >= 0)
+        val sr        = s.recur()
+//        val indices   = s.recur().indexOfSlice(tj)
+//        val indicesF  = FilterSeq(indices, indices >= 0)
+        val same      = sr sig_== Repeat(tj)
+        val indices   = sr.indices
+        val indicesF  = FilterSeq(indices, same)
         indicesF
       }
 

@@ -86,6 +86,16 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     BinaryOp(op, x, that)
   }
 
+  def sig_== [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2]): Pat.Boolean = {
+    val op = BinaryOp.Eq[T2]()
+    BinaryOp(op, x, that)
+  }
+
+  def sig_!= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2]): Pat.Boolean = {
+    val op = BinaryOp.Neq[T2]()
+    BinaryOp(op, x, that)
+  }
+
   def linlin[T1 <: Top, T2 <: Top](inLo: Pat[T], inHi: Pat[T], outLo: Pat[T1], outHi: Pat[T1])
                                   (implicit br: Widen[T, T1, T2], num: NumFrac[T2]): Pat[T2] =
     LinLin[T, T1, T2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
@@ -95,8 +105,10 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
   def distinct: Pat[T] = Distinct(x)
 
   /** Same as `length`. */
-  def size  : Pat.Int = Length(x)
-  def length: Pat.Int = Length(x)
+  def size    : Pat.Int = Length(x)
+  def length  : Pat.Int = Length(x)
+
+  def indices : Pat.Int = Indices(x)
 
   def sorted(implicit ord: Ord[T]): Pat[T] = Sorted(x)
 
@@ -179,6 +191,8 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     * and then pass through the input stream's value.
     * The side-effecting stream may end early, the compound stream keeps
     * producing while the input stream has elements.
+    *
+    * Similar to `runWith` for standard Scala collections.
     */
   def <| [A <: Top](f: Pat[T] => Pat[A]): Pat[T] = Tap(x, f(x))
 }
@@ -215,6 +229,8 @@ final class PatNestedOps[T <: Top](private val x: Pat[Pat[T]]) extends AnyVal {
     }
     Filter(x, it, inner)
   }
+
+  // def /: [B <: Top](z: Pat[B])(op: (Pat[B], Pat[T]) => Pat[B]): Pat[B] = foldLeft(z)(op)
 
   def foldLeft[B <: Top](z: Pat[B])(op: (Pat[B], Pat[T]) => Pat[B]): Pat[B] = {
     val b     = Graph.builder
