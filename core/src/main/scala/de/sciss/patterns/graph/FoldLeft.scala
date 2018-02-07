@@ -51,23 +51,21 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
       if (!_valid()) {
         logStream("FoldLeft.iterator.validate()")
         _valid() = true
-        advance()
-      }
-
-    private def advance()(implicit tx: Tx): Unit = {
-      val hn = itStream.hasNext
-      _hasNext() = hn
-      if (hn) {
-        val itStreams = ctx.getStreams(ref)
-        while (innerStream.hasNext) {
-          val x = innerStream.next()
-          itStreams.foreach {
-            case m: FoldLeftItStream[Tx, T1, T] => m.advance(x)
+        val hn = itStream.hasNext
+        _hasNext() = hn
+        if (hn) {
+          val itStreams = ctx.getStreams(ref)
+          while (itStream.hasNext && innerStream.hasNext) {
+            val x = innerStream.next()
+            itStream.next()
+            itStreams.foreach {
+              case m: FoldLeftItStream[Tx, T1, T] => m.advance(x)
+            }
+            innerStream.reset()
           }
+//          _hasNext() = true
         }
-        _hasNext() = true
       }
-    }
 
     def reset()(implicit tx: Tx): Unit = {
       logStream("FoldLeft.iterator.reset()")
