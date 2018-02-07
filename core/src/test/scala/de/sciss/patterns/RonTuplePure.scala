@@ -88,9 +88,10 @@ object RonTuplePure {
   // collects the indices of every occurrence of elements of t in s
   def extract[A <: Top](s: Pat[A], t: Pat[A]): Pat[Pat.Int] =
     t.bubble.map { tj: Pat[A] =>
-      val indices   = s.recur().indexOfSlice(tj)
-//      val indicesF  = indices.bubbleFilter(_ >= 0)
-      val indicesF  = FilterSeq(indices, indices >= 0)
+      val sr        = s.recur()
+      val same      = sr sig_== Repeat(tj)
+      val indices   = sr.indices
+      val indicesF  = FilterSeq(indices, same)
       indicesF
     }
 
@@ -190,7 +191,7 @@ object RonTuplePure {
   def computeDurs[A <: Top](pattern: Pat[A], cantus0: Pat[A], start: Pat.Int = 0): Pat.Int = {
     val cantus = cantus0
 
-    val positions : Pat[Pat.Int] = extract(cantus, pattern) <| (_.size.poll("positions.size"))
+    val positions : Pat[Pat.Int] = extract(cantus, pattern) // <| (_.size.poll("positions.size"))
     val tuples0   : Pat[Pat.Int] = allTuples(positions)     <| (_.size.poll("tuple0.size"))
     val tuples    : Pat[Pat.Int] = tuples0.sortWith { (a, b) =>
       val ad = computeDur(a, 7)

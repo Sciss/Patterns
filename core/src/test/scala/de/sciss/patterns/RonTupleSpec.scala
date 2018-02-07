@@ -97,28 +97,58 @@ class RonTupleSpec extends PatSpec {
     evalH(pat2) shouldBe plain2
   }
 
-//  "The allTuples example" should work in {
-//    def allTuples_Seq[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
-//      val size = x.size
-//      var res: Seq[Seq[A]] = x.head.map(Seq(_))
-//      for (i <- 1 until size) {
-//        res = directProduct_Seq(res, x(i))
+  "The allTuples example" should work in {
+//    def directProduct_Pat[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
+//      a.flatMap { v: Pat[A] =>
+//        val br = b // .recur()
+//        br.bubble.map { w: Pat[A] =>
+//          val vr = v.recur()
+//          vr ++ w
+//        }
 //      }
-//      res
-//    }
-//
-//    def allTuples_Seq2[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
-//      val hd +: tl = x
-//      val res = tl.foldLeft(hd.map(Seq(_)))((ys, xi) => directProduct_Seq(ys, xi))
-//      res
-//    }
-//
-//    // generates all tuplets from within x, an array
-//    // where each element is an array of occurrences of a value
-//    def allTuples[A <: Top](x: Pat[Pat[A]]): Pat[Pat[A]] = {
-//      val hd = x.head
-//      val tl = x.tail
-//      tl.foldLeft(hd)((ys: Pat[Pat[A]], xi: Pat[A]) => directProduct_Pat(ys, xi))
-//    }
-//  }
+
+    def allTuples_Seq[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
+      val size = x.size
+      var res: Seq[Seq[A]] = x.head.map(Seq(_))
+      for (i <- 1 until size) {
+        res = directProduct_Seq(res, x(i))
+      }
+      res
+    }
+
+    def allTuples_Seq2[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
+      val hd +: tl = x
+      val res = tl.foldLeft(hd.map(Seq(_)))((ys, xi) => directProduct_Seq(ys, xi))
+      res
+    }
+
+    // generates all tuplets from within x, an array
+    // where each element is an array of occurrences of a value
+    def allTuples_Pat[A <: Top](x: Pat[Pat[A]]): Pat[Pat[A]] = {
+      val hd = x.head // <| (_.size.poll("hd-sz"))
+      val tl = x.tail // .map(_.poll("tl"))// <| (_.size.poll("tl-sz"))
+      tl.foldLeft(hd) { (ys: Pat[Pat[A]], xi: Pat[A]) =>
+//        ys.map(_.poll("ys")) ++ xi.poll("xi").bubble // directProduct_Pat(ys.map(_.poll("ys")), xi.poll("xi"))
+        ys ++ xi.bubble // directProduct_Pat(ys.map(_.poll("ys")), xi.poll("xi"))
+      }
+    }
+
+    val in  = Seq(Seq(0, 6, 7), Seq(2), Seq(1, 3, 5))
+    val out = Seq(Seq(0, 2, 1), Seq(0, 2, 3), Seq(0, 2, 5), Seq(6, 2, 1), Seq(6, 2, 3), Seq(6, 2, 5), Seq(7, 2, 1),
+      Seq(7, 2, 3), Seq(7, 2, 5))
+
+    val plainOut1 = allTuples_Seq(in)
+    plainOut1 shouldBe out
+
+    val plainOut2 = allTuples_Seq2(in)
+    plainOut2 shouldBe out
+
+    val patOut = Graph {
+      val inPat0 = in.map(xs => Pat.Int(xs: _*))
+      val inPat: Pat[Pat.Int] = inPat0
+      allTuples_Pat(inPat)
+    }
+
+    evalH(patOut) shouldBe out
+  }
 }
