@@ -28,16 +28,12 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
     @transient final private[this] lazy val ref = new AnyRef
 
     private def mkItStream(implicit tx: Tx) = {
-      val res = new FoldLeftItStream[Tx, T1, T](outer, z, tx)
+      val res = new FoldLeftItStream[Tx, T1, T](outer, inner, z, tx)
       ctx.addStream(ref, res)
       res
     }
 
     ctx.provideOuterStream[(T1#Out[Tx], T#Out[Tx])](it.token, mkItStream(_))(tx0)
-
-//    private[this] val outerStream = outer.expand(ctx, tx0)
-//    private[this] val zStream     = z    .expand(ctx, tx0)
-    private[this] val innerStream: Stream[Tx, T#Out[Tx]] = inner.expand(ctx, tx0)
 
     // because `inner` is not guaranteed to depend on `It`, we must
     // pro-active create one instance of the it-stream which is used
@@ -55,13 +51,11 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
         _hasNext() = hn
         if (hn) {
           val itStreams = ctx.getStreams(ref)
-          while (itStream.hasNext && innerStream.hasNext) {
-            val x = innerStream.next()
-            itStream.next()
+          while (itStream.hasNext) {
+//            itStream.next()
             itStreams.foreach {
-              case m: FoldLeftItStream[Tx, T1, T] => m.advance(x)
+              case m: FoldLeftItStream[Tx, T1, T] => m.advance()
             }
-            innerStream.reset()
           }
 //          _hasNext() = true
         }

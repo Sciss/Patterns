@@ -17,7 +17,7 @@ package impl
 
 import de.sciss.patterns.Types.Top
 
-final class FoldLeftItStream[Tx, T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], tx0: Tx)
+final class FoldLeftItStream[Tx, T1 <: Top, T <: Top](outer: Pat[Pat[T1]], inner: Graph[T], z: Pat[T], tx0: Tx)
                                                      (implicit ctx: Context[Tx])
   extends Stream[Tx, (T1#Out[Tx], T#Out[Tx])] {
 
@@ -30,6 +30,7 @@ final class FoldLeftItStream[Tx, T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pa
   override def toString: String = simpleString
 
   private[this] val outerStream: Stream[Tx, Stream[Tx, T1#Out[Tx]]] = outer.expand(ctx, tx0)
+  private[this] val innerStream: Stream[Tx, T#Out[Tx]]              = inner.expand(ctx, tx0)
   private[this] val zStream    : Stream[Tx, T#Out[Tx]]              = z    .expand(ctx, tx0)
 
   private[this] val inStream    = ctx.newVar[Stream[Tx, T1#Out[Tx]]](null)
@@ -45,8 +46,8 @@ final class FoldLeftItStream[Tx, T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pa
     zValueRef()
   }
 
-  def advance(x: T#Out[Tx])(implicit tx: Tx): Unit = {
-    zValueRef() = x
+  def advance()(implicit tx: Tx): Unit = {
+    zValueRef() = ???
     _hasZ()     = true
     val hn      = outerStream.hasNext
     _hasNext()  = hn
@@ -64,8 +65,8 @@ final class FoldLeftItStream[Tx, T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pa
       _hasZ()     = ohn
       _hasNext()  = ohn
       if (ohn) {
-        val zValue    = zStream.next()
-        advance(zValue)
+        ??? // val zValue    = zStream.next()
+        advance()
       }
     }
 
