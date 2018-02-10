@@ -14,8 +14,6 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
-
 /** A pattern that prints snapshots of its input to the console.
   * The pattern passes its input through to the output.
   *
@@ -28,14 +26,12 @@ import de.sciss.patterns.Types.Top
   *               to print the corresponding value of the input.
   * @param label  an identifying label to prepend to the printing.
   */
-final case class Poll[T <: Top](in: Pat[T], gate: Pat.Boolean, label: Pat.String = "poll")
-  extends Pattern[T] {
+final case class Poll[A](in: Pat[A], gate: Pat[Boolean], label: Pat[String] = "poll")
+  extends Pattern[A] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl[Tx](tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
-    type A = T#Out[Tx]
-
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream    = in    .expand(ctx, tx0)
     private[this] val gateStream  = gate  .expand(ctx, tx0)
     private[this] val labelStream = label .expand(ctx, tx0)

@@ -34,7 +34,7 @@ object ResetExample {
     implicit val ctx: Context.Plain = Context()
     import ctx.tx
 
-    def plot(g: Pat.Int, title: String): Unit =
+    def plot(g: Pat[Int], title: String): Unit =
       g.iterator.toList.plot(title = title, discrete = true)
 
     Swing.onEDT {

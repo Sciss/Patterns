@@ -1,7 +1,7 @@
 package de.sciss.patterns
 
 import de.sciss.numbers.Implicits._
-import de.sciss.patterns.Types.{DoubleTop, IntTop, TopT}
+import de.sciss.patterns.Types.{DoubleTop, IntTop}
 import de.sciss.patterns.graph._
 
 /**
@@ -13,10 +13,10 @@ object RonTuple {
     val x = spawner()
     implicit val ctx: Context.Plain = Context()
     import ctx.tx
-    val it = x.expand
+    val it = x.expand[Unit]
     println("Done.")
     var time = 0.0
-    it.foreach { elem: Event#COut =>
+    it.foreach { elem: Event =>
 //      val elemS = elem.map {
 //        case (k, d: Double) => f"$k -> $d%g"
 //        case (k, a)         => s"$k -> $a"
@@ -97,8 +97,8 @@ object RonTuple {
     durs
   }
 
-  def makePart[A, T <: TopT[A]](pattern: Seq[A], cantus: Seq[A], start: Int = 0, stutter: Int = 1)
-                               (implicit view: A => Pat[T]): (Pat[T], Pat.Double) = {
+  def makePart[A](pattern: Seq[A], cantus: Seq[A], start: Int = 0, stutter: Int = 1)
+                 (implicit view: A => Pat[A]): (Pat[A], Pat[Double]) = {
     val durs1 = {
       val durs0 = computeDurs(pattern, cantus, start).map(_.toDouble)
       if (stutter == 1) durs0 else durs0.stutter(stutter).map(_ / stutter)
@@ -112,16 +112,16 @@ object RonTuple {
 //      Seq(Pseq(Seq.fill(stutter)('r)),
 //        Pseq(pattern.grouped(stutter).stutter(stutter).flatten, inf))
 //    }
-    val ptrnOut: Seq[Pseq[T]] = Seq(Pseq(pattern, inf))
+    val ptrnOut: Seq[Pseq[A]] = Seq(Pseq(pattern, inf))
 
 //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
     (Pseq(ptrnOut), Pseq(durs))
   }
 
-  def spawner(): Pat.Event = Spawner { sp =>
-    import sp.context
+  def spawner(): Pat[Event] = Spawner { sp =>
+
     val inf = Int.MaxValue
-    def catPat(cantus: Seq[Double]): Pat.Event =
+    def catPat(cantus: Seq[Double]): Pat[Event] =
       Bind(
         "instrument"  -> "sine4",
         "note"        -> Pseq(cantus, inf), // Prout({ loop{ Pseq(~cantus).embedInStream } }),

@@ -15,20 +15,19 @@ package de.sciss.patterns
 package graph
 package impl
 
-import de.sciss.patterns.Types.{Widen, Top}
+import de.sciss.patterns.Types.Widen
 
-abstract class SeriesLikeStreamImpl[T1 <: Top, T2 <: Top, T <: Top, Tx](start: Pat[T1], step: Pat[T2], // length: Pat.Int,
-                                                                        tx0: Tx)
-                                                                       (implicit ctx: Context[Tx], widen: Widen[T1, T2, T])
-  extends Stream[Tx, T#Out[Tx]] {
+abstract class SeriesLikeStreamImpl[A1, A2, A, Tx](start: Pat[A1], step: Pat[A2], tx0: Tx)
+                                                  (implicit ctx: Context[Tx], widen: Widen[A1, A2, A])
+  extends Stream[Tx, A] {
 
-  protected def op(a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
+  protected def op(a: A, b: A): A
 
   private[this] val startStream   = start .expand(ctx, tx0).map(widen.lift1)
   private[this] val stepStream    = step  .expand(ctx, tx0).map(widen.lift2)
 //  private[this] val lengthStream  = length.expand(ctx, tx0)
 
-  private[this] val state     = ctx.newVar[T#Out[Tx]](null.asInstanceOf[T#Out[Tx]])
+  private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])
 //  private[this] val lengthVal = ctx.newVar(0)
 //  private[this] val count     = ctx.newVar(0)
   private[this] val _hasNext  = ctx.newVar(false)
@@ -53,7 +52,7 @@ abstract class SeriesLikeStreamImpl[T1 <: Top, T2 <: Top, T <: Top, Tx](start: P
       }
     }
 
-  final def next()(implicit tx: Tx): T#Out[Tx] = {
+  final def next()(implicit tx: Tx): A = {
     if (!hasNext) Stream.exhausted()
     val res = state()
 //    val c   = count() + 1

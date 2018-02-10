@@ -14,24 +14,23 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
 import de.sciss.patterns.graph.impl.{FoldLeftCarryBuffer, FoldLeftCarryStream, MapItStream}
 
-final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], itIn: It[T1], itCarry: It[T],
-                                               inner: Graph[T])
-  extends Pattern[T] {
+final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCarry: It[A],
+                                inner: Graph[A])
+  extends Pattern[A] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] =
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     new StreamImpl[Tx](tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     @transient final private[this] lazy val refIn     = new AnyRef
     @transient final private[this] lazy val refCarry  = new AnyRef
 
     ctx.provideOuterStream[B](itIn   .token, mkItInStream   (_))(tx0)
     ctx.provideOuterStream[A](itCarry.token, mkItCarryStream(_))(tx0)
 
-    private[this] val buf           = new FoldLeftCarryBuffer[Tx, T](tx0)
+    private[this] val buf           = new FoldLeftCarryBuffer[Tx, A](tx0)
     // because `inner` is not guaranteed to depend on `It`, we must
     // pro-active create one instance of the it-stream which is used
     // as an additional constraint to determine `hasNext`!
@@ -42,19 +41,16 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
     private[this] val _valid        = ctx.newVar(false)
     private[this] val _result       = ctx.newVar[Stream[Tx, A]](null)
 
-    type A = T #Out[Tx]
-    type B = T1#Out[Tx]
-
     private def mkItInStream(implicit tx: Tx) = {
       logStream("FoldLeft.iterator.mkItInStream")
-      val res = new MapItStream[Tx, T1](outer, tx)
+      val res = new MapItStream[Tx, B](outer, tx)
       ctx.addStream(refIn, res)
       res
     }
 
     private def mkItCarryStream(implicit tx: Tx) = {
       logStream("FoldLeft.iterator.mkItCarryStream")
-      val res = new FoldLeftCarryStream[Tx, T](buf)
+      val res = new FoldLeftCarryStream[Tx, A](buf)
       ctx.addStream(refCarry, res)
       buf.addIt(res)
       res

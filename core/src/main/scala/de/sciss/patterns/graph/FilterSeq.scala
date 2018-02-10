@@ -14,21 +14,19 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
-
 import scala.annotation.tailrec
 
-final case class FilterSeq[T <: Top](in: Pat[T], gate: Pat.Boolean) extends Pattern[T] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] =
+final case class FilterSeq[A](in: Pat[A], gate: Pat[Boolean]) extends Pattern[A] {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     new StreamImpl[Tx](tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream    = in  .expand(ctx, tx0)
     private[this] val gateStream  = gate.expand(ctx, tx0)
 
     private[this] val _valid      = ctx.newVar(false)
     private[this] val _hasNext    = ctx.newVar(false)
-    private[this] val _nextElem   = ctx.newVar[T#Out[Tx]](null.asInstanceOf[T#Out[Tx]])
+    private[this] val _nextElem   = ctx.newVar[A](null.asInstanceOf[A])
 
     def reset()(implicit tx: Tx): Unit =
       _valid() = false
@@ -64,7 +62,7 @@ final case class FilterSeq[T <: Top](in: Pat[T], gate: Pat.Boolean) extends Patt
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): T#Out[Tx] = {
+    def next()(implicit tx: Tx): A = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = _nextElem()

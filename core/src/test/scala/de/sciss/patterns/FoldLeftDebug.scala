@@ -10,7 +10,7 @@ class FoldLeftDebug extends PatSpec {
 //    val in  = Seq(Seq(1), Seq(2), Seq(3))
 
     val pat = Graph {
-      val inPat = in.map(x => Pat.Int(x: _*)): Pat[Pat.Int]
+      val inPat = in.map(x => Pat.Int(x: _*)): Pat[Pat[Int]]
       val hd    = inPat.head
       val tl    = inPat.tail
 //      tl.foldLeft(hd) { (yi, xi) => yi ++ xi.bubble }

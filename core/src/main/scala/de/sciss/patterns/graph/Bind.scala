@@ -15,11 +15,9 @@ package de.sciss.patterns
 package graph
 
 final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
-  type EOut[Tx] = Event#Out[Tx]
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Event] = new StreamImpl(tx)
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, EOut[Tx]] = new StreamImpl(tx)
-
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, EOut[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Event] {
     val mapE: Map[String, Stream[Tx, _]] = entries.map {
       case (key, value) => key -> value.expand(ctx, tx0)
     } .toMap  // (breakOut)
@@ -43,15 +41,15 @@ final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
     def reset()(implicit tx: Tx): Unit =
       _valid() = false
 
-    private def mkState()(implicit tx: Tx): EOut[Tx] = {
+    private def mkState()(implicit tx: Tx): Event = {
       val m = mapE.map {
         case (key, value) =>
           key -> value.next()
       }
-      Event.Out(m)
+      Event(m)
     }
 
-    def next()(implicit tx: Tx): EOut[Tx] = {
+    def next()(implicit tx: Tx): Event = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = mkState()

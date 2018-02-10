@@ -11,11 +11,11 @@ object Examples {
     import ctx.tx
 
     // ok
-    val a = (Seq(1, 2): Pat.IntSeq) + 3
+    val a = (Seq(1, 2): Pat[Seq[Int]]) + 3
     println(a.iterator.take(1).toList.mkString("a: ", ", ", ""))
 
     // ok
-    val b = (Seq(1, 2): Pat.IntSeq) + 3
+    val b = (Seq(1, 2): Pat[Seq[Int]]) + 3
     println(b.iterator.take(1).toList.mkString("b: ", ", ", ""))
 
     // ok
@@ -24,11 +24,11 @@ object Examples {
     println(c.iterator.take(1).toList.mkString("c: ", ", ", ""))
 
     // ok
-    val d = (1: Pat.Int) + (Seq(2, 3): Pat.IntSeq)
+    val d = (1: Pat[Int]) + (Seq(2, 3): Pat[Seq[Int]])
     println(d.iterator.take(1).toList.mkString("d: ", ", ", ""))
 
     // ok
-    val e = (Seq(1, 2): Pat.IntSeq) + Seq(3, 4)
+    val e = (Seq(1, 2): Pat[Seq[Int]]) + Seq(3, 4)
     println(e.iterator.take(1).toList.mkString("e: ", ", ", ""))
 
     // ok

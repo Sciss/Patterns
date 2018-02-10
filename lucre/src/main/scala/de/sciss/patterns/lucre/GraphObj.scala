@@ -20,7 +20,7 @@ import de.sciss.lucre.expr
 import de.sciss.lucre.expr.Expr
 import de.sciss.lucre.stm.{Copy, Elem, Obj, Sys}
 import de.sciss.model.Change
-import de.sciss.patterns.Types.{Aux, CTop, Top}
+import de.sciss.patterns.Types.Aux
 import de.sciss.patterns.graph.{Constant, Pseq}
 import de.sciss.patterns.{Graph, Pat, ProductWithAux, Pattern => _Pattern}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
@@ -215,7 +215,7 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
       (in.readByte(): @switch) match {
         case 'C' =>
           val value = readElem(in, ref)
-          Constant[CTop](value.asInstanceOf[CTop#COut])
+          Constant(value)
 //          (in.readByte(): @switch) match {
 //            case 'd' => ConstantD(in.readDouble())
 //            case 'i' => ConstantI(in.readInt   ())
@@ -249,10 +249,10 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
       require(b1 == 'X')    // expecting sequence
       val numSources  = in.readInt()
       val sources     = Vector.fill(numSources) {
-        readElem(in, ref).asInstanceOf[_Pattern[Top]]
+        readElem(in, ref).asInstanceOf[_Pattern[_]]
       }
-      val out = readElem(in, ref).asInstanceOf[Pat[Top]]
-      new Graph[Top](sources, out)
+      val out = readElem(in, ref).asInstanceOf[Pat[_]]
+      new Graph(sources, out)
     }
   }
 
@@ -266,8 +266,8 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
       case _ => super.readCookie(in, access, cookie)
     }
 
-  private val emptyGraph = Graph[Top] {
-    Pseq[Top](Nil) // (Vector.empty, Pseq[Top](Nil))
+  private val emptyGraph = Graph {
+    Pseq(Nil) // (Vector.empty, Pseq[Top](Nil))
   }
 
   def empty[S <: Sys[S]](implicit tx: S#Tx): Ex[S] = apply(emptyCookie)

@@ -40,7 +40,7 @@ class PatternsSpec extends PatSpec {
   }
 
   "Combinations" should work in {
-    val p1: Pat.Int = Pseq(1 to 4)
+    val p1: Pat[Int] = Pseq(1 to 4)
     val p2 = p1.combinations(3)
 
     val plain = List(1, 2, 3, 4).combinations(3).toList
@@ -60,7 +60,7 @@ class PatternsSpec extends PatSpec {
   "Map" should work in {
     val pat1 = Graph {
       val in = Pseq(1 to 4).combinations(3)
-      in.map { x: Pat.Int =>
+      in.map { x: Pat[Int] =>
         x.drop(1)
       }
     }
@@ -74,8 +74,8 @@ class PatternsSpec extends PatSpec {
     // it must be possible t
     val pat2 = Graph {
       val in = Pseq(1 to 4).combinations(3)
-      in.map { _: Pat.Int =>
-        Pat.Int(6)
+      in.map { _: Pat[Int] =>
+        Pat[Int](6)
       }
     }
 
@@ -88,13 +88,13 @@ class PatternsSpec extends PatSpec {
 
   "Copy" should work in {
     val res1 = Graph {
-      val a = Pat.Int(1, 2, 3)
+      val a = Pat[Int](1, 2, 3)
       Pat.seqFill(3) { _ => a }
     }
     eval(res1) shouldBe List(1, 2, 3)
 
     val res2  = Graph {
-      val a = Pat.Int(1, 2, 3)
+      val a = Pat[Int](1, 2, 3)
       Pat.seqFill(3) { _ => a.recur() }
     }
     eval(res2) shouldBe List(1, 2, 3, 1, 2, 3, 1, 2, 3)
@@ -159,7 +159,7 @@ class PatternsSpec extends PatSpec {
     // must be possible to ignore iteration variable
     val pat2 = Graph {
       Pat.seqFill(4) { _ =>
-        Pat.Int(6)
+        Pat[Int](6)
       }
     }
 
@@ -170,11 +170,11 @@ class PatternsSpec extends PatSpec {
 
   // XXX TODO: BubbleMap is broken ATM -- not sure we'll need it much, anyway
 //  "BubbleMap" should work in {
-//    val resSimple = Graph { Pat.Int(1, 2, 3).bubbleMap(x => x ++ Pat.Int(4)) }
+//    val resSimple = Graph { Pat[Int](1, 2, 3).bubbleMap(x => x ++ Pat[Int](4)) }
 //    eval(resSimple) shouldBe List(1, 4, 2, 4, 3, 4)
 //
 // XXX TODO
-//    val resDup = Pat.Int(1, 2, 3).bubbleMap(x => x ++ x)
+//    val resDup = Pat[Int](1, 2, 3).bubbleMap(x => x ++ x)
 //    eval(resDup) shouldBe List(1, 1, 2, 2, 3, 3)
 //
 //    def directProduct_Seq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] =
@@ -195,8 +195,8 @@ class PatternsSpec extends PatSpec {
 //    assert(plain === Seq(Seq(1, 2, 3, 7), Seq(1, 2, 3, 8), Seq(4, 5, 6, 7), Seq(4, 5, 6, 8)))
 //
 //    val outPat = Graph {
-//      val aInPat: Pat[Pat.Int]  = aInSeq.map(xs => Pat[IntTop](xs: _*))
-//      val bInPat: Pat.Int       = Pat[IntTop](bInSeq: _*)
+//      val aInPat: Pat[Pat[Int]]  = aInSeq.map(xs => Pat[IntTop](xs: _*))
+//      val bInPat: Pat[Int]       = Pat[IntTop](bInSeq: _*)
 //      directProduct_Pat(aInPat, bInPat)
 //    }
 //    import ctx.tx
@@ -205,7 +205,7 @@ class PatternsSpec extends PatSpec {
 //    }.toList
 //
 ////    {
-////      val v: Pat.Int = Pat[IntTop](aInSeq(0): _*)
+////      val v: Pat[Int] = Pat[IntTop](aInSeq(0): _*)
 ////      val res22 = bInPat.bubbleMap { w =>
 ////        v.copy() ++ w
 ////        // bc.take(1) // v.copy() ++ bc.take(1) // w

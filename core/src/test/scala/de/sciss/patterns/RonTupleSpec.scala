@@ -1,13 +1,12 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{IntTop, Top}
-import graph._
+import de.sciss.patterns.graph._
 
 class RonTupleSpec extends PatSpec {
   def directProduct_Seq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] =
     a.flatMap { v => b.map { w => v :+ w } }
 
-  def directProduct_Pat[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
+  def directProduct_Pat[A](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
     a.flatMap { v: Pat[A] =>
       val br = b.recur()
       br.bubble.map { w: Pat[A] =>
@@ -25,13 +24,13 @@ class RonTupleSpec extends PatSpec {
     assert(plain === Seq(Seq(1, 2, 3, 7), Seq(1, 2, 3, 8), Seq(4, 5, 6, 7), Seq(4, 5, 6, 8)))
 
     val outPat = Graph {
-      val aInPat: Pat[Pat.Int]  = aInSeq.map(xs => Pat[IntTop](xs: _*))
-      val bInPat: Pat.Int       = Pat[IntTop](bInSeq: _*)
+      val aInPat: Pat[Pat[Int]]  = aInSeq.map(xs => Pat[Int](xs: _*))
+      val bInPat: Pat[Int]       = Pat[Int](bInSeq: _*)
       directProduct_Pat(aInPat, bInPat)
     }
     import ctx.tx
     val res = outPat.expand.map { in =>
-      val i = in.toList
+      val i = in.expand.toList
       i
     }.toList
 
@@ -63,7 +62,7 @@ class RonTupleSpec extends PatSpec {
       }
 
     // collects the indices of every occurrence of elements of t in s
-    def extract_Pat[A <: Top](s: Pat[A], t: Pat[A]): Pat[Pat.Int] =
+    def extract_Pat[A](s: Pat[A], t: Pat[A]): Pat[Pat[Int]] =
       t.bubble.map { tj: Pat[A] =>
         val sr        = s.recur()
 //        val indices   = s.recur().indexOfSlice(tj)
@@ -124,7 +123,7 @@ class RonTupleSpec extends PatSpec {
 
     // generates all tuplets from within x, an array
     // where each element is an array of occurrences of a value
-    def allTuples_Pat[A <: Top](x: Pat[Pat[A]]): Pat[Pat[A]] = {
+    def allTuples_Pat[A](x: Pat[Pat[A]]): Pat[Pat[A]] = {
       val hd = x.head // <| (_.size.poll("hd-sz"))
       val tl = x.tail // .map(_.poll("tl"))// <| (_.size.poll("tl-sz"))
       tl.foldLeft(hd) { (ys: Pat[Pat[A]], xi: Pat[A]) =>
@@ -145,7 +144,7 @@ class RonTupleSpec extends PatSpec {
 
     val patOut = Graph {
       val inPat0 = in.map(xs => Pat.Int(xs: _*))
-      val inPat: Pat[Pat.Int] = inPat0
+      val inPat: Pat[Pat[Int]] = inPat0
       allTuples_Pat(inPat)
     }
 

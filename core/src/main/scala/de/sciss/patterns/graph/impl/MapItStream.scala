@@ -15,10 +15,8 @@ package de.sciss.patterns
 package graph
 package impl
 
-import de.sciss.patterns.Types.Top
-
-final class MapItStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implicit ctx: Context[Tx])
-  extends Stream[Tx, T#Out[Tx]] {
+final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Context[Tx])
+  extends Stream[Tx, A] {
 
   private[this] lazy val simpleString = {
     val os0 = outer.toString
@@ -28,9 +26,9 @@ final class MapItStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implicit ctx:
 
   override def toString: String = simpleString
 
-  private[this] val outerStream: Stream[Tx, Stream[Tx, T#Out[Tx]]] = outer.expand(ctx, tx0)
+  private[this] val outerStream: Stream[Tx, Pat[A]] = outer.expand(ctx, tx0)
 
-  private[this] val inStream    = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
+  private[this] val inStream    = ctx.newVar[Stream[Tx, A]](null)
   private[this] val _valid      = ctx.newVar(false)
   private[this] val _hasIn      = ctx.newVar(false)
   private[this] val _hasNext    = ctx.newVar(false)
@@ -41,7 +39,8 @@ final class MapItStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implicit ctx:
     _hasIn()    = ohn
     logStream(s"$simpleString.advance(): outerStream.hasNext = $ohn")
     if (ohn) {
-      val inValue   = outerStream.next()
+      val inPat     = outerStream.next()
+      val inValue   = inPat.expand
       val ihn       = inValue.hasNext
       logStream(s"$simpleString.advance(): inValue.hasNext = $ihn")
       inStream()    = inValue
@@ -75,7 +74,7 @@ final class MapItStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implicit ctx:
     _hasNext()
   }
 
-  def next()(implicit tx: Tx): T#Out[Tx] = {
+  def next()(implicit tx: Tx): A = {
     validate()
     if (!_hasNext()) Stream.exhausted()
     val in      = inStream()

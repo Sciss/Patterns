@@ -1,15 +1,13 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.CTop
-
-final case class PatSeq[T <: CTop](elems: Seq[T#COut]) extends Pattern[T] {
+final case class PatSeq[A](elems: A*) extends Pattern[A] {
   private def simpleString: String =
     s"PatSeq(${elems.iterator.take(4).mkString(", ")}).iterator"
 
   override def toString: String = simpleString
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#COut] = {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     logStream(simpleString)
     Stream(elems: _*)
   }

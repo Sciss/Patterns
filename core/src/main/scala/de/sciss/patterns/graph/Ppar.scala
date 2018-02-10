@@ -18,23 +18,21 @@ import de.sciss.patterns.graph.impl.TimeRef
 
 import scala.collection.immutable.{SortedMap => ISortedMap}
 
-final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset: Pat.Int = 0)
+final case class Ppar(list: Pat[Pat[Event]], repeats: Pat[Int] = 1, offset: Pat[Int] = 0)
   extends Pattern[Event] {
 
-  type EOut[Tx] = Event#Out[Tx]
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Event] = new StreamImpl(tx)
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, EOut[Tx]] = new StreamImpl(tx)
-
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, EOut[Tx]] {
-    private[this] val listStream: Stream[Tx, Stream[Tx, Event.Out]] = list.expand(ctx, tx0)
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Event] {
+    private[this] val listStream: Stream[Tx, Pat[Event]] = list.expand(ctx, tx0)
     private[this] val repeatsStream = repeats .expand(ctx, tx0)
     private[this] val offsetStream  = offset  .expand(ctx, tx0)
 
-    private[this] val pq          = ctx.newVar[ISortedMap[TimeRef, Stream[Tx, EOut[Tx]]]](null)
+    private[this] val pq          = ctx.newVar[ISortedMap[TimeRef, Stream[Tx, Event]]](null)
     private[this] val _hasNext    = ctx.newVar[Boolean ](false)
     private[this] val repeatsVal  = ctx.newVar[Int     ](0)
     private[this] val offsetVal   = ctx.newVar[Int     ](0)
-    private[this] val elem        = ctx.newVar[EOut[Tx]](null)
+    private[this] val elem        = ctx.newVar[Event   ](null)
 
     private[this] val _valid      = ctx.newVar(false)
 
@@ -51,7 +49,8 @@ final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset: Pat.In
         if (offsetVal () != 0) throw new NotImplementedError("Ppar offset")
 
         var refCnt = 0
-        listStream.foreach { it =>
+        listStream.foreach { pat =>
+          val it = pat.expand
           if (it.hasNext) {
             pq() = pq() + (new TimeRef(refCnt) -> it)
             refCnt += 1
@@ -89,7 +88,7 @@ final case class Ppar(list: Pat[Pat.Event], repeats: Pat.Int = 1, offset: Pat.In
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): EOut[Tx] = {
+    def next()(implicit tx: Tx): Event = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = elem()

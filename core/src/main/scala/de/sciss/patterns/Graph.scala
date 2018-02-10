@@ -13,7 +13,6 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.Top
 import de.sciss.patterns.graph.It
 
 import scala.collection.immutable.{IndexedSeq => Vec}
@@ -22,7 +21,7 @@ object Graph {
   trait Builder {
     def addPattern(p: Pattern[_]): Unit
 
-    def allocToken[T <: Top](): It[T]
+    def allocToken[A](): It[A]
 
     def isOutside: Boolean
 
@@ -43,14 +42,14 @@ object Graph {
 
     def addPattern(p: Pattern[_]): Unit = ()
 
-    def allocToken[T <: Top](): It[T] = outOfContext
+    def allocToken[A](): It[A] = outOfContext
 
     def visit[P](ref: AnyRef, init: => P): P = outOfContext
   }
 
-  def apply[T <: Top](thunk: => Pat[T]): Graph[T] = {
+  def apply[A](thunk: => Pat[A]): Graph[A] = {
     val old = builderRef.get()
-    val b   = new BuilderImpl[T](old)
+    val b   = new BuilderImpl[A](old)
     builderRef.set(b)
     try {
       val out = thunk
@@ -60,7 +59,7 @@ object Graph {
     }
   }
 
-  private[this] final class BuilderImpl[T <: Top](val parent: Builder) extends Builder {
+  private[this] final class BuilderImpl[A](val parent: Builder) extends Builder {
     private[this] val lazies    = Vec.newBuilder[Pattern[_]]
     private[this] var sourceMap = Map.empty[AnyRef, Any]
     private[this] var tokenId   = 0
@@ -69,11 +68,11 @@ object Graph {
 
     override def toString = s"patterns.Graph.Builder@${hashCode.toHexString}"
 
-    def build(out: Pat[T]) = Graph(lazies.result(), out)
+    def build(out: Pat[A]) = Graph(lazies.result(), out)
 
     def addPattern(p: Pattern[_]): Unit = lazies += p
 
-    def allocToken[U <: Top](): It[U] =
+    def allocToken[U](): It[U] =
       if (parent.isOutside) {
         val res = tokenId
         tokenId += 1
@@ -95,20 +94,20 @@ object Graph {
   }
 }
 
-final case class Graph[T <: Top](sources: Vec[Pattern[_]], out: Pat[T]) extends Pattern[T] {
+final case class Graph[A](sources: Vec[Pattern[_]], out: Pat[A]) extends Pattern[A] {
   def isEmpty : Boolean = sources.isEmpty // && controlProxies.isEmpty
   def nonEmpty: Boolean = !isEmpty
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
 //    private[this] val sourceStreams = sources.map(_.expand)
     private[this] val peer = out.expand(ctx, tx0)
 
     def reset()(implicit tx: Tx): Unit =
       sources.foreach(_.reset())
 
-    def hasNext(implicit tx: Tx): Boolean   = peer.hasNext
-    def next ()(implicit tx: Tx): T#Out[Tx] = peer.next()
+    def hasNext(implicit tx: Tx): Boolean = peer.hasNext
+    def next ()(implicit tx: Tx): A       = peer.next()
   }
 }

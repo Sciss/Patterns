@@ -14,18 +14,17 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
 import de.sciss.patterns.graph.impl.MapItStream
 
-final case class FlatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], inner: Graph[T])
-  extends Pattern[T] {
+final case class FlatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Graph[A])
+  extends Pattern[A] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     logStream("FlatMap.iterator")
     new StreamImpl(tx)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     @transient final private[this] lazy val ref = new AnyRef
 
     private def mkItStream(implicit tx: Tx) = {
@@ -36,7 +35,7 @@ final case class FlatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], i
 
     ctx.provideOuterStream(it.token, mkItStream(_))(tx0)
 
-    private[this] val innerStream: Stream[Tx, T#Out[Tx]] = inner.expand(ctx, tx0)
+    private[this] val innerStream: Stream[Tx, A] = inner.expand(ctx, tx0)
 
     // because `inner` is not guaranteed to depend on `It`, we must
     // pro-active create one instance of the it-stream which is used
@@ -61,7 +60,7 @@ final case class FlatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], i
       innerStream.reset()
     }
 
-    def next()(implicit tx: Tx): T#Out[Tx] = {
+    def next()(implicit tx: Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = innerStream.next()
       logStream(s"FlatMap.iterator.next() = $res; innerStream.hasNext = ${innerStream.hasNext}; itStream.hasNext = ${itStream.hasNext}")

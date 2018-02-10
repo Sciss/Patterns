@@ -14,9 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{IntTop, Top}
-
-case class Indices[T <: Top](in: Pat[T]) extends Pattern[IntTop] {
+case class Indices[A](in: Pat[A]) extends Pattern[Int] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl(tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Int] {

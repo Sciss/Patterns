@@ -15,16 +15,15 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.patterns
-import de.sciss.patterns.Types.{Top, Tuple2Top}
 
-final case class Zip2[T1 <: Top, T2 <: Top](a: Pat[T1], b: Pat[T2])
-  extends Pattern[Tuple2Top[T1, T2]] {
+final case class Zip2[A1, A2](a: Pat[A1], b: Pat[A2])
+  extends Pattern[(A1, A2)] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, (T1#Out[Tx], T2#Out[Tx])] =
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, (A1, A2)] =
     new StreamImpl[Tx](tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends Stream[Tx, (T1#Out[Tx], T2#Out[Tx])] {
+    extends Stream[Tx, (A1, A2)] {
 
     private[this] val aStream = a.expand(ctx, tx0)
     private[this] val bStream = b.expand(ctx, tx0)
@@ -33,6 +32,6 @@ final case class Zip2[T1 <: Top, T2 <: Top](a: Pat[T1], b: Pat[T2])
 
     def hasNext(implicit tx: Tx): Boolean = aStream.hasNext && bStream.hasNext
 
-    def next()(implicit tx: Tx): (T1#Out[Tx], T2#Out[Tx]) = (aStream.next(), bStream.next())
+    def next()(implicit tx: Tx): (A1, A2) = (aStream.next(), bStream.next())
   }
 }

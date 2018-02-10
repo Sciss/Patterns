@@ -14,15 +14,13 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
-
-final case class PatPat[T <: Top](in: Pat[T]*) extends Pattern[Pat[T]] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new StreamImpl(tx)
+final case class PatPat[A](in: Pat[A]*) extends Pattern[Pat[A]] {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl(tx)
 
   override def toString: String = in.mkString("PatPat(", ", ", ")")
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
-    private[this] val inStreams: Array[Stream[Tx, T#Out[Tx]]] = in.iterator.map(_.expand(ctx, tx0)).toArray
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
+    private[this] val inStreams: Array[Pat[A]] = in.toArray // in.iterator.map(_.expand(ctx, tx0)).toArray
     private[this] val inIdx = ctx.newVar(0)
 
     def reset()(implicit tx: Tx): Unit =
@@ -31,7 +29,7 @@ final case class PatPat[T <: Top](in: Pat[T]*) extends Pattern[Pat[T]] {
     def hasNext(implicit tx: Tx): Boolean =
       inIdx() < inStreams.length // && inStreams(inIdx).hasNext
 
-    def next()(implicit tx: Tx): Stream[Tx, T#Out[Tx]] = {
+    def next()(implicit tx: Tx): Pat[A] = {
       if (!hasNext) Stream.exhausted()
       val _idx = inIdx()
       val res = inStreams(_idx)

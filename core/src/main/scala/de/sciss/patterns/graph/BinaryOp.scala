@@ -14,11 +14,11 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, BooleanTop, Widen, Num, Ord, Top}
+import de.sciss.patterns.Types.{Aux, Num, Ord, Widen}
 
 object BinaryOp {
-  sealed abstract class Op[T1 <: Top, T2 <: Top] extends ProductWithAux {
-    def apply[Tx](a: T1#Out[Tx], b: T1#Out[Tx]): T2#Out[Tx]
+  sealed abstract class Op[A1, A2] extends ProductWithAux {
+    def apply(a: A1, b: A1): A2
 
     override final def productPrefix = s"BinaryOp$$$name"
 
@@ -27,48 +27,48 @@ object BinaryOp {
 
   // ---- (Num, Num) -> Num ----
 
-  final case class Plus[T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.plus(a, b)
+  final case class Plus[A]()(implicit num: Num[A]) extends Op[A, A] {
+    def apply(a: A, b: A): A = num.plus(a, b)
 
     def name = "Plus"
 
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Minus[T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.minus(a, b)
+  final case class Minus[A]()(implicit num: Num[A]) extends Op[A, A] {
+    def apply(a: A, b: A): A = num.minus(a, b)
 
     def name = "Minus"
 
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Times[T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.times(a, b)
+  final case class Times[A]()(implicit num: Num[A]) extends Op[A, A] {
+    def apply(a: A, b: A): A = num.times(a, b)
 
     def name = "Times"
 
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class RoundTo[T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.times(a, b)
+  final case class RoundTo[A]()(implicit num: Num[A]) extends Op[A, A] {
+    def apply(a: A, b: A): A = num.times(a, b)
 
     def name = "RoundTo"
 
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class % [T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.%(a, b)
+  final case class % [A]()(implicit num: Num[A]) extends Op[A, A] {
+    def apply(a: A, b: A): A = num.%(a, b)
 
     def name = "%"
 
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Mod[T <: Top]()(implicit num: Num[T]) extends Op[T, T] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx] = num.mod(a, b)
+  final case class Mod[A]()(implicit num: Num[A]) extends Op[A, A] {
+    def apply(a: A, b: A): A = num.mod(a, b)
 
     def name = "Mod"
 
@@ -78,8 +78,8 @@ object BinaryOp {
   // ---- (Ord, Ord) -> Boolean ----
 
   /** Less than or equal */
-  final case class Leq[T <: Top]()(implicit ord: Ord[T]) extends Op[T, BooleanTop] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = ord.leq(a, b)
+  final case class Leq[A]()(implicit ord: Ord[A]) extends Op[A, Boolean] {
+    def apply(a: A, b: A): Boolean = ord.leq(a, b)
 
     def name = "Leq"
 
@@ -87,8 +87,8 @@ object BinaryOp {
   }
 
   /** Less than */
-  final case class Lt[T <: Top]()(implicit ord: Ord[T]) extends Op[T, BooleanTop] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = ord.lt(a, b)
+  final case class Lt[A]()(implicit ord: Ord[A]) extends Op[A, Boolean] {
+    def apply(a: A, b: A): Boolean = ord.lt(a, b)
 
     def name = "Lt"
 
@@ -96,8 +96,8 @@ object BinaryOp {
   }
 
   /** Greater than or equal */
-  final case class Geq[T <: Top]()(implicit ord: Ord[T]) extends Op[T, BooleanTop] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = ord.geq(a, b)
+  final case class Geq[A]()(implicit ord: Ord[A]) extends Op[A, Boolean] {
+    def apply(a: A, b: A): Boolean = ord.geq(a, b)
 
     def name = "Geq"
 
@@ -105,8 +105,8 @@ object BinaryOp {
   }
 
   /** Greater than */
-  final case class Gt[T <: Top]()(implicit ord: Ord[T]) extends Op[T, BooleanTop] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = ord.gt(a, b)
+  final case class Gt[A]()(implicit ord: Ord[A]) extends Op[A, Boolean] {
+    def apply(a: A, b: A): Boolean = ord.gt(a, b)
 
     def name = "Gt"
 
@@ -114,8 +114,8 @@ object BinaryOp {
   }
 
   /** Equal */
-  final case class Eq[T <: Top]() extends Op[T, BooleanTop] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = a == b
+  final case class Eq[A]() extends Op[A, Boolean] {
+    def apply(a: A, b: A): Boolean = a == b
 
     def name = "Eq"
 
@@ -123,21 +123,21 @@ object BinaryOp {
   }
 
   /** Not equal */
-  final case class Neq[T <: Top]() extends Op[T, BooleanTop] {
-    def apply[Tx](a: T#Out[Tx], b: T#Out[Tx]): Boolean = a != b
+  final case class Neq[A]() extends Op[A, Boolean] {
+    def apply(a: A, b: A): Boolean = a != b
 
     def name = "Neq"
 
     private[patterns] def aux: List[Aux] = Nil
   }
 }
-final case class BinaryOp[T1 <: Top, T2 <: Top, T3 <: Top, T <: Top](op: BinaryOp.Op[T3, T], a: Pat[T1], b: Pat[T2])
-                                                                    (implicit widen: Widen[T1, T2, T3])
-  extends Pattern[T] {
+final case class BinaryOp[A1, A2, A3, A](op: BinaryOp.Op[A3, A], a: Pat[A1], b: Pat[A2])
+                                        (implicit widen: Widen[A1, A2, A3])
+  extends Pattern[A] {
 
   override private[patterns] def aux: List[Aux] = widen :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     val ai = a.expand.map(widen.lift1)
     val bi = b.expand.map(widen.lift2)
     (ai zip bi).map { case (av, bv) => op(av, bv) }

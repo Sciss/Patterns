@@ -14,21 +14,20 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{BooleanTop, Top}
 import de.sciss.patterns.graph.impl.MapItStream
 
-final case class Filter[T <: Top](outer: Pat[Pat[T]], it: It[T], inner: Graph[BooleanTop])
-  extends Pattern[Pat[T]] {
+final case class Filter[A](outer: Pat[Pat[A]], it: It[A], inner: Graph[Boolean])
+  extends Pattern[Pat[A]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = {
     logStream("Filter.iterator")
     new StreamImpl(tx)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
     @transient final private[this] lazy val ref = new AnyRef
 
-    private def mkItStream(implicit tx: Tx): Stream[Tx, T#Out[Tx]] = {
+    private def mkItStream(implicit tx: Tx): Stream[Tx, A] = {
       val res = new MapItStream(outer, tx)
       ctx.addStream(ref, res)
       res
@@ -43,7 +42,7 @@ final case class Filter[T <: Top](outer: Pat[Pat[T]], it: It[T], inner: Graph[Bo
     // as an additional constraint to determine `hasNext`!
     private[this] val itStream      = mkItStream(tx0)
 
-    private[this] val mapStream     = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
+    private[this] val mapStream     = ctx.newVar[Pat[A]](null) // Stream[Tx, T#Out[Tx]]](null)
     private[this] val _valid        = ctx.newVar(false)
     private[this] val _hasNext      = ctx.newVar(false)
 
@@ -77,7 +76,7 @@ final case class Filter[T <: Top](outer: Pat[Pat[T]], it: It[T], inner: Graph[Bo
       _hasNext() = hn
       if (hn) {
         // itStream.next()
-        val b = Vector.newBuilder[T#Out[Tx]]
+        val b = Vector.newBuilder[A]
         var i = 0
         // there is _no_ reasonable way to provide the
         // stream than to eagerly collect the values here,
@@ -87,8 +86,8 @@ final case class Filter[T <: Top](outer: Pat[Pat[T]], it: It[T], inner: Graph[Bo
           ??? // b += innerStream.next()
           i += 1
         }
-        val inner   = Stream[Tx, T#Out[Tx]](b.result: _*)
-        mapStream() = inner
+        val inner   = Stream[Tx, A](b.result: _*)
+        mapStream() = ??? // inner
         _hasNext()  = inner.hasNext
       }
     }
@@ -98,7 +97,7 @@ final case class Filter[T <: Top](outer: Pat[Pat[T]], it: It[T], inner: Graph[Bo
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Stream[Tx, T#Out[Tx]] = {
+    def next()(implicit tx: Tx): Pat[A] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = mapStream()

@@ -14,9 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.StringTop
-
-final case class Format(s: Pat.String, args: Pat[_]*) extends Pattern[StringTop] {
+final case class Format(s: Pat[String], args: Pat[_]*) extends Pattern[String] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, String] = new StreamImpl[Tx](tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, String] {

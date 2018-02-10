@@ -15,19 +15,17 @@ package de.sciss.patterns
 package graph
 package impl
 
-import de.sciss.patterns.Types.Top
-
-final class SortWithItStream[Tx, T <: Top](tx0: Tx)(implicit ctx: Context[Tx])
-  extends Stream[Tx, (T#Out[Tx], T#Out[Tx])] {
+final class SortWithItStream[Tx, A](tx0: Tx)(implicit ctx: Context[Tx])
+  extends Stream[Tx, (A, A)] {
 
 //  private[this] val _valid      = ctx.newVar(false)
   private[this] val _hasZ       = ctx.newVar(false)
   private[this] val _hasNext    = ctx.newVar(false)
 
-  private[this] val pairInRef   = ctx.newVar[(Vector[T#Out[Tx]], Vector[T#Out[Tx]])](null)
+  private[this] val pairInRef   = ctx.newVar[(Vector[A], Vector[A])](null)
   private[this] val count       = ctx.newVar(0)
 
-  def advance(x: Vector[T#Out[Tx]], y: Vector[T#Out[Tx]])(implicit tx: Tx): Unit = {
+  def advance(x: Vector[A], y: Vector[A])(implicit tx: Tx): Unit = {
     pairInRef() = (x, y)
     count()     = 0
     _hasZ()     = true
@@ -69,7 +67,7 @@ final class SortWithItStream[Tx, T <: Top](tx0: Tx)(implicit ctx: Context[Tx])
     _hasZ() && _hasNext()
   }
 
-  def next()(implicit tx: Tx): (T#Out[Tx], T#Out[Tx]) = {
+  def next()(implicit tx: Tx): (A, A) = {
     if (!hasNext) Stream.exhausted()
     val (x, y)  = pairInRef()
     val sz      = math.min(x.size, y.size)

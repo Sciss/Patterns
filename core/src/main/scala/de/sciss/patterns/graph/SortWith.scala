@@ -14,38 +14,35 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{BooleanTop, Top, Tuple2Top}
 import de.sciss.patterns.graph.impl.SortWithItStream
 
 import scala.util.control.Breaks
 
-final case class SortWith[T <: Top](outer: Pat[Pat[T]], it: It[Tuple2Top[T, T]], lt: Graph[BooleanTop])
-  extends Pattern[Pat[T]] {
+final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Graph[Boolean])
+  extends Pattern[Pat[A]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] =
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] =
     new StreamImpl[Tx](tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
-
-    type A = T#Out[Tx]
+    extends Stream[Tx, Pat[A]] {
 
     @transient final private[this] lazy val ref = new AnyRef
 
     private def mkItStream(implicit tx: Tx) = {
-      val res = new SortWithItStream[Tx, T](tx)
+      val res = new SortWithItStream[Tx, A](tx)
       ctx.addStream(ref, res)
       res
     }
 
     ctx.provideOuterStream[(A, A)](it.token, mkItStream(_))(tx0)
 
-    private[this] val outerStream: Stream[Tx, Stream[Tx, A]]  = outer.expand(ctx, tx0)
-    private[this] val ltStream   : Stream[Tx, Boolean]        = lt   .expand(ctx, tx0)
+    private[this] val outerStream: Stream[Tx, Pat[A]]  = outer.expand(ctx, tx0)
+    private[this] val ltStream   : Stream[Tx, Boolean] = lt   .expand(ctx, tx0)
 
     private[this] val _valid      = ctx.newVar(false)
 
-    private[this] val sortedIt    = ctx.newVar[Stream[Tx, Stream[Tx, A]]](null)
+    private[this] val sortedIt    = ctx.newVar[Stream[Tx, Pat[A]]](null)
     private[this] val _hasSorted  = ctx.newVar(false)
 
     private def validate()(implicit tx: Tx): Unit =
@@ -56,12 +53,12 @@ final case class SortWith[T <: Top](outer: Pat[Pat[T]], it: It[Tuple2Top[T, T]],
       }
 
     private def perform()(implicit tx: Tx): Unit = {
-      val vec: Vector[Vector[A]] = outerStream.map(_.toVector).toVector
+      val vec: Vector[Vector[A]] = outerStream.map(_.expand.toVector).toVector
       val itStreams = ctx.getStreams(ref)
       Breaks.breakable {
         val sorted = vec.sortWith { (x, y) =>
           itStreams.foreach {
-            case m: SortWithItStream[Tx, T] => m.advance(x, y)
+            case m: SortWithItStream[Tx, A] => m.advance(x, y)
           }
           ltStream.reset()
           if (ltStream.hasNext) {
@@ -71,7 +68,7 @@ final case class SortWith[T <: Top](outer: Pat[Pat[T]], it: It[Tuple2Top[T, T]],
           }
         }
         _hasSorted() = true
-        sortedIt() = Stream(sorted.map(xs => Stream(xs: _*)): _*)
+        sortedIt() = Stream(sorted.map(xs => ??? /* Stream(xs: _*) */): _*)
       }
     }
 
@@ -85,7 +82,7 @@ final case class SortWith[T <: Top](outer: Pat[Pat[T]], it: It[Tuple2Top[T, T]],
       _hasSorted() && sortedIt().hasNext
     }
 
-    def next()(implicit tx: Tx): Stream[Tx, T#Out[Tx]] = {
+    def next()(implicit tx: Tx): Pat[A] = {
       if (!hasNext) Stream.exhausted()
       sortedIt().next()
     }

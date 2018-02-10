@@ -16,7 +16,6 @@ package de.sciss
 import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
-import de.sciss.patterns.Types.{BooleanSeqTop, BooleanTop, DoubleSeqTop, DoubleTop, IntSeqTop, IntTop, StringTop, Top}
 import de.sciss.patterns.graph.{Bind, Constant, PatPat}
 
 import scala.annotation.elidable
@@ -24,23 +23,23 @@ import scala.annotation.elidable.CONFIG
 import scala.language.implicitConversions
 
 package object patterns {
-  implicit def patOps      [T <: Top](p: Pat[T]     ): PatOps      [T] = new PatOps(p)
-  implicit def patNestedOps[T <: Top](p: Pat[Pat[T]]): PatNestedOps[T] = new PatNestedOps(p)
+  implicit def patOps      [A](p: Pat[A]     ): PatOps      [A] = new PatOps(p)
+  implicit def patNestedOps[A](p: Pat[Pat[A]]): PatNestedOps[A] = new PatNestedOps(p)
 
   //  implicit def const[A, T <: Top](x: A)(implicit tpe: T { type Out = A }): Elem[T] = Const(x)
 
-  implicit def constIntPat        (x: Int           ): Pat[IntTop       ] = Constant[IntTop       ](x)
-  implicit def constIntSeqPat     (xs: Seq[Int]     ): Pat[IntSeqTop    ] = Constant[IntSeqTop    ](xs)
-  implicit def constDoublePat     (x: Double        ): Pat[DoubleTop    ] = Constant[DoubleTop    ](x)
-  implicit def constDoubleSeqPat  (xs: Seq[Double]  ): Pat[DoubleSeqTop ] = Constant[DoubleSeqTop ](xs)
-  implicit def constBooleanPat    (x: Boolean       ): Pat[BooleanTop   ] = Constant[BooleanTop   ](x)
-  implicit def constBooleanSeqPat (xs: Seq[Boolean] ): Pat[BooleanSeqTop] = Constant[BooleanSeqTop](xs)
-  implicit def constStringPat     (x: String        ): Pat[StringTop    ] = Constant[StringTop    ](x)
+  implicit def constIntPat        (x: Int           ): Pat[Int          ] = Constant[Int          ](x)
+  implicit def constIntSeqPat     (xs: Seq[Int]     ): Pat[Seq[Int]     ] = Constant[Seq[Int]     ](xs)
+  implicit def constDoublePat     (x: Double        ): Pat[Double       ] = Constant[Double       ](x)
+  implicit def constDoubleSeqPat  (xs: Seq[Double]  ): Pat[Seq[Double]  ] = Constant[Seq[Double]  ](xs)
+  implicit def constBooleanPat    (x: Boolean       ): Pat[Boolean      ] = Constant[Boolean      ](x)
+  implicit def constBooleanSeqPat (xs: Seq[Boolean] ): Pat[Seq[Boolean] ] = Constant[Seq[Boolean] ](xs)
+  implicit def constStringPat     (x: String        ): Pat[String       ] = Constant[String       ](x)
 
-  implicit def patSeq[A, T <: Top](xs: Seq[A])(implicit lift: A => Pat[T]): Seq[Pat[T]] =
+  implicit def patSeq[A, T](xs: Seq[A])(implicit lift: A => Pat[T]): Seq[Pat[T]] =
     xs.map(lift)
 
-  implicit def seqPat[A, T <: Top](xs: Seq[A])(implicit lift: A => Pat[T]): Pat[Pat[T]] =
+  implicit def seqPat[A, T](xs: Seq[A])(implicit lift: A => Pat[T]): Pat[Pat[T]] =
     PatPat(xs.map(lift): _*)
 
   private lazy val logHeader = new SimpleDateFormat("[d MMM yyyy, HH:mm''ss.SSS] 'pattern' - ", Locale.US)
@@ -56,6 +55,6 @@ package object patterns {
     if (showGraphLog) Console.out.println(s"${logHeader.format(new Date())}graph $what")
 
   /** A shortcut for `Bind` with time/value pairs. */
-  def Output[T <: Top](delta: Pat.Double, value: Pat[T]): Pat.Event =
+  def Output[A](delta: Pat[Double], value: Pat[A]): Pat[Event] =
     Bind(Event.keyDelta -> delta, Event.keyValue -> value)
 }

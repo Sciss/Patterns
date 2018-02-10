@@ -32,15 +32,12 @@ class PatternsSpec extends PatSpec {
   }
 
   "Combinations" should work in {
-    val p1: Pat.Int = Pseq(1 to 4)
+    val p1: Pat[Int] = Pseq(1 to 4)
     val p2 = p1.combinations(3)
-    val res: List[List[Int]] = ctx.step { implicit tx =>
-      p2.expand.map(_.toList).toList
-    }
 
     val plain = List(1, 2, 3, 4).combinations(3).toList
 
-    assert(res === plain)
+    evalH(p2) shouldBe plain
   }
 
   "Flatten" should work in {
@@ -55,19 +52,15 @@ class PatternsSpec extends PatSpec {
   "Map" should work in {
     val pat = Graph {
       val in = Pseq(1 to 4).combinations(3)
-      in.map { in: Pat.Int =>
+      in.map { in: Pat[Int] =>
         in.drop(1)
       }
-    }
-
-    val res = ctx.step { implicit tx =>
-      pat.expand.map(_.toList).toList
     }
 
     val plain = List(1 to 4: _*).combinations(3)
       .map(_.drop(1))
       .toList
 
-    assert(res === plain)
+    evalH(pat) shouldBe plain
   }
 }

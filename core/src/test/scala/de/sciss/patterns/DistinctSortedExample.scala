@@ -15,7 +15,7 @@ object DistinctSortedExample {
       Pat.seqFill(4) { _ =>
         val b = Brown(0, 100, 2)
         val d = b.take(10).distinct.sorted
-        d ++ (-1: Pat.Int).head
+        d ++ (-1: Pat[Int]).head
       }
     }
 
@@ -23,14 +23,14 @@ object DistinctSortedExample {
       val b = Brown(0, 100, 2)
       Pat.seqFill(4) { _ =>
         val d = b.take(10).distinct.sorted
-        d ++ (-1: Pat.Int).head
+        d ++ (-1: Pat[Int]).head
       }
     }
 
     implicit val ctx: Context.Plain = Context()
     import ctx.tx
 
-    def plot(g: Pat.Int, title: String): Unit =
+    def plot(g: Pat[Int], title: String): Unit =
       g.iterator.toList.plot(title = title, discrete = true)
 
     Swing.onEDT {

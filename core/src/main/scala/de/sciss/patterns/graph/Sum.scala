@@ -14,14 +14,14 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Num, Top}
+import de.sciss.patterns.Types.{Aux, Num}
 
-final case class Sum[T <: Top](in: Pat[T])(implicit num: Num[T]) extends Pattern[T] {
+final case class Sum[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
   override private[patterns] def aux: List[Aux] = num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl[Tx](tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     def reset()(implicit tx: Tx): Unit = {
       println("Sum. TODO: reset")
       ???
@@ -32,7 +32,7 @@ final case class Sum[T <: Top](in: Pat[T])(implicit num: Num[T]) extends Pattern
       ???
     }
 
-    def next()(implicit tx: Tx): T#Out[Tx] = {
+    def next()(implicit tx: Tx): A = {
       println("Sum. TODO: next")
       ???
     }

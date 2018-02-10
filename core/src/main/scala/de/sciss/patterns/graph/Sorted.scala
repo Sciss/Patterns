@@ -14,18 +14,18 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Ord, Top}
+import de.sciss.patterns.Types.{Aux, Ord}
 
-final case class Sorted[T <: Top](in: Pat[T])(implicit ord: Ord[T]) extends Pattern[T] {
+final case class Sorted[A](in: Pat[A])(implicit ord: Ord[A]) extends Pattern[A] {
   override private[patterns] def aux: List[Aux] = ord :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream  = in.expand(ctx, tx0)
     private[this] val _valid    = ctx.newVar(false)
 
-    private[this] val sortedIt  = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
+    private[this] val sortedIt  = ctx.newVar[Stream[Tx, A]](null)
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
@@ -42,7 +42,7 @@ final case class Sorted[T <: Top](in: Pat[T])(implicit ord: Ord[T]) extends Patt
       sortedIt().hasNext
     }
 
-    def next()(implicit tx: Tx): T#Out[Tx] = {
+    def next()(implicit tx: Tx): A = {
       validate()
       sortedIt().next()
     }

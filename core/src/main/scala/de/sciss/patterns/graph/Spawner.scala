@@ -20,8 +20,8 @@ object Spawner {
   trait Queue[Tx] {
     type Ref
 
-    def par(pat: Pat.Event)(implicit tx: Tx): Ref
-    def seq(pat: Pat.Event)(implicit tx: Tx): Unit
+    def par(pat: Pat[Event])(implicit tx: Tx): Ref
+    def seq(pat: Pat[Event])(implicit tx: Tx): Unit
 
     def suspend(ref: Ref)(implicit tx: Tx): Unit
 
@@ -32,9 +32,7 @@ object Spawner {
   }
 }
 final case class Spawner(fun: Spawner.Queue[_] => Unit) extends Pattern[Event] {
-  type EOut[Tx] = Event#Out[Tx]
-
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, EOut[Tx]] = {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Event] = {
     val queue = new QueueImpl[Tx](tx)
     fun(queue)
     queue.iterator

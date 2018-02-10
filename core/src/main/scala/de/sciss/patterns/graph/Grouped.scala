@@ -14,18 +14,14 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
+final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] { pat =>
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl(tx)
 
-final case class Grouped[T <: Top](in: Pat[T], size: Pat.Int) extends Pattern[Pat[T]] { pat =>
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new StreamImpl(tx)
-
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
-    private type A = T#Out[Tx]
-
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
     private[this] val inStream  : Stream[Tx, A]   = pat.in  .expand(ctx, tx0)
     private[this] val sizeStream: Stream[Tx, Int] = pat.size.expand(ctx, tx0)
 
-    private[this] val innerStream = ctx.newVar[Stream[Tx, A]](null)
+    private[this] val innerStream = ctx.newVar[Pat[A]](null) // Stream[Tx, A]](null)
     private[this] val _hasNext    = ctx.newVar(false)
 
     private[this] val _valid      = ctx.newVar(false)
@@ -56,7 +52,7 @@ final case class Grouped[T <: Top](in: Pat[T], size: Pat.Int) extends Pattern[Pa
           i += 1
         }
         val inner     = Stream[Tx, A](b.result: _*)
-        innerStream() = inner
+        innerStream() = ??? // inner
         _hasNext()    = sizeVal > 0
       }
     }
@@ -66,7 +62,7 @@ final case class Grouped[T <: Top](in: Pat[T], size: Pat.Int) extends Pattern[Pa
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Stream[Tx, A] = {
+    def next()(implicit tx: Tx): Pat[A] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = innerStream()

@@ -21,9 +21,9 @@ import scala.collection.immutable.{SortedMap => ISortedMap}
 object QueueImpl {
 
   sealed trait Cmd
-  final case class Par    (ref: TimeRef, pat: Pat.Event)  extends Cmd
+  final case class Par    (ref: TimeRef, pat: Pat[Event]) extends Cmd
   final case class Suspend(ref: TimeRef)                  extends Cmd
-  final case class Seq    (pat: Pat.Event)                extends Cmd
+  final case class Seq    (pat: Pat[Event])               extends Cmd
   final case class Advance(seconds: Double)               extends Cmd
 
 //  sealed trait Blocking
@@ -55,13 +55,13 @@ final class QueueImpl[Tx](tx0: Tx)(implicit val context: Context[Tx])
     ref
   }
 
-  def par(pat: Pat.Event)(implicit tx: Tx): Ref = {
+  def par(pat: Pat[Event])(implicit tx: Tx): Ref = {
     val ref = mkRef()
     cmdRev() = Par(ref, pat) :: cmdRev()
     ref
   }
 
-  def seq(pat: Pat.Event)(implicit tx: Tx): Unit =
+  def seq(pat: Pat[Event])(implicit tx: Tx): Unit =
     cmdRev() = Seq(pat) :: cmdRev()
 
   def suspend(ref: Ref)(implicit tx: Tx): Unit =
@@ -70,7 +70,7 @@ final class QueueImpl[Tx](tx0: Tx)(implicit val context: Context[Tx])
   def advance(seconds: Double)(implicit tx: Tx): Unit =
     cmdRev() = Advance(seconds) :: cmdRev()
 
-  type Out = Event#Out[Tx]
+  type Out = Event
 
   def iterator: Stream[Tx, Out] = new Stream[Tx, Out] {
     private[this] val pq = context.newVar[ISortedMap[Ref, Stream[Tx, Either[Out, Cmd]]]](null)
@@ -128,7 +128,7 @@ final class QueueImpl[Tx](tx0: Tx)(implicit val context: Context[Tx])
             cmd match {
               case Par(refP, pat) =>
                 refP.time = ref.time // now
-                val patIt: Stream[Tx, Event#Out[Tx]] = pat.expand
+                val patIt: Stream[Tx, Event] = pat.expand
                 if (patIt.nonEmpty) pq() = pq() + (refP -> patIt.map(Left(_)))
                 putBack()
                 advance()

@@ -13,19 +13,19 @@
 
 package de.sciss.patterns.graph
 
+import de.sciss.patterns.Types.{Aux, Num}
 import de.sciss.patterns.{Context, Pat, Pattern, Stream}
-import de.sciss.patterns.Types.{Aux, Num, Top}
 
-final case class Differentiate[T <: Top](in: Pat[T])(implicit num: Num[T]) extends Pattern[T] {
+final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
   override private[patterns] def aux: List[Aux] = num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl[Tx](tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     def reset()(implicit tx: Tx): Unit = ???
 
     def hasNext(implicit tx: Tx): Boolean = ???
 
-    def next()(implicit tx: Tx): T#Out[Tx] = ???
+    def next()(implicit tx: Tx): A = ???
   }
 }

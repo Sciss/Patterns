@@ -15,11 +15,7 @@ package de.sciss.patterns
 package graph
 package impl
 
-import de.sciss.patterns.Types.Top
-
-final class FoldLeftCarryBuffer[Tx, T <: Top](tx0: Tx)(implicit ctx: Context[Tx]) {
-  type A = T#Out[Tx]
-
+final class FoldLeftCarryBuffer[Tx, A](tx0: Tx)(implicit ctx: Context[Tx]) {
   private[this] val zValueRef   = ctx.newVar(Vector.empty[A])
   private[this] val offsetMap   = ctx.newVar(Map.empty[Stream[Tx, _], Int])
   private[this] val skipped     = ctx.newVar(0)

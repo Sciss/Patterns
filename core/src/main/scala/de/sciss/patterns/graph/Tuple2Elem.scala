@@ -15,16 +15,15 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.patterns
-import de.sciss.patterns.Types.Top
 
-final case class Tuple2_1[T1 <: Top, T2 <: Top](tup: Pat.Tuple2[T1, T2])
-  extends Pattern[T1] {
+final case class Tuple2_1[A1, A2](tup: Pat[(A1, A2)])
+  extends Pattern[A1] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, T1#Out[Tx]] =
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A1] =
     new StreamImpl[Tx](tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends Stream[Tx, T1#Out[Tx]] {
+    extends Stream[Tx, A1] {
 
     private[this] val tupStream = tup.expand(ctx, tx0)
 
@@ -32,18 +31,18 @@ final case class Tuple2_1[T1 <: Top, T2 <: Top](tup: Pat.Tuple2[T1, T2])
 
     def hasNext(implicit tx: Tx): Boolean = tupStream.hasNext
 
-    def next()(implicit tx: Tx): T1#Out[Tx] = tupStream.next()._1
+    def next()(implicit tx: Tx): A1 = tupStream.next()._1
   }
 }
 
-final case class Tuple2_2[T1 <: Top, T2 <: Top](tup: Pat.Tuple2[T1, T2])
-  extends Pattern[T2] {
+final case class Tuple2_2[A1, A2](tup: Pat[(A1, A2)])
+  extends Pattern[A2] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, T2#Out[Tx]] =
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A2] =
     new StreamImpl[Tx](tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends Stream[Tx, T2#Out[Tx]] {
+    extends Stream[Tx, A2] {
 
     private[this] val tupStream = tup.expand(ctx, tx0)
 
@@ -51,7 +50,7 @@ final case class Tuple2_2[T1 <: Top, T2 <: Top](tup: Pat.Tuple2[T1, T2])
 
     def hasNext(implicit tx: Tx): Boolean = tupStream.hasNext
 
-    def next()(implicit tx: Tx): T2#Out[Tx] = tupStream.next()._2
+    def next()(implicit tx: Tx): A2 = tupStream.next()._2
   }
 }
 

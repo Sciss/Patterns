@@ -1,7 +1,7 @@
 package de.sciss.patterns
 
 import de.sciss.numbers.Implicits._
-import de.sciss.patterns.Types.{DoubleTop, IntTop, TopT}
+import de.sciss.patterns.Types.{DoubleTop, IntTop}
 import de.sciss.patterns.graph._
 
 object RonTupleNeu {
@@ -21,12 +21,12 @@ object RonTupleNeu {
 
   def main(args: Array[String]): Unit = {
     implicit val ctx: Context.Plain = Context()
-    val x = spawner()
     import ctx.tx
-    val it = x.expand
+    val x = spawner()
+    val it = x.expand[Unit]
     println("Done.")
     var time = 0.0
-    it.foreach { elem0: Event#COut =>
+    it.foreach { elem0: Event =>
       val elem  = elem0 +
         (Event.keyDetunedFreq -> Event.detunedFreq(elem0)) +
         (Event.keySustain     -> Event.sustain    (elem0)) +
@@ -143,8 +143,8 @@ object RonTupleNeu {
     durs
   }
 
-  def makePart[A, T <: TopT[A]](pattern: Seq[A], cantus: Seq[A], start: Int = 0, stutter: Int = 1)
-                               (implicit view: A => Pat[T]): (Pat[T], Pat.Double) = {
+  def makePart[A](pattern: Seq[A], cantus: Seq[A], start: Int = 0, stutter: Int = 1)
+                 (implicit view: A => Pat[A]): (Pat[A], Pat[Double]) = {
     log("makePart", pattern, cantus, start, stutter)
     val durs = {
       val durs0 = computeDurs(pattern, cantus, start).map(_.toDouble)
@@ -158,22 +158,20 @@ object RonTupleNeu {
     //      Seq(Pseq(Seq.fill(stutter)('r)),
     //        Pseq(pattern.grouped(stutter).stutter(stutter).flatten, inf))
     //    }
-    val ptrnOut: Seq[Pseq[T]] = Seq(Pseq(pattern, inf))
+    val ptrnOut: Seq[Pseq[A]] = Seq(Pseq(pattern, inf))
 
     //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
     log("makePart - durs", durs)
     (Pseq(ptrnOut), Pseq(durs.map(_ * 0.02)))
   }
 
-  def spawner()(implicit ctx: Context.Plain): Pat.Event = Spawner { sp =>
+  def spawner()(implicit ctx: Context.Plain): Pat[Event] = Spawner { sp =>
     implicit val random: Random[Unit] = {
       import ctx.tx
       ctx.mkRandom("rnd")
     }
-
-    import sp.context
     val inf = Int.MaxValue
-    def catPat(cantus: Seq[Double]): Pat.Event =
+    def catPat(cantus: Seq[Double]): Pat[Event] =
       Bind(
         "instrument"  -> "sine4",
         "note"        -> Pseq(cantus, inf), // Prout({ loop{ Pseq(~cantus).embedInStream } }),

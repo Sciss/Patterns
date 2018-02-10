@@ -14,11 +14,9 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
-
 /** A glue element to make `map` and `flatMap` work. */
-final case class It[T <: Top](token: Int) extends Pattern[T] { pat =>
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = {
+final case class It[A](token: Int) extends Pattern[A] { pat =>
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     logStream(s"$pat.iterator")
     new StreamImpl[Tx](tx)
   }
@@ -55,11 +53,11 @@ final case class It[T <: Top](token: Int) extends Pattern[T] { pat =>
 //    }
 //  }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val refStream = ctx.mkOuterStream(token)(tx0)
 
     def reset()(implicit tx: Tx): Unit      = refStream.reset()
     def hasNext(implicit tx: Tx): Boolean   = refStream.hasNext
-    def next ()(implicit tx: Tx): T#Out[Tx] = refStream.next()
+    def next ()(implicit tx: Tx): A         = refStream.next()
   }
 }

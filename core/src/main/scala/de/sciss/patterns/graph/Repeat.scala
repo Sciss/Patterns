@@ -14,12 +14,10 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
+final case class Repeat[A](in: Pat[A], times: Pat[Int] = Int.MaxValue) extends Pattern[A] {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-final case class Repeat[T <: Top](in: Pat[T], times: Pat.Int = Int.MaxValue) extends Pattern[T] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
-
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream    = in    .expand(ctx, tx0)
     private[this] val timesStream = times .expand(ctx, tx0)
 
@@ -49,7 +47,7 @@ final case class Repeat[T <: Top](in: Pat[T], times: Pat.Int = Int.MaxValue) ext
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): T#Out[Tx] = {
+    def next()(implicit tx: Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = inStream.next()
       if (!inStream.hasNext) {

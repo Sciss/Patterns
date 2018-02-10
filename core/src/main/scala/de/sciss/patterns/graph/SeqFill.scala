@@ -14,8 +14,6 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{IntTop, Top}
-
 import scala.annotation.tailrec
 
 /*
@@ -26,8 +24,8 @@ import scala.annotation.tailrec
     }
 
  */
-final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T], it: It[IntTop]) extends Pattern[T] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
+final case class SeqFill[A](n: Pat[Int], inner: Graph[A], it: It[Int]) extends Pattern[A] {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
   private final class ItStreamImpl[Tx](iteration: Context.Var[Tx, Int])(implicit ctx: Context[Tx])
     extends Stream[Tx, Int] {
@@ -44,7 +42,7 @@ final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T], it: It[IntTop]) 
     }
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     @transient final private[this] lazy val ref = new AnyRef
 
     private[this] val iteration = ctx.newVar(0)
@@ -101,7 +99,7 @@ final case class SeqFill[T <: Top](n: Pat.Int, inner: Graph[T], it: It[IntTop]) 
       }
     }
 
-    def next()(implicit tx: Tx): T#Out[Tx] = {
+    def next()(implicit tx: Tx): A = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = innerStream.next()

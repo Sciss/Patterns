@@ -14,21 +14,20 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
 import de.sciss.patterns.graph.impl.MapItStream
 
-final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], inner: Graph[T])
-  extends Pattern[Pat[T]] {
+final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Graph[A])
+  extends Pattern[Pat[A]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = {
     logStream("PatMap.iterator")
     new StreamImpl(tx)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
     @transient final private[this] lazy val ref = new AnyRef
 
-    private def mkItStream(implicit tx: Tx): Stream[Tx, T1#Out[Tx]] = {
+    private def mkItStream(implicit tx: Tx): Stream[Tx, A1] = {
       val res = new MapItStream(outer, tx)
       ctx.addStream(ref, res)
       res
@@ -36,14 +35,14 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
 
     ctx.provideOuterStream(it.token, mkItStream(_))(tx0)
 
-    private[this] val innerStream: Stream[Tx, T#Out[Tx]] = inner.expand(ctx, tx0)
+    private[this] val innerStream: Stream[Tx, A] = inner.expand(ctx, tx0)
 
     // because `inner` is not guaranteed to depend on `It`, we must
     // pro-active create one instance of the it-stream which is used
     // as an additional constraint to determine `hasNext`!
     private[this] val itStream      = mkItStream(tx0)
 
-    private[this] val mapStream     = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
+    private[this] val mapStream     = ctx.newVar[Pat[A]](null) // Stream[Tx, T#Out[Tx]]](null)
     private[this] val _valid        = ctx.newVar(false)
     private[this] val _hasNext      = ctx.newVar(false)
 
@@ -77,7 +76,7 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
       _hasNext() = hn
       if (hn) {
         // itStream.next()
-        val b = Vector.newBuilder[T#Out[Tx]]
+        val b = Vector.newBuilder[A]
         var i = 0
         // there is _no_ reasonable way to provide the
         // stream than to eagerly collect the values here,
@@ -87,8 +86,8 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
           b += innerStream.next()
           i += 1
         }
-        val inner   = Stream[Tx, T#Out[Tx]](b.result: _*)
-        mapStream() = inner
+        val inner   = Stream[Tx, A](b.result: _*)
+        mapStream() = ??? // inner
         _hasNext()  = true // inner.hasNext
       }
     }
@@ -98,7 +97,7 @@ final case class PatMap[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], it: It[T1], in
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Stream[Tx, T#Out[Tx]] = {
+    def next()(implicit tx: Tx): Pat[A] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = mapStream()

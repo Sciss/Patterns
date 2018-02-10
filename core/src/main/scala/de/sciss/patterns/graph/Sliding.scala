@@ -13,21 +13,18 @@
 
 package de.sciss.patterns.graph
 
-import de.sciss.patterns.Types.Top
 import de.sciss.patterns.{Context, Pat, Pattern, Stream}
 
-final case class Sliding[T <: Top](in: Pat[T], size: Pat.Int, step: Pat.Int) extends Pattern[Pat[T]] { pat =>
+final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends Pattern[Pat[A]] { pat =>
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new StreamImpl[Tx](tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl[Tx](tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
-    private type A = T#Out[Tx]
-
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
     private[this] val inStream    = pat.in  .expand(ctx, tx0)
     private[this] val sizeStream  = pat.size.expand(ctx, tx0)
     private[this] val stepStream  = pat.step.expand(ctx, tx0)
 
-    private[this] val innerStream = ctx.newVar[Stream[Tx, A]](null)
+    private[this] val innerStream = ctx.newVar[Pat[A]](null) // Stream[Tx, A]](null)
     private[this] val _valid      = ctx.newVar(false)
     private[this] val _hasNext    = ctx.newVar(false)
     private[this] val _hasStep    = ctx.newVar(true)
@@ -63,7 +60,7 @@ final case class Sliding[T <: Top](in: Pat[T], size: Pat.Int, step: Pat.Int) ext
         }
         val vecNew    = b.result()
         val inner     = Stream[Tx, A](vecNew: _*)
-        innerStream() = inner
+        innerStream() = ??? // inner
         val ihn       = sizeVal > 0
         _hasNext()    = ihn
         if (ihn) {
@@ -87,7 +84,7 @@ final case class Sliding[T <: Top](in: Pat[T], size: Pat.Int, step: Pat.Int) ext
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Stream[Tx, A] = {
+    def next()(implicit tx: Tx): Pat[A] = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = innerStream()

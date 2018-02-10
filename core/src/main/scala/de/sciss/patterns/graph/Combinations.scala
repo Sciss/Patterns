@@ -14,16 +14,14 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
-
 import scala.collection.mutable
 
-final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[Pat[T]] {
+final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Stream[Tx, T#Out[Tx]]] = new StreamImpl(tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl(tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends Stream[Tx, Stream[Tx, T#Out[Tx]]] {
+    extends Stream[Tx, Pat[A]] {
 
     // Adapted from scala.collection.SeqLike#CombinationsItr
     // Scala license: BSD 3-clause
@@ -31,14 +29,14 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
     // generating all nums such that:
     // (1) nums(0) + .. + nums(length-1) = n
     // (2) 0 <= nums(i) <= cnts(i), where 0 <= i <= cnts.length-1
-    private[this] val elements  = ctx.newVar[IndexedSeq[T#Out[Tx]]](null)
+    private[this] val elements  = ctx.newVar[IndexedSeq[A]](null)
     private[this] val counts    = ctx.newVar[Vector[Int]](null)
     private[this] val numbers   = ctx.newVar[Vector[Int]](null)
     private[this] val offsets   = ctx.newVar[Vector[Int]](null)
     private[this] val _hasNext  = ctx.newVar(false)
 
-    private[this] val inStream: Stream[Tx, T#Out[Tx]] = in.expand(ctx, tx0)
-    private[this] val nStream : Stream[Tx, Int]       = n .expand(ctx, tx0)
+    private[this] val inStream: Stream[Tx, A]   = in.expand(ctx, tx0)
+    private[this] val nStream : Stream[Tx, Int] = n .expand(ctx, tx0)
 
     private[this] val _valid = ctx.newVar(false)
 
@@ -47,11 +45,11 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Stream[Tx, T#Out[Tx]] = {
+    def next()(implicit tx: Tx): Pat[A] = {
       if (!_hasNext()) Stream.exhausted()
 
       /* Calculate this result. */
-      val buf = List.newBuilder[T#Out[Tx]]
+      val buf = List.newBuilder[A]
       var _numbers  = numbers()
       val _elements = elements()
       val _offsets  = offsets()
@@ -88,13 +86,7 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
         numbers() = _numbers
       }
 
-      new Stream[Tx, T#Out[Tx]] {
-        private[this] val peer = buf.result().iterator
-
-        def reset()(implicit tx: Tx): Unit      = ()
-        def hasNext(implicit tx: Tx): Boolean   = peer.hasNext
-        def next ()(implicit tx: Tx): T#Out[Tx] = peer.next()
-      }
+      ??? // Pat(buf.result(): _*)
     }
 
     def reset()(implicit tx: Tx): Unit =
@@ -110,10 +102,10 @@ final case class Combinations[T <: Top](in: Pat[T], n: Pat.Int) extends Pattern[
 
       val nVal = nStream.next()
 
-      val m = mutable.Map.empty[T#Out[Tx], Int]
+      val m = mutable.Map.empty[A, Int]
 
       // e => (e, weight(e))
-      val tup: List[(T#Out[Tx], Int)] = inStream.map(e => (e, m.getOrElseUpdate(e, m.size))).toList.sortBy(_._2)
+      val tup: List[(A, Int)] = inStream.map(e => (e, m.getOrElseUpdate(e, m.size))).toList.sortBy(_._2)
       val (es, is) = tup.unzip
       var cs = Vector.fill(m.size)(0) //  new Array[Int](m.size)
       is.foreach { i =>

@@ -14,28 +14,27 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.Top
 import de.sciss.patterns.graph.impl.Truncate
 
 /** aka `Pfin` */
-final case class Take[T <: Top](in: Pat[T], length: Pat.Int)
-  extends Truncate[T] {
+final case class Take[A](in: Pat[A], length: Pat[Int])
+  extends Truncate[A] {
 
-  protected def truncate[Tx](it: Stream[Tx, T#Out[Tx]], n: Int)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] =
+  protected def truncate[Tx](it: Stream[Tx, A], n: Int)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     it.take(n)
 }
 
-final case class Drop[T <: Top](in: Pat[T], length: Pat.Int)
-  extends Truncate[T] {
+final case class Drop[A](in: Pat[A], length: Pat[Int])
+  extends Truncate[A] {
 
-  protected def truncate[Tx](it: Stream[Tx, T#Out[Tx]], n: Int)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] =
+  protected def truncate[Tx](it: Stream[Tx, A], n: Int)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     it.drop(n)
 }
 
-final case class Stutter[T <: Top](n: Pat.Int, in: Pat[T])
-  extends Pattern[T] {
+final case class Stutter[A](n: Pat[Int], in: Pat[A])
+  extends Pattern[A] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = {
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     val nIt  = n .expand
     val inIt = in.expand
     (inIt zip nIt).flatMap { case (xi, ni) => Stream.fill(ni)(xi) }

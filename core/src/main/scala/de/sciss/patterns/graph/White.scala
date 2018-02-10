@@ -14,24 +14,24 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Num, Top}
+import de.sciss.patterns.Types.{Aux, Num}
 
-final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T])
-  extends Pattern[T] { pat =>
+final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
+  extends Pattern[A] { pat =>
 
   override private[patterns] def aux: List[Aux] = num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl[Tx](tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val loStream  = lo.expand(ctx, tx0)
     private[this] val hiStream  = hi.expand(ctx, tx0)
 
     private[this] implicit val r: Random[Tx] = ctx.mkRandom(pat.ref)(tx0)
 
-    private def mkState()(implicit tx: Tx): T#Out[Tx] = num.rrand(loStream.next(), hiStream.next())
+    private def mkState()(implicit tx: Tx): A = num.rrand(loStream.next(), hiStream.next())
 
-    private[this] val state     = ctx.newVar[T#Out[Tx]](null.asInstanceOf[T#Out[Tx]])
+    private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])
     private[this] val _hasNext  = ctx.newVar(false)
     private[this] val _valid    = ctx.newVar(false)
 
@@ -52,7 +52,7 @@ final case class White[T <: Top](lo: Pat[T], hi: Pat[T])(implicit num: Num[T])
         }
       }
 
-    def next()(implicit tx: Tx): T#Out[Tx] = {
+    def next()(implicit tx: Tx): A = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = state()

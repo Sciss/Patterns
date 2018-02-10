@@ -15,14 +15,13 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.numbers.IntFunctions
-import de.sciss.patterns.Types.Top
 
-final case class Pseq[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, offset : Pat.Int = 0)
-  extends Pattern[T] {
+final case class Pseq[A](list: Seq[Pat[A]], repeats: Pat[Int] = 1, offset : Pat[Int] = 0)
+  extends Pattern[A] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val repeatsIt   = repeats.expand(ctx, tx0)
     private[this] val offsetIt    = offset .expand(ctx, tx0)
     private[this] val indexed     = list.toIndexedSeq
@@ -31,7 +30,7 @@ final case class Pseq[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, offset 
     private[this] val repeatsVal  = ctx.newVar(0)
     private[this] val offsetVal   = ctx.newVar(0)
 
-    private[this] val listIt      = ctx.newVar[Stream[Tx, T#Out[Tx]]](null)
+    private[this] val listIt      = ctx.newVar[Stream[Tx, A]](null)
 
     private[this] val repeatsCnt  = ctx.newVar(0)
     private[this] val sizeCnt     = ctx.newVar(0)
@@ -39,7 +38,7 @@ final case class Pseq[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, offset 
     private[this] val _hasNext    = ctx.newVar(false)
     private[this] val _valid      = ctx.newVar(false)
 
-    private def mkListIter()(implicit tx: Tx): Stream[Tx, T#Out[Tx]] = {
+    private def mkListIter()(implicit tx: Tx): Stream[Tx, A] = {
       import IntFunctions.wrap
       val i = wrap(sizeCnt() + offsetVal(), 0, sizeVal - 1)
       indexed(i).embed
@@ -69,7 +68,7 @@ final case class Pseq[T <: Top](list: Seq[Pat[T]], repeats: Pat.Int = 1, offset 
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): T#Out[Tx] = {
+    def next()(implicit tx: Tx): A = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = listIt().next()

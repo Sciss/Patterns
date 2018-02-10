@@ -14,11 +14,9 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{IntTop, Top}
-
 import scala.collection.mutable
 
-final case class IndexOfSlice[T1 <: Top, T2 <: Top](in: Pat[T1], sub: Pat[T2], from: Pat.Int) extends Pattern[IntTop] {
+final case class IndexOfSlice[A1, A2](in: Pat[A1], sub: Pat[A2], from: Pat[Int]) extends Pattern[Int] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl[Tx](tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Int] {
@@ -64,7 +62,7 @@ final case class IndexOfSlice[T1 <: Top, T2 <: Top](in: Pat[T1], sub: Pat[T2], f
       }
       if (idx < _fromValue) return -1
 
-      val q   = mutable.Queue.empty[T1#Out[Tx]]
+      val q   = mutable.Queue.empty[A1]
       var qSz = 0
       while (qSz < subSz && inStream.hasNext) {
         val c = inStream.next()

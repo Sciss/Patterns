@@ -15,12 +15,8 @@ package de.sciss.patterns
 package graph
 package impl
 
-import de.sciss.patterns.Types.Top
-
-final class FoldLeftCarryStream[Tx, T <: Top](buf: FoldLeftCarryBuffer[Tx, T])
-  extends Stream[Tx, T#Out[Tx]] { id =>
-
-  type A = T#Out[Tx]
+final class FoldLeftCarryStream[Tx, A](buf: FoldLeftCarryBuffer[Tx, A])
+  extends Stream[Tx, A] { id =>
 
 //  def resetOuter()(implicit tx: Tx): Unit =
 //    _valid() = false

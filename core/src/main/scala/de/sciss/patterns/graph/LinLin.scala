@@ -13,19 +13,19 @@
 
 package de.sciss.patterns.graph
 
-import de.sciss.patterns.Types.{Aux, Widen, NumFrac, Top}
+import de.sciss.patterns.Types.{Aux, NumFrac, Widen}
 import de.sciss.patterns.{Context, Pat, Pattern, Stream}
 
-final case class LinLin[T1 <: Top, T2 <: Top, T <: Top](in: Pat[T1], inLo: Pat[T1], inHi: Pat[T1],
-                                                        outLo: Pat[T2], outHi: Pat[T2])
-                                                       (implicit widen: Widen[T1, T2, T], num: NumFrac[T])
-  extends Pattern[T] {
+final case class LinLin[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
+                                   outLo: Pat[A2], outHi: Pat[A2])
+                                  (implicit widen: Widen[A1, A2, A], num: NumFrac[A])
+  extends Pattern[A] {
 
   override private[patterns] def aux: List[Aux] = widen :: num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream    = in    .expand(ctx, tx0).map(widen.lift1)
     private[this] val inLoStream  = inLo  .expand(ctx, tx0).map(widen.lift1)
     private[this] val inHiStream  = inHi  .expand(ctx, tx0).map(widen.lift1)
@@ -39,7 +39,7 @@ final case class LinLin[T1 <: Top, T2 <: Top, T <: Top](in: Pat[T1], inLo: Pat[T
       inLoStream .hasNext && inHiStream .hasNext &&
       outLoStream.hasNext && outHiStream.hasNext
 
-    def next()(implicit tx: Tx): T#Out[Tx] = {
+    def next()(implicit tx: Tx): A = {
       if (!hasNext) Stream.exhausted()
       val inVal     = inStream    .next()
       val inLoVal   = inLoStream  .next()
@@ -48,7 +48,7 @@ final case class LinLin[T1 <: Top, T2 <: Top, T <: Top](in: Pat[T1], inLo: Pat[T
       val outHiVal  = outHiStream .next()
 
       // (inVal - inLoVal) / (inHiVal - inLoVal) * (outHiVal - outLoVal) + outLoVal
-      num.plus[Tx](num.times[Tx](num.div[Tx](num.minus[Tx](inVal, inLoVal), num.minus[Tx](inHiVal, inLoVal)),
+      num.plus(num.times(num.div(num.minus(inVal, inLoVal), num.minus(inHiVal, inLoVal)),
         num.minus(outHiVal, outLoVal)), outLoVal)
     }
   }

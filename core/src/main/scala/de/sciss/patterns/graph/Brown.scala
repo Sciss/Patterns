@@ -14,18 +14,18 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Num, Top, Widen}
+import de.sciss.patterns.Types.{Aux, Num, Widen}
 
-final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1], step: Pat[T2])
-                                                      (implicit protected val widen: Widen[T1, T2, T], num: Num[T])
-  extends Pattern[T] { pat =>
+final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
+                                 (implicit protected val widen: Widen[A1, A2, A], num: Num[A])
+  extends Pattern[A] { pat =>
 
   override private[patterns] def aux: List[Aux] = widen :: num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, T#Out[Tx]] = new StreamImpl(tx)
+  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends Stream[Tx, T#Out[Tx]] {
+    extends Stream[Tx, A] {
 
     // println("Brown.iterator")
     // (new Exception).fillInStackTrace().printStackTrace()
@@ -36,12 +36,12 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
 
     private[this] implicit val r: Random[Tx] = ctx.mkRandom(pat.ref)(tx0)
 
-    private[this] val state     = ctx.newVar[T#Out[Tx]](null.asInstanceOf[T#Out[Tx]])
+    private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])
     private[this] val _hasNext  = ctx.newVar(false)
     private[this] val _valid    = ctx.newVar(false)
 
     @inline
-    private def calcNext(cur: T#Out[Tx], step: T#Out[Tx])(implicit r: Random[Tx], tx: Tx): T#Out[Tx] =
+    private def calcNext(cur: A, step: A)(implicit r: Random[Tx], tx: Tx): A =
       num.plus(cur, num.rand2(step))
 
     private def validate()(implicit tx: Tx): Unit =
@@ -61,7 +61,7 @@ final case class Brown[T1 <: Top, T2 <: Top, T <: Top](lo: Pat[T1], hi: Pat[T1],
     def reset()(implicit tx: Tx): Unit =
       _valid() = false
 
-    def next()(implicit tx: Tx): T#Out[Tx] = {
+    def next()(implicit tx: Tx): A = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = state()

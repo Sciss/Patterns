@@ -19,7 +19,6 @@ import de.sciss.lucre.stm.impl.ObjSerializer
 import de.sciss.lucre.stm.{Copy, Elem, NoSys, Obj, Sys}
 import de.sciss.lucre.{event => evt}
 import de.sciss.patterns.{Graph, Pat}
-import de.sciss.patterns.Types.Top
 import de.sciss.serial.{DataInput, DataOutput, Serializer}
 import de.sciss.synth.proc.impl.CodeImpl
 
@@ -131,9 +130,9 @@ object PatternImpl {
     def id: Int = Pattern.Code.id
     def binding = Option.empty[String]
 
-    def wrap(in: Unit)(fun: => Any): Graph[_] = Graph[Top] {
+    def wrap(in: Unit)(fun: => Any): Graph[_] = Graph {
       fun match {
-        case ok: Pat[_] => ok.asInstanceOf[Pat[Top]]
+        case ok: Pat[_] => ok // .asInstanceOf[Pat[Top]]
         case other => throw new IllegalArgumentException(s"Not a pattern: $other")
       }
     }

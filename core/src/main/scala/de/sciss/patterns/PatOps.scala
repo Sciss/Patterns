@@ -13,116 +13,116 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Widen, Num, NumFrac, Ord, Top, Tuple2Top}
+import de.sciss.patterns.Types.{Num, NumFrac, Ord, Widen}
 import de.sciss.patterns.graph._
 
-final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
-  def take(length: Pat.Int): Pat[T] = Take(x, length)
-  def drop(length: Pat.Int): Pat[T] = Drop(x, length)
+final class PatOps[A](private val x: Pat[A]) extends AnyVal {
+  def take(length: Pat[Int]): Pat[A] = Take(x, length)
+  def drop(length: Pat[Int]): Pat[A] = Drop(x, length)
 
-  def head: Pat[T] = take(1)
-  def tail: Pat[T] = drop(1)
+  def head: Pat[A] = take(1)
+  def tail: Pat[A] = drop(1)
 
-  def splitAt(index: Pat.Int): (Pat[T], Pat[T]) = (take(index), drop(index))
+  def splitAt(index: Pat[Int]): (Pat[A], Pat[A]) = (take(index), drop(index))
 
   // unary
 
-  def differentiate(implicit num: Num[T]): Pat[T] = Differentiate(x)
+  def differentiate(implicit num: Num[A]): Pat[A] = Differentiate(x)
 
-  def sum(implicit num: Num[T]): Pat[T] = Sum(x)
+  def sum(implicit num: Num[A]): Pat[A] = Sum(x)
 
   // binary
 
-  def ++[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2]): Pat[T2] /* Cat[T, T1, T2] */ =
+  def ++[A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2]): Pat[A2] /* Cat[T, T1, T2] */ =
     Cat(x, that)
 
-  def + [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
-    val op = BinaryOp.Plus[T2]()
+  def + [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
+    val op = BinaryOp.Plus[A2]()
     BinaryOp(op, x, that)
   }
 
-  def - [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
-    val op = BinaryOp.Minus[T2]()
+  def - [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
+    val op = BinaryOp.Minus[A2]()
     BinaryOp(op, x, that)
   }
 
-  def * [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
-    val op = BinaryOp.Times[T2]()
+  def * [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
+    val op = BinaryOp.Times[A2]()
     BinaryOp(op, x, that)
   }
 
-  def % [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
-    val op = BinaryOp.%[T2]()
+  def % [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
+    val op = BinaryOp.%[A2]()
     BinaryOp(op, x, that)
   }
 
-  def mod[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
-    val op = BinaryOp.Mod[T2]()
+  def mod[A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
+    val op = BinaryOp.Mod[A2]()
     BinaryOp(op, x, that)
   }
 
-  def roundTo[T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], num: Num[T2]): Pat[T2] = {
-    val op = BinaryOp.RoundTo[T2]()
+  def roundTo[A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
+    val op = BinaryOp.RoundTo[A2]()
     BinaryOp(op, x, that)
   }
 
-  def <  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
-    val op = BinaryOp.Lt[T2]()
+  def <  [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], ord: Ord[A2]): Pat[Boolean] = {
+    val op = BinaryOp.Lt[A2]()
     BinaryOp(op, x, that)
   }
 
-  def <= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
-    val op = BinaryOp.Leq[T2]()
+  def <= [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], ord: Ord[A2]): Pat[Boolean] = {
+    val op = BinaryOp.Leq[A2]()
     BinaryOp(op, x, that)
   }
 
-  def >  [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
-    val op = BinaryOp.Gt[T2]()
+  def >  [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], ord: Ord[A2]): Pat[Boolean] = {
+    val op = BinaryOp.Gt[A2]()
     BinaryOp(op, x, that)
   }
 
-  def >= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2], ord: Ord[T2]): Pat.Boolean = {
-    val op = BinaryOp.Geq[T2]()
+  def >= [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], ord: Ord[A2]): Pat[Boolean] = {
+    val op = BinaryOp.Geq[A2]()
     BinaryOp(op, x, that)
   }
 
-  def sig_== [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2]): Pat.Boolean = {
-    val op = BinaryOp.Eq[T2]()
+  def sig_== [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2]): Pat[Boolean] = {
+    val op = BinaryOp.Eq[A2]()
     BinaryOp(op, x, that)
   }
 
-  def sig_!= [T1 <: Top, T2 <: Top](that: Pat[T1])(implicit br: Widen[T, T1, T2]): Pat.Boolean = {
-    val op = BinaryOp.Neq[T2]()
+  def sig_!= [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2]): Pat[Boolean] = {
+    val op = BinaryOp.Neq[A2]()
     BinaryOp(op, x, that)
   }
 
-  def linlin[T1 <: Top, T2 <: Top](inLo: Pat[T], inHi: Pat[T], outLo: Pat[T1], outHi: Pat[T1])
-                                  (implicit br: Widen[T, T1, T2], num: NumFrac[T2]): Pat[T2] =
-    LinLin[T, T1, T2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
+  def linlin[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
+                    (implicit br: Widen[A, A1, A2], num: NumFrac[A2]): Pat[A2] =
+    LinLin[A, A1, A2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
 
-  def stutter(n: Pat.Int): Pat[T] = Stutter(n, x)
+  def stutter(n: Pat[Int]): Pat[A] = Stutter(n, x)
 
-  def distinct: Pat[T] = Distinct(x)
+  def distinct: Pat[A] = Distinct(x)
 
   /** Same as `length`. */
-  def size    : Pat.Int = Length(x)
-  def length  : Pat.Int = Length(x)
+  def size    : Pat[Int]  = Length(x)
+  def length  : Pat[Int]  = Length(x)
 
-  def indices : Pat.Int = Indices(x)
+  def indices : Pat[Int]  = Indices(x)
 
-  def sorted(implicit ord: Ord[T]): Pat[T] = Sorted(x)
+  def sorted(implicit ord: Ord[A]): Pat[A] = Sorted(x)
 
   /** Short-cut for `grouped(1)`. For example,
     * `Pat(1, 2, 3)` becomes `Pat(Pat(1), Pat(2), Pat(3))`.
     */
-  def bubble: Pat[Pat[T]] = grouped(1)
+  def bubble: Pat[Pat[A]] = grouped(1)
 
-  def grouped(size: Pat.Int): Pat[Pat[T]] = Grouped(x, size)
+  def grouped(size: Pat[Int]): Pat[Pat[A]] = Grouped(x, size)
 
-  def bubbleFilter[A <: Top](f: Pat[T] => Pat.Boolean): Pat[T] =
+  def bubbleFilter(f: Pat[A] => Pat[Boolean]): Pat[A] =
     bubble.filter(f).flatten
 
-  def indexOfSlice[A <: Top](that: Pat[A]): Pat.Int = indexOfSlice(that, 0)
+  def indexOfSlice[B](that: Pat[B]): Pat[Int] = indexOfSlice(that, 0)
 
   /** Finds first index after or at a start index where this pattern
     * contains a given other pattern as a slice.
@@ -132,12 +132,12 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     *  @return  the first index `>= from` such that the elements of this pattern starting at this index
     *           match the elements of pattern `that`, or `-1` of no such subsequence exists.
     */
-  def indexOfSlice[A <: Top](that: Pat[A], from: Pat.Int): Pat.Int =
+  def indexOfSlice[B](that: Pat[B], from: Pat[Int]): Pat[Int] =
     IndexOfSlice(x, that, from)
 
-  def sliding(size: Pat.Int): Pat[Pat[T]] = sliding(size, step = 1)
+  def sliding(size: Pat[Int]): Pat[Pat[A]] = sliding(size, step = 1)
 
-  def sliding(size: Pat.Int, step: Pat.Int): Pat[Pat[T]] = Sliding(x, size = size, step = step)
+  def sliding(size: Pat[Int], step: Pat[Int]): Pat[Pat[A]] = Sliding(x, size = size, step = step)
 
 //  /** currently broken
 //    *
@@ -168,21 +168,21 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
 //  }
 
   /** Short-hand for `.bubble.map.flatten` */
-  def bubbleMap[A <: Top](f: Pat[T] => Pat[A]): Pat[A] =
+  def bubbleMap(f: Pat[A] => Pat[A]): Pat[A] =
     bubble.map(f).flatten
 
-  def combinations(n: Pat.Int): Pat[Pat[T]] = Combinations(x, n)
+  def combinations(n: Pat[Int]): Pat[Pat[A]] = Combinations(x, n)
 
-  def recur(): Pat[T] = Recur(x)
+  def recur(): Pat[A] = Recur(x)
 
-  def zip[A <: Top](that: Pat[A]): Pat.Tuple2[T, A] = Zip2(x, that)
+  def zip[B](that: Pat[B]): Pat[(A, B)] = Zip2(x, that)
 
-  def unzip[A <: Top, B <: Top](implicit ev: T <:< Tuple2Top[A, B]): (Pat[A], Pat[B]) = {
-    val tup = x.asInstanceOf[Pat.Tuple2[A, B]]
+  def unzip[A1, A2](implicit ev: A <:< (A1, A2)): (Pat[A1], Pat[A2]) = {
+    val tup = x.asInstanceOf[Pat[(A1, A2)]]
     (Tuple2_1(tup), Tuple2_2(tup))
   }
 
-  def poll(label: Pat.String = "poll", gate: Pat.Boolean = true): Pat[T] =
+  def poll(label: Pat[String] = "poll", gate: Pat[Boolean] = true): Pat[A] =
     Poll(x, gate = gate, label = label)
 
   /** "Taps" into this pattern by appending a side-effect. The returned
@@ -194,15 +194,15 @@ final class PatOps[T <: Top](private val x: Pat[T]) extends AnyVal {
     *
     * Similar to `runWith` for standard Scala collections.
     */
-  def <| [A <: Top](f: Pat[T] => Pat[A]): Pat[T] = Tap(x, f(x))
+  def <| [B](f: Pat[A] => Pat[B]): Pat[A] = Tap(x, f(x))
 }
 
-final class PatNestedOps[T <: Top](private val x: Pat[Pat[T]]) extends AnyVal {
+final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
   /** Similar to a monadic `map` but with the constraint
     * the element type must be a (nested) pattern.
     */
-  def map[B <: Top](f: Pat[T] => Pat[B]): Pat[Pat[B]] = {
-    val it    = Graph.builder.allocToken[T]()
+  def map[B](f: Pat[A] => Pat[B]): Pat[Pat[B]] = {
+    val it    = Graph.builder.allocToken[A]()
     val inner = Graph {
       f(it)
     }
@@ -212,18 +212,18 @@ final class PatNestedOps[T <: Top](private val x: Pat[Pat[T]]) extends AnyVal {
   /** Similar to a monadic `flatMap` but with the constraint
     * the element type must be a (nested) pattern.
     */
-  def flatMap[B <: Top](f: Pat[T] => Pat[B]): Pat[B] = {
-    val it    = Graph.builder.allocToken[T]()
+  def flatMap[B](f: Pat[A] => Pat[B]): Pat[B] = {
+    val it    = Graph.builder.allocToken[A]()
     val inner = Graph {
       f(it)
     }
     FlatMap(x, it, inner)
   }
 
-  def flatten: Pat[T] = Flatten(x)
+  def flatten: Pat[A] = Flatten(x)
 
-  def filter(f: Pat[T] => Pat.Boolean): Pat[Pat[T]] = {
-    val it    = Graph.builder.allocToken[T]()
+  def filter(f: Pat[A] => Pat[Boolean]): Pat[Pat[A]] = {
+    val it    = Graph.builder.allocToken[A]()
     val inner = Graph {
       f(it)
     }
@@ -232,19 +232,19 @@ final class PatNestedOps[T <: Top](private val x: Pat[Pat[T]]) extends AnyVal {
 
   // def /: [B <: Top](z: Pat[B])(op: (Pat[B], Pat[T]) => Pat[B]): Pat[B] = foldLeft(z)(op)
 
-  def foldLeft[B <: Top](z: Pat[B])(op: (Pat[B], Pat[T]) => Pat[B]): Pat[B] = {
+  def foldLeft[B](z: Pat[B])(op: (Pat[B], Pat[A]) => Pat[B]): Pat[B] = {
     val b       = Graph.builder
-    val itIn    = b.allocToken[T]()
+    val itIn    = b.allocToken[A]()
     val itCarry = b.allocToken[B]()
     val inner   = Graph {
       op(itCarry, itIn)
     }
-    FoldLeft[T, B](outer = x, z = z, itIn = itIn, itCarry = itCarry, inner = inner)
+    FoldLeft[A, B](outer = x, z = z, itIn = itIn, itCarry = itCarry, inner = inner)
   }
 
-  def sortWith(lt: (Pat[T], Pat[T]) => Pat.Boolean): Pat[Pat[T]] = {
+  def sortWith(lt: (Pat[A], Pat[A]) => Pat[Boolean]): Pat[Pat[A]] = {
     val b     = Graph.builder
-    val it    = b.allocToken[Tuple2Top[T, T]]()
+    val it    = b.allocToken[(A, A)]()
     val inner = Graph {
       val (it1, it2) = it.unzip
       lt(it1, it2)

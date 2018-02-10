@@ -13,14 +13,12 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.CTop
-
 object Event {
-  final case class Out(map: Map[String, Any]) {
-    def + (kv: (String, Any)): Out = copy(map = map + kv)
-  }
+//  final case class Out(map: Map[String, Any]) {
+//    def + (kv: (String, Any)): Out = copy(map = map + kv)
+//  }
 
-  private def getOrElseDouble(out: Out, key: String, default: => Double): Double = {
+  private def getOrElseDouble(out: Event, key: String, default: => Double): Double = {
     val opt = out.map.get(key)
     opt match {
       case Some(d: Double)  => d
@@ -60,7 +58,7 @@ object Event {
   /** SoundProcesses specific */
   final val keyValue      = "value"
 
-  def scale(out: Out): Scale =
+  def scale(out: Event): Scale =
     out.map.get(keyScale).fold(Scale.default) {
       case Some(s: Scale) => s
       case _              => Scale.default
@@ -68,45 +66,48 @@ object Event {
 
   import de.sciss.numbers.Implicits._
 
-  def mTranspose  (out: Out): Double = getOrElseDouble(out, keyMTranspose , 0)
-  def gTranspose  (out: Out): Double = getOrElseDouble(out, keyGTranspose , 0.0)
-  def cTranspose  (out: Out): Double = getOrElseDouble(out, keyCTranspose , 0.0)
+  def mTranspose  (out: Event): Double = getOrElseDouble(out, keyMTranspose , 0)
+  def gTranspose  (out: Event): Double = getOrElseDouble(out, keyGTranspose , 0.0)
+  def cTranspose  (out: Event): Double = getOrElseDouble(out, keyCTranspose , 0.0)
 
-  def octave      (out: Out): Double = getOrElseDouble(out, keyOctave     , 5.0)
-  def root        (out: Out): Double = getOrElseDouble(out, keyRoot       , 0.0)
-  def degree      (out: Out): Double = getOrElseDouble(out, keyDegree     , 0)
+  def octave      (out: Event): Double = getOrElseDouble(out, keyOctave     , 5.0)
+  def root        (out: Event): Double = getOrElseDouble(out, keyRoot       , 0.0)
+  def degree      (out: Event): Double = getOrElseDouble(out, keyDegree     , 0)
 
-  def detune      (out: Out): Double = getOrElseDouble(out, keyDetune     , 0.0)
-  def harmonic    (out: Out): Double = getOrElseDouble(out, keyHarmonic   , 1.0)
+  def detune      (out: Event): Double = getOrElseDouble(out, keyDetune     , 0.0)
+  def harmonic    (out: Event): Double = getOrElseDouble(out, keyHarmonic   , 1.0)
 
-  def note        (out: Out): Double = getOrElseDouble(out, keyNote       , {
+  def note        (out: Event): Double = getOrElseDouble(out, keyNote       , {
     val _scale = scale(out)
     _scale.degreeToKey(degree(out) + mTranspose(out))
   })
 
-  def midiNote    (out: Out): Double = getOrElseDouble(out, keyMidiNote   , {
+  def midiNote    (out: Event): Double = getOrElseDouble(out, keyMidiNote   , {
     val _scale = scale(out)
     val temp = (note(out) + gTranspose(out) + root(out)) / _scale.stepsPerOctave + octave(out) - 5.0
     temp * (12.0 * _scale.octaveRatio.log2) + 60.0
   })
 
-  def detunedFreq (out: Out): Double = getOrElseDouble(out, keyDetunedFreq, freq(out) + detune(out))
+  def detunedFreq (out: Event): Double = getOrElseDouble(out, keyDetunedFreq, freq(out) + detune(out))
 
-  def freq        (out: Out): Double = getOrElseDouble(out, keyFreq       , {
+  def freq        (out: Event): Double = getOrElseDouble(out, keyFreq       , {
     (midiNote(out) + cTranspose(out)).midicps * harmonic(out)
   })
 
-  def dur         (out: Out): Double = getOrElseDouble(out, keyDur        , 0.0)
-  def stretch     (out: Out): Double = getOrElseDouble(out, keyStretch    , 1.0)
-  def legato      (out: Out): Double = getOrElseDouble(out, keyLegato     , 0.8)
-  def sustain     (out: Out): Double = getOrElseDouble(out, keySustain    , dur(out) * legato(out) * stretch(out))
+  def dur         (out: Event): Double = getOrElseDouble(out, keyDur        , 0.0)
+  def stretch     (out: Event): Double = getOrElseDouble(out, keyStretch    , 1.0)
+  def legato      (out: Event): Double = getOrElseDouble(out, keyLegato     , 0.8)
+  def sustain     (out: Event): Double = getOrElseDouble(out, keySustain    , dur(out) * legato(out) * stretch(out))
 
-  def delta       (out: Out): Double = getOrElseDouble(out, keyDelta      , stretch(out) * dur(out))
+  def delta       (out: Event): Double = getOrElseDouble(out, keyDelta      , stretch(out) * dur(out))
 
-  def db          (out: Out): Double = getOrElseDouble(out, keyDb         , -20.0)
-  def amp         (out: Out): Double = getOrElseDouble(out, keyAmp        , db(out).dbamp)
-  def pan         (out: Out): Double = getOrElseDouble(out, keyPan        , 0.0)
+  def db          (out: Event): Double = getOrElseDouble(out, keyDb         , -20.0)
+  def amp         (out: Event): Double = getOrElseDouble(out, keyAmp        , db(out).dbamp)
+  def pan         (out: Event): Double = getOrElseDouble(out, keyPan        , 0.0)
 }
-trait Event extends CTop {
-  type COut = Event.Out // Map[String, _]
+//trait Event extends CTop {
+//  type COut = Event.Out // Map[String, _]
+//}
+final case class Event(map: Map[String, Any]) {
+  def + (kv: (String, Any)): Event = copy(map = map + kv)
 }
