@@ -58,7 +58,10 @@ object Stream {
     private[this] val count = ctx.newVar(0)
     private[this] val xs    = elems.toIndexedSeq
 
-    // override def toString = s"$simpleString; count = $count"
+    private[this] lazy val simpleString =
+      elems.mkString("Stream(", ", ", ")")
+
+    override def toString = s"$simpleString; count = $count"
 
     def reset()(implicit tx: Tx): Unit    = count() = 0
     def hasNext(implicit tx: Tx): Boolean = count() < xs.size

@@ -70,9 +70,9 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
           val z0 = zStream.next()
           buf.advance(z0)
           val itInStreams = ctx.getStreams(refIn)
-          itInStreams.foreach {
-            case m: MapItStream[Tx, _] => m.advance()
-          }
+//          itInStreams.foreach {
+//            case m: MapItStream[Tx, _] => m.advance()
+//          }
           while (itInStream.hasNext && innerStream.hasNext) {
             val curr = innerStream.next()
             buf.advance(curr)
