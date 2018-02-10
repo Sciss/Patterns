@@ -233,13 +233,13 @@ final class PatNestedOps[T <: Top](private val x: Pat[Pat[T]]) extends AnyVal {
   // def /: [B <: Top](z: Pat[B])(op: (Pat[B], Pat[T]) => Pat[B]): Pat[B] = foldLeft(z)(op)
 
   def foldLeft[B <: Top](z: Pat[B])(op: (Pat[B], Pat[T]) => Pat[B]): Pat[B] = {
-    val b     = Graph.builder
-    val it    = b.allocToken[Tuple2Top[T, B]]()
-    val inner = Graph {
-      val (itT, itB) = it.unzip
-      op(itB, itT)
+    val b       = Graph.builder
+    val itIn    = b.allocToken[T]()
+    val itCarry = b.allocToken[B]()
+    val inner   = Graph {
+      op(itCarry, itIn)
     }
-    FoldLeft[T, B](x, z, it, inner)
+    FoldLeft[T, B](outer = x, z = z, itIn = itIn, itCarry = itCarry, inner = inner)
   }
 
   def sortWith(lt: (Pat[T], Pat[T]) => Pat.Boolean): Pat[Pat[T]] = {

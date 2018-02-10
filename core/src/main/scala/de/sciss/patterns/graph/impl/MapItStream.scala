@@ -42,9 +42,10 @@ final class MapItStream[Tx, T <: Top](outer: Pat[Pat[T]], tx0: Tx)(implicit ctx:
     logStream(s"$simpleString.advance(): outerStream.hasNext = $ohn")
     if (ohn) {
       val inValue   = outerStream.next()
-      logStream(s"$simpleString.advance(): inValue.hasNext = $ohn")
+      val ihn       = inValue.hasNext
+      logStream(s"$simpleString.advance(): inValue.hasNext = $ihn")
       inStream()    = inValue
-      _hasNext()    = inValue.hasNext
+      _hasNext()    = ihn
     }
   }
 

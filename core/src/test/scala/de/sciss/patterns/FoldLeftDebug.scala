@@ -2,7 +2,7 @@ package de.sciss.patterns
 
 class FoldLeftDebug extends PatSpec {
   "FoldLeft" should work in {
-    //    showStreamLog = true
+    showStreamLog = true
 
     val in  = Seq(Seq(0, 6, 7), Seq(2), Seq(1, 3, 5))
 

@@ -14,10 +14,10 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Top, Tuple2Top}
-import de.sciss.patterns.graph.impl.FoldLeftItStream
+import de.sciss.patterns.Types.Top
+import de.sciss.patterns.graph.impl.{FoldLeftCarryBuffer, FoldLeftCarryStream, MapItStream}
 
-final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], it: It[Tuple2Top[T1, T]],
+final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], itIn: It[T1], itCarry: It[T],
                                                inner: Graph[T])
   extends Pattern[T] {
 
@@ -25,37 +25,61 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
     new StreamImpl[Tx](tx)
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, T#Out[Tx]] {
-    @transient final private[this] lazy val ref = new AnyRef
+    @transient final private[this] lazy val refIn     = new AnyRef
+    @transient final private[this] lazy val refCarry  = new AnyRef
 
-    private def mkItStream(implicit tx: Tx) = {
-      val res = new FoldLeftItStream[Tx, T1, T](outer, inner, z, tx)
-      ctx.addStream(ref, res)
-      res
-    }
+    ctx.provideOuterStream[B](itIn   .token, mkItInStream   (_))(tx0)
+    ctx.provideOuterStream[A](itCarry.token, mkItCarryStream(_))(tx0)
 
-    ctx.provideOuterStream[(T1#Out[Tx], T#Out[Tx])](it.token, mkItStream(_))(tx0)
-
+    private[this] val buf           = new FoldLeftCarryBuffer[Tx, T](tx0)
     // because `inner` is not guaranteed to depend on `It`, we must
     // pro-active create one instance of the it-stream which is used
     // as an additional constraint to determine `hasNext`!
-    private[this] val itStream    = mkItStream(tx0)
+    private[this] val itInStream    = mkItInStream(tx0)
+    private[this] val innerStream   = inner.expand(ctx, tx0)
+    private[this] val zStream       = z    .expand(ctx, tx0)
 
     private[this] val _valid        = ctx.newVar(false)
     private[this] val _hasNext      = ctx.newVar(false)
+
+    type A = T #Out[Tx]
+    type B = T1#Out[Tx]
+
+    private def mkItInStream(implicit tx: Tx) = {
+      logStream("FoldLeft.iterator.mkItInStream")
+      val res = new MapItStream[Tx, T1](outer, tx)
+      ctx.addStream(refIn, res)
+      res
+    }
+
+    private def mkItCarryStream(implicit tx: Tx) = {
+      logStream("FoldLeft.iterator.mkItCarryStream")
+      val res = new FoldLeftCarryStream[Tx, T](buf)
+      ctx.addStream(refCarry, res)
+      buf.addIt(res)
+      res
+    }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
         logStream("FoldLeft.iterator.validate()")
         _valid() = true
-        val hn = itStream.hasNext
-        _hasNext() = hn
-        if (hn) {
-          val itStreams = ctx.getStreams(ref)
-          while (itStream.hasNext) {
-//            itStream.next()
-            itStreams.foreach {
-              case m: FoldLeftItStream[Tx, T1, T] => m.advance()
+        val zhn = zStream.hasNext
+        _hasNext() = zhn
+        if (zhn) {
+          val z0 = zStream.next()
+          buf.advance(z0)
+          val itInStreams = ctx.getStreams(refIn)
+          itInStreams.foreach {
+            case m: MapItStream[Tx, _] => m.advance()
+          }
+          while (itInStream.hasNext && innerStream.hasNext) {
+            val curr = innerStream.next()
+            buf.advance(curr)
+            itInStreams.foreach {
+              case m: MapItStream[Tx, _] => m.advance()
             }
+            innerStream.reset()
           }
 //          _hasNext() = true
         }
@@ -64,8 +88,9 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
     def reset()(implicit tx: Tx): Unit = {
       logStream("FoldLeft.iterator.reset()")
       _valid() = false
-      ctx.getStreams(ref).foreach {
-        case m: FoldLeftItStream[Tx, T1, T] => m.resetOuter()
+      buf.clear()
+      ctx.getStreams(refIn).foreach {
+        case m: MapItStream[Tx, _] => m.resetOuter()
       }
     }
 
@@ -74,9 +99,9 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): T#Out[Tx] = {
+    def next()(implicit tx: Tx): A = {
       if (!hasNext) Stream.exhausted()
-      val res = itStream.result
+      val res = buf.result
       logStream(s"FoldLeft.iterator.next() = $res")
       _hasNext() = false
       res
