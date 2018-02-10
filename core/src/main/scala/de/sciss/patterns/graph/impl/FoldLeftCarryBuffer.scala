@@ -30,10 +30,9 @@ final class FoldLeftCarryBuffer[Tx, T <: Top](tx0: Tx)(implicit ctx: Context[Tx]
     offsetMap() = om0 + (id -> 0)
   }
 
-  def result(implicit tx: Tx): A = {
-    val xs  = zValueRef()
-    val res = if (xs.isEmpty) Stream.exhausted() else xs.last
-    logStream(s"FoldLeftCarryBuffer.result. buffer size = ${xs.size}, res = $res")
+  def result(implicit tx: Tx): Vector[A] = {
+    val res = zValueRef()
+    logStream(s"FoldLeftCarryBuffer.result = $res")
     res
   }
 
@@ -43,9 +42,10 @@ final class FoldLeftCarryBuffer[Tx, T <: Top](tx0: Tx)(implicit ctx: Context[Tx]
     skipped()   = 0
   }
 
-  def advance(x: A)(implicit tx: Tx): Unit = {
-    val z0 = zValueRef()
-    zValueRef() = z0 :+ x
+  def advance(x: Vector[A])(implicit tx: Tx): Unit = {
+    logStream(s"FoldLeftCarryBuffer.advance($x)")
+    clear()
+    zValueRef() = x
   }
 
   def hasNext(id: Stream[Tx, _])(implicit tx: Tx): Boolean = {

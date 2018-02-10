@@ -40,7 +40,7 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
     private[this] val zStream       = z    .expand(ctx, tx0)
 
     private[this] val _valid        = ctx.newVar(false)
-    private[this] val _hasNext      = ctx.newVar(false)
+    private[this] val _result       = ctx.newVar[Stream[Tx, A]](null)
 
     type A = T #Out[Tx]
     type B = T1#Out[Tx]
@@ -60,29 +60,31 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
       res
     }
 
+    private def captureZ(in: Stream[Tx, A])(implicit tx: Tx): Vector[A] = {
+      val bi = Vector.newBuilder[A]
+      while (in.hasNext) {
+        val v = in.next()
+        bi += v
+      }
+      bi.result()
+    }
+
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
         logStream("FoldLeft.iterator.validate()")
         _valid() = true
-        val zhn = zStream.hasNext
-        _hasNext() = zhn
-        if (zhn) {
-          val z0 = zStream.next()
-          buf.advance(z0)
-          val itInStreams = ctx.getStreams(refIn)
-//          itInStreams.foreach {
-//            case m: MapItStream[Tx, _] => m.advance()
-//          }
-          while (itInStream.hasNext && innerStream.hasNext) {
-            val curr = innerStream.next()
-            buf.advance(curr)
-            itInStreams.foreach {
-              case m: MapItStream[Tx, _] => m.advance()
-            }
-            innerStream.reset()
+        val z0 = captureZ(zStream)
+        buf.advance(z0)
+        val itInStreams = ctx.getStreams(refIn)
+        while (itInStream.hasNext && innerStream.hasNext) {
+          val curr = captureZ(innerStream)
+          buf.advance(curr)
+          itInStreams.foreach {
+            case m: MapItStream[Tx, _] => m.advance()
           }
-//          _hasNext() = true
+          innerStream.reset()
         }
+        _result() = Stream(buf.result: _*)
       }
 
     def reset()(implicit tx: Tx): Unit = {
@@ -96,14 +98,13 @@ final case class FoldLeft[T1 <: Top, T <: Top](outer: Pat[Pat[T1]], z: Pat[T], i
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()
-      _hasNext()
+      _result().hasNext
     }
 
     def next()(implicit tx: Tx): A = {
       if (!hasNext) Stream.exhausted()
-      val res = buf.result
+      val res = _result().next()
       logStream(s"FoldLeft.iterator.next() = $res")
-      _hasNext() = false
       res
     }
   }
