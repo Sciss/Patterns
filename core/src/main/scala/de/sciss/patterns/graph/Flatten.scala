@@ -1,5 +1,5 @@
 /*
- *  PatPat.scala
+ *  Flatten.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.

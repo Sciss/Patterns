@@ -41,7 +41,7 @@ package object patterns {
     xs.map(lift)
 
   implicit def seqPat[A, T <: Top](xs: Seq[A])(implicit lift: A => Pat[T]): Pat[Pat[T]] =
-    PatPat(xs.map(lift))
+    PatPat(xs.map(lift): _*)
 
   private lazy val logHeader = new SimpleDateFormat("[d MMM yyyy, HH:mm''ss.SSS] 'pattern' - ", Locale.US)
 
