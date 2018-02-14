@@ -59,8 +59,8 @@ final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends 
           i += 1
         }
         val vecNew    = b.result()
-        val inner     = Stream[Tx, A](vecNew: _*)
-        innerStream() = ??? // inner
+        val inner     = Pat(vecNew: _*) // Stream[Tx, A](vecNew: _*)
+        innerStream() = inner
         val ihn       = sizeVal > 0
         _hasNext()    = ihn
         if (ihn) {

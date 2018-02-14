@@ -51,8 +51,8 @@ final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] 
           b += inStream.next()
           i += 1
         }
-        val inner     = Stream[Tx, A](b.result: _*)
-        innerStream() = ??? // inner
+        val inner     = Pat(b.result: _*) // Stream[Tx, A](b.result: _*)
+        innerStream() = inner
         _hasNext()    = sizeVal > 0
       }
     }

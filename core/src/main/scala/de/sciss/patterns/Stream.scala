@@ -22,6 +22,8 @@ object Stream {
     continually(elem).take(n) // XXX TODO -- more efficient
 
   def empty[Tx, A]: Stream[Tx, A] = new Stream[Tx, A] {
+    override def toString = "Stream.empty"
+
     def reset()(implicit tx: Tx): Unit    = ()
     def hasNext(implicit tx: Tx): Boolean = false
     def next ()(implicit tx: Tx): A       = Stream.exhausted()
@@ -30,6 +32,8 @@ object Stream {
 //  def reverseIterator[Tx, A](that: Iterable[A]): Stream[Tx, A] = ...
 
   def continually[Tx, A](elem: => A): Stream[Tx, A] = new Stream[Tx, A] {
+    override def toString = s"Stream.continually@${hashCode().toHexString}"
+
     def reset()(implicit tx: Tx): Unit    = ()
     def hasNext(implicit tx: Tx): Boolean = true
     def next ()(implicit tx: Tx): A       = elem

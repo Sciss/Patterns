@@ -22,7 +22,6 @@ final class FoldLeftCarryBuffer[Tx, A](tx0: Tx)(implicit ctx: Context[Tx]) {
 
   def addIt(id: Stream[Tx, _])(implicit tx: Tx): Unit = {
     val om0 = offsetMap()
-    if (om0.nonEmpty) ??? // for this to work, we must ensure that `A != Stream[Tx, _]`
     offsetMap() = om0 + (id -> 0)
   }
 

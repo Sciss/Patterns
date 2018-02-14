@@ -86,8 +86,8 @@ final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Graph[A])
           b += innerStream.next()
           i += 1
         }
-        val inner   = Stream[Tx, A](b.result: _*)
-        mapStream() = ??? // inner
+        val inner   = Pat(b.result: _*) // Stream[Tx, A](b.result: _*)
+        mapStream() = inner
         _hasNext()  = true // inner.hasNext
       }
     }

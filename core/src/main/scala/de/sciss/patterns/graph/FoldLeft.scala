@@ -69,6 +69,7 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
       if (!_valid()) {
         logStream("FoldLeft.iterator.validate()")
         _valid() = true
+        ??? // the following fails for constants which produce an infinite stream
         val z0 = captureZ(zStream)
         buf.advance(z0)
         val itInStreams = ctx.getStreams(refIn)

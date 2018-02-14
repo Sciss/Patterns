@@ -68,7 +68,7 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Graph[Boole
           }
         }
         _hasSorted() = true
-        sortedIt() = Stream(sorted.map(xs => ??? /* Stream(xs: _*) */): _*)
+        sortedIt() = Stream(sorted.map(xs => Pat(xs: _*) /* Stream(xs: _*) */): _*)
       }
     }
 

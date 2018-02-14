@@ -86,7 +86,7 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
         numbers() = _numbers
       }
 
-      ??? // Pat(buf.result(): _*)
+      Pat(buf.result(): _*)
     }
 
     def reset()(implicit tx: Tx): Unit =
