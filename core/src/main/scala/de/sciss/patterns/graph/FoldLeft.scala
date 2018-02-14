@@ -38,7 +38,15 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
 
     private[this] val levelVar      = new ThreadLocal[Int]
 
-    private def level(): Int = levelVar.get()
+    private def nextLevel()(implicit tx: Tx): Int = {
+      val lvl = levelVar.get() - 1
+      if (lvl >= 0) lvl else {
+        ???
+//        validate()
+//        println("AQUI")
+//        outerVec().size - 1
+      }
+    }
 
     private def useLevel[R](lvl: Int)(body: => R): R = {
       val prev = levelVar.get()
@@ -51,13 +59,13 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
     }
 
     private def mkItInStream(implicit tx: Tx): Stream[Tx, B] = {
-      val lvl = level() - 1
+      val lvl = nextLevel()
       logStream(s"FoldLeft.iterator.mkItInStream - lvl $lvl")
       outerVec().apply(lvl).expand
     }
 
     private def mkItCarryStream(implicit tx: Tx): Stream[Tx, A] = {
-      val lvl = level() - 1
+      val lvl = nextLevel()
       mkItCarryStream(lvl)
     }
 
