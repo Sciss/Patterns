@@ -38,36 +38,41 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
 
     private[this] val levelVar      = new ThreadLocal[Int]
 
-    private def nextLevel()(implicit tx: Tx): Int = {
+    private def inNextLevel[R](isCarry: Boolean)(fun: Int => R)(implicit tx: Tx): R = {
       val lvl = levelVar.get() - 1
-      if (lvl >= 0) lvl else {
-        ???
-//        validate()
-//        println("AQUI")
-//        outerVec().size - 1
+      if (lvl >= 0) fun(lvl) else {
+        validate()
+        val vec = outerVec()
+        println(s"AQUI. vec.size = ${vec.size}")
+        (new Exception).fillInStackTrace().printStackTrace(System.out)
+        val lvl0  = vec.size
+        val lvl   = if (false && isCarry) lvl0 else lvl0 - 1
+        useLevel(lvl0)(fun(lvl))
       }
     }
 
     private def useLevel[R](lvl: Int)(body: => R): R = {
+      logStream(s"FoldLeft.useLevel($lvl) >>")
       val prev = levelVar.get()
       levelVar.set(lvl)
       try {
         body
       } finally {
         levelVar.set(prev)
+        logStream(s"FoldLeft.useLevel($lvl) <<")
       }
     }
 
-    private def mkItInStream(implicit tx: Tx): Stream[Tx, B] = {
-      val lvl = nextLevel()
-      logStream(s"FoldLeft.iterator.mkItInStream - lvl $lvl")
-      outerVec().apply(lvl).expand
-    }
+    private def mkItInStream(implicit tx: Tx): Stream[Tx, B] =
+      inNextLevel(isCarry = false) { lvl =>
+        logStream(s"FoldLeft.iterator.mkItInStream - lvl $lvl")
+        outerVec().apply(lvl).expand
+      }
 
-    private def mkItCarryStream(implicit tx: Tx): Stream[Tx, A] = {
-      val lvl = nextLevel()
-      mkItCarryStream(lvl)
-    }
+    private def mkItCarryStream(implicit tx: Tx): Stream[Tx, A] =
+      inNextLevel(isCarry = true) { lvl =>
+        mkItCarryStream(lvl)
+      }
 
     private def mkItCarryStream(lvl: Int)(implicit tx: Tx): Stream[Tx, A] = {
       logStream(s"FoldLeft.iterator.mkItCarryStream - lvl $lvl")
@@ -105,7 +110,11 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
 
       def reset()(implicit tx: Tx): Unit    = ()
       def hasNext(implicit tx: Tx): Boolean = use(innerStream.hasNext)
-      def next() (implicit tx: Tx): A       = use(innerStream.next())
+      def next() (implicit tx: Tx): A       = {
+        val res = use(innerStream.next())
+        logStream(s"FoldLeft.CarryStream($lvl).next() = $res")
+        res
+      }
     }
 
     private def validate()(implicit tx: Tx): Unit =
@@ -137,7 +146,7 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
     def next()(implicit tx: Tx): A = {
       if (!hasNext) Stream.exhausted()
       val s = _result()
-      val res = s .next()
+      val res = s.next()
       logStream(s"FoldLeft.iterator.next() = $res")
       res
     }

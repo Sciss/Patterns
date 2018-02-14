@@ -236,7 +236,11 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
     val b       = Graph.builder
     val itIn    = b.allocToken[A]()
     val itCarry = b.allocToken[B]()
+//    var itIn    : It[A] = null
+//    var itCarry : It[B] = null
     val inner   = Graph {
+//      itIn    = b.allocToken[A]()
+//      itCarry = b.allocToken[B]()
       op(itCarry, itIn)
     }
     FoldLeft[A, B](outer = x, z = z, itIn = itIn, itCarry = itCarry, inner = inner)

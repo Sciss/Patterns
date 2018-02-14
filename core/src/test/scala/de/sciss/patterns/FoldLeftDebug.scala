@@ -1,7 +1,5 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.graph.{ArithmSeq, PatPat}
-
 class FoldLeftDebug extends PatSpec {
   "FoldLeft" should work in {
     showStreamLog = true
@@ -19,13 +17,16 @@ class FoldLeftDebug extends PatSpec {
 //    val in  = Seq(Seq(1), Seq(2), Seq(3))
 
     val pat2 = Graph {
-      val inPat = in2.map(x => Pat.Int(x: _*)): Pat[Pat[Int]]
-      val hd    = inPat.head
-      val tl    = inPat.tail
+//      val inPat = in2.map(x => Pat.Int(x: _*)): Pat[Pat[Int]]
+      val hd    = Pat(Pat(0, 6, 7)) // inPat.head
+      val tl    = Pat(Pat(2), Pat(1, 3, 5)) // inPat.tail
 //      tl.foldLeft(hd) { (yi, xi) => yi ++ xi.bubble }
-      tl.foldLeft(hd) { (yi, xi) => yi ++ PatPat(xi) }
+      val foo = tl.foldLeft(hd) { (yi, xi) => yi ++ Pat(xi) }
+//      foo.flatten
+      foo
     }
 
-    evalH(pat2) shouldBe in2
+    evalH1(pat2) shouldBe in2
+//    eval(pat2) shouldBe in2.flatten
   }
 }

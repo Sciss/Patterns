@@ -47,7 +47,8 @@ final case class Flatten[A](in: Pat[Pat[A]]) extends Pattern[A] {
       if (!_hasNext()) {
         _hasNext() = inStream.hasNext
         if (_hasNext()) {
-          innerStream() = inStream.next().expand
+          val inPat     = inStream.next()
+          innerStream() = inPat.expand
           hasInner() = true
           advance()
         }
