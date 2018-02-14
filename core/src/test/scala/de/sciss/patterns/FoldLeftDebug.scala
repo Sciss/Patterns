@@ -6,6 +6,8 @@ class FoldLeftDebug extends PatSpec {
   "FoldLeft" should work in {
     showStreamLog = true
 
+//    Pat(Pat(1), Pat(2), Pat(3)).foldLeft(0)(_ + _)
+
     val in1   = List(1, 4, 7, 10, 13)
     val pat1  = Graph {
       val inPat = ArithmSeq(1, 3).take(5)

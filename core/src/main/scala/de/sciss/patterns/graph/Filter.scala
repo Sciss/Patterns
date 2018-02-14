@@ -16,7 +16,7 @@ package graph
 
 import de.sciss.patterns.graph.impl.MapItStream
 
-final case class Filter[A](outer: Pat[Pat[A]], it: It[A], inner: Graph[Boolean])
+final case class Filter[A](outer: Pat[Pat[A]], it: It[A], inner: Pat[Boolean])
   extends Pattern[Pat[A]] {
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = {

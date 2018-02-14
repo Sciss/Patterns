@@ -16,7 +16,7 @@ package graph
 
 import de.sciss.patterns.graph.impl.MapItStream
 
-final case class FlatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Graph[A])
+final case class FlatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
   extends Pattern[A] {
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {

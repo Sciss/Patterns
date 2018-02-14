@@ -24,7 +24,7 @@ import scala.annotation.tailrec
     }
 
  */
-final case class SeqFill[A](n: Pat[Int], inner: Graph[A], it: It[Int]) extends Pattern[A] {
+final case class SeqFill[A](n: Pat[Int], it: It[Int], inner: Pat[A]) extends Pattern[A] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
   private final class ItStreamImpl[Tx](iteration: Context.Var[Tx, Int])(implicit ctx: Context[Tx])

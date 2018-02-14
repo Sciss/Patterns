@@ -43,7 +43,7 @@ object Pat {
     val inner = Graph[A] {
       body(it) // XXX TODO
     }
-    SeqFill(n, inner, it)
+    SeqFill(n, it, inner)
   }
 
   def apply[A](elems: A*): Pat[A] = PatSeq(elems: _*)
