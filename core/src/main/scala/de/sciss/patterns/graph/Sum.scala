@@ -21,6 +21,11 @@ final case class Sum[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
+  def transform(t: Transform): Pat[A] = {
+    val inT = t(in) .transform(t)
+    if (inT.eq(in)) this else copy(in = inT)
+  }
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     def reset()(implicit tx: Tx): Unit = {
       println("Sum. TODO: reset")

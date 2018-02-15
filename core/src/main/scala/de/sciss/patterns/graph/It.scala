@@ -53,6 +53,8 @@ final case class It[A](token: Int) extends Pattern[A] { pat =>
 //    }
 //  }
 
+  def transform(t: Transform): Pat[A] = this
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val refStream = ctx.mkOuterStream(token)(tx0)
 

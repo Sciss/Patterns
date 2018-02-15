@@ -100,7 +100,7 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
                     (implicit br: Widen[A, A1, A2], num: NumFrac[A2]): Pat[A2] =
     LinLin[A, A1, A2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
 
-  def stutter(n: Pat[Int]): Pat[A] = Stutter(n, x)
+  def stutter(n: Pat[Int]): Pat[A] = Stutter(x, n)
 
   def distinct: Pat[A] = Distinct(x)
 

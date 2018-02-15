@@ -17,6 +17,8 @@ package graph
 case class Indices[A](in: Pat[A]) extends Pattern[Int] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl(tx)
 
+  def transform(t: Transform): Pat[Int] = ???
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Int] {
     private[this] val inStream = in.expand(ctx, tx0)
 

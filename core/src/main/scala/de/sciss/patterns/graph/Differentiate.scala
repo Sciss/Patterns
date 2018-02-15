@@ -11,7 +11,8 @@
  *  contact@sciss.de
  */
 
-package de.sciss.patterns.graph
+package de.sciss.patterns
+package graph
 
 import de.sciss.patterns.Types.{Aux, Num}
 import de.sciss.patterns.{Context, Pat, Pattern, Stream}
@@ -20,6 +21,11 @@ final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Patt
   override private[patterns] def aux: List[Aux] = num :: Nil
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+
+  def transform(t: Transform): Pat[A] = {
+    val inT = t(in).transform(t)
+    if (inT eq in) this else copy(in = inT)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     def reset()(implicit tx: Tx): Unit = ???

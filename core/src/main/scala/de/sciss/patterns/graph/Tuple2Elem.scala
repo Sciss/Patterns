@@ -16,16 +16,21 @@ package graph
 
 import de.sciss.patterns
 
-final case class Tuple2_1[A1, A2](tup: Pat[(A1, A2)])
+final case class Tuple2_1[A1, A2](in: Pat[(A1, A2)])
   extends Pattern[A1] {
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A1] =
     new StreamImpl[Tx](tx)
 
+  def transform(t: Transform): Pat[A1] = {
+    val inT = t(in) .transform(t)
+    if (inT.eq(in)) this else copy(in = inT)
+  }
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends Stream[Tx, A1] {
 
-    private[this] val tupStream = tup.expand(ctx, tx0)
+    private[this] val tupStream = in.expand(ctx, tx0)
 
     def reset()(implicit tx: Tx): Unit = ()
 
@@ -35,16 +40,21 @@ final case class Tuple2_1[A1, A2](tup: Pat[(A1, A2)])
   }
 }
 
-final case class Tuple2_2[A1, A2](tup: Pat[(A1, A2)])
+final case class Tuple2_2[A1, A2](in: Pat[(A1, A2)])
   extends Pattern[A2] {
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A2] =
     new StreamImpl[Tx](tx)
 
+  def transform(t: Transform): Pat[A2] = {
+    val inT = t(in) .transform(t)
+    if (inT.eq(in)) this else copy(in = inT)
+  }
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends Stream[Tx, A2] {
 
-    private[this] val tupStream = tup.expand(ctx, tx0)
+    private[this] val tupStream = in.expand(ctx, tx0)
 
     def reset()(implicit tx: Tx): Unit = ()
 

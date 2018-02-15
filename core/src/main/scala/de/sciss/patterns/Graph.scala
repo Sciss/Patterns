@@ -94,11 +94,17 @@ object Graph {
   }
 }
 
-final case class Graph[A](sources: Vec[Pattern[_]], out: Pat[A]) extends Pattern[A] {
+final case class Graph[A](sources: Vec[Pat[_]], out: Pat[A]) extends Pattern[A] {
   def isEmpty : Boolean = sources.isEmpty // && controlProxies.isEmpty
   def nonEmpty: Boolean = !isEmpty
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+
+  def transform(t: Transform): Pat[A] = {
+    val sourcesT = sources.map(x => t(x).transform(t))
+    val outT     = t(out).transform(t)
+    copy(sources = sourcesT, out = outT)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
 //    private[this] val sourceStreams = sources.map(_.expand)

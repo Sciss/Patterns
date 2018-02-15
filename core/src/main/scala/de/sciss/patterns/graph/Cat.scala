@@ -14,7 +14,13 @@ final case class Cat[A1, A2, A](a: Pat[A1], b: Pat[A2])
     new StreamImpl[Tx](tx)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+  def transform(t: Transform): Pat[A] = {
+    val aT = t(a).transform(t)
+    val bT = t(b).transform(t)
+    if (aT.eq(a) && bT.eq(b)) this else copy(a = aT, b = bT)
+  }
+
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] { stream =>
     private[this] val ai = a.expand(ctx, tx0) // .map(widen.lift1)
     private[this] val bi = b.expand(ctx, tx0) // .map(widen.lift2)
 
@@ -35,7 +41,7 @@ final case class Cat[A1, A2, A](a: Pat[A1], b: Pat[A2])
         val bVal = bi.next()
         widen.lift2(bVal)
       }
-      logStream(s"Cat.iterator.next(); ai.hasNext = $ahn; res = $res")
+      logStream(s"Cat.iterator.next(); ai.hasNext = $ahn; res = $res") // ${stream.hashCode().toHexString}
       res
     }
   }

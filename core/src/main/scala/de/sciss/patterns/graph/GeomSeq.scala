@@ -25,6 +25,8 @@ final case class GeomSeq[A1, A2, A](start: Pat[A1], step: Pat[A2] /* , length: P
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
+  def transform(t: Transform): Pat[A] = ???
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends SeriesLikeStreamImpl[A1, A2, A, Tx](start, step /* , length */, tx0) {
 

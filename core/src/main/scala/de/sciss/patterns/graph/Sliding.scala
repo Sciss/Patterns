@@ -13,11 +13,13 @@
 
 package de.sciss.patterns.graph
 
-import de.sciss.patterns.{Context, Pat, Pattern, Stream}
+import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
 
 final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends Pattern[Pat[A]] { pat =>
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl[Tx](tx)
+
+  def transform(t: Transform): Pat[Pat[A]] = ???
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
     private[this] val inStream    = pat.in  .expand(ctx, tx0)

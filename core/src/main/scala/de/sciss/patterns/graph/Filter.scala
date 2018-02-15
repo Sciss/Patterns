@@ -24,6 +24,8 @@ final case class Filter[A](outer: Pat[Pat[A]], it: It[A], inner: Pat[Boolean])
     new StreamImpl(tx)
   }
 
+  def transform(t: Transform): Pat[Pat[A]] = ???
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
     @transient final private[this] lazy val ref = new AnyRef
 

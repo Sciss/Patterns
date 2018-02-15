@@ -24,6 +24,8 @@ final case class FlatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
     new StreamImpl(tx)
   }
 
+  def transform(t: Transform): Pat[A] = ???
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     @transient final private[this] lazy val ref = new AnyRef
 

@@ -58,6 +58,10 @@ trait Pat[+A] extends ProductWithAux {
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A]
   def embed   [Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A]
+
+  def transform(t: Transform): Pat[A]
+
+  private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit
 }
 
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */

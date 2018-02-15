@@ -18,11 +18,13 @@ import de.sciss.patterns.graph.impl.SortWithItStream
 
 import scala.util.control.Breaks
 
-final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Graph[Boolean])
+final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean])
   extends Pattern[Pat[A]] {
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] =
     new StreamImpl[Tx](tx)
+
+  def transform(t: Transform): Pat[Pat[A]] = ???
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends Stream[Tx, Pat[A]] {

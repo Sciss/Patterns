@@ -16,7 +16,7 @@ package de.sciss
 import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
-import de.sciss.patterns.graph.{Bind, Constant, PatPat}
+import de.sciss.patterns.graph.{Bind, Constant}
 
 import scala.annotation.elidable
 import scala.annotation.elidable.CONFIG
@@ -40,7 +40,7 @@ package object patterns {
     xs.map(lift)
 
   implicit def seqPat[A, T](xs: Seq[A])(implicit lift: A => Pat[T]): Pat[Pat[T]] =
-    PatPat(xs.map(lift): _*)
+    Pat(xs.map(lift): _*)
 
   private lazy val logHeader = new SimpleDateFormat("[d MMM yyyy, HH:mm''ss.SSS] 'pattern' - ", Locale.US)
 

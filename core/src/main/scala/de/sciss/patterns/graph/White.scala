@@ -23,6 +23,8 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
+  def transform(t: Transform): Pat[A] = ???
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val loStream  = lo.expand(ctx, tx0)
     private[this] val hiStream  = hi.expand(ctx, tx0)

@@ -142,4 +142,10 @@ final case class BinaryOp[A1, A2, A3, A](op: BinaryOp.Op[A3, A], a: Pat[A1], b: 
     val bi = b.expand.map(widen.lift2)
     (ai zip bi).map { case (av, bv) => op(av, bv) }
   }
+
+  def transform(t: Transform): Pat[A] = {
+    val aT = t(a).transform(t)
+    val bT = t(b).transform(t)
+    if (aT.eq(a) && bT.eq(b)) this else copy(a = aT, b = bT)
+  }
 }

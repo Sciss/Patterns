@@ -20,6 +20,11 @@ final case class Recur[A](in: Pat[A]) extends Pattern[A] {
     new StreamImpl[Tx](tx)
   }
 
+  def transform(t: Transform): Pat[A] = {
+    val inT = t(in) .transform(t)
+    if (inT.eq(in)) this else copy(in = inT)
+  }
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val peer = in.expand(ctx, tx0)
 

@@ -24,6 +24,13 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
+  def transform(t: Transform): Pat[A] = {
+    val loT   = t(lo)   .transform(t)
+    val hiT   = t(hi)   .transform(t)
+    val stepT = t(step) .transform(t)
+    if (loT.eq(lo) && hiT.eq(hi) && stepT.eq(step)) this else copy(lo = loT, hi = hiT, step = stepT)
+  }
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends Stream[Tx, A] {
 

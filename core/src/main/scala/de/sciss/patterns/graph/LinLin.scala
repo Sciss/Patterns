@@ -14,7 +14,7 @@
 package de.sciss.patterns.graph
 
 import de.sciss.patterns.Types.{Aux, NumFrac, Widen}
-import de.sciss.patterns.{Context, Pat, Pattern, Stream}
+import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
 
 final case class LinLin[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
                                    outLo: Pat[A2], outHi: Pat[A2])
@@ -24,6 +24,8 @@ final case class LinLin[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
   override private[patterns] def aux: List[Aux] = widen :: num :: Nil
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+
+  def transform(t: Transform): Pat[A] = ???
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream    = in    .expand(ctx, tx0).map(widen.lift1)

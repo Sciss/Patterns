@@ -11,6 +11,16 @@ final case class PatSeq[A](elems: A*) extends Pattern[A] {
     logStream(simpleString)
     Stream(elems: _*)
   }
+
+  def transform(t: Transform): Pat[A] = {
+    val elemsT: Seq[_] = elems.map {
+      case e: Pat[_] => t(e).transform(t)
+      case e => e
+    }
+    val elemsC = elemsT.asInstanceOf[Seq[A]]
+    PatSeq(elemsC: _*)
+  }
+
 //
 //  private final class StreamImpl[Tx](implicit ctx: Context[Tx]) extends Stream[Tx, T#COut] {
 //    private[this] val count = ctx.newVar(0)

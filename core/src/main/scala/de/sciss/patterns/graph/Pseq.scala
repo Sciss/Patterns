@@ -21,6 +21,8 @@ final case class Pseq[A](list: Seq[Pat[A]], repeats: Pat[Int] = 1, offset : Pat[
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
+  def transform(t: Transform): Pat[A] = ???
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val repeatsIt   = repeats.expand(ctx, tx0)
     private[this] val offsetIt    = offset .expand(ctx, tx0)

@@ -23,6 +23,8 @@ final case class Ppar(list: Pat[Pat[Event]], repeats: Pat[Int] = 1, offset: Pat[
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Event] = new StreamImpl(tx)
 
+  def transform(t: Transform): Pat[Event] = ???
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Event] {
     private[this] val listStream: Stream[Tx, Pat[Event]] = list.expand(ctx, tx0)
     private[this] val repeatsStream = repeats .expand(ctx, tx0)

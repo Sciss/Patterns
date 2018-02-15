@@ -37,4 +37,6 @@ final case class Spawner(fun: Spawner.Queue[_] => Unit) extends Pattern[Event] {
     fun(queue)
     queue.iterator
   }
+
+  def transform(t: Transform): Pat[Event] = ???
 }

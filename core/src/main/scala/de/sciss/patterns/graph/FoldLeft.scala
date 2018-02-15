@@ -21,6 +21,8 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     new StreamImpl[Tx](tx)
 
+  def transform(t: Transform): Pat[A] = ???
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
 //    @transient final private[this] lazy val refIn     = new AnyRef
 //    @transient final private[this] lazy val refCarry  = new AnyRef

@@ -22,6 +22,8 @@ final case class Zip2[A1, A2](a: Pat[A1], b: Pat[A2])
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, (A1, A2)] =
     new StreamImpl[Tx](tx)
 
+  def transform(t: Transform): Pat[(A1, A2)] = ???
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends Stream[Tx, (A1, A2)] {
 
