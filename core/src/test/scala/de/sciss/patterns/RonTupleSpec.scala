@@ -151,10 +151,16 @@ class RonTupleSpec extends PatSpec {
 
     def allTuples_Pat1(): Pat[Pat[Int]] = {
       Pat.seqFill(2) { _ =>
-        val yi = Pat(Pat(0, 6, 7))
-        val y0 = yi.flatMap(_.bubble)
+//        val yi = Pat(Pat(0, 6, 7))
+//        val y0 = yi.flatMap(_.bubble)
+
+        val y0 = /* Graph */ {
+          val yi = Pat(Pat(0, 6, 7))
+          yi.flatMap(_.bubble)
+        }
+
         //      val y0 = Pat(Pat(0), Pat(6), Pat(7))
-        val y1 = directProduct_Pat(y0, Pat(2))
+        val y1 = y0 // directProduct_Pat(y0, Pat(2))
         val y2 = y1 // directProduct_Pat(y1, Pat(1, 3, 5))
         y2
       }
