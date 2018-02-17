@@ -21,8 +21,8 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[Pat[A]] = {
-    val inT = t(in) .transform(t)
-    val nT  = t(n)  .transform(t)
+    val inT = t(in)
+    val nT  = t(n)
     if (inT.eq(in) && nT.eq(n)) this else copy(in = inT, n = nT)
   }
 

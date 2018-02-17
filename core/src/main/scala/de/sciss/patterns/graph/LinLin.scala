@@ -25,7 +25,15 @@ final case class LinLin[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-  def transform(t: Transform): Pat[A] = ???
+  def transform(t: Transform): Pat[A] = {
+    val inT     = t(in)
+    val inLoT   = t(inLo)
+    val inHiT   = t(inHi)
+    val outLoT  = t(outLo)
+    val outHiT  = t(outHi)
+    if (inT.eq(in) && inLoT.eq(inLo) && inHiT.eq(inHi) && outLoT.eq(outLo) && outHiT.eq(outHi)) this
+    else copy(in = inT, inLo = inLoT, inHi = inHiT, outLo = outLoT, outHi = outHiT)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream    = in    .expand(ctx, tx0).map(widen.lift1)

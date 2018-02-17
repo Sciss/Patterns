@@ -14,8 +14,8 @@ final case class PatSeq[A](elems: A*) extends Pattern[A] {
 
   def transform(t: Transform): Pat[A] = {
     val elemsT: Seq[_] = elems.map {
-      case e: Pat[_] => t(e).transform(t)
-      case e => e
+      case e: Pat[_]  => t(e)
+      case e          => e
     }
     val elemsC = elemsT.asInstanceOf[Seq[A]]
     PatSeq(elemsC: _*)

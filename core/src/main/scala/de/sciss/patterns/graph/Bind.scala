@@ -17,7 +17,10 @@ package graph
 final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Event] = new StreamImpl(tx)
 
-  def transform(t: Transform): Pat[Event] = ???
+  def transform(t: Transform): Pat[Event] = {
+    val entriesT = entries.map { case (key, value) => key -> t(value) }
+    Bind(entriesT: _*)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Event] {
     val mapE: Map[String, Stream[Tx, _]] = entries.map {

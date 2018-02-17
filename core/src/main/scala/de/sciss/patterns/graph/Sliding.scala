@@ -19,7 +19,12 @@ final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends 
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[Pat[A]] = ???
+  def transform(t: Transform): Pat[Pat[A]] = {
+    val inT   = t(in)
+    val sizeT = t(size)
+    val stepT = t(step)
+    if (inT.eq(in) && sizeT.eq(size) && stepT.eq(step)) this else copy(in = inT, size = sizeT, step = stepT)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
     private[this] val inStream    = pat.in  .expand(ctx, tx0)

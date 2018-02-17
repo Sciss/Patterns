@@ -31,7 +31,12 @@ final case class Poll[A](in: Pat[A], gate: Pat[Boolean], label: Pat[String] = "p
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[A] = ???
+  def transform(t: Transform): Pat[A] = {
+    val inT     = t(in)
+    val gateT   = t(gate)
+    val labelT  = t(label)
+    if (inT.eq(in) && gateT.eq(gate) && labelT.eq(label)) this else copy(in = inT, gate = gateT, label = labelT)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream    = in    .expand(ctx, tx0)

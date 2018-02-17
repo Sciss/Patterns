@@ -19,7 +19,12 @@ import scala.collection.mutable
 final case class IndexOfSlice[A1, A2](in: Pat[A1], sub: Pat[A2], from: Pat[Int]) extends Pattern[Int] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[Int] = ???
+  def transform(t: Transform): Pat[Int] = {
+    val inT   = t(in)
+    val subT  = t(sub)
+    val fromT = t(from)
+    if (inT.eq(in) && subT.eq(sub) && fromT.eq(from)) this else copy(in = inT, sub = subT, from = fromT)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Int] {
     private[this] val inStream    = in  .expand(ctx, tx0)

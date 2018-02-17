@@ -21,7 +21,10 @@ final case class Sorted[A](in: Pat[A])(implicit ord: Ord[A]) extends Pattern[A] 
 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-  def transform(t: Transform): Pat[A] = ???
+  def transform(t: Transform): Pat[A] = {
+    val inT = t(in)
+    if (inT eq in) this else copy(in = inT)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream  = in.expand(ctx, tx0)

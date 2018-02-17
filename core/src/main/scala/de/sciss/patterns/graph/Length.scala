@@ -18,7 +18,7 @@ case class Length[A](in: Pat[A]) extends Pattern[Int] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[Int] = {
-    val inT = t(in).transform(t)
+    val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }
 

@@ -21,7 +21,7 @@ final case class Recur[A](in: Pat[A]) extends Pattern[A] {
   }
 
   def transform(t: Transform): Pat[A] = {
-    val inT = t(in) .transform(t)
+    val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }
 

@@ -37,8 +37,8 @@ final case class Drop[A](in: Pat[A], length: Pat[Int])
     it.drop(n)
 
   def transform(t: Transform): Pat[A] = {
-    val inT     = t(in)     .transform(t)
-    val lengthT = t(length) .transform(t)
+    val inT     = t(in)
+    val lengthT = t(length)
     if (inT.eq(in) && lengthT.eq(length)) this else copy(in = inT, length = lengthT)
   }
 }

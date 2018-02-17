@@ -23,7 +23,7 @@ final case class Tuple2_1[A1, A2](in: Pat[(A1, A2)])
     new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A1] = {
-    val inT = t(in) .transform(t)
+    val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }
 
@@ -47,7 +47,7 @@ final case class Tuple2_2[A1, A2](in: Pat[(A1, A2)])
     new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A2] = {
-    val inT = t(in) .transform(t)
+    val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }
 

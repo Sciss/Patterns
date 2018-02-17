@@ -128,7 +128,7 @@ class RonTupleSpec extends PatSpec {
       val tl = x.tail // .map(_.poll("tl"))// <| (_.size.poll("tl-sz"))
       tl.foldLeft(hd) { (ys: Pat[Pat[A]], xi: Pat[A]) =>
 //        ys.map(_.poll("ys")) ++ xi.poll("xi").bubble // directProduct_Pat(ys.map(_.poll("ys")), xi.poll("xi"))
-        ys ++ xi.bubble // directProduct_Pat(ys.map(_.poll("ys")), xi.poll("xi"))
+        directProduct_Pat(ys, xi)
       }
     }
 

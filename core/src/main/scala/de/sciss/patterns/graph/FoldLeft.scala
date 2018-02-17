@@ -21,7 +21,12 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[A] = ???
+  def transform(t: Transform): Pat[A] = {
+    val outerT  = t(outer)
+    val zT      = t(z)
+    val innerT  = t(inner)
+    if (outerT.eq(outer) && zT.eq(z) && innerT.eq(inner)) this else copy(outer = outerT, z = zT, inner = innerT)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
 
@@ -37,13 +42,13 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
         val _outer        = outerStream.toVector
         val innerRewrite  = _outer.foldLeft(z) { (y: Pat[A], x: Pat[B]) =>
           val t = new Transform {
-            def apply[X](in: Pat[X]): Pat[X] = in match {
+            def applyOne[X](in: Pat[X]): Pat[X] = in match {
               case `itIn`     => x.asInstanceOf[Pat[X]]
               case `itCarry`  => y.asInstanceOf[Pat[X]]
               case other      => other
             }
           }
-          t(inner).transform(t)
+          t(inner)
         }
 
         val res   = innerRewrite.expand[Tx]

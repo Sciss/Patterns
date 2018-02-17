@@ -15,8 +15,8 @@ final case class Cat[A1, A2, A](a: Pat[A1], b: Pat[A2])
   }
 
   def transform(t: Transform): Pat[A] = {
-    val aT = t(a).transform(t)
-    val bT = t(b).transform(t)
+    val aT = t(a)
+    val bT = t(b)
     if (aT.eq(a) && bT.eq(b)) this else copy(a = aT, b = bT)
   }
 

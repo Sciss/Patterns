@@ -18,8 +18,8 @@ final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] 
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[Pat[A]] = {
-    val inT   = t(in)   .transform(t)
-    val sizeT = t(size) .transform(t)
+    val inT   = t(in)
+    val sizeT = t(size)
     if (inT.eq(in) && sizeT.eq(size)) this else copy(in = inT, size = sizeT)
   }
 

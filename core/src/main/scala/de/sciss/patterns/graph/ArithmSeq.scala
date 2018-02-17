@@ -27,8 +27,8 @@ final case class ArithmSeq[A1, A2, A](start: Pat[A1], step: Pat[A2])
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A] = {
-    val startT = t(start) .transform(t)
-    val stepT  = t(step)  .transform(t)
+    val startT = t(start)
+    val stepT  = t(step )
     if (startT.eq(start) && stepT.eq(step)) this else copy(start = startT, step = stepT)
   }
 

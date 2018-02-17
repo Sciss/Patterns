@@ -1,5 +1,7 @@
 package de.sciss.patterns
 
 trait Transform {
-  def apply[A](in: Pat[A]): Pat[A]
+  final def apply[A](in: Pat[A]): Pat[A] = applyOne(in).transform(this)
+
+  protected def applyOne[A](in: Pat[A]): Pat[A]
 }

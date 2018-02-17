@@ -107,7 +107,7 @@ final case class Graph[A](sources: Vec[Pat[_]], out: Pat[A]) extends Pattern[A] 
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-//    private[this] val sourceStreams = sources.map(_.expand)
+
     private[this] val peer = out.expand(ctx, tx0)
 
     def reset()(implicit tx: Tx): Unit =

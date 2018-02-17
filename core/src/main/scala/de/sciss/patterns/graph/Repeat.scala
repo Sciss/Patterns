@@ -17,7 +17,11 @@ package graph
 final case class Repeat[A](in: Pat[A], times: Pat[Int] = Int.MaxValue) extends Pattern[A] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-  def transform(t: Transform): Pat[A] = ???
+  def transform(t: Transform): Pat[A] = {
+    val inT     = t(in)
+    val timesT  = t(times)
+    if (inT.eq(in) && timesT.eq(times)) this else copy(in = inT, times = timesT)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream    = in    .expand(ctx, tx0)

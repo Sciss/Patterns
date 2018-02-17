@@ -22,7 +22,7 @@ final case class Sum[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A] = {
-    val inT = t(in) .transform(t)
+    val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }
 

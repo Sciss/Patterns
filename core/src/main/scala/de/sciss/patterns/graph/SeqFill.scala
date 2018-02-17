@@ -28,8 +28,8 @@ final case class SeqFill[A](n: Pat[Int], it: It[Int], inner: Pat[A]) extends Pat
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[A] = {
-    val nT      = t(n)    .transform(t)
-    val innerT  = t(inner).transform(t)
+    val nT      = t(n)
+    val innerT  = t(inner)
     if (nT.eq(n) && innerT.eq(inner)) this else copy(n = nT, inner = innerT)
   }
 
