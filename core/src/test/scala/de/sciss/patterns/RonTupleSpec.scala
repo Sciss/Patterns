@@ -97,15 +97,6 @@ class RonTupleSpec extends PatSpec {
 //  }
 
   "The allTuples example" should work in {
-    def directProduct_Pat[A](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
-      a.flatMap { v: Pat[A] =>
-        val br = b.recur()
-        br.bubble.map { w: Pat[A] =>
-          val vr = v.recur()
-          vr ++ w
-        }
-      }
-
     def allTuples_Seq[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
       val size = x.size
       var res: Seq[Seq[A]] = x.head.map(Seq(_))
@@ -132,11 +123,35 @@ class RonTupleSpec extends PatSpec {
       }
     }
 
+    def directProduct_Pat[A](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
+      a.flatMap { v: Pat[A] =>
+        val br = b.recur()
+        br.bubble.map { w: Pat[A] =>
+          val vr = v.recur()
+          vr ++ w
+        }
+      }
+
+    /*
+    has problems with the last flatMap iteration it seems:
+
+    out     : List(List(0, 2, 1), List(0, 2, 3), List(0, 2, 5), List(6, 2, 1), List(6, 2, 3), List(6, 2, 5), List(1), List(3), List(5))
+    expected: List(List(0, 2, 1), List(0, 2, 3), List(0, 2, 5), List(6, 2, 1), List(6, 2, 3), List(6, 2, 5), List(7, 2, 1), List(7, 2, 3), List(7, 2, 5))
+
+    or, dropping the last recursion:
+
+    out     : List(List(0, 2), List(6, 2), List(2))
+    expected: List(List(0, 2), List(6, 2), List(7, 2))
+
+     */
+
     def allTuples_Pat1(): Pat[Pat[Int]] = {
-      val y0 = Pat(Pat(0, 6, 7))
-      val y1 = directProduct_Pat(y0, Pat(2))
-      val y2 = directProduct_Pat(y1, Pat(1, 3, 5))
-      y2
+      val yi = Pat(Pat(0, 6, 7))
+      val y0 = yi.map(i => i) // flatMap(_.bubble)
+//      val y0 = Pat(Pat(0), Pat(6), Pat(7))
+      val y1 = y0 // directProduct_Pat(y0, Pat(2))
+      val y2 = y1 // directProduct_Pat(y1, Pat(1, 3, 5))
+      Repeat(y2, 2)
     }
 
     val in  = Seq(Seq(0, 6, 7), Seq(2), Seq(1, 3, 5))
