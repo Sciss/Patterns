@@ -86,6 +86,16 @@ class PatternsSpec extends PatSpec {
     evalH(pat2) shouldBe plain2
   }
 
+//  "Map reset" should work in {
+//    val pat = Graph {
+//      val in  = Pat(Pat(0, 6, 7))
+//      val inM = in.map(identity)
+//      Repeat(inM, 2)
+//    }
+//
+//    evalH(pat) shouldBe Seq(Seq(0, 6, 7), Seq(0, 6, 7))
+//  }
+
   "Copy" should work in {
     val res1 = Graph {
       val a = Pat[Int](1, 2, 3)

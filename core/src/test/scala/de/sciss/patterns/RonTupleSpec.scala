@@ -151,7 +151,7 @@ class RonTupleSpec extends PatSpec {
 //      val y0 = Pat(Pat(0), Pat(6), Pat(7))
       val y1 = y0 // directProduct_Pat(y0, Pat(2))
       val y2 = y1 // directProduct_Pat(y1, Pat(1, 3, 5))
-      Repeat(y2, 2)
+      ??? // Repeat(y2, 2)
     }
 
     val in  = Seq(Seq(0, 6, 7), Seq(2), Seq(1, 3, 5))

@@ -1,5 +1,5 @@
 /*
- *  FilterSeq.scala
+ *  Gate.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
@@ -16,7 +16,7 @@ package graph
 
 import scala.annotation.tailrec
 
-final case class FilterSeq[A](in: Pat[A], gate: Pat[Boolean]) extends Pattern[A] {
+final case class Gate[A](in: Pat[A], gate: Pat[Boolean]) extends Pattern[A] {
   def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     new StreamImpl[Tx](tx)
 

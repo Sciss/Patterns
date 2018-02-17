@@ -104,8 +104,7 @@ final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
     }
 
     def next()(implicit tx: Tx): Pat[A] = {
-      validate()
-      if (!_hasNext()) Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = mapStream()
       advance()
       res

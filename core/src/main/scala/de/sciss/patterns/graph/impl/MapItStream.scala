@@ -41,7 +41,6 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
     if (ohn) {
       val inPat     = outerStream.next()
       val inValue   = inPat.expand
-      assert (inValue != null)
       val ihn       = inValue.hasNext
       logStream(s"$simpleString.advance(): inValue.hasNext = $ihn")
       inStream()    = inValue
@@ -77,8 +76,7 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
   }
 
   def next()(implicit tx: Tx): A = {
-    validate()
-    if (!_hasNext()) Stream.exhausted()
+    if (!hasNext) Stream.exhausted()
     val in      = inStream()
     val res     = in.next()
     _hasNext()  = in.hasNext

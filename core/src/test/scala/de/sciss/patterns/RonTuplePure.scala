@@ -89,9 +89,9 @@ object RonTuplePure {
   def extract[A](s: Pat[A], t: Pat[A]): Pat[Pat[Int]] =
     t.bubble.map { tj: Pat[A] =>
       val sr        = s.recur()
-      val same      = sr sig_== Repeat(tj)
+      val same      = sr sig_== Hold(tj)
       val indices   = sr.indices
-      val indicesF  = FilterSeq(indices, same)
+      val indicesF  = Gate(indices, same)
       indicesF
     }
 
@@ -145,7 +145,7 @@ object RonTuplePure {
 
   // computes the duration of a set of time points relative to a cycle.
   def computeDur[A](tps: Pat[A], cycle: Pat[A])(implicit num: Num[A]): Pat[A] = {
-    val one  = Repeat(Pat(num.one)) // onePat
+    val one  = Constant(num.one) // Repeat(Pat(num.one)) // onePat
     val dur0 = tps.differentiate
     val dur1 = dur0 % cycle
     val dur  = ((dur1 - one) % cycle) + one // dur1.map { v => if (v == zero) cycle else v }
