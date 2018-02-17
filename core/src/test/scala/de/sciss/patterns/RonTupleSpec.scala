@@ -154,9 +154,10 @@ class RonTupleSpec extends PatSpec {
 //        val yi = Pat(Pat(0, 6, 7))
 //        val y0 = yi.flatMap(_.bubble)
 
-        val y0 = /* Graph */ {
-          val yi = Pat(Pat(0, 6, 7))
-          yi.flatMap(_.bubble)
+        val y0 = Graph {
+//          val yi = Pat(Pat(0, 6, 7))
+//          yi.flatMap(_.bubble)
+          Pat(Pat(0), Pat(6), Pat(7))
         }
 
         //      val y0 = Pat(Pat(0), Pat(6), Pat(7))

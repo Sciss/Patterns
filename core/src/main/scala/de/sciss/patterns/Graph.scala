@@ -110,8 +110,11 @@ final case class Graph[A](sources: Vec[Pat[_]], out: Pat[A]) extends Pattern[A] 
 
     private[this] val peer = out.expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit =
+    def reset()(implicit tx: Tx): Unit = {
       sources.foreach(_.reset())
+      println("WTF --- why is `peer` not reset by the previous line?")
+      peer.reset()
+    }
 
     def hasNext(implicit tx: Tx): Boolean = peer.hasNext
     def next ()(implicit tx: Tx): A       = peer.next()
