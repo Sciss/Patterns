@@ -13,7 +13,7 @@ class ListPatternsSpec extends PatSpec {
   }
 
   "Pseq and Stutter" should "produce the expected output" in {
-    val pat1 = Stutter(2, Pseq(Seq(1, 2, 3), 66))
+    val pat1 = Stutter(Pseq(Seq(1, 2, 3), 66), n = 2)
     eval(pat1, 9) shouldBe Seq(1, 1, 2, 2, 3, 3, 1, 1, 2)
   }
 

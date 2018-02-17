@@ -33,7 +33,7 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   // binary
 
-  def ++[A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2]): Pat[A2] /* Cat[T, T1, T2] */ =
+  def ++[A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2]): Pat[A2] =
     Cat(x, that)
 
   def + [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
@@ -119,8 +119,8 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def grouped(size: Pat[Int]): Pat[Pat[A]] = Grouped(x, size)
 
-  def bubbleFilter(f: Pat[A] => Pat[Boolean]): Pat[A] =
-    bubble.filter(f).flatten
+//  def bubbleFilter(f: Pat[A] => Pat[Boolean]): Pat[A] =
+//    bubble.filter(f).flatten
 
   def indexOfSlice[B](that: Pat[B]): Pat[Int] = indexOfSlice(that, 0)
 
@@ -139,34 +139,6 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def sliding(size: Pat[Int], step: Pat[Int]): Pat[Pat[A]] = Sliding(x, size = size, step = step)
 
-//  /** currently broken
-//    *
-//    * The "counter" operation to `flatMap`. It bubbles each
-//    * element of the receiver pattern as a singleton pattern itself,
-//    * then applies the function, and flattens the result.
-//    *
-//    * This way, we can translate `p.flatMap(_.map)` into
-//    * `p.map(_.bubbleMap)` when `T` is not a (nested) pattern.
-//    * For example an operation on collections
-//    *
-//    * {{{
-//    *   a.flatMap { v => b.map { w => v :+ w }}
-//    * }}}
-//    *
-//    * can be rewritten for patterns as
-//    *
-//    * {{{
-//    *   a.map { v: Pat[A] => b.bubbleMap { w => v ++ w }}
-//    * }}}
-//    */
-//  def bubbleMap[A <: Top](f: Pat[T] => Pat[A]): Pat[A] = {
-//    val it    = Graph.builder.allocToken[T]()
-//    val inner = Graph {
-//      f(it)
-//    }
-//    BubbleMap[T, A](x, it, inner)
-//  }
-
   /** Short-hand for `.bubble.map.flatten` */
   def bubbleMap(f: Pat[A] => Pat[A]): Pat[A] =
     bubble.map(f).flatten
@@ -176,11 +148,6 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def recur(): Pat[A] = Recur(x)
 
   def zip[B](that: Pat[B]): Pat[(A, B)] = Zip2(x, that)
-
-  def unzip[A1, A2](implicit ev: A <:< (A1, A2)): (Pat[A1], Pat[A2]) = {
-    val tup = x.asInstanceOf[Pat[(A1, A2)]]
-    (Tuple2_1(tup), Tuple2_2(tup))
-  }
 
   def poll(label: Pat[String] = "poll", gate: Pat[Boolean] = true): Pat[A] =
     Poll(x, gate = gate, label = label)
@@ -222,13 +189,13 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
 
   def flatten: Pat[A] = Flatten(x)
 
-  def filter(f: Pat[A] => Pat[Boolean]): Pat[Pat[A]] = {
-    val it    = Graph.builder.allocToken[A]()
-    val inner = Graph {
-      f(it)
-    }
-    Filter(x, it, inner)
-  }
+//  def filter(f: Pat[A] => Pat[Boolean]): Pat[Pat[A]] = {
+//    val it    = Graph.builder.allocToken[A]()
+//    val inner = Graph {
+//      f(it)
+//    }
+//    Filter(x, it, inner)
+//  }
 
   // def /: [B <: Top](z: Pat[B])(op: (Pat[B], Pat[T]) => Pat[B]): Pat[B] = foldLeft(z)(op)
 
@@ -236,11 +203,7 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
     val b       = Graph.builder
     val itIn    = b.allocToken[A]()
     val itCarry = b.allocToken[B]()
-//    var itIn    : It[A] = null
-//    var itCarry : It[B] = null
     val inner   = Graph {
-//      itIn    = b.allocToken[A]()
-//      itCarry = b.allocToken[B]()
       op(itCarry, itIn)
     }
     FoldLeft[A, B](outer = x, z = z, itIn = itIn, itCarry = itCarry, inner = inner)
@@ -254,5 +217,11 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
       lt(it1, it2)
     }
     SortWith(x, it, inner)
+  }
+}
+
+final class PatTuple2Ops[A, B](private val tup: Pat[(A, B)]) extends AnyVal {
+  def unzip: (Pat[A], Pat[B]) = {
+    (Tuple2_1(tup), Tuple2_2(tup))
   }
 }

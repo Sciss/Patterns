@@ -18,7 +18,7 @@ package impl
 final class SortWithItStream[Tx, A](tx0: Tx)(implicit ctx: Context[Tx])
   extends Stream[Tx, (A, A)] {
 
-//  private[this] val _valid      = ctx.newVar(false)
+  private[this] val _valid      = ctx.newVar(false)
   private[this] val _hasZ       = ctx.newVar(false)
   private[this] val _hasNext    = ctx.newVar(false)
 
@@ -29,38 +29,34 @@ final class SortWithItStream[Tx, A](tx0: Tx)(implicit ctx: Context[Tx])
     pairInRef() = (x, y)
     count()     = 0
     _hasZ()     = true
-    val sz      = math.min(x.size, y.size)
-    val hn      = sz > 0
-    _hasNext()  = hn
+    calcHasNext()
   }
 
-  private def validate()(implicit tx: Tx): Unit = ()
-//    if (!_valid()) {
-//      _valid()    = true
+  private def calcHasNext()(implicit tx: Tx): Unit = {
+    if (_hasZ()) {
+      val (x, y) = pairInRef()
+      val sz      = math.min(x.size, y.size)
+      val hn      = sz > count()
+      _hasNext()  = hn
+    } else {
+      _hasNext() = false
+    }
+  }
+
+  private def validate()(implicit tx: Tx): Unit =
+    if (!_valid()) {
+      _valid()    = true
 //      _hasZ()     = false
-//      val ohn     = zStream.hasNext
-//      _hasZ()     = ohn
-//      _hasNext()  = ohn
-//      if (ohn) {
-//        val zValue    = zStream.next()
-//        advance(zValue)
-//      }
-//    }
+      count()     = 0
+      calcHasNext()
+    }
 
 //  def resetOuter()(implicit tx: Tx): Unit = {
 //    _valid() = false
 //  }
 
-  def reset()(implicit tx: Tx): Unit = {
-    ???
-    //      val hi = _hasIn()
-    //      logStream(s"$simpleString.reset(); hasIn = $hi")
-    //      if (hi) {
-    //        val inValue = inStream()
-    //        inValue.reset()
-    //        _hasNext() = inValue.hasNext
-    //      }
-  }
+  def reset()(implicit tx: Tx): Unit =
+    _valid() = false
 
   def hasNext(implicit tx: Tx): Boolean = {
     validate()

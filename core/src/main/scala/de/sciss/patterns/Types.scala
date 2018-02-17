@@ -126,8 +126,8 @@ object Types {
     def zero: A
     def one : A
 
-    def zeroPat: Pat[A]
-    def onePat : Pat[A]
+//    def zeroPat: Pat[A]
+//    def onePat : Pat[A]
 
     def rand2[Tx](a: A      )(implicit r: Random[Tx], tx: Tx): A
     def rrand[Tx](a: A, b: A)(implicit r: Random[Tx], tx: Tx): A
@@ -162,8 +162,8 @@ object Types {
     def zero : Seq[A] = peer.zero :: Nil
     def one  : Seq[A] = peer.one  :: Nil
 
-    def zeroPat : Pat[Seq[A]] = ??? // Pat[Top.CSeq[A]](peer.zero :: Nil)
-    def onePat  : Pat[Seq[A]] = ??? // Pat[Top.CSeq[A]](peer.one  :: Nil)
+//    def zeroPat : Pat[Seq[A]] = ... // Pat[Top.CSeq[A]](peer.zero :: Nil)
+//    def onePat  : Pat[Seq[A]] = ... // Pat[Top.CSeq[A]](peer.one  :: Nil)
 
     def rand2[Tx](a: Seq[A]           )(implicit r: Random[Tx], tx: Tx): Seq[A] = unOp (a   )(peer.rand2[Tx])
     def rrand[Tx](a: Seq[A], b: Seq[A])(implicit r: Random[Tx], tx: Tx): Seq[A] = binOp(a, b)(peer.rrand[Tx])
@@ -293,8 +293,8 @@ object Types {
     def zero   : Int = 0
     def one    : Int = 1
 
-    def zeroPat: Pat[Int] = 0
-    def onePat : Pat[Int] = 1
+//    def zeroPat: Pat[Int] = 0
+//    def onePat : Pat[Int] = 1
 
     def negate (a: Int): Int = -a
     def abs    (a: Int): Int = math.abs(a)
@@ -347,8 +347,8 @@ object Types {
     def zero   : Double = 0.0
     def one    : Double = 1.0
 
-    def zeroPat: Pat[Double] = 0.0
-    def onePat : Pat[Double] = 1.0
+//    def zeroPat: Pat[Double] = 0.0
+//    def onePat : Pat[Double] = 1.0
 
     def negate (a: Double): Double = -a
     def abs    (a: Double): Double = math.abs(a)

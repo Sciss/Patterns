@@ -36,14 +36,16 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
   def advance()(implicit tx: Tx): Unit = {
     val ohn     = outerStream.hasNext
     _hasNext()  = ohn
-    _hasIn()    = ohn
+    _hasIn()    = false
     logStream(s"$simpleString.advance(): outerStream.hasNext = $ohn")
     if (ohn) {
       val inPat     = outerStream.next()
       val inValue   = inPat.expand
+      assert (inValue != null)
       val ihn       = inValue.hasNext
       logStream(s"$simpleString.advance(): inValue.hasNext = $ihn")
       inStream()    = inValue
+      _hasIn()      = true
       _hasNext()    = ihn
     }
   }

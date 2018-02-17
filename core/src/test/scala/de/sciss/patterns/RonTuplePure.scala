@@ -145,7 +145,7 @@ object RonTuplePure {
 
   // computes the duration of a set of time points relative to a cycle.
   def computeDur[A](tps: Pat[A], cycle: Pat[A])(implicit num: Num[A]): Pat[A] = {
-    val one  = num.onePat
+    val one  = Repeat(Pat(num.one)) // onePat
     val dur0 = tps.differentiate
     val dur1 = dur0 % cycle
     val dur  = ((dur1 - one) % cycle) + one // dur1.map { v => if (v == zero) cycle else v }
@@ -336,14 +336,14 @@ object RonTuplePure {
 
 println("RonTuplePure: TODO")
 patsF
-//      ??? // sp.seq(patsF) // Ppar(patsF))
+//      ... // sp.seq(patsF) // Ppar(patsF))
 //      //      println(s"ending $cantus")
 //      // at this point, it wouldn't have any effect:
 //      // { cantus(cantus.size.rand) = 'r }.dup(5)
 //      val stopTime = length * 2 * 0.2
-//      ??? // sp.advance(stopTime)
-//      ??? // sp.suspend(catter)
-//      ???
+//      ... // sp.advance(stopTime)
+//      ... // sp.suspend(catter)
+//      ...
     }
   }
 }

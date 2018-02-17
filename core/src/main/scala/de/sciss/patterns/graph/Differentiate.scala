@@ -15,7 +15,6 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.patterns.Types.{Aux, Num}
-import de.sciss.patterns.{Context, Pat, Pattern, Stream}
 
 final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
   override private[patterns] def aux: List[Aux] = num :: Nil
@@ -28,10 +27,48 @@ final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Patt
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-    def reset()(implicit tx: Tx): Unit = ???
+    private[this] val inStream  = in.expand(ctx, tx0)
+    private[this] val _valid    = ctx.newVar(false)
+    private[this] val _hasNext  = ctx.newVar(false)
+    private[this] val x1        = ctx.newVar[A](null.asInstanceOf[A])
+    private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])
 
-    def hasNext(implicit tx: Tx): Boolean = ???
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid() = true
+        if (inStream.hasNext) {
+          x1() = inStream.next()
+          advance()
+        } else {
+          _hasNext() = false
+        }
+      }
 
-    def next()(implicit tx: Tx): A = ???
+    private def advance()(implicit tx: Tx): Unit = {
+      if (inStream.hasNext) {
+        val in1     = x1()
+        val in0     = inStream.next()
+        x1()        = in0
+        state()     = num.minus(in1, in0)
+        _hasNext()  = true
+      } else {
+        _hasNext() = false
+      }
+    }
+
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
+
+    def hasNext(implicit tx: Tx): Boolean = {
+      validate()
+      _hasNext()
+    }
+
+    def next()(implicit tx: Tx): A = {
+      if (!hasNext) Stream.exhausted()
+      val res = state()
+      advance()
+      res
+    }
   }
 }

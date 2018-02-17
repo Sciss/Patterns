@@ -27,19 +27,38 @@ final case class Sum[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-    def reset()(implicit tx: Tx): Unit = {
-      println("Sum. TODO: reset")
-      ???
-    }
+    private[this] val inStream  = in.expand(ctx, tx0)
+    private[this] val _valid    = ctx.newVar(false)
+    private[this] val _hasNext  = ctx.newVar(false)
+    private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])
+
+    private def validate()(implicit tx: Tx): Unit =
+      if (!_valid()) {
+        _valid() = true
+        val ihn = inStream.hasNext
+        _hasNext() = ihn
+        if (ihn) {
+          var acc = inStream.next()
+          while (inStream.hasNext) {
+            acc = num.plus(acc, inStream.next())
+          }
+          state() = acc
+        }
+      }
+
+    def reset()(implicit tx: Tx): Unit =
+      _valid() = false
 
     def hasNext(implicit tx: Tx): Boolean = {
-      println("Sum. TODO: hasNext")
-      ???
+      validate()
+      _hasNext()
     }
 
     def next()(implicit tx: Tx): A = {
-      println("Sum. TODO: next")
-      ???
+      if (!hasNext) Stream.exhausted()
+      val res = state()
+      _hasNext() = false
+      res
     }
   }
 }
