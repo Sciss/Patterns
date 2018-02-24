@@ -3,11 +3,11 @@ package graph
 
 final case class PatSeq[A](elems: A*) extends Pattern[A] {
   private def simpleString: String =
-    s"PatSeq(${elems.iterator.take(4).mkString(", ")}).iterator"
+    s"Pat(${elems.iterator.take(4).mkString(", ")}).iterator"
 
   override def toString: String = simpleString
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     logStream(simpleString)
     Stream(elems: _*)
   }

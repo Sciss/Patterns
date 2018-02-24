@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 final case class Format(s: Pat[String], args: Pat[_]*) extends Pattern[String] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, String] = new StreamImpl[Tx](tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, String] = new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[String] = {
     val sT    = t(s)
@@ -27,7 +27,10 @@ final case class Format(s: Pat[String], args: Pat[_]*) extends Pattern[String] {
     private[this] val sStream     = s.expand(ctx, tx0)
     private[this] val argStreams  = args.map(_.expand(ctx, tx0))
 
-    def reset()(implicit tx: Tx): Unit = ()
+    def reset()(implicit tx: Tx): Unit = {
+      sStream.reset()
+      argStreams.foreach(_.reset())
+    }
 
     def hasNext(implicit tx: Tx): Boolean = sStream.hasNext && argStreams.forall(_.hasNext)
 

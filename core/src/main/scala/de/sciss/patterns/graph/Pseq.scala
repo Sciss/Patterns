@@ -19,7 +19,7 @@ import de.sciss.numbers.IntFunctions
 final case class Pseq[A](list: Seq[Pat[A]], repeats: Pat[Int] = 1, offset : Pat[Int] = 0)
   extends Pattern[A] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[A] = {
     val listT     = list.map(t(_))
@@ -29,40 +29,45 @@ final case class Pseq[A](list: Seq[Pat[A]], repeats: Pat[Int] = 1, offset : Pat[
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-    private[this] val repeatsIt   = repeats.expand(ctx, tx0)
-    private[this] val offsetIt    = offset .expand(ctx, tx0)
-    private[this] val indexed     = list.toIndexedSeq
-    private[this] val sizeVal     = indexed.size
+    private[this] val repeatsStream = repeats.expand(ctx, tx0)
+    private[this] val offsetStream  = offset .expand(ctx, tx0)
 
-    private[this] val repeatsVal  = ctx.newVar(0)
-    private[this] val offsetVal   = ctx.newVar(0)
+    private[this] val indexed       = list.toIndexedSeq
+    private[this] val sizeVal       = indexed.size
 
-    private[this] val listIt      = ctx.newVar[Stream[Tx, A]](null)
+    private[this] val repeatsVal    = ctx.newVar(0)
+    private[this] val offsetVal     = ctx.newVar(0)
 
-    private[this] val repeatsCnt  = ctx.newVar(0)
-    private[this] val sizeCnt     = ctx.newVar(0)
+    private[this] val listIt        = ctx.newVar[Stream[Tx, A]](null)
 
-    private[this] val _hasNext    = ctx.newVar(false)
-    private[this] val _valid      = ctx.newVar(false)
+    private[this] val repeatsCnt    = ctx.newVar(0)
+    private[this] val sizeCnt       = ctx.newVar(0)
+
+    private[this] val _hasNext      = ctx.newVar(false)
+    private[this] val _valid        = ctx.newVar(false)
 
     private def mkListIter()(implicit tx: Tx): Stream[Tx, A] = {
       import IntFunctions.wrap
       val i = wrap(sizeCnt() + offsetVal(), 0, sizeVal - 1)
-      indexed(i).embed
+      indexed(i).expand
     }
 
     def reset()(implicit tx: Tx): Unit =
-      _valid() = false
+      if (_valid()) {
+        _valid() = false
+        repeatsStream .reset()
+        offsetStream  .reset()
+      }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
         _valid()      = true
         repeatsCnt()  = 0
         sizeCnt()     = 0
-        _hasNext()    = repeatsIt.hasNext && offsetIt.hasNext
+        _hasNext()    = repeatsStream.hasNext && offsetStream.hasNext
         if (_hasNext()) {
-          repeatsVal() = repeatsIt.next()
-          offsetVal () = offsetIt .next()
+          repeatsVal() = repeatsStream.next()
+          offsetVal () = offsetStream .next()
           _hasNext() = repeatsCnt() < repeatsVal()
           if (_hasNext()) {
             listIt() = mkListIter()
@@ -76,8 +81,7 @@ final case class Pseq[A](list: Seq[Pat[A]], repeats: Pat[Int] = 1, offset : Pat[
     }
 
     def next()(implicit tx: Tx): A = {
-      validate()
-      if (!_hasNext()) Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = listIt().next()
       if (listIt().isEmpty) {
         sizeCnt() = sizeCnt() + 1

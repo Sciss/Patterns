@@ -19,7 +19,7 @@ import de.sciss.patterns.Types.{Aux, Num}
 final case class Sum[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
   override private[patterns] def aux: List[Aux] = num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A] = {
     val inT = t(in)
@@ -31,6 +31,12 @@ final case class Sum[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
     private[this] val _valid    = ctx.newVar(false)
     private[this] val _hasNext  = ctx.newVar(false)
     private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])
+
+    def reset()(implicit tx: Tx): Unit =
+      if (_valid()) {
+        _valid() = false
+        inStream.reset()
+      }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
@@ -45,9 +51,6 @@ final case class Sum[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
           state() = acc
         }
       }
-
-    def reset()(implicit tx: Tx): Unit =
-      _valid() = false
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()

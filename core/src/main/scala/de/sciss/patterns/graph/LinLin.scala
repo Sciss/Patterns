@@ -23,7 +23,7 @@ final case class LinLin[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
 
   override private[patterns] def aux: List[Aux] = widen :: num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[A] = {
     val inT     = t(in)
@@ -42,12 +42,20 @@ final case class LinLin[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
     private[this] val outLoStream = outLo .expand(ctx, tx0).map(widen.lift2)
     private[this] val outHiStream = outHi .expand(ctx, tx0).map(widen.lift2)
 
-    def reset()(implicit tx: Tx): Unit = ()
+    def reset()(implicit tx: Tx): Unit = {
+      inStream    .reset()
+      inLoStream  .reset()
+      inHiStream  .reset()
+      outLoStream .reset()
+      outHiStream .reset()
+    }
 
     def hasNext(implicit tx: Tx): Boolean =
       inStream   .hasNext &&
-      inLoStream .hasNext && inHiStream .hasNext &&
-      outLoStream.hasNext && outHiStream.hasNext
+      inLoStream .hasNext &&
+      inHiStream .hasNext &&
+      outLoStream.hasNext &&
+      outHiStream.hasNext
 
     def next()(implicit tx: Tx): A = {
       if (!hasNext) Stream.exhausted()

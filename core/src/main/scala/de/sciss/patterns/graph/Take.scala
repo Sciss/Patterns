@@ -18,7 +18,7 @@ import de.sciss.patterns.graph.impl.TruncateStream
 
 final case class Take[A](in: Pat[A], length: Pat[Int]) extends Pattern[A] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A] = {

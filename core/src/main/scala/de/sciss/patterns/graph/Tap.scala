@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 final case class Tap[A, A1](in: Pat[A], side: Pat[A1]) extends Pattern[A] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A] = {
     val inT   = t(in)
@@ -27,7 +27,10 @@ final case class Tap[A, A1](in: Pat[A], side: Pat[A1]) extends Pattern[A] {
     private[this] val inStream    = in  .expand(ctx, tx0)
     private[this] val sideStream  = side.expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = ()
+    def reset()(implicit tx: Tx): Unit = {
+      inStream  .reset()
+      sideStream.reset()
+    }
 
     def hasNext(implicit tx: Tx): Boolean =
       inStream.hasNext

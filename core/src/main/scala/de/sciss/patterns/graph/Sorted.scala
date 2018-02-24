@@ -19,7 +19,7 @@ import de.sciss.patterns.Types.{Aux, Ord}
 final case class Sorted[A](in: Pat[A])(implicit ord: Ord[A]) extends Pattern[A] {
   override private[patterns] def aux: List[Aux] = ord :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[A] = {
     val inT = t(in)
@@ -40,7 +40,10 @@ final case class Sorted[A](in: Pat[A])(implicit ord: Ord[A]) extends Pattern[A] 
       }
 
     def reset()(implicit tx: Tx): Unit =
-      _valid() = false
+      if (_valid()) {
+        _valid() = false
+        inStream.reset()
+      }
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()

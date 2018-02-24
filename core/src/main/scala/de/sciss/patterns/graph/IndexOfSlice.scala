@@ -17,7 +17,7 @@ package graph
 import scala.collection.mutable
 
 final case class IndexOfSlice[A1, A2](in: Pat[A1], sub: Pat[A2], from: Pat[Int]) extends Pattern[Int] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl[Tx](tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[Int] = {
     val inT   = t(in)
@@ -30,13 +30,18 @@ final case class IndexOfSlice[A1, A2](in: Pat[A1], sub: Pat[A2], from: Pat[Int])
     private[this] val inStream    = in  .expand(ctx, tx0)
     private[this] val subStream   = sub .expand(ctx, tx0)
     private[this] val fromStream  = from.expand(ctx, tx0)
-    private[this] val fromValue   = ctx.newVar(0)
 
+    private[this] val fromValue   = ctx.newVar(0)
     private[this] val _valid      = ctx.newVar(false)
     private[this] val _hasNext    = ctx.newVar(false)
 
     def reset()(implicit tx: Tx): Unit =
-      _valid() = false
+      if (_valid()) {
+        _valid() = false
+        inStream  .reset()
+        subStream .reset()
+        fromStream.reset()
+      }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {

@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 case class Length[A](in: Pat[A]) extends Pattern[Int] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl(tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[Int] = {
     val inT = t(in)
@@ -28,12 +28,14 @@ case class Length[A](in: Pat[A]) extends Pattern[Int] {
     private[this] val _hasNext  = ctx.newVar(true)
 
     def reset()(implicit tx: Tx): Unit = {
+      inStream.reset()
       _hasNext() = true
     }
 
     def hasNext(implicit tx: Tx): Boolean = _hasNext()
 
     def next()(implicit tx: Tx): Int = {
+      if (!hasNext) Stream.exhausted()
       var res = 0
       while (inStream.hasNext) {
         inStream.next()

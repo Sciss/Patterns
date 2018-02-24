@@ -21,7 +21,7 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
 
   override private[patterns] def aux: List[Aux] = num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A] = {
     val loT = t(lo)
@@ -42,7 +42,12 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
     private[this] val _valid    = ctx.newVar(false)
 
     def reset()(implicit tx: Tx): Unit =
-      _valid() = false
+      if (_valid()) {
+        _valid() = false
+        loStream.reset()
+        hiStream.reset()
+        // XXX TODO: r.reset()
+      }
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()
@@ -59,8 +64,7 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
       }
 
     def next()(implicit tx: Tx): A = {
-      validate()
-      if (!_hasNext()) Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = state()
       _hasNext() = loStream.hasNext && hiStream.hasNext
       if (_hasNext()) {

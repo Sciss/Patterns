@@ -19,7 +19,7 @@ import de.sciss.patterns.graph.impl.MapItStream
 final case class FlatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
   extends Pattern[A] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     logStream("FlatMap.iterator")
     new StreamImpl(tx)
   }
@@ -48,11 +48,13 @@ final case class FlatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
     // as an additional constraint to determine `hasNext`!
     private[this] val itStream      = mkItStream(tx0)
 
-    def reset()(implicit tx: Tx): Unit =
+    def reset()(implicit tx: Tx): Unit = {
+      println("TODO: FlatMap.reset")
       ctx.getStreams(ref).foreach {
         case m: MapItStream[Tx, _] => m.resetOuter()
         // case _ =>
       }
+    }
 
     def hasNext(implicit tx: Tx): Boolean =
       itStream.hasNext && innerStream.hasNext

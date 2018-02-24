@@ -22,21 +22,31 @@ abstract class TruncateStream[A, Tx](in: Pat[A], length: Pat[Int], tx0: Tx)(impl
   private[this] val inStream  = in    .expand(ctx, tx0)
 
   private[this] val peer      = ctx.newVar[Stream[Tx, A]](null)
+//  private[this] val _hasPeer  = ctx.newVar(false)
   private[this] val _hasNext  = ctx.newVar(false)
-
   private[this] val _valid    = ctx.newVar(false)
 
   protected def truncate(it: Stream[Tx, A], n: Int)(implicit tx: Tx): Stream[Tx, A]
 
-  def reset()(implicit tx: Tx): Unit = _valid() = false
+  def reset()(implicit tx: Tx): Unit =
+    if (_valid()) {
+      _valid() = false
+      lenStream .reset()
+      inStream  .reset()
+//      if (_hasPeer()) peer().reset()
+    }
 
   private def validate()(implicit tx: Tx): Unit = if (!_valid()) {
     _valid() = true
-    _hasNext() = lenStream.hasNext
-    if (_hasNext()) {
+    val lhn = lenStream.hasNext
+    if (lhn) {
       val lenVal = lenStream.next()
-      peer() = truncate(inStream, lenVal)
-      _hasNext() = peer().hasNext
+      peer()      = truncate(inStream, lenVal)
+//      _hasPeer()  = true
+      _hasNext()  = peer().hasNext
+    } else {
+//      _hasPeer()  = false
+      _hasNext()  = false
     }
   }
 
@@ -46,8 +56,7 @@ abstract class TruncateStream[A, Tx](in: Pat[A], length: Pat[Int], tx0: Tx)(impl
   }
 
   def next()(implicit tx: Tx): A = {
-    validate()
-    if (!_hasNext()) Stream.exhausted()
+    if (!hasNext) Stream.exhausted()
     val res = peer().next()
     _hasNext() = peer().hasNext
     res

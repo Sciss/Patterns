@@ -22,7 +22,7 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
 
   override private[patterns] def aux: List[Aux] = widen :: num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[A] = {
     val loT   = t(lo)
@@ -66,11 +66,16 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
     }
 
     def reset()(implicit tx: Tx): Unit =
-      _valid() = false
+      if (_valid()) {
+        _valid() = false
+        loStream  .reset()
+        hiStream  .reset()
+        stepStream.reset()
+        // XXX TODO: r.reset()
+      }
 
     def next()(implicit tx: Tx): A = {
-      validate()
-      if (!_hasNext()) Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = state()
       _hasNext() = loStream.hasNext && hiStream.hasNext && stepStream.hasNext
       if (_hasNext()) {

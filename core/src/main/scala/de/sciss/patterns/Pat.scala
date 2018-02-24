@@ -54,14 +54,9 @@ trait ProductWithAux extends Product {
 }
 
 trait Pat[+A] extends ProductWithAux {
-  private[patterns] def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A]
-
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A]
-  def embed   [Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A]
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A]
 
   def transform(t: Transform): Pat[A]
-
-  private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit
 }
 
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */
@@ -78,20 +73,20 @@ abstract class Pattern[+A] extends Pat[A] {
   // default is _no aux_
   private[patterns] def aux: List[Aux] = Nil
 
-  /** A final implementation of this method which looks up the current stream graph
-    * builder and then performs the expansion just as `force`, returning the
-    * expanded object
-    *
-    * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
-    *          or a single stream, or a group of streams)
-    */
-  final private[patterns] def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
-//    ctx.visit(ref, iterator)
-    ctx.addStream(_ref, iterator)
-  }
+//  /** A final implementation of this method which looks up the current stream graph
+//    * builder and then performs the expansion just as `force`, returning the
+//    * expanded object
+//    *
+//    * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
+//    *          or a single stream, or a group of streams)
+//    */
+//  final private[patterns] def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+////    ctx.visit(ref, iterator)
+//    ctx.addStream(_ref, iterator)
+//  }
 
-  final private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit =
-    ctx.getStreams(_ref).foreach(_.reset())
-
-  final def embed[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = iterator
+//  final private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit =
+//    ctx.getStreams(_ref).foreach(_.reset())
+//
+//  final def embed[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = iterator
 }

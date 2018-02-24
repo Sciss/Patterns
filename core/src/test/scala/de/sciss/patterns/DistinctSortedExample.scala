@@ -31,7 +31,7 @@ object DistinctSortedExample {
     import ctx.tx
 
     def plot(g: Pat[Int], title: String): Unit =
-      g.iterator.toList.plot(title = title, discrete = true)
+      g.expand.toList.plot(title = title, discrete = true)
 
     Swing.onEDT {
       plot(ex1, "ex1")

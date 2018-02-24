@@ -29,7 +29,7 @@ package graph
 final case class Poll[A](in: Pat[A], gate: Pat[Boolean], label: Pat[String] = "poll")
   extends Pattern[A] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A] = {
     val inT     = t(in)
@@ -43,7 +43,11 @@ final case class Poll[A](in: Pat[A], gate: Pat[Boolean], label: Pat[String] = "p
     private[this] val gateStream  = gate  .expand(ctx, tx0)
     private[this] val labelStream = label .expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = ()
+    def reset()(implicit tx: Tx): Unit = {
+      inStream    .reset()
+      gateStream  .reset()
+      labelStream .reset()
+    }
 
     def hasNext(implicit tx: Tx): Boolean = inStream.hasNext
 

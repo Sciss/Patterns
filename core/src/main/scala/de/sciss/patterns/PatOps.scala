@@ -145,7 +145,9 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def combinations(n: Pat[Int]): Pat[Pat[A]] = Combinations(x, n)
 
-  def recur(): Pat[A] = Recur(x)
+//  def recur(): Pat[A] = Recur(x)
+
+  def flow(): Pat[A] = Flow(x)
 
   def zip[B](that: Pat[B]): Pat[(A, B)] = Zip2(x, that)
 

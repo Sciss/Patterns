@@ -19,7 +19,7 @@ import de.sciss.patterns
 final case class Zip2[A1, A2](a: Pat[A1], b: Pat[A2])
   extends Pattern[(A1, A2)] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, (A1, A2)] =
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, (A1, A2)] =
     new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[(A1, A2)] = {
@@ -34,7 +34,10 @@ final case class Zip2[A1, A2](a: Pat[A1], b: Pat[A2])
     private[this] val aStream = a.expand(ctx, tx0)
     private[this] val bStream = b.expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = ()
+    def reset()(implicit tx: Tx): Unit = {
+      aStream.reset()
+      bStream.reset()
+    }
 
     def hasNext(implicit tx: Tx): Boolean = aStream.hasNext && bStream.hasNext
 

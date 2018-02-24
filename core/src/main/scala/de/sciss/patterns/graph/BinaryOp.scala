@@ -137,7 +137,7 @@ final case class BinaryOp[A1, A2, A3, A](op: BinaryOp.Op[A3, A], a: Pat[A1], b: 
 
   override private[patterns] def aux: List[Aux] = widen :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     val ai = a.expand.map(widen.lift1)
     val bi = b.expand.map(widen.lift2)
     (ai zip bi).map { case (av, bv) => op(av, bv) }

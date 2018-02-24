@@ -19,7 +19,7 @@ import de.sciss.patterns.graph.impl.MapItStream
 final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
   extends Pattern[Pat[A]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = {
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = {
     logStream("PatMap.iterator")
     new StreamImpl(tx)
   }
@@ -60,6 +60,7 @@ final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
       }
 
     def reset()(implicit tx: Tx): Unit = {
+      println("TODO: PatMap.reset")
       logStream("PatMap.iterator.reset()")
       _valid() = false
       ctx.getStreams(ref).foreach {

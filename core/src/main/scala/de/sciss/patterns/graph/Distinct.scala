@@ -17,7 +17,7 @@ package graph
 import scala.annotation.tailrec
 
 final case class Distinct[A](in: Pat[A]) extends Pattern[A] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A] = {
     val inT = t(in)
@@ -32,7 +32,10 @@ final case class Distinct[A](in: Pat[A]) extends Pattern[A] {
     private[this] val _next    = ctx.newVar[A       ](null.asInstanceOf[A])
 
     def reset()(implicit tx: Tx): Unit =
-      _valid() = false
+      if (_valid()) {
+        _valid() = false
+        inStream.reset()
+      }
 
     @tailrec
     private def advance()(implicit tx: Tx): Unit = {

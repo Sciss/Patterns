@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 case class Indices[A](in: Pat[A]) extends Pattern[Int] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl(tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[Int] = {
     val inT = t(in)
@@ -27,8 +27,10 @@ case class Indices[A](in: Pat[A]) extends Pattern[Int] {
 
     private[this] val count = ctx.newVar(0)
 
-    def reset()(implicit tx: Tx): Unit =
+    def reset()(implicit tx: Tx): Unit = {
+      inStream.reset()
       count() = 0
+    }
 
     def hasNext(implicit tx: Tx): Boolean = inStream.hasNext
 

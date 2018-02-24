@@ -40,7 +40,7 @@ class PatternsSpec extends PatSpec {
   }
 
   "Combinations" should work in {
-    val p1: Pat[Int] = Pseq(1 to 4)
+    val p1: Pat[Int] = Pat(1 to 4: _*) // Pseq(1 to 4)
     val p2 = p1.combinations(3)
 
     val plain = List(1, 2, 3, 4).combinations(3).toList
@@ -49,7 +49,7 @@ class PatternsSpec extends PatSpec {
   }
 
   "Flatten" should work in {
-    val p1  = Pseq(1 to 4)
+    val p1  = Pat(1 to 4: _*) // Pseq(1 to 4)
     val p2  = p1.combinations(3)
     val values: Seq[Int] = eval(Flatten(p2))
     val plain = List(1, 2, 3, 4).combinations(3).toList.flatten
@@ -59,7 +59,7 @@ class PatternsSpec extends PatSpec {
 
   "Map" should work in {
     val pat1 = Graph {
-      val in = Pseq(1 to 4).combinations(3)
+      val in = Pat(1 to 4: _*).combinations(3)
       in.map { x: Pat[Int] =>
         x.drop(1)
       }
@@ -73,7 +73,7 @@ class PatternsSpec extends PatSpec {
 
     // it must be possible t
     val pat2 = Graph {
-      val in = Pseq(1 to 4).combinations(3)
+      val in = Pat(1 to 4: _*).combinations(3)
       in.map { _: Pat[Int] =>
         Pat[Int](6)
       }
@@ -98,14 +98,14 @@ class PatternsSpec extends PatSpec {
 
   "Copy" should work in {
     val res1 = Graph {
-      val a = Pat[Int](1, 2, 3)
+      val a = Pat[Int](1, 2, 3).flow()
       Pat.seqFill(3) { _ => a }
     }
     eval(res1) shouldBe List(1, 2, 3)
 
     val res2  = Graph {
       val a = Pat[Int](1, 2, 3)
-      Pat.seqFill(3) { _ => a.recur() }
+      Pat.seqFill(3) { _ => a }
     }
     eval(res2) shouldBe List(1, 2, 3, 1, 2, 3, 1, 2, 3)
   }

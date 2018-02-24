@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] { pat =>
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl(tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[Pat[A]] = {
     val inT   = t(in)
@@ -32,9 +32,12 @@ final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] 
 
     private[this] val _valid      = ctx.newVar(false)
 
-    def reset()(implicit tx: Tx): Unit = {
-      _valid() = false
-    }
+    def reset()(implicit tx: Tx): Unit =
+      if (_valid()) {
+        _valid() = false
+        inStream  .reset()
+        sizeStream.reset()
+      }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
@@ -69,8 +72,7 @@ final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] 
     }
 
     def next()(implicit tx: Tx): Pat[A] = {
-      validate()
-      if (!_hasNext()) Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = innerStream()
       advance()
       res

@@ -17,7 +17,7 @@ package graph
 import scala.annotation.tailrec
 
 final case class Flatten[A](in: Pat[Pat[A]]) extends Pattern[A] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[A] = {
     val inT = t(in)
@@ -34,11 +34,15 @@ final case class Flatten[A](in: Pat[Pat[A]]) extends Pattern[A] {
     private[this] val _valid      = ctx.newVar(false)
 
     def reset()(implicit tx: Tx): Unit =
-      _valid() = false
+      if (_valid()) {
+        _valid() = false
+        inStream.reset()
+      }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
-        _valid() = true
+        _valid()    = true
+        hasInner()  = false
         advance()
       }
 
@@ -66,8 +70,7 @@ final case class Flatten[A](in: Pat[Pat[A]]) extends Pattern[A] {
     }
 
     def next()(implicit tx: Tx): A = {
-      validate()
-      if (!_hasNext()) Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = innerStream().next()
       advance()
       res

@@ -18,7 +18,7 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
                                 inner: Pat[A])
   extends Pattern[A] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A] = {
@@ -56,6 +56,7 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
       }
 
     def reset()(implicit tx: Tx): Unit = {
+      println("TODO: FoldLeft.reset")
       logStream("FoldLeft.iterator.reset()")
       _valid() = false
     }

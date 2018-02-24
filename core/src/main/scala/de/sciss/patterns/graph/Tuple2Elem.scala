@@ -19,7 +19,7 @@ import de.sciss.patterns
 final case class Tuple2_1[A1, A2](in: Pat[(A1, A2)])
   extends Pattern[A1] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A1] =
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A1] =
     new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A1] = {
@@ -32,18 +32,16 @@ final case class Tuple2_1[A1, A2](in: Pat[(A1, A2)])
 
     private[this] val tupStream = in.expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = ()
-
+    def reset()(implicit tx: Tx): Unit    = tupStream.reset()
     def hasNext(implicit tx: Tx): Boolean = tupStream.hasNext
-
-    def next()(implicit tx: Tx): A1 = tupStream.next()._1
+    def next ()(implicit tx: Tx): A1      = tupStream.next()._1
   }
 }
 
 final case class Tuple2_2[A1, A2](in: Pat[(A1, A2)])
   extends Pattern[A2] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A2] =
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A2] =
     new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A2] = {
@@ -56,11 +54,9 @@ final case class Tuple2_2[A1, A2](in: Pat[(A1, A2)])
 
     private[this] val tupStream = in.expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = ()
-
+    def reset()(implicit tx: Tx): Unit    = tupStream.reset()
     def hasNext(implicit tx: Tx): Boolean = tupStream.hasNext
-
-    def next()(implicit tx: Tx): A2 = tupStream.next()._2
+    def next ()(implicit tx: Tx): A2      = tupStream.next()._2
   }
 }
 

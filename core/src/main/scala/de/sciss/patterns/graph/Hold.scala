@@ -19,7 +19,7 @@ package graph
   * input element forever.
   */
 final case class Hold[A](in: Pat[A], hold: Pat[Boolean] = true) extends Pattern[A] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[A] = {
     val inT   = t(in)
@@ -37,7 +37,11 @@ final case class Hold[A](in: Pat[A], hold: Pat[Boolean] = true) extends Pattern[
     private[this] val state       = ctx.newVar[A](null.asInstanceOf[A])
 
     def reset()(implicit tx: Tx): Unit =
-      _valid() = false
+      if (_valid()) {
+        _valid() = false
+        inStream  .reset()
+        holdStream.reset()
+      }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {

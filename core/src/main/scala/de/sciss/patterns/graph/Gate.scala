@@ -17,7 +17,7 @@ package graph
 import scala.annotation.tailrec
 
 final case class Gate[A](in: Pat[A], gate: Pat[Boolean]) extends Pattern[A] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A] = {
@@ -35,7 +35,11 @@ final case class Gate[A](in: Pat[A], gate: Pat[Boolean]) extends Pattern[A] {
     private[this] val _nextElem   = ctx.newVar[A](null.asInstanceOf[A])
 
     def reset()(implicit tx: Tx): Unit =
-      _valid() = false
+      if (_valid()) {
+        _valid() = false
+        inStream  .reset()
+        gateStream.reset()
+      }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
@@ -69,8 +73,7 @@ final case class Gate[A](in: Pat[A], gate: Pat[Boolean]) extends Pattern[A] {
     }
 
     def next()(implicit tx: Tx): A = {
-      validate()
-      if (!_hasNext()) Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = _nextElem()
       advance()
       res

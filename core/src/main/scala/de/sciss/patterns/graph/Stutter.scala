@@ -17,7 +17,7 @@ package graph
 final case class Stutter[A](in: Pat[A], n: Pat[Int])
   extends Pattern[A] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     val inIt = in.expand
     val nIt  = n .expand
     (inIt zip nIt).flatMap { case (xi, ni) => Stream.fill(ni)(xi) }

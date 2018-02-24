@@ -21,7 +21,7 @@ import scala.util.control.Breaks
 final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean])
   extends Pattern[Pat[A]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] =
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] =
     new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[Pat[A]] = {
@@ -51,6 +51,11 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
     private[this] val sortedIt    = ctx.newVar[Stream[Tx, Pat[A]]](null)
     private[this] val _hasSorted  = ctx.newVar(false)
 
+    def reset()(implicit tx: Tx): Unit = {
+      println("TODO: SortWith.reset")
+      _valid() = false
+    }
+
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
         _valid()      = true
@@ -76,11 +81,6 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
         _hasSorted() = true
         sortedIt() = Stream(sorted.map(xs => Pat(xs: _*) /* Stream(xs: _*) */): _*)
       }
-    }
-
-    def reset()(implicit tx: Tx): Unit = {
-      _valid() = false
-      println("SortWith. TODO: resetOuter")
     }
 
     def hasNext(implicit tx: Tx): Boolean = {

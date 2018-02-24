@@ -71,7 +71,7 @@ object RonTuplePure {
   // all pairs from two arrays
   def directProduct[A](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
     a.flatMap { v: Pat[A] =>
-      b.recur().bubble.map { w: Pat[A] => v.recur() ++ w }
+      b.bubble.map { w: Pat[A] => v ++ w }
     }
 
   // collects the indices of every occurrence of elements of t in s
@@ -88,9 +88,8 @@ object RonTuplePure {
   // collects the indices of every occurrence of elements of t in s
   def extract[A](s: Pat[A], t: Pat[A]): Pat[Pat[Int]] =
     t.bubble.map { tj: Pat[A] =>
-      val sr        = s.recur()
-      val same      = sr sig_== Hold(tj)
-      val indices   = sr.indices
+      val same      = s sig_== Hold(tj)
+      val indices   = s.indices
       val indicesF  = Gate(indices, same)
       indicesF
     }
@@ -275,10 +274,10 @@ object RonTuplePure {
         "dr"          -> 0.1,
         "stretch"     -> 1
       )
-    val lPat  = Pseq[Int   ]((8 to 12).mirror            , inf) // .iterator
-    val rPat  = Pseq[Double]((5 to  9).mirror.map(_/25.0), inf) // .iterator
+    val lPat  = Pseq[Int   ]((8 to 12).mirror            , inf).flow() // .iterator
+    val rPat  = Pseq[Double]((5 to  9).mirror.map(_/25.0), inf).flow() // .iterator
 
-    val stutterPat: Pat[Int] = White(1, 4)
+    val stutterPat: Pat[Int] = White(1, 4).flow()
 
     //    lPat.next(); rPat.next()
     Pat.seqFill(4) { _ => // original: infinite
@@ -306,7 +305,7 @@ object RonTuplePure {
       val pats: Pat[Pat[Event]] = parts.map { part: Pat[Double] =>
         val partsIdx = partsIndices.head
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-        val (notePat, durPat) = makePart(part, cantus.recur(), stutter = stutterPat.head)
+        val (notePat, durPat) = makePart(part, cantus, stutter = stutterPat.head)
 
           //        durs ::= durPat.iterator.sum
 

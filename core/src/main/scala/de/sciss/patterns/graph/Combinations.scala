@@ -18,7 +18,7 @@ import scala.collection.mutable
 
 final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl(tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[Pat[A]] = {
     val inT = t(in)
@@ -46,13 +46,20 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
 
     private[this] val _valid = ctx.newVar(false)
 
+    def reset()(implicit tx: Tx): Unit =
+      if (_valid()) {
+        _valid() = false
+        inStream.reset()
+        nStream .reset()
+      }
+
     def hasNext(implicit tx: Tx): Boolean = {
       validate()
       _hasNext()
     }
 
     def next()(implicit tx: Tx): Pat[A] = {
-      if (!_hasNext()) Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
 
       /* Calculate this result. */
       val buf = List.newBuilder[A]
@@ -94,9 +101,6 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
 
       Pat(buf.result(): _*)
     }
-
-    def reset()(implicit tx: Tx): Unit =
-      _valid() = false
 
     /* Rearranges seq to newSeq a0a0..a0a1..a1...ak..ak such that
      * seq.count(_ == aj) == counts(j)

@@ -21,7 +21,7 @@ import scala.collection.immutable.{SortedMap => ISortedMap}
 final case class Ppar(list: Pat[Pat[Event]], repeats: Pat[Int] = 1, offset: Pat[Int] = 0)
   extends Pattern[Event] {
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Event] = new StreamImpl(tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Event] = new StreamImpl(tx)
 
   def transform(t: Transform): Pat[Event] = {
     val listT     = list.map(t(_))
@@ -42,6 +42,14 @@ final case class Ppar(list: Pat[Pat[Event]], repeats: Pat[Int] = 1, offset: Pat[
     private[this] val elem        = ctx.newVar[Event   ](null)
 
     private[this] val _valid      = ctx.newVar(false)
+
+    def reset()(implicit tx: Tx): Unit =
+      if (_valid()) {
+        _valid() = false
+        listStream    .reset()
+        repeatsStream .reset()
+        offsetStream  .reset()
+      }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
@@ -66,9 +74,6 @@ final case class Ppar(list: Pat[Pat[Event]], repeats: Pat[Int] = 1, offset: Pat[
 
         advance()
       }
-
-    def reset()(implicit tx: Tx): Unit =
-      _valid() = false
 
     private def advance()(implicit tx: Tx): Unit =
       if (pq().nonEmpty) {
@@ -96,8 +101,7 @@ final case class Ppar(list: Pat[Pat[Event]], repeats: Pat[Int] = 1, offset: Pat[
     }
 
     def next()(implicit tx: Tx): Event = {
-      validate()
-      if (!_hasNext()) Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = elem()
       advance()
       res

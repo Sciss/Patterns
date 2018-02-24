@@ -24,7 +24,7 @@ final case class ArithmSeq[A1, A2, A](start: Pat[A1], step: Pat[A2])
 
   override private[patterns] def aux: List[Aux] = widen :: num :: Nil
 
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
   def transform(t: Transform): Pat[A] = {
     val startT = t(start)

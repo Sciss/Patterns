@@ -1,17 +1,13 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.graph._
-
 class RonTupleSpec extends PatSpec {
   def directProduct_Seq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] =
     a.flatMap { v => b.map { w => v :+ w } }
 
   def directProduct_Pat[A](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
     a.flatMap { v: Pat[A] =>
-      val br = b.recur()
-      br.bubble.map { w: Pat[A] =>
-        val vr = v.recur()
-        vr ++ w
+      b.bubble.map { w: Pat[A] =>
+        v ++ w
       }
     }
 
@@ -125,10 +121,8 @@ class RonTupleSpec extends PatSpec {
 
     def directProduct_Pat[A](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
       a.flatMap { v: Pat[A] =>
-        val br = b.recur()
-        br.bubble.map { w: Pat[A] =>
-          val vr = v.recur()
-          vr ++ w
+        b.bubble.map { w: Pat[A] =>
+          v ++ w
         }
       }
 

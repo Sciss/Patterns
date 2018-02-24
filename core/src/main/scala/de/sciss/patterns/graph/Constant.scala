@@ -17,16 +17,17 @@ package graph
 import de.sciss.patterns.Types.Aux
 
 final case class Constant[A](value: A) extends Pat[A] {
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = Stream.continually(value)
-  def embed   [Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = Stream.single     (value)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = Stream.continually(value)
+
+//  def embed   [Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = Stream.single     (value)
 
 //  private[patterns] final def cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
 
   private[patterns] def aux: List[Aux] = Nil
 
-  private[patterns] def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = iterator
-
-  private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit = ()
+//  private[patterns] def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = iterator
+//
+//  private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit = ()
 
   def transform(t: Transform): Pat[A] = this
 }

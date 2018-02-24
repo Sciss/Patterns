@@ -16,7 +16,7 @@ package graph
 
 /** A glue element to make `map` and `flatMap` work. */
 final case class It[A](token: Int) extends Pattern[A] { pat =>
-  def iterator[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     logStream(s"$pat.iterator")
     new StreamImpl[Tx](tx)
   }
