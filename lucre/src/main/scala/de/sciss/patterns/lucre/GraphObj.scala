@@ -21,7 +21,7 @@ import de.sciss.lucre.expr.Expr
 import de.sciss.lucre.stm.{Copy, Elem, Obj, Sys}
 import de.sciss.model.Change
 import de.sciss.patterns.Types.Aux
-import de.sciss.patterns.graph.{Constant, Pseq}
+import de.sciss.patterns.graph.Constant
 import de.sciss.patterns.{Graph, Pat, ProductWithAux, Pattern => _Pattern}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
@@ -267,7 +267,7 @@ object GraphObj extends expr.impl.ExprTypeImpl[Graph[_], GraphObj] {
     }
 
   private val emptyGraph = Graph {
-    Pseq(Nil) // (Vector.empty, Pseq[Top](Nil))
+    Pat()
   }
 
   def empty[S <: Sys[S]](implicit tx: S#Tx): Ex[S] = apply(emptyCookie)
