@@ -29,5 +29,5 @@ final case class Constant[A](value: A) extends Pat[A] {
 //
 //  private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit = ()
 
-  def transform(t: Transform): Pat[A] = this
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = this
 }

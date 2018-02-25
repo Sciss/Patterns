@@ -31,7 +31,7 @@ final case class Poll[A](in: Pat[A], gate: Pat[Boolean], label: Pat[String] = "p
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val inT     = t(in)
     val gateT   = t(gate)
     val labelT  = t(label)

@@ -17,7 +17,7 @@ package graph
 final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] { pat =>
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl(tx)
 
-  def transform(t: Transform): Pat[Pat[A]] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Pat[A]] = {
     val inT   = t(in)
     val sizeT = t(size)
     if (inT.eq(in) && sizeT.eq(size)) this else copy(in = inT, size = sizeT)

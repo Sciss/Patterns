@@ -24,10 +24,13 @@ final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
     new StreamImpl(tx)
   }
 
-  def transform(t: Transform): Pat[Pat[A]] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Pat[A]] = {
     val outerT  = t(outer)
     val innerT  = t(inner)
-    if (outerT.eq(outer) && innerT.eq(inner)) this else copy(outer = outerT, inner = innerT)
+    if (outerT.eq(outer) && innerT.eq(inner)) this else {
+      val (itT, innerT1) = it.replaceIn(innerT)
+      copy(outer = outerT, it = itT, inner = innerT1)
+    }
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {

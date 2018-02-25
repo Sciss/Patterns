@@ -23,7 +23,7 @@ final case class Stutter[A](in: Pat[A], n: Pat[Int])
     (inIt zip nIt).flatMap { case (xi, ni) => Stream.fill(ni)(xi) }
   }
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val inT = t(in) .transform(t)
     val nT  = t(n)  .transform(t)
     if (inT.eq(in) && nT.eq(n)) this else copy(in = inT, n = nT)

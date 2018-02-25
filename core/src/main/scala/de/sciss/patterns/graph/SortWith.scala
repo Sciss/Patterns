@@ -24,10 +24,13 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] =
     new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[Pat[A]] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Pat[A]] = {
     val outerT  = t(outer)
     val ltT     = t(lt)
-    if (outerT.eq(outer) && ltT.eq(lt)) this else copy(outer = outerT, lt = ltT)
+    if (outerT.eq(outer) && ltT.eq(lt)) this else {
+      val (itT, ltT1) = it.replaceIn(ltT)
+      copy(outer = outerT, it = itT, lt = ltT1)
+    }
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])

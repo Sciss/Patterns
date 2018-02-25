@@ -17,7 +17,7 @@ package graph
 final case class Format(s: Pat[String], args: Pat[_]*) extends Pattern[String] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, String] = new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[String] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[String] = {
     val sT    = t(s)
     val argsT = args.map(t(_))
     Format(sT, argsT: _*)

@@ -9,7 +9,7 @@ class RonTupleSpec extends PatSpec {
   def directProduct_Pat[A](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
     a.flatMap { v => b.bubble.map { w => v ++ w }}
 
-  ignore /* "The directProduct example" */ should "Bla" in {
+  "The directProduct example" should work in {
     //    showStreamLog = true
 
     val aInSeq  = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
@@ -46,7 +46,7 @@ class RonTupleSpec extends PatSpec {
      */
   }
 
-  ignore /* "The extract example" */ should "Blub" in {
+  "The extract example" should work in {
     // collects the indices of every occurrence of elements of t in s
     def extract_Seq[A](s: Seq[A], t: Seq[A]): Seq[Seq[Int]] =
       t.map { tj =>
@@ -105,55 +105,14 @@ class RonTupleSpec extends PatSpec {
       res
     }
 
-    def directProduct_Pat[A](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
-      a.flatMap { v =>
-        b.bubble.map { w =>
-          v ++ w
-        }
-      }
-
-    /*
-
-    List(List(0, 2, 2), List(0, 2, 2), List(0, 2, 2), List(6, 2, 2), List(6, 2, 2), List(6, 2, 2), List(7, 2, 2), List(7, 2, 2), List(7, 2, 2))
-    was not equal to
-    List(List(0, 2, 1), List(0, 2, 3), List(0, 2, 5), List(6, 2, 1), List(6, 2, 3), List(6, 2, 5), List(7, 2, 1), List(7, 2, 3), List(7, 2, 5))
-
-
-FlatMap(
-  outer = FlatMap(
-    outer = Grouped(Apply(Pat(Pat(0, 6, 7), Pat(2), Pat(1, 3, 5)),Constant(0)),Constant(1)),
-    it    = It(2),
-    inner = PatMap(
-      outer = Grouped(Pat(2),Constant(1)),
-      it    = It(3),
-      inner = Cat(It(2),It(3)))),
-  it = It(2),
-  inner = PatMap(
-    outer = Grouped(Pat(1, 3, 5),Constant(1)),
-    it    = It(3),
-    inner = Cat(It(2),It(3)))
-)
-
-
-     */
-
     // generates all tuplets from within x, an array
     // where each element is an array of occurrences of a value
     def allTuples_Pat[A](x: Pat[Pat[A]]): Pat[Pat[A]] = {
       val hd = x.head.bubble // <| (_.size.poll("hd-sz"))
       val tl = x.tail // .map(_.poll("tl"))// <| (_.size.poll("tl-sz"))
       tl.foldLeft(hd) { (ys: Pat[Pat[A]], xi: Pat[A]) =>
-//        ys.map(_.poll("ys")) ++ xi.poll("xi").bubble // directProduct_Pat(ys.map(_.poll("ys")), xi.poll("xi"))
         directProduct_Pat(ys, xi)
       }
-    }
-
-    def allTuples_Pat1[A](x: Pat[Pat[A]]): Pat[Pat[A]] = {
-      val hd = x.head.bubble
-      val tl = x.tail
-      val y1 = directProduct_Pat(hd, tl(0))
-      val y2 = directProduct_Pat(y1, tl(1))
-      y2
     }
 
     val in  = Seq(Seq(0, 6, 7), Seq(2), Seq(1, 3, 5))
@@ -165,12 +124,6 @@ FlatMap(
 
     val plainOut2 = allTuples_Seq2(in)
     plainOut2 shouldBe out
-
-//    val patOut = Graph {
-//      val inPat0 = in.map(xs => Pat.Int(xs: _*))
-//      val inPat: Pat[Pat[Int]] = inPat0
-//      allTuples_Pat(inPat)
-//    }
 
     val patOut = Graph {
       val inPat0 = in.map(xs => Pat.Int(xs: _*))

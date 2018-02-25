@@ -21,7 +21,7 @@ final case class Sorted[A](in: Pat[A])(implicit ord: Ord[A]) extends Pattern[A] 
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val inT = t(in)
     if (inT eq in) this else copy(in = inT)
   }

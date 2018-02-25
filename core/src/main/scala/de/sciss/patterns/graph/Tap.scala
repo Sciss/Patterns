@@ -17,7 +17,7 @@ package graph
 final case class Tap[A, A1](in: Pat[A], side: Pat[A1]) extends Pattern[A] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val inT   = t(in)
     val sideT = t(side)
     if (inT.eq(in) && sideT.eq(side)) this else copy(in = inT, side = sideT)

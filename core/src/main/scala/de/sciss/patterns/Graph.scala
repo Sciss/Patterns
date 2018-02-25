@@ -100,7 +100,7 @@ final case class Graph[A](sources: Vec[Pat[_]], out: Pat[A]) extends Pattern[A] 
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val sourcesT = sources.map(t(_))
     val outT     = t(out)
     copy(sources = sourcesT, out = outT)

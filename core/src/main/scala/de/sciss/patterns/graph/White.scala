@@ -23,7 +23,7 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val loT = t(lo)
     val hiT = t(hi)
     if (loT.eq(lo) && hiT.eq(hi)) this else copy(lo = loT, hi = hiT)

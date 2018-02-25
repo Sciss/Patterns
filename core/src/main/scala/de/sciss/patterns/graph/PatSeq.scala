@@ -16,7 +16,7 @@ final case class PatSeq[A](elems: A*) extends Pattern[A] {
     Stream(elems: _*)
   }
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val elemsT: Seq[_] = elems.map {
       case e: Pat[_]  => t(e)
       case e          => e

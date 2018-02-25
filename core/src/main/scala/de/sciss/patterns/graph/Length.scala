@@ -17,7 +17,7 @@ package graph
 case class Length[A](in: Pat[A]) extends Pattern[Int] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl(tx)
 
-  def transform(t: Transform): Pat[Int] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Int] = {
     val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }

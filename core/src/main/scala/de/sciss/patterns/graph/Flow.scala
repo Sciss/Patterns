@@ -20,7 +20,7 @@ final case class Flow[A](in: Pat[A]) extends Pattern[A] {
     new StreamImpl[Tx](tx)
   }
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }

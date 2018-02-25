@@ -56,7 +56,7 @@ trait ProductWithAux extends Product {
 trait Pat[+A] extends ProductWithAux {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A]
 
-  def transform(t: Transform): Pat[A]
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A]
 }
 
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */

@@ -143,7 +143,7 @@ final case class BinaryOp[A1, A2, A3, A](op: BinaryOp.Op[A3, A], a: Pat[A1], b: 
     (ai zip bi).map { case (av, bv) => op(av, bv) }
   }
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val aT = t(a)
     val bT = t(b)
     if (aT.eq(a) && bT.eq(b)) this else copy(a = aT, b = bT)

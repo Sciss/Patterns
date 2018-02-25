@@ -19,7 +19,7 @@ import scala.collection.mutable
 final case class IndexOfSlice[A1, A2](in: Pat[A1], sub: Pat[A2], from: Pat[Int]) extends Pattern[Int] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[Int] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Int] = {
     val inT   = t(in)
     val subT  = t(sub)
     val fromT = t(from)

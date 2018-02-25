@@ -21,7 +21,7 @@ package graph
 final case class Hold[A](in: Pat[A], hold: Pat[Boolean] = true) extends Pattern[A] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val inT   = t(in)
     val holdT = t(hold)
     if (inT.eq(in) && holdT.eq(hold)) this else copy(in = inT, hold = holdT)

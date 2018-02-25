@@ -22,7 +22,7 @@ final case class Zip2[A1, A2](a: Pat[A1], b: Pat[A2])
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, (A1, A2)] =
     new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[(A1, A2)] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[(A1, A2)] = {
     val aT = t(a)
     val bT = t(b)
     if (aT.eq(a) && bT.eq(b)) this else copy(a = aT, b = bT)

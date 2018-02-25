@@ -22,7 +22,7 @@ final case class Tuple2_1[A1, A2](in: Pat[(A1, A2)])
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A1] =
     new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[A1] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A1] = {
     val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }
@@ -44,7 +44,7 @@ final case class Tuple2_2[A1, A2](in: Pat[(A1, A2)])
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A2] =
     new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[A2] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A2] = {
     val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }

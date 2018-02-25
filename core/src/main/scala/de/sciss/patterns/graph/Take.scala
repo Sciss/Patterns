@@ -21,7 +21,7 @@ final case class Take[A](in: Pat[A], length: Pat[Int]) extends Pattern[A] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val inT     = t(in)     .transform(t)
     val lengthT = t(length) .transform(t)
     if (inT.eq(in) && lengthT.eq(length)) this else copy(in = inT, length = lengthT)

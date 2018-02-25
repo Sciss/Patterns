@@ -15,6 +15,7 @@ package de.sciss.patterns
 
 import de.sciss.lucre.stm.{Sink, Source}
 import de.sciss.patterns.Context.Var
+import de.sciss.patterns.graph.It
 
 trait Context[Tx] {
 //  def visit[U](ref: AnyRef, init: => U): U
@@ -33,6 +34,8 @@ trait Context[Tx] {
   def newVar[A](init: A): Var[Tx, A]
 //  def newVar[A](init: A): Var[A]
 //  def newIntVar(init: Int)(implicit tx: Tx): Var[Int]
+
+  def allocToken[A]()(implicit tx: Tx): It[A]
 }
 
 object Context {
@@ -56,12 +59,19 @@ object Context {
   private final class PlainImpl extends ContextLike[Unit] with Plain {
     def newVar[A](init: A): Var[Unit, A] = new PlainVar[A](init)
 
-    private[this] lazy val seedRnd = new PlainRandom(System.currentTimeMillis())
+    private[this] lazy val seedRnd  = new PlainRandom(System.currentTimeMillis())
+    private[this] var tokenId       = 1000000000 // 0x40000000
 
     protected def nextSeed()(implicit tx: Unit): Long = seedRnd.nextLong()
 
     def mkRandomWithSeed(seed: Long)(implicit tx: Unit): Random[Unit] =
       new PlainRandom(seed)
+
+    def allocToken[A]()(implicit tx: Unit): It[A] = {
+      val res = tokenId
+      tokenId += 1
+      It(res)
+    }
   }
 
   private final class PlainVar[A](private[this] var current: A) extends Sink[Unit, A] with Source[Unit, A] {

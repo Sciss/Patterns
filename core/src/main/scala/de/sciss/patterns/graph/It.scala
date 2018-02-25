@@ -21,7 +21,19 @@ final case class It[A](token: Int) extends Pattern[A] { pat =>
     new StreamImpl[Tx](tx)
   }
 
-  def transform(t: Transform): Pat[A] = this
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = this
+
+  def replaceIn[Tx, B](inner: Pat[B])(implicit ctx: Context[Tx], tx: Tx): (It[A], Pat[B]) = {
+    val itT = ctx.allocToken[A]()
+    val t = new Transform {
+      def applyOne[X](in: Pat[X]): Pat[X] = in match {
+        case `pat`  => itT.asInstanceOf[Pat[X]]
+        case other  => other
+      }
+    }
+    val innerT = t(inner)
+    (itT, innerT)
+  }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val refStream = ctx.mkOuterStream(token)(tx0)

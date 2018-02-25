@@ -23,7 +23,7 @@ final case class Ppar(list: Pat[Pat[Event]], repeats: Pat[Int] = 1, offset: Pat[
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Event] = new StreamImpl(tx)
 
-  def transform(t: Transform): Pat[Event] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Event] = {
     val listT     = list.map(t(_))
     val repeatsT  = t(repeats)
     val offsetT   = t(offset)

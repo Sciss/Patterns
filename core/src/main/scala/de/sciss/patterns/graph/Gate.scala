@@ -20,7 +20,7 @@ final case class Gate[A](in: Pat[A], gate: Pat[Boolean]) extends Pattern[A] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val inT   = t(in)
     val gateT = t(gate)
     if (inT.eq(in) && gateT.eq(gate)) this else copy(in = inT, gate = gateT)

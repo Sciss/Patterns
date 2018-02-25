@@ -19,7 +19,7 @@ final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends 
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[Pat[A]] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Pat[A]] = {
     val inT   = t(in)
     val sizeT = t(size)
     val stepT = t(step)

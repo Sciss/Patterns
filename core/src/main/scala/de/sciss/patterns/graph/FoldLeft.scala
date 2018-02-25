@@ -21,11 +21,15 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val outerT  = t(outer)
     val zT      = t(z)
     val innerT  = t(inner)
-    if (outerT.eq(outer) && zT.eq(z) && innerT.eq(inner)) this else copy(outer = outerT, z = zT, inner = innerT)
+    if (outerT.eq(outer) && zT.eq(z) && innerT.eq(inner)) this else {
+      val (itInT    , innerT1) = itIn   .replaceIn(innerT)
+      val (itCarryT , innerT2) = itCarry.replaceIn(innerT1)
+      copy(outer = outerT, z = zT, itIn = itInT, itCarry = itCarryT, inner = innerT2)
+    }
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {

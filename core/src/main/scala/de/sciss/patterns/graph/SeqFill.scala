@@ -27,7 +27,7 @@ import scala.annotation.tailrec
 final case class SeqFill[A](n: Pat[Int], it: It[Int], inner: Pat[A]) extends Pattern[A] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val nT      = t(n)
     val innerT  = t(inner)
     if (nT.eq(n) && innerT.eq(inner)) this else copy(n = nT, inner = innerT)

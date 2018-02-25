@@ -25,7 +25,7 @@ final case class GeomSeq[A1, A2, A](start: Pat[A1], step: Pat[A2] /* , length: P
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
-  def transform(t: Transform): Pat[A] = {
+  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val startT = t(start)
     val stepT  = t(step )
     if (startT.eq(start) && stepT.eq(step)) this else copy(start = startT, step = stepT)

@@ -17,6 +17,7 @@ import de.sciss.lucre.confluent.TxnRandom
 import de.sciss.lucre.stm.{Sink, Source, Txn}
 import de.sciss.patterns
 import de.sciss.patterns.Context.Var
+import de.sciss.patterns.graph.It
 import de.sciss.patterns.{ContextLike, Random}
 
 import scala.concurrent.stm.{InTxn, Ref}
@@ -45,6 +46,7 @@ object Context {
 
   private final class InMemoryImpl extends ContextLike[InTxn] with InMemory {
     private[this] val seedRnd = TxnRandom.plain()
+    private[this] val tokenId = newVar(1000000000) // 0x40000000
 
     protected def nextSeed()(implicit tx: InTxn): Long = seedRnd.nextLong()
 
@@ -52,5 +54,11 @@ object Context {
       new RandomImpl(TxnRandom.plain(seed))
 
     def newVar[A](init: A): Var[InTxn, A] = new VarImpl[A](init)
+
+    def allocToken[A]()(implicit tx: InTxn): It[A] = {
+      val res = tokenId()
+      tokenId() = res + 1
+      It(res)
+    }
   }
 }
