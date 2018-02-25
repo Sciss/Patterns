@@ -208,7 +208,7 @@ object RonTuplePure {
     val clump: Pat[Pat[Int]] = ((start % cantusSz) ++ tuples.flatten).sliding(2)
     val durs      = clump.flatMap { pr: Pat[Int] =>
       val (pr0, pr1) = pr.splitAt(1)
-      val dur0 = ((pr1 - pr0 - 1) % cantusSz) + 1
+      val dur0 = ((pr1 - pr0 - 1) mod cantusSz) + 1
       dur0: Pat[Int] // if (dur0 == 0) { cantus.size } else dur0
     }
     durs

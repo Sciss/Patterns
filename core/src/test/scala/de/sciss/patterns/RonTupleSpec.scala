@@ -4,11 +4,73 @@ import de.sciss.patterns.Types.Num
 import de.sciss.patterns.graph.{Constant, Gate, Hold}
 
 class RonTupleSpec extends PatSpec {
+  // some extra operations
+  implicit class SeqOps[A](xs: Seq[A]) {
+    // like Kollflitz' `differentiate`
+    def differentiate(implicit num: Numeric[A]): Seq[A] = {
+      import num._
+      xs.sliding(2).map { case Seq(_a, _b) => _b - _a }.toList
+    }
+  }
+
+  // N.B. SuperCollider `mod` is different from `%` for negative numbers!
+  def mod[A](a: A, b: A)(implicit num: Integral[A]): A = {
+    import num._
+    if (gteq(a, zero)) a % b else {
+      val c = -a % b
+      if (c == zero) zero else b - c
+    }
+  }
+
   def directProduct_Seq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] =
     a.flatMap { v => b       .map { w => v :+ w }}
 
   def directProduct_Pat[A](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
     a.flatMap { v => b.bubble.map { w => v ++ w }}
+
+  def extract_Seq[A](s: Seq[A], t: Seq[A]): Seq[Seq[Int]] =
+    t.map { tj =>
+      s.zipWithIndex.collect {
+        case (b, i) if b == tj => i
+      }
+    }
+
+  def extract_Pat[A](s: Pat[A], t: Pat[A]): Pat[Pat[Int]] =
+    t.bubble.map { tj: Pat[A] =>
+      val same      = s sig_== Hold(tj)
+      val indices   = s.indices
+      Gate(indices, same)
+    }
+
+  def allTuples_Seq[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
+    val hd +: tl = x
+    val res = tl.foldLeft(hd.map(Seq(_)))((ys, xi) => directProduct_Seq(ys, xi))
+    res
+  }
+
+  def allTuples_Pat[A](x: Pat[Pat[A]]): Pat[Pat[A]] = {
+    val hd = x.head.bubble
+    val tl = x.tail
+    tl.foldLeft(hd) { (ys: Pat[Pat[A]], xi: Pat[A]) =>
+      directProduct_Pat(ys, xi)
+    }
+  }
+
+  def computeDur_Seq[A](tps: Seq[A], cycle: A)(implicit num: Integral[A]): A = {
+    import num._
+    val dur0  = tps.differentiate
+    val dur1  = dur0.map(mod(_, cycle))
+    val dur   = dur1.map { v => if (v == zero) cycle else v }
+    val res   = dur.sum
+    res
+  }
+
+  def computeDur_Pat[A](tps: Pat[A], cycle: Pat[A])(implicit num: Num[A]): Pat[A] = {
+    val one  = Constant(num.one)
+    val dur0 = tps.differentiate
+    val dur  = ((dur0 - one) mod cycle) + one
+    dur.sum
+  }
 
   "The directProduct example" should work in {
     //    showStreamLog = true
@@ -48,25 +110,6 @@ class RonTupleSpec extends PatSpec {
   }
 
   "The extract example" should work in {
-    // collects the indices of every occurrence of elements of t in s
-    def extract_Seq[A](s: Seq[A], t: Seq[A]): Seq[Seq[Int]] =
-      t.map { tj =>
-        s.zipWithIndex.collect {
-          case (b, i) if b == tj => i
-        }
-      }
-
-    // collects the indices of every occurrence of elements of t in s
-    def extract_Pat[A](s: Pat[A], t: Pat[A]): Pat[Pat[Int]] =
-      t.bubble.map { tj: Pat[A] =>
-//        val indices   = s.recur().indexOfSlice(tj)
-//        val indicesF  = FilterSeq(indices, indices >= 0)
-        val same      = s sig_== Hold(tj)
-        val indices   = s.indices
-        val indicesF  = Gate(indices, same)
-        indicesF
-      }
-
     val as1     = Seq(1, 5, 2, 3, 4)
     val bs1     = Seq(4, 5, 6)
     val plain1  = extract_Seq(as1, bs1)
@@ -91,7 +134,7 @@ class RonTupleSpec extends PatSpec {
   }
 
   "The allTuples example" should work in {
-    def allTuples_Seq[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
+    def allTuples_Seq1[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
       val size = x.size
       var res: Seq[Seq[A]] = x.head.map(Seq(_))
       for (i <- 1 until size) {
@@ -100,30 +143,14 @@ class RonTupleSpec extends PatSpec {
       res
     }
 
-    def allTuples_Seq2[A](x: Seq[Seq[A]]): Seq[Seq[A]] = {
-      val hd +: tl = x
-      val res = tl.foldLeft(hd.map(Seq(_)))((ys, xi) => directProduct_Seq(ys, xi))
-      res
-    }
-
-    // generates all tuplets from within x, an array
-    // where each element is an array of occurrences of a value
-    def allTuples_Pat[A](x: Pat[Pat[A]]): Pat[Pat[A]] = {
-      val hd = x.head.bubble // <| (_.size.poll("hd-sz"))
-      val tl = x.tail // .map(_.poll("tl"))// <| (_.size.poll("tl-sz"))
-      tl.foldLeft(hd) { (ys: Pat[Pat[A]], xi: Pat[A]) =>
-        directProduct_Pat(ys, xi)
-      }
-    }
-
     val in  = Seq(Seq(0, 6, 7), Seq(2), Seq(1, 3, 5))
     val out = Seq(Seq(0, 2, 1), Seq(0, 2, 3), Seq(0, 2, 5), Seq(6, 2, 1), Seq(6, 2, 3), Seq(6, 2, 5), Seq(7, 2, 1),
       Seq(7, 2, 3), Seq(7, 2, 5))
 
-    val plainOut1 = allTuples_Seq(in)
+    val plainOut1 = allTuples_Seq1(in)
     plainOut1 shouldBe out
 
-    val plainOut2 = allTuples_Seq2(in)
+    val plainOut2 = allTuples_Seq(in)
     plainOut2 shouldBe out
 
     val patOut = Graph {
@@ -136,34 +163,6 @@ class RonTupleSpec extends PatSpec {
   }
 
   "The computeDur examples" should work in {
-    // N.B. SuperCollider `mod` is different from `%` for negative numbers!
-    def mod[A](a: A, b: A)(implicit num: Integral[A]): A = {
-      import num._
-      if (gteq(a, zero)) a % b else {
-        val c = -a % b
-        if (c == zero) zero else b - c
-      }
-    }
-
-    // some extra operations
-    implicit class SeqOps[A](xs: Seq[A]) {
-      // like Kollflitz' `differentiate`
-      def differentiate(implicit num: Numeric[A]): Seq[A] = {
-        import num._
-        xs.sliding(2).map { case Seq(_a, _b) => _b - _a }.toList
-      }
-    }
-
-    // computes the duration of a set of time points relative to a cycle.
-    def computeDur_Seq[A](tps: Seq[A], cycle: A)(implicit num: Integral[A]): A = {
-      import num._
-      val dur0  = tps.differentiate
-      val dur1  = dur0.map(mod(_, cycle))
-      val dur   = dur1.map { v => if (v == zero) cycle else v }
-      val res   = dur.sum
-      res
-    }
-
     val ex: Seq[((Seq[Int], Int), Int)] = Seq(
       Seq( 5, 4, 3) -> 7 -> 12,
       Seq( 5, 4, 2) -> 7 -> 11,
@@ -177,17 +176,63 @@ class RonTupleSpec extends PatSpec {
       assert(res1 === res)
     }
 
-    // computes the duration of a set of time points relative to a cycle.
-    def computeDur_Pat[A](tps: Pat[A], cycle: Pat[A])(implicit num: Num[A]): Pat[A] = {
-      val one  = Constant(num.one) // Repeat(Pat(num.one)) // onePat
-      val dur0 = tps.differentiate
-      val dur  = ((dur0 - one) mod cycle) + one // dur1.map { v => if (v == zero) cycle else v }
-      dur.sum
-    }
-
     ex.foreach { case ((tps, cycle), res) =>
       val res1 = Graph { computeDur_Pat[Int](Pat(tps: _*), cycle) }
       eval(res1) shouldBe Seq(res)
     }
+  }
+
+  "The computeDurs example" should work in {
+    def computeDurs_Seq[A](pattern: Seq[A], cantus: Seq[A], start: Int = 0): Seq[Int] = {
+      val positions = extract_Seq(cantus, pattern)
+      val tuples0   = allTuples_Seq(positions)
+      val tuples    = tuples0.sortWith { (a, b) =>
+        val ad = computeDur_Seq(a, 7)
+        val bd = computeDur_Seq(b, 7)
+        // handle algorithmic ambiguity
+        if (ad == bd) {
+          (a zip b).collectFirst {
+            case (ai, bi) if ai < bi => true
+            case (ai, bi) if ai > bi => false
+          } .get // OrElse(true)
+        } else {
+          ad > bd
+        }
+      }
+      val clump     = (Seq(mod(start, cantus.size)) ++ tuples.flatten).sliding(2).toList
+      val durs      = clump.map { case Seq(pr0, pr1) =>
+        val dur0 = mod(pr1 - pr0, cantus.size)
+        if (dur0 == 0) { cantus.size } else dur0
+      }
+      durs
+    }
+
+    val seqIn     = Seq(8.8, 11.2, 16.0)
+    val cantus    = Seq(11.2, 11.2, 18.4, 18.4, 16.0, 8.8, 16.0, 16.0)
+    val expOut    = Seq(5, 3, 7, 6, 4, 6, 6, 3, 6, 7, 4, 5, 7, 3, 4, 1, 4, 3)
+
+    val plainOut  = computeDurs_Seq(seqIn, cantus)
+    assert(plainOut === expOut)
+
+    def computeDurs_Pat[A](pattern: Pat[A], cantus: Pat[A], start: Pat[Int] = 0): Pat[Int] = {
+      val positions : Pat[Pat[Int]] = extract_Pat(cantus, pattern) // <| (_.size.poll("positions.size"))
+      val tuples0   : Pat[Pat[Int]] = allTuples_Pat(positions)     // <| (_.size.poll("tuple0.size"))
+      val tuples    : Pat[Pat[Int]] = tuples0.sortWith { (a, b) =>
+        val ad = computeDur_Pat(a, 7)
+        val bd = computeDur_Pat(b, 7)
+        ad > bd
+      }
+      val cantusSz = cantus.size
+      val clump: Pat[Pat[Int]] = ((start % cantusSz) ++ tuples.flatten).sliding(2)
+      val durs: Pat[Int] = clump.flatMap { pr =>
+        val (pr0, pr1) = pr.splitAt(1)
+        val dur0 = ((pr1 - pr0 - 1) mod cantusSz) + 1
+        dur0
+      }
+      durs
+    }
+
+    val patOut = Graph { computeDurs_Pat[Double](seqIn, cantus) }
+    eval(patOut) shouldBe expOut
   }
 }
