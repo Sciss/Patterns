@@ -119,6 +119,22 @@ class RonTupleSpec extends PatSpec {
     List(List(0, 2, 1), List(0, 2, 3), List(0, 2, 5), List(6, 2, 1), List(6, 2, 3), List(6, 2, 5), List(7, 2, 1), List(7, 2, 3), List(7, 2, 5))
 
 
+FlatMap(
+  outer = FlatMap(
+    outer = Grouped(Apply(Pat(Pat(0, 6, 7), Pat(2), Pat(1, 3, 5)),Constant(0)),Constant(1)),
+    it    = It(2),
+    inner = PatMap(
+      outer = Grouped(Pat(2),Constant(1)),
+      it    = It(3),
+      inner = Cat(It(2),It(3)))),
+  it = It(2),
+  inner = PatMap(
+    outer = Grouped(Pat(1, 3, 5),Constant(1)),
+    it    = It(3),
+    inner = Cat(It(2),It(3)))
+)
+
+
      */
 
     // generates all tuplets from within x, an array
@@ -159,7 +175,7 @@ class RonTupleSpec extends PatSpec {
     val patOut = Graph {
       val inPat0 = in.map(xs => Pat.Int(xs: _*))
       val inPat: Pat[Pat[Int]] = inPat0
-      allTuples_Pat1(inPat)
+      allTuples_Pat(inPat)
     }
 
     evalH(patOut) shouldBe out

@@ -172,7 +172,7 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
     */
   def map[B](f: Pat[A] => Pat[B]): Pat[Pat[B]] = {
     val it    = Graph.builder.allocToken[A]()
-    val inner = Graph {
+    val inner = /* Graph */ {
       f(it)
     }
     PatMap(x, it, inner)
@@ -183,7 +183,7 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
     */
   def flatMap[B](f: Pat[A] => Pat[B]): Pat[B] = {
     val it    = Graph.builder.allocToken[A]()
-    val inner = Graph {
+    val inner = /* Graph */ {
       f(it)
     }
     FlatMap(x, it, inner)
@@ -205,7 +205,7 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
     val b       = Graph.builder
     val itIn    = b.allocToken[A]()
     val itCarry = b.allocToken[B]()
-    val inner   = Graph {
+    val inner   = /* Graph */ {
       op(itCarry, itIn)
     }
     FoldLeft[A, B](outer = x, z = z, itIn = itIn, itCarry = itCarry, inner = inner)
@@ -214,7 +214,7 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
   def sortWith(lt: (Pat[A], Pat[A]) => Pat[Boolean]): Pat[Pat[A]] = {
     val b     = Graph.builder
     val it    = b.allocToken[(A, A)]()
-    val inner = Graph {
+    val inner = /* Graph */ {
       val (it1, it2) = it.unzip
       lt(it1, it2)
     }

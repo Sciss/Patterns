@@ -2,8 +2,12 @@ package de.sciss.patterns
 package graph
 
 final case class PatSeq[A](elems: A*) extends Pattern[A] {
-  private def simpleString: String =
-    s"Pat(${elems.iterator.take(4).mkString(", ")}).iterator"
+  private def simpleString: String = {
+    val xs = elems.iterator.take(5).toList
+    val es = if (xs.lengthCompare(5) == 0) xs.init.mkString("", ", ", ", ...")
+      else xs.mkString(", ")
+    s"Pat($es)"
+  }
 
   override def toString: String = simpleString
 
