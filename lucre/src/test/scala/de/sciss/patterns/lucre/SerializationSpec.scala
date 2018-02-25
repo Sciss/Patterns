@@ -28,7 +28,7 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
   "A Pattern object" should "be serializable" in { cursor =>
     val g = Graph[Int] {
       import graph._
-      val in = Pseq(1 to 4).combinations(3)
+      val in = Pat(1 to 4: _*).combinations(3)
       val pat = in.map { in: Pat[Int] =>
         in.drop(1)
       }

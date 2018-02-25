@@ -25,7 +25,7 @@ object RonTuplePure {
     val it = x.expand[Unit]
     println("Done.")
     var time = 0.0
-    it.foreach { elem0: Event =>
+    it.take(10).foreach { elem0: Event =>
       val elem  = elem0 +
         (Event.keyDetunedFreq -> Event.detunedFreq(elem0)) +
         (Event.keySustain     -> Event.sustain    (elem0)) +
@@ -221,7 +221,7 @@ object RonTuplePure {
       val durs0 = computeDurs_Sq(pattern, cantus, start).map(_.toDouble)
       durs0 // if (stutter == 1) durs0 else durs0.stutter(stutter).map(_ / stutter)
     }
-    val inf   = Int.MaxValue
+//    val inf   = Int.MaxValue
 
     //    val ptrnOut = if (stutter == 1) {
     //      Seq('r, Pseq(pattern, inf))
@@ -229,11 +229,11 @@ object RonTuplePure {
     //      Seq(Pseq(Seq.fill(stutter)('r)),
     //        Pseq(pattern.grouped(stutter).stutter(stutter).flatten, inf))
     //    }
-    val ptrnOut: Seq[Pseq[A]] = Seq(Pseq(pattern, inf))
+    val ptrnOut = Pat.loop(pattern) // Pseq(pattern, inf)
 
     //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
     log("makePart - durs", durs)
-    (Pseq(ptrnOut), Pseq(durs.map(_ * 0.02)))
+    (ptrnOut, durs.map(_ * 0.02))
   }
 
   def makePart[A](pattern: Pat[A], cantus: Pat[A], start: Pat[Int] = 0, stutter: Pat[Int] = 1): (Pat[A], Pat[Double]) = {
@@ -241,7 +241,7 @@ object RonTuplePure {
       val durs0 = computeDurs(pattern, cantus, start) // .map(_.toDouble)
       durs0 // if (stutter == 1) durs0 else durs0.stutter(stutter).map(_ / stutter)
     }
-    val inf = Int.MaxValue
+//    val inf = Int.MaxValue
 
     //    val ptrnOut = if (stutter == 1) {
     //      Seq('r, Pseq(pattern, inf))
@@ -249,7 +249,7 @@ object RonTuplePure {
     //      Seq(Pseq(Seq.fill(stutter)('r)),
     //        Pseq(pattern.grouped(stutter).stutter(stutter).flatten, inf))
     //    }
-    val ptrnOut: Pat[A] = Pseq(List(pattern), inf)
+    val ptrnOut: Pat[A] = Pat.loop(pattern) // Pseq(List(pattern), inf)
 
     //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
     // (Pseq(ptrnOut), Pseq(durs.map(_ * 0.02)))
@@ -273,13 +273,13 @@ object RonTuplePure {
         "dr"          -> 0.1,
         "stretch"     -> 1
       )
-    val lPat  = Pseq[Int   ]((8 to 12).mirror            , inf).flow() // .iterator
-    val rPat  = Pseq[Double]((5 to  9).mirror.map(_/25.0), inf).flow() // .iterator
+    val lPat  = Pat.loop((8 to 12).mirror            ).flow() // .iterator
+    val rPat  = Pat.loop((5 to  9).mirror.map(_/25.0)).flow() // .iterator
 
     val stutterPat: Pat[Int] = White(1, 4).flow()
 
     //    lPat.next(); rPat.next()
-    Pat.flatFill(4) { // original: infinite
+    Pat.loop {
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
       val length    = lPat // .next()
       val cantus0: Pat[Double] = ((Brown(-6, 6, 3): Pat[Int]) * 2.4 + 4.0).take(length) // .iterator.take(length).toList
@@ -299,10 +299,10 @@ object RonTuplePure {
 
       //      var durs = List.empty[Double]
 
-      // val numParts = parts.size
-      val partsIndices = Indices(parts)
+      val numParts = Hold(parts.size).flow()
+      val partsIndices = Indices(parts).flow()
       val pats: Pat[Pat[Event]] = parts.map { part: Pat[Double] =>
-        val partsIdx = partsIndices.take(1)
+        val partsIdx = Hold(partsIndices) // .take(1)
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
         val (notePat, durPat) = makePart(part, cantus, stutter = stutterPat.take(1))
 
@@ -315,14 +315,14 @@ object RonTuplePure {
           //        Pfunc({ ("voice" + i + "done").postln; nil })]),
           //          "db"          -> -15,
           "octave"      -> 5,
-          "legato"      -> partsIdx.linlin(0, parts.size, 0.02, 1.0),
+          "legato"      -> partsIdx.linlin(0, numParts, 0.02, 1.0),
           "detune"      -> White(-2.0,2.0),
           //		out: Pseq((0..23), inf, i),
-          "i"           -> Pseq(0 to 23, inf, partsIdx),
+          "i"           -> partsIdx, // Pseq(0 to 23, inf, partsIdx),
           "ar"          -> 0.001,
           "dr"          -> 0.1,
           "stretch"     -> 1,
-          "db"          -> partsIdx.linlin(0, parts.size, -40.0, -30.0)
+          "db"          -> partsIdx.linlin(0, numParts, -40.0, -30.0)
         )
       }
 

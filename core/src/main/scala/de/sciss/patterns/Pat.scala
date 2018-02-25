@@ -17,9 +17,11 @@ import de.sciss.patterns.Types.Aux
 import de.sciss.patterns.graph.{PatSeq, FlatTabulate}
 
 object Pat {
-  def Int    (elems: scala.Int*    ): Pat[Int]      = apply[Int    ](elems: _*)
-  def Double (elems: scala.Double* ): Pat[Double]   = apply[Double ](elems: _*)
-  def Boolean(elems: scala.Boolean*): Pat[Boolean]  = apply[Boolean](elems: _*)
+//  def Int    (elems: scala.Int*    ): Pat[Int]      = apply[Int    ](elems: _*)
+//  def Double (elems: scala.Double* ): Pat[Double]   = apply[Double ](elems: _*)
+//  def Boolean(elems: scala.Boolean*): Pat[Boolean]  = apply[Boolean](elems: _*)
+
+  def loop[A](body: => Pat[A]): Pat[A] = flatFill[A](scala.Int.MaxValue)(body)
 
   def flatFill[A](n: Pat[Int])(body: => Pat[A]): Pat[A] = {
     // val i = Series(start = 0, step = 1).take(n)

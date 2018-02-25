@@ -19,7 +19,7 @@ object Examples {
     println(b.expand.take(1).toList.mkString("b: ", ", ", ""))
 
     // ok
-    val c = Pat.Int(1) + 3
+    val c = Pat(1) + 3
     c.expand: Stream[Unit, Int] // right
     println(c.expand.take(1).toList.mkString("c: ", ", ", ""))
 

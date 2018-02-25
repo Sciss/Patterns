@@ -116,7 +116,7 @@ class RonTupleSpec extends PatSpec {
     assert(plain1 === List(List(4), List(1), List()))
 
     val pat1 = Graph {
-      extract_Pat(Pat.Int(as1: _*), Pat.Int(bs1: _*))
+      extract_Pat(Pat(as1: _*), Pat(bs1: _*))
     }
 
     evalH(pat1) shouldBe plain1
@@ -127,7 +127,7 @@ class RonTupleSpec extends PatSpec {
     assert(plain2 === Seq(Seq(0, 6, 7), Seq(2), Seq(1, 3, 5)))
 
     val pat2 = Graph {
-      extract_Pat(Pat.Double(as2: _*), Pat.Double(bs2: _*))
+      extract_Pat(Pat(as2: _*), Pat(bs2: _*))
     }
 
     evalH(pat2) shouldBe plain2
@@ -154,7 +154,7 @@ class RonTupleSpec extends PatSpec {
     plainOut2 shouldBe out
 
     val patOut = Graph {
-      val inPat0 = in.map(xs => Pat.Int(xs: _*))
+      val inPat0 = in.map(xs => Pat(xs: _*))
       val inPat: Pat[Pat[Int]] = inPat0
       allTuples_Pat(inPat)
     }

@@ -18,7 +18,7 @@ class FoldLeftDebug extends PatSpec {
 //    val in  = Seq(Seq(1), Seq(2), Seq(3))
 
     val pat2 = Graph {
-      val inPat = in2.map(x => Pat.Int(x: _*)): Pat[Pat[Int]]
+      val inPat = in2.map(x => Pat(x: _*)): Pat[Pat[Int]]
       val hd    = inPat.take(1)
       val tl    = inPat.tail
 //      val hd    = Pat(Pat(0, 6, 7))

@@ -19,7 +19,7 @@ class MapDebug extends PatSpec {
     val pat2 = Graph {
       val in = Pat(1 to 4: _*).combinations(3)
       in.map { _: Pat[Int] =>
-        Pat.Int(6)
+        Pat(6)
       }
     }
 

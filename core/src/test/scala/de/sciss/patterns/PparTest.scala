@@ -6,10 +6,10 @@ object PparTest extends App {
   implicit val ctx: Context.Plain = Context()
   import ctx.tx
 
-  val p1  = Pseq( 0 to 10)
-  val p2  = Pseq(20 to 30)
-  val d1  = Pseq(1.0 to 2.0 by  0.1)
-  val d2  = Pseq(2.0 to 1.0 by -0.1)
+  val p1  = Pat( 0 to 10: _*)
+  val p2  = Pat(20 to 30: _*)
+  val d1  = Pat(1.0 to 2.0 by  0.1: _*)
+  val d2  = Pat(2.0 to 1.0 by -0.1: _*)
   val b1  = Bind("pitch" -> p1, "dur" -> d1, "instrument" -> "A")
   val b2  = Bind("pitch" -> p2, "dur" -> d2, "instrument" -> "B")
 
