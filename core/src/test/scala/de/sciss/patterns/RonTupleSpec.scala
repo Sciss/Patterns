@@ -221,29 +221,21 @@ class RonTupleSpec extends PatSpec {
     eval(patOut) shouldBe expOut
   }
 
-  "Debug cantus" should work in {
+  "Debug inf loop" should work in {
     val cantus  = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
 //    val part    = Pat(6.4, 8.8, 13.6)
     val parts: Pat[Pat[Double]] =
       cantus.distinct.sorted.combinations(3)
-
-    def makePart[A](pattern: Pat[A], cantus: Pat[A], start: Pat[Int] = 0, stutter: Pat[Int] = 1): (Pat[A], Pat[Double]) = {
-      val durs: Pat[Int] = {
-        val durs0 = computeDurs_Pat(pattern, cantus, start) // <| (_.poll("computeDurs")) // .map(_.toDouble)
-        durs0
-      }
-      val ptrnOut: Pat[A] = Pat.loop(pattern) // Pseq(List(pattern), inf)
-      (ptrnOut, durs * 0.02)
-    }
-
     val g = Graph {
-      parts.map { part =>
-        val (out1, out2) = makePart(part, cantus)
-        out2
+      Pat.loop {
+        val bla = parts.map { part =>
+          computeDurs_Pat(part, cantus)
+        }
+        bla(0)
       }
     }
 
-    val gs = evalH(g)
+    val gs = eval(g, n = 6)
     println(gs.mkString("durs: ", ", ", ""))
   }
 }
