@@ -304,10 +304,13 @@ object RonTuplePure {
 
       //      var durs = List.empty[Double]
 
-      val numParts = Hold(parts.size).flow()
+      val numParts = Hold(parts.size)
+      // XXX TODO: The following is wrong -- `flow()`
+      // should only be effective inside `parts.map` but not for
+      // `Pat.loop`
       val partsIndices = Indices(parts).flow() // <| (_.poll("partsIndices"))
       val pats: Pat[Pat[Event]] = parts.map { part0: Pat[Double] =>
-        val partsIdx = Hold(partsIndices) // <| (_.poll("partsIdx"))
+        val partsIdx = Hold(partsIndices) <| (_.poll("partsIdx"))
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
         val part    = part0 // <| (_.poll("part"))
         val (notePat0, durPat0) = makePart(part, cantus) // , stutter = stutterPat.take())
@@ -322,13 +325,13 @@ object RonTuplePure {
           "note"        -> notePat,
           "dur"         -> durPat,
           "octave"      -> 5,
-//          "legato"      -> legato,
+          "legato"      -> legato,
           "detune"      -> -2.0, // White(-2.0,2.0),
-//          "i"           -> i,
+          "i"           -> i,
           "ar"          -> 0.001,
           "dr"          -> 0.1,
           "stretch"     -> 1,
-//          "db"          -> db
+          "db"          -> db
         )
       }
 
