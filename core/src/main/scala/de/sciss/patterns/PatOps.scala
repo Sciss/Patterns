@@ -20,7 +20,7 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def take(length: Pat[Int]): Pat[A] = Take(x, length)
   def drop(length: Pat[Int]): Pat[A] = Drop(x, length)
 
-  def head: Pat[A] = take(1)
+//  def head: Pat[A] = take(1)
   def tail: Pat[A] = drop(1)
 
   def splitAt(index: Pat[Int]): (Pat[A], Pat[A]) = (take(index), drop(index))
@@ -220,6 +220,10 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
     }
     SortWith(x, it, inner)
   }
+
+  def apply(idx: Pat[Int]): Pat[A] = Apply(x, idx)
+
+  def head: Pat[A] = apply(0)
 }
 
 final class PatTuple2Ops[A, B](private val tup: Pat[(A, B)]) extends AnyVal {

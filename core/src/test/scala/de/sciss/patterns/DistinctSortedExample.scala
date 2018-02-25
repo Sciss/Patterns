@@ -15,7 +15,7 @@ object DistinctSortedExample {
       Pat.seqFill(4) { _ =>
         val b = Brown(0, 100, 2)
         val d = b.take(10).distinct.sorted
-        d ++ (-1: Pat[Int]).head
+        d ++ Pat(-1)
       }
     }
 
@@ -23,7 +23,7 @@ object DistinctSortedExample {
       val b = Brown(0, 100, 2)
       Pat.seqFill(4) { _ =>
         val d = b.take(10).distinct.sorted
-        d ++ (-1: Pat[Int]).head
+        d ++ Pat(-1)
       }
     }
 

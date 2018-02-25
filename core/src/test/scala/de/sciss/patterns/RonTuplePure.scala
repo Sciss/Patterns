@@ -116,7 +116,7 @@ object RonTuplePure {
   // generates all tuplets from within x, an array
   // where each element is an array of occurrences of a value
   def allTuples[A](x: Pat[Pat[A]]): Pat[Pat[A]] = {
-    val hd = x.head
+    val hd = x.take(1)
     val tl = x.tail
     tl.foldLeft(hd)((ys: Pat[Pat[A]], xi: Pat[A]) => directProduct(ys, xi))
   }
@@ -303,9 +303,9 @@ object RonTuplePure {
       // val numParts = parts.size
       val partsIndices = Indices(parts)
       val pats: Pat[Pat[Event]] = parts.map { part: Pat[Double] =>
-        val partsIdx = partsIndices.head
+        val partsIdx = partsIndices.take(1)
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-        val (notePat, durPat) = makePart(part, cantus, stutter = stutterPat.head)
+        val (notePat, durPat) = makePart(part, cantus, stutter = stutterPat.take(1))
 
           //        durs ::= durPat.iterator.sum
 
