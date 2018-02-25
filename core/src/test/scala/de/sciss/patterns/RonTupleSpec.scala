@@ -181,8 +181,7 @@ class RonTupleSpec extends PatSpec {
     def computeDur_Pat[A](tps: Pat[A], cycle: Pat[A])(implicit num: Num[A]): Pat[A] = {
       val one  = Constant(num.one) // Repeat(Pat(num.one)) // onePat
       val dur0 = tps.differentiate
-      val dur1 = dur0 % cycle
-      val dur  = ((dur1 - one) % cycle) + one // dur1.map { v => if (v == zero) cycle else v }
+      val dur  = ((dur0 - one) mod cycle) + one // dur1.map { v => if (v == zero) cycle else v }
       dur.sum
     }
 
