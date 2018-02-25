@@ -72,6 +72,48 @@ class RonTupleSpec extends PatSpec {
     dur.sum
   }
 
+  def computeDurs_Seq[A](pattern: Seq[A], cantus: Seq[A], start: Int = 0): Seq[Int] = {
+    val positions = extract_Seq(cantus, pattern)
+    val tuples0   = allTuples_Seq(positions)
+    val tuples    = tuples0.sortWith { (a, b) =>
+      val ad = computeDur_Seq(a, 7)
+      val bd = computeDur_Seq(b, 7)
+      // handle algorithmic ambiguity
+      if (ad == bd) {
+        (a zip b).collectFirst {
+          case (ai, bi) if ai < bi => true
+          case (ai, bi) if ai > bi => false
+        } .get // OrElse(true)
+      } else {
+        ad > bd
+      }
+    }
+    val clump     = (Seq(mod(start, cantus.size)) ++ tuples.flatten).sliding(2).toList
+    val durs      = clump.map { case Seq(pr0, pr1) =>
+      val dur0 = mod(pr1 - pr0, cantus.size)
+      if (dur0 == 0) { cantus.size } else dur0
+    }
+    durs
+  }
+
+  def computeDurs_Pat[A](pattern: Pat[A], cantus: Pat[A], start: Pat[Int] = 0): Pat[Int] = {
+    val positions : Pat[Pat[Int]] = extract_Pat(cantus, pattern) // <| (_.size.poll("positions.size"))
+    val tuples0   : Pat[Pat[Int]] = allTuples_Pat(positions)     // <| (_.size.poll("tuple0.size"))
+    val tuples    : Pat[Pat[Int]] = tuples0.sortWith { (a, b) =>
+      val ad = computeDur_Pat(a, 7)
+      val bd = computeDur_Pat(b, 7)
+      ad > bd
+    }
+    val cantusSz = cantus.size
+    val clump: Pat[Pat[Int]] = ((start % cantusSz) ++ tuples.flatten).sliding(2)
+    val durs: Pat[Int] = clump.flatMap { pr =>
+      val (pr0, pr1) = pr.splitAt(1)
+      val dur0 = ((pr1 - pr0 - 1) mod cantusSz) + 1
+      dur0
+    }
+    durs
+  }
+
   "The directProduct example" should work in {
     //    showStreamLog = true
 
@@ -91,22 +133,7 @@ class RonTupleSpec extends PatSpec {
       i
     }.toList
 
-    assert(res === plain)  // XXX TODO fails
-
-    /*
-      Se we have
-
-        List(List(1, 2, 3, 7), List(8), List(4, 5, 6, 7), List(8))
-
-      instead of
-
-        List(List(1, 2, 3, 7), List(1, 2, 3, 8), List(4, 5, 6, 7), List(4, 5, 6, 8))
-
-      if we create a copy of `v`, the output is
-
-        List(List(1, 2, 3, 7), List(1, 2, 3, 8), List(1, 2, 3, 7), List(1, 2, 3, 8))
-
-     */
+    assert(res === plain)
   }
 
   "The extract example" should work in {
@@ -183,30 +210,6 @@ class RonTupleSpec extends PatSpec {
   }
 
   "The computeDurs example" should work in {
-    def computeDurs_Seq[A](pattern: Seq[A], cantus: Seq[A], start: Int = 0): Seq[Int] = {
-      val positions = extract_Seq(cantus, pattern)
-      val tuples0   = allTuples_Seq(positions)
-      val tuples    = tuples0.sortWith { (a, b) =>
-        val ad = computeDur_Seq(a, 7)
-        val bd = computeDur_Seq(b, 7)
-        // handle algorithmic ambiguity
-        if (ad == bd) {
-          (a zip b).collectFirst {
-            case (ai, bi) if ai < bi => true
-            case (ai, bi) if ai > bi => false
-          } .get // OrElse(true)
-        } else {
-          ad > bd
-        }
-      }
-      val clump     = (Seq(mod(start, cantus.size)) ++ tuples.flatten).sliding(2).toList
-      val durs      = clump.map { case Seq(pr0, pr1) =>
-        val dur0 = mod(pr1 - pr0, cantus.size)
-        if (dur0 == 0) { cantus.size } else dur0
-      }
-      durs
-    }
-
     val seqIn     = Seq(8.8, 11.2, 16.0)
     val cantus    = Seq(11.2, 11.2, 18.4, 18.4, 16.0, 8.8, 16.0, 16.0)
     val expOut    = Seq(5, 3, 7, 6, 4, 6, 6, 3, 6, 7, 4, 5, 7, 3, 4, 1, 4, 3)
@@ -214,25 +217,33 @@ class RonTupleSpec extends PatSpec {
     val plainOut  = computeDurs_Seq(seqIn, cantus)
     assert(plainOut === expOut)
 
-    def computeDurs_Pat[A](pattern: Pat[A], cantus: Pat[A], start: Pat[Int] = 0): Pat[Int] = {
-      val positions : Pat[Pat[Int]] = extract_Pat(cantus, pattern) // <| (_.size.poll("positions.size"))
-      val tuples0   : Pat[Pat[Int]] = allTuples_Pat(positions)     // <| (_.size.poll("tuple0.size"))
-      val tuples    : Pat[Pat[Int]] = tuples0.sortWith { (a, b) =>
-        val ad = computeDur_Pat(a, 7)
-        val bd = computeDur_Pat(b, 7)
-        ad > bd
-      }
-      val cantusSz = cantus.size
-      val clump: Pat[Pat[Int]] = ((start % cantusSz) ++ tuples.flatten).sliding(2)
-      val durs: Pat[Int] = clump.flatMap { pr =>
-        val (pr0, pr1) = pr.splitAt(1)
-        val dur0 = ((pr1 - pr0 - 1) mod cantusSz) + 1
-        dur0
-      }
-      durs
-    }
-
     val patOut = Graph { computeDurs_Pat[Double](seqIn, cantus) }
     eval(patOut) shouldBe expOut
+  }
+
+  "Debug cantus" should work in {
+    val cantus  = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
+//    val part    = Pat(6.4, 8.8, 13.6)
+    val parts: Pat[Pat[Double]] =
+      cantus.distinct.sorted.combinations(3)
+
+    def makePart[A](pattern: Pat[A], cantus: Pat[A], start: Pat[Int] = 0, stutter: Pat[Int] = 1): (Pat[A], Pat[Double]) = {
+      val durs: Pat[Int] = {
+        val durs0 = computeDurs_Pat(pattern, cantus, start) // <| (_.poll("computeDurs")) // .map(_.toDouble)
+        durs0
+      }
+      val ptrnOut: Pat[A] = Pat.loop(pattern) // Pseq(List(pattern), inf)
+      (ptrnOut, durs * 0.02)
+    }
+
+    val g = Graph {
+      parts.map { part =>
+        val (out1, out2) = makePart(part, cantus)
+        out2
+      }
+    }
+
+    val gs = evalH(g)
+    println(gs.mkString("durs: ", ", ", ""))
   }
 }
