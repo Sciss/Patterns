@@ -99,13 +99,13 @@ class PatternsSpec extends PatSpec {
   "Copy" should work in {
     val res1 = Graph {
       val a = Pat[Int](1, 2, 3).flow()
-      Pat.seqFill(3) { _ => a }
+      Pat.flatFill(3) { a }
     }
     eval(res1) shouldBe List(1, 2, 3)
 
     val res2  = Graph {
       val a = Pat[Int](1, 2, 3)
-      Pat.seqFill(3) { _ => a }
+      Pat.flatFill(3) { a }
     }
     eval(res2) shouldBe List(1, 2, 3, 1, 2, 3, 1, 2, 3)
   }
@@ -154,10 +154,10 @@ class PatternsSpec extends PatSpec {
     eval(sorted) shouldBe inL.sorted.reverse
   }
 
-  "SeqFill" should work in {
+  "FlatTabulate" should work in {
     // must be possible to use iteration variable multiple times
     val pat1 = Graph {
-      Pat.seqFill(4) { i =>
+      Pat.flatTabulate(4) { i =>
         i + i
       }
     }
@@ -168,7 +168,7 @@ class PatternsSpec extends PatSpec {
 
     // must be possible to ignore iteration variable
     val pat2 = Graph {
-      Pat.seqFill(4) { _ =>
+      Pat.flatFill(4) {
         Pat[Int](6)
       }
     }

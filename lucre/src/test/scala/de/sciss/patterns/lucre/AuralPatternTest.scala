@@ -43,8 +43,8 @@ class AuralPatternTest[S <: Sys[S]](name: String)(implicit cursor: stm.Cursor[S]
         Out.ar(0, Pan2.ar(osc))
       }
 
-      val pat = Pattern[S]
-      pat.graph() = patVal
+      val pat = Pattern.newConst[S](patVal)
+//      pat.graph() = patVal
       _view.obj().attr.put("pitch", pat)
 
       _view

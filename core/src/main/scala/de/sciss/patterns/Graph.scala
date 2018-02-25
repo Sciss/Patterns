@@ -47,13 +47,13 @@ object Graph {
     def visit[P](ref: AnyRef, init: => P): P = outOfContext
   }
 
-  def apply[A](thunk: => Pat[A]): Graph[A] = {
+  def apply[A](thunk: => Pat[A]): Pat[A] /* Graph[A] */ = {
     val old = builderRef.get()
     val b   = new BuilderImpl[A](old)
     builderRef.set(b)
     try {
       val out = thunk
-      b.build(out)
+      out // b.build(out)
     } finally {
       builderRef.set(old) // BuilderDummy
     }
@@ -68,7 +68,7 @@ object Graph {
 
     override def toString = s"patterns.Graph.Builder@${hashCode.toHexString}"
 
-    def build(out: Pat[A]) = Graph(lazies.result(), out)
+//    def build(out: Pat[A]): Graph[A] = Graph(lazies.result(), out)
 
     def addPattern(p: Pattern[_]): Unit = lazies += p
 
@@ -94,28 +94,28 @@ object Graph {
   }
 }
 
-final case class Graph[A](sources: Vec[Pat[_]], out: Pat[A]) extends Pattern[A] {
-  def isEmpty : Boolean = sources.isEmpty // && controlProxies.isEmpty
-  def nonEmpty: Boolean = !isEmpty
-
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
-
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
-    val sourcesT = sources.map(t(_))
-    val outT     = t(out)
-    copy(sources = sourcesT, out = outT)
-  }
-
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-
-    private[this] val peer = out.expand(ctx, tx0)
-
-    def reset()(implicit tx: Tx): Unit = {
-//      sources.foreach(_.reset())
-      peer.reset()
-    }
-
-    def hasNext(implicit tx: Tx): Boolean = peer.hasNext
-    def next ()(implicit tx: Tx): A       = peer.next()
-  }
-}
+//final case class Graph[A](sources: Vec[Pat[_]], out: Pat[A]) extends Pattern[A] {
+//  def isEmpty : Boolean = sources.isEmpty // && controlProxies.isEmpty
+//  def nonEmpty: Boolean = !isEmpty
+//
+//  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+//
+//  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+//    val sourcesT = sources.map(t(_))
+//    val outT     = t(out)
+//    copy(sources = sourcesT, out = outT)
+//  }
+//
+//  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+//
+//    private[this] val peer = out.expand(ctx, tx0)
+//
+//    def reset()(implicit tx: Tx): Unit = {
+////      sources.foreach(_.reset())
+//      peer.reset()
+//    }
+//
+//    def hasNext(implicit tx: Tx): Boolean = peer.hasNext
+//    def next ()(implicit tx: Tx): A       = peer.next()
+//  }
+//}

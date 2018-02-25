@@ -280,7 +280,7 @@ object RonTuplePure {
     val stutterPat: Pat[Int] = White(1, 4).flow()
 
     //    lPat.next(); rPat.next()
-    Pat.seqFill(4) { _ => // original: infinite
+    Pat.flatFill(4) { // original: infinite
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
       val length    = lPat // .next()
       val cantus0: Pat[Double] = ((Brown(-6, 6, 3): Pat[Int]) * 2.4 + 4.0).take(length) // .iterator.take(length).toList

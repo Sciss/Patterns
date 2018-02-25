@@ -12,7 +12,7 @@ object DistinctSortedExample {
 //    List(2,3,4,5).combinations(3)
 
     val ex1 = Graph {
-      Pat.seqFill(4) { _ =>
+      Pat.flatFill(4) {
         val b = Brown(0, 100, 2)
         val d = b.take(10).distinct.sorted
         d ++ Pat(-1)
@@ -20,8 +20,8 @@ object DistinctSortedExample {
     }
 
     val ex2 = Graph {
-      val b = Brown(0, 100, 2)
-      Pat.seqFill(4) { _ =>
+      val b = Brown(0, 100, 2).flow()
+      Pat.flatFill(4) {
         val d = b.take(10).distinct.sorted
         d ++ Pat(-1)
       }

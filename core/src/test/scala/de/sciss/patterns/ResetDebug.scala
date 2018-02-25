@@ -9,7 +9,7 @@ class ResetDebug extends PatSpec {
 //    }
 
     val pat = Graph {
-      Pat.seqFill(2) { _ =>
+      Pat.flatFill(2) {
         val in  = Pat(Pat(0, 6, 7))
         val inM = in.map(identity)
         inM

@@ -21,7 +21,7 @@ import de.sciss.lucre.stm.{Disposable, TxnLike}
 import de.sciss.lucre.synth.Sys
 import de.sciss.patterns
 import de.sciss.patterns.lucre.AuralPatternAttribute.ViewImpl
-import de.sciss.patterns.{Event, Graph}
+import de.sciss.patterns.{Event, Pat}
 import de.sciss.serial.Serializer
 import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.proc.AuralAttribute.{Factory, Observer}
@@ -194,7 +194,7 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     loop(0)
   }
 
-  private def setGraph(g: Graph[_])(implicit tx: S#Tx): Boolean = {
+  private def setPattern(g: Pat[_])(implicit tx: S#Tx): Boolean = {
     // println("setGraph")
     val _pr = playingRef()
     _pr.foreach(elemRemoved(_, elemPlays = true))
@@ -229,13 +229,10 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     prefChansNumRef()
 
   def init(pat: Pattern[S])(implicit tx: S#Tx): this.type = {
-    val graph0 = pat.graph.value
-    setGraph(graph0)
+    val graph0 = pat.value
+    setPattern(graph0)
     patObserver = pat.changed.react { implicit tx => upd =>
-      upd.changes.foreach {
-        case Pattern.GraphChange(ch) => setGraph(ch.now)
-        case _ =>
-      }
+      setPattern(upd.now)
     }
     this
   }
@@ -295,9 +292,9 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
       case None =>
         if (isEmptyRef()) Iterator.empty
         else {    // we lost the cache
-          val graph = obj().graph.value
+          val graph = obj().value
           // println("RESETTING GRAPH [1]")
-          if (!setGraph(graph)) Iterator.empty  // became empty
+          if (!setPattern(graph)) Iterator.empty  // became empty
           else processPrepare(spanP, timeRef, initial = initial) // repeat
         }
     }
@@ -333,9 +330,9 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
       case None =>
         if (isEmptyRef()) Long.MaxValue
         else {    // we lost the cache
-          val graph = obj().graph.value
+          val graph = obj().value
           // println("RESETTING GRAPH [0]")
-          if (!setGraph(graph)) Long.MaxValue // became empty
+          if (!setPattern(graph)) Long.MaxValue // became empty
           else modelEventAfter(offset)  // repeat
         }
     }

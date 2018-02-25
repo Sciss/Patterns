@@ -1,5 +1,5 @@
 /*
- *  SeqFill.scala
+ *  FlatTabulate.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
@@ -18,13 +18,13 @@ import scala.annotation.tailrec
 
 /*
 
-    Pat.seqFill(4) { _ =>
+    Pat.flatFill(4) {
       val b = Brown(0, 100, 2)
       b.take(10)
     }
 
  */
-final case class SeqFill[A](n: Pat[Int], it: It[Int], inner: Pat[A]) extends Pattern[A] {
+final case class FlatTabulate[A](n: Pat[Int], it: It[Int], inner: Pat[A]) extends Pattern[A] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
 
   def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {

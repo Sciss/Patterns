@@ -35,18 +35,19 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
       Flatten(pat)
       //      Constant[IntTop](1)
     }
-    val (fH, numSources) = cursor.step { implicit tx =>
-      val f = Pattern[S]
-      f.graph() = g
-      tx.newHandle(f) -> g.sources.size
+    val fH = cursor.step { implicit tx =>
+      val f = Pattern.newVar[S](g)
+//      f.graph() = g
+      tx.newHandle(f) // -> g.sources.size
     }
 
     cursor.step { implicit tx =>
       val f = fH()
-      val g1 = f.graph.value
-      assert(g1.sources.size === numSources )
-      assert(g1.sources      === g.sources  )
-      assert(g1.out          ==  g.out      ) // bloody triple-equals macro breaks
+      val g1 = f.value
+      assert(g1 === g)
+//      assert(g1.sources.size === numSources )
+//      assert(g1.sources      === g.sources  )
+//      assert(g1.out          ==  g.out      ) // bloody triple-equals macro breaks
     }
   }
 
@@ -54,18 +55,19 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
     val g = Graph {
       import graph._
       val b = Brown(lo = 10, hi = 40, step = 4)
-      val c = Pat.seqFill(4) { _ =>
+      val c = Pat.flatFill(4) {
         b.take(10).distinct.sorted * 0.5
       }
       val d = c.drop(4).stutter(2)
       c ++ d
     }
     val out = DataOutput()
-    GraphObj.valueSerializer.write(g, out)
+    Pattern.valueSerializer.write(g, out)
     val in = DataInput(out.toByteArray)
-    val g1 = GraphObj.valueSerializer.read(in)
-    assert(g1.sources === g.sources)
-    assert(g1.out     ==  g.out    ) // bloody triple-equals macro breaks
+    val g1 = Pattern.valueSerializer.read(in)
+    assert(g1 === g)
+//    assert(g1.sources === g.sources)
+//    assert(g1.out     ==  g.out    ) // bloody triple-equals macro breaks
   }
 
   "An Event Pattern" should "be serializable" in { _ =>
@@ -76,10 +78,11 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
       Bind("foo" -> b, "bar" -> c)
     }
     val out = DataOutput()
-    GraphObj.valueSerializer.write(g, out)
+    Pattern.valueSerializer.write(g, out)
     val in = DataInput(out.toByteArray)
-    val g1 = GraphObj.valueSerializer.read(in)
-    assert(g1.sources === g.sources)
-    assert(g1.out     ==  g.out    ) // bloody triple-equals macro breaks
+    val g1 = Pattern.valueSerializer.read(in)
+    assert(g1 === g)
+//    assert(g1.sources === g.sources)
+//    assert(g1.out     ==  g.out    ) // bloody triple-equals macro breaks
   }
 }

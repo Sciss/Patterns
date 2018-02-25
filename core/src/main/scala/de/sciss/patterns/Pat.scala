@@ -14,36 +14,29 @@
 package de.sciss.patterns
 
 import de.sciss.patterns.Types.Aux
-import de.sciss.patterns.graph.{PatSeq, SeqFill}
+import de.sciss.patterns.graph.{PatSeq, FlatTabulate}
 
 object Pat {
-  // XXX TODO -- this might be larger constrained than necessary
-  // e.g. could be
-  // type Int = Pat[CTop { type Out = Int }] ?
-//  type Int        = Pat[IntTop        ]
-//  type IntSeq     = Pat[IntSeqTop     ]
-//  type Double     = Pat[DoubleTop     ]
-//  type DoubleSeq  = Pat[DoubleSeqTop  ]
-//  type Boolean    = Pat[BooleanTop    ]
-//  type BooleanSeq = Pat[BooleanSeqTop ]
-//  type String     = Pat[StringTop     ]
-//  type Event      = Pat[patterns.Event]
-//
-//  type Tuple2[A <: Top, B <: Top] = Pat[Tuple2Top[A, B]]
-
   def Int    (elems: scala.Int*    ): Pat[Int]      = apply[Int    ](elems: _*)
   def Double (elems: scala.Double* ): Pat[Double]   = apply[Double ](elems: _*)
   def Boolean(elems: scala.Boolean*): Pat[Boolean]  = apply[Boolean](elems: _*)
 
-//  type $[T <: Top, A] = Pat[T { type Out[Tx] = A }]
-
-  def seqFill[A](n: Pat[Int])(body: Pat[Int] => Pat[A]): Pat[A] = {
+  def flatFill[A](n: Pat[Int])(body: => Pat[A]): Pat[A] = {
     // val i = Series(start = 0, step = 1).take(n)
     val it    = Graph.builder.allocToken[Int]()
-    val inner = Graph[A] {
-      body(it) // XXX TODO
+    val inner = /* Graph[A] */ {
+      body
     }
-    SeqFill(n, it, inner)
+    FlatTabulate(n, it, inner)
+  }
+
+  def flatTabulate[A](n: Pat[Int])(body: Pat[Int] => Pat[A]): Pat[A] = {
+    // val i = Series(start = 0, step = 1).take(n)
+    val it    = Graph.builder.allocToken[Int]()
+    val inner = /* Graph[A] */ {
+      body(it)
+    }
+    FlatTabulate(n, it, inner)
   }
 
   def apply[A](elems: A*): Pat[A] = PatSeq(elems: _*)
