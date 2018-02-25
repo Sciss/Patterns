@@ -3,7 +3,7 @@ package de.sciss.patterns
 import de.sciss.patterns.Types.IntTop
 import de.sciss.patterns.graph._
 
-class FlatMapDebug extends PatSpec {
+class FlatMapSpec extends PatSpec {
   "FlatMap" should work in {
 //    showStreamLog = true
 

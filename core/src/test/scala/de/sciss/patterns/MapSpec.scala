@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-class MapDebug extends PatSpec {
+class MapSpec extends PatSpec {
   "Map" should work in {
     val pat1 = Graph {
       val in = Pat(1 to 4: _*).combinations(3)

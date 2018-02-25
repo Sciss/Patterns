@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-class ResetDebug extends PatSpec {
+class ResetSpec extends PatSpec {
   "Map reset" should work in {
 //    val pat = Graph {
 //      val in  = Pat(Pat(0, 6, 7))

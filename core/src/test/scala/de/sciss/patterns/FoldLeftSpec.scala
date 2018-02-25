@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-class FoldLeftDebug extends PatSpec {
+class FoldLeftSpec extends PatSpec {
   "FoldLeft" should work in {
 //    showStreamLog = true
 
