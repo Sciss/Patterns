@@ -15,7 +15,12 @@ package de.sciss.patterns
 package graph
 
 final case class Apply[A](in: Pat[Pat[A]], idx: Pat[Int]) extends Pattern[A] {
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+    val res = new StreamImpl[Tx](tx)
+//    println(s"NEW APPLY STREAM ${res.hashCode().toHexString}")
+//    (new Exception).fillInStackTrace().printStackTrace()
+    res
+  }
 
   def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val inT   = t(in)
@@ -51,7 +56,8 @@ final case class Apply[A](in: Pat[Pat[A]], idx: Pat[Int]) extends Pattern[A] {
             i += 1
           }
           if (inStream.hasNext) {
-            val _state  = inStream.next().expand[Tx]
+            val inVal   = inStream.next()
+            val _state  = inVal.expand[Tx]
             state()     = _state
             _hasNext()  = _state.hasNext
           }

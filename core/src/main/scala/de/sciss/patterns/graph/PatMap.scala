@@ -69,6 +69,7 @@ final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
         case m: MapItStream[Tx, _] => m.resetOuter()
         // case _ =>
       }
+      innerStream.reset()
     }
 
     private def advance()(implicit tx: Tx): Unit = {

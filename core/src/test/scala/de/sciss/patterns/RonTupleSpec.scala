@@ -221,7 +221,7 @@ class RonTupleSpec extends PatSpec {
     eval(patOut) shouldBe expOut
   }
 
-  "Debug inf loop" should work in {
+  "Pat.loop and PatMap.reset" should work in {
     val cantus  = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
 //    val part    = Pat(6.4, 8.8, 13.6)
     val parts: Pat[Pat[Double]] =
@@ -231,11 +231,12 @@ class RonTupleSpec extends PatSpec {
         val bla = parts.map { part =>
           computeDurs_Pat(part, cantus)
         }
-        bla(0)
+        bla(0) // ApplyDebug(bla, 0)
       }
     }
 
     val gs = eval(g, n = 6)
-    println(gs.mkString("durs: ", ", ", ""))
+    gs shouldBe List(2, 7, 7, 2, 7, 2)
+//    println(gs.mkString("durs: ", ", ", ""))
   }
 }

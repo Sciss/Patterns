@@ -99,9 +99,9 @@ final case class FlatTabulate[A](n: Pat[Int], it: It[Int], inner: Pat[A]) extend
       val nhn     = i < n
       _hasNext()  = nhn
       if (nhn) {
-        if (n == 200000 || n == 2000000) {
-          println("here")
-        }
+//        if (n == 200000 || n == 2000000) {
+//          println("here")
+//        }
 //        val itStream = () => Stream.single(i)
 //        ctx.provideOuterStream(it.token, itStream)
         ctx.getStreams(ref).foreach(_.reset())

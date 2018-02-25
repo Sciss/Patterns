@@ -72,7 +72,7 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
         buf += _elements(_offsets(k) + j)
       }
 
-      /* Prepare for the next call to next. */
+      /* Prepare for the next call to `next`. */
       var idx: Int = _numbers.length - 1
       while (idx >= 0 && _numbers(idx) == _counts(idx))
         idx -= 1
