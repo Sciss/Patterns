@@ -11,11 +11,11 @@ object Examples {
     import ctx.tx
 
     // ok
-    val a = (Seq(1, 2): Pat[Seq[Int]]) + 3
+    val a = Constant(Seq(1, 2)) + 3
     println(a.expand.take(1).toList.mkString("a: ", ", ", ""))
 
     // ok
-    val b = (Seq(1, 2): Pat[Seq[Int]]) + 3
+    val b = Constant(Seq(1, 2)) + 3
     println(b.expand.take(1).toList.mkString("b: ", ", ", ""))
 
     // ok
@@ -24,15 +24,15 @@ object Examples {
     println(c.expand.take(1).toList.mkString("c: ", ", ", ""))
 
     // ok
-    val d = (1: Pat[Int]) + (Seq(2, 3): Pat[Seq[Int]])
+    val d = (1: Pat[Int]) + Constant(Seq(2, 3))
     println(d.expand.take(1).toList.mkString("d: ", ", ", ""))
 
     // ok
-    val e = (Seq(1, 2): Pat[Seq[Int]]) + Seq(3, 4)
+    val e = Constant(Seq(1, 2)) + Constant(Seq(3, 4))
     println(e.expand.take(1).toList.mkString("e: ", ", ", ""))
 
     // ok
-    val f = ArithmSeq(Seq(2, 3), 4)
+    val f = ArithmSeq(Constant(Seq(2, 3)), 4)
     println(f.expand.take(3).toList.mkString("f: ", ", ", ""))
 
     // ok

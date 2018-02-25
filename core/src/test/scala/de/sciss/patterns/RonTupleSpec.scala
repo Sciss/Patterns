@@ -1,6 +1,7 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.graph.{Gate, Hold}
+import de.sciss.patterns.Types.Num
+import de.sciss.patterns.graph.{Constant, Gate, Hold}
 
 class RonTupleSpec extends PatSpec {
   def directProduct_Seq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] =
@@ -132,5 +133,62 @@ class RonTupleSpec extends PatSpec {
     }
 
     evalH(patOut) shouldBe out
+  }
+
+  "The computeDur examples" should work in {
+    // N.B. SuperCollider `mod` is different from `%` for negative numbers!
+    def mod[A](a: A, b: A)(implicit num: Integral[A]): A = {
+      import num._
+      if (gteq(a, zero)) a % b else {
+        val c = -a % b
+        if (c == zero) zero else b - c
+      }
+    }
+
+    // some extra operations
+    implicit class SeqOps[A](xs: Seq[A]) {
+      // like Kollflitz' `differentiate`
+      def differentiate(implicit num: Numeric[A]): Seq[A] = {
+        import num._
+        xs.sliding(2).map { case Seq(_a, _b) => _b - _a }.toList
+      }
+    }
+
+    // computes the duration of a set of time points relative to a cycle.
+    def computeDur_Seq[A](tps: Seq[A], cycle: A)(implicit num: Integral[A]): A = {
+      import num._
+      val dur0  = tps.differentiate
+      val dur1  = dur0.map(mod(_, cycle))
+      val dur   = dur1.map { v => if (v == zero) cycle else v }
+      val res   = dur.sum
+      res
+    }
+
+    val ex: Seq[((Seq[Int], Int), Int)] = Seq(
+      Seq( 5, 4, 3) -> 7 -> 12,
+      Seq( 5, 4, 2) -> 7 -> 11,
+      Seq( 5, 6, 2) -> 7 ->  4,
+      Seq( 5, 6, 3) -> 7 ->  5,
+      Seq(10, 8, 0) -> 7 -> 11
+    )
+
+    ex.foreach { case ((tps, cycle), res) =>
+      val res1 = computeDur_Seq(tps, cycle)
+      assert(res1 === res)
+    }
+
+    // computes the duration of a set of time points relative to a cycle.
+    def computeDur_Pat[A](tps: Pat[A], cycle: Pat[A])(implicit num: Num[A]): Pat[A] = {
+      val one  = Constant(num.one) // Repeat(Pat(num.one)) // onePat
+      val dur0 = tps.differentiate
+      val dur1 = dur0 % cycle
+      val dur  = ((dur1 - one) % cycle) + one // dur1.map { v => if (v == zero) cycle else v }
+      dur.sum
+    }
+
+    ex.foreach { case ((tps, cycle), res) =>
+      val res1 = Graph { computeDur_Pat[Int](Pat(tps: _*), cycle) }
+      eval(res1) shouldBe Seq(res)
+    }
   }
 }

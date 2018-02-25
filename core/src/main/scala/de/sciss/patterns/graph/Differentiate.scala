@@ -55,7 +55,7 @@ final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Patt
         val in1     = x1()
         val in0     = inStream.next()
         x1()        = in0
-        state()     = num.minus(in1, in0)
+        state()     = num.minus(in0, in1)
         _hasNext()  = true
       } else {
         _hasNext() = false

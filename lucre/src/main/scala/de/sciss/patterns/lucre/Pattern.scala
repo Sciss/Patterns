@@ -339,9 +339,7 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
       case _ => super.readCookie(in, access, cookie)
     }
 
-  private val emptyPat = Pat {
-    Pat()
-  }
+  private val emptyPat = Pat()
 
   def empty[S <: Sys[S]](implicit tx: S#Tx): Ex[S] = apply(emptyCookie)
 

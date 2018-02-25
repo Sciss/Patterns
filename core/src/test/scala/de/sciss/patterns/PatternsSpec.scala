@@ -48,6 +48,24 @@ class PatternsSpec extends PatSpec {
     evalH(p2) shouldBe plain
   }
 
+  "Differentiate" should work in {
+    implicit class SeqOps[A](xs: Seq[A]) {
+      // like Kollflitz' `differentiate`
+      def differentiate(implicit num: Numeric[A]): List[A] = {
+        import num._
+        xs.sliding(2).map { case Seq(_a, _b) => _b - _a }.toList
+      }
+    }
+
+    val s1 = List(5, 6, 2, 10, 8, 0)
+    val p1: Pat[Int] = s1
+    val p2 = p1.differentiate
+
+    val plain = s1.differentiate
+
+    eval(p2) shouldBe plain
+  }
+
   "Flatten" should work in {
     val p1  = Pat(1 to 4: _*) // Pseq(1 to 4)
     val p2  = p1.combinations(3)
