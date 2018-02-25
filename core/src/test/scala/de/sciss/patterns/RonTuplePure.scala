@@ -304,7 +304,7 @@ object RonTuplePure {
       val pats: Pat[Pat[Event]] = parts.map { part: Pat[Double] =>
         val partsIdx = Hold(partsIndices) // .take(1)
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-        val (notePat, durPat) = makePart(part, cantus, stutter = stutterPat.take(1))
+        val (notePat, durPat) = makePart(part, cantus, stutter = stutterPat.take())
 
           //        durs ::= durPat.iterator.sum
 

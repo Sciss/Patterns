@@ -62,7 +62,7 @@ final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
         buildNext() // advance()
       }
 
-    def reset()(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: Tx): Unit = if (_valid()) {
       logStream("PatMap.iterator.reset()")
       _valid() = false
       ctx.getStreams(ref).foreach {

@@ -52,12 +52,17 @@ final case class FlatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
     private[this] val itStream      = mkItStream(tx0)
 
     def reset()(implicit tx: Tx): Unit = {
-      println("TODO: FlatMap.reset")
+      logStream("FlatMap.iterator.reset()")
       ctx.getStreams(ref).foreach {
         case m: MapItStream[Tx, _] => m.resetOuter()
         // case _ =>
       }
     }
+
+//      ctx.getStreams(ref).foreach {
+//        case m: MapItStream[Tx, _] => m.resetOuter()
+//        // case _ =>
+//      }
 
     def hasNext(implicit tx: Tx): Boolean =
       itStream.hasNext && innerStream.hasNext

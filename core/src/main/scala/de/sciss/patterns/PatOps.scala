@@ -17,8 +17,8 @@ import de.sciss.patterns.Types.{Num, NumFrac, Ord, Widen}
 import de.sciss.patterns.graph._
 
 final class PatOps[A](private val x: Pat[A]) extends AnyVal {
-  def take(length: Pat[Int]): Pat[A] = Take(x, length)
-  def drop(length: Pat[Int]): Pat[A] = Drop(x, length)
+  def take(length: Pat[Int] = 1): Pat[A] = Take(x, length)
+  def drop(length: Pat[Int]    ): Pat[A] = Drop(x, length)
 
 //  def head: Pat[A] = take(1)
   def tail: Pat[A] = drop(1)
