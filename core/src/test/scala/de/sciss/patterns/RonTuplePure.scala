@@ -297,14 +297,14 @@ object RonTuplePure {
       //      println(s"CANTUS $cantus")
 
       val parts: Pat[Pat[Double]] =
-        cantus.distinct.sorted.combinations(3) // <| (_.poll("parts"))
+        cantus.distinct.sorted.combinations(3) // <| (_.size.poll("numParts"))
 
 //      if (DEBUG) println("PARTS:")
       // if (DEBUG) parts.foreach(p => println(mkElemString(p)))
 
       //      var durs = List.empty[Double]
 
-      val numParts = Hold(parts.size).flow()   // <| (_.poll("numParts"))
+      val numParts = Hold(parts.size).flow()
       val partsIndices = Indices(parts).flow() // <| (_.poll("partsIndices"))
       val pats: Pat[Pat[Event]] = parts.map { part0: Pat[Double] =>
         val partsIdx = Hold(partsIndices) // <| (_.poll("partsIdx"))
@@ -318,17 +318,17 @@ object RonTuplePure {
         val db      = partsIdx.linlin(0, numParts, -40.0, -30.0)
 
         Bind(
-          "instrument"  -> "sine4",
+//          "instrument"  -> "sine4",
           "note"        -> notePat,
           "dur"         -> durPat,
           "octave"      -> 5,
-          "legato"      -> legato,
+//          "legato"      -> legato,
           "detune"      -> -2.0, // White(-2.0,2.0),
-          "i"           -> i,
+//          "i"           -> i,
           "ar"          -> 0.001,
           "dr"          -> 0.1,
           "stretch"     -> 1,
-          "db"          -> db
+//          "db"          -> db
         )
       }
 
