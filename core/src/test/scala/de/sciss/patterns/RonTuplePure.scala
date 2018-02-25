@@ -116,7 +116,7 @@ object RonTuplePure {
   // generates all tuplets from within x, an array
   // where each element is an array of occurrences of a value
   def allTuples[A](x: Pat[Pat[A]]): Pat[Pat[A]] = {
-    val hd = x.take(1)
+    val hd = x.head.bubble
     val tl = x.tail
     tl.foldLeft(hd)((ys: Pat[Pat[A]], xi: Pat[A]) => directProduct(ys, xi))
   }
