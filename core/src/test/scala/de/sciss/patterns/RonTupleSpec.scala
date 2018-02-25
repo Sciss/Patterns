@@ -4,16 +4,12 @@ import de.sciss.patterns.graph.{Gate, Hold}
 
 class RonTupleSpec extends PatSpec {
   def directProduct_Seq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] =
-    a.flatMap { v => b.map { w => v :+ w } }
+    a.flatMap { v => b       .map { w => v :+ w }}
 
   def directProduct_Pat[A](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
-    a.flatMap { v: Pat[A] =>
-      b.bubble.map { w: Pat[A] =>
-        v ++ w
-      }
-    }
+    a.flatMap { v => b.bubble.map { w => v ++ w }}
 
-  "The directProduct example" should work in {
+  ignore /* "The directProduct example" */ should "Bla" in {
     //    showStreamLog = true
 
     val aInSeq  = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
@@ -50,7 +46,7 @@ class RonTupleSpec extends PatSpec {
      */
   }
 
-  "The extract example" should work in {
+  ignore /* "The extract example" */ should "Blub" in {
     // collects the indices of every occurrence of elements of t in s
     def extract_Seq[A](s: Seq[A], t: Seq[A]): Seq[Seq[Int]] =
       t.map { tj =>
@@ -110,8 +106,8 @@ class RonTupleSpec extends PatSpec {
     }
 
     def directProduct_Pat[A](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
-      a.flatMap { v: Pat[A] =>
-        b.bubble.map { w: Pat[A] =>
+      a.flatMap { v =>
+        b.bubble.map { w =>
           v ++ w
         }
       }
@@ -163,7 +159,7 @@ class RonTupleSpec extends PatSpec {
     val patOut = Graph {
       val inPat0 = in.map(xs => Pat.Int(xs: _*))
       val inPat: Pat[Pat[Int]] = inPat0
-      allTuples_Pat(inPat)
+      allTuples_Pat1(inPat)
     }
 
     evalH(patOut) shouldBe out
