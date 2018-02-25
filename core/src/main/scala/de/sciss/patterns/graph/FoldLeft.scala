@@ -59,10 +59,10 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
         _result() = res
       }
 
-    def reset()(implicit tx: Tx): Unit = {
-      println("TODO: FoldLeft.reset")
+    def reset()(implicit tx: Tx): Unit = if (_valid()) {
       logStream("FoldLeft.iterator.reset()")
       _valid() = false
+      outerStream.reset()
     }
 
     def hasNext(implicit tx: Tx): Boolean = {
