@@ -94,10 +94,14 @@ final case class FlatTabulate[A](n: Pat[Int], it: It[Int], inner: Pat[A]) extend
 
     @tailrec
     private def nextIteration()(implicit tx: Tx): Unit = {
-      val i = iteration()
-      val nhn = i < nValue()
-      _hasNext() = nhn
+      val i       = iteration()
+      val n       = nValue()
+      val nhn     = i < n
+      _hasNext()  = nhn
       if (nhn) {
+        if (n == 200000 || n == 2000000) {
+          println("here")
+        }
 //        val itStream = () => Stream.single(i)
 //        ctx.provideOuterStream(it.token, itStream)
         ctx.getStreams(ref).foreach(_.reset())

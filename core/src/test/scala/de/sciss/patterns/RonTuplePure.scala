@@ -26,7 +26,7 @@ object RonTuplePure {
     println("Done.")
     var time = 0.0
 //    showStreamLog = true
-    val xs = it.take(10).toList
+    val xs = it.take(6).toList
     println(s"Size = ${xs.size}")
     xs.foreach { elem0: Event =>
       val elem  = elem0 +
@@ -282,7 +282,7 @@ object RonTuplePure {
 //    val stutterPat: Pat[Int] = White(1, 4).flow()
 
     //    lPat.next(); rPat.next()
-    Pat.flatFill(200000) {
+    Pat.flatFill(2000000) {
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
       val length    = lPat <| (_.poll("length")) // .next()
 //      val cantus0: Pat[Double] = ((Brown(-6, 6, 3): Pat[Int]) * 2.4 + 4.0).take(length) // .iterator.take(length).toList
@@ -323,7 +323,7 @@ object RonTuplePure {
           "dur"         -> durPat,
           "octave"      -> 5,
           "legato"      -> legato,
-          "detune"      -> White(-2.0,2.0),
+          "detune"      -> -2.0, // White(-2.0,2.0),
           "i"           -> i,
           "ar"          -> 0.001,
           "dr"          -> 0.1,
