@@ -38,7 +38,7 @@
 //    private[this] val _hasNext  = ctx.newVar(false)
 //    private[this] val state     = ctx.newVar[Stream[Tx, A]](null)
 //
-//    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+//    def reset()(implicit tx: Tx): Unit = {
 //      _valid() = false
 //      inStream  .reset()
 //      idxStream .reset()

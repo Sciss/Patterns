@@ -33,11 +33,10 @@ final case class Flatten[A](in: Pat[Pat[A]]) extends Pattern[A] {
 
     private[this] val _valid      = ctx.newVar(false)
 
-    def reset(level: Int)(implicit tx: Tx): Unit =
-      if (_valid()) {
-        _valid() = false
-        inStream.reset(level: Int)
-      }
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      _valid() = false
+      inStream.reset(level: Int)
+    }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {

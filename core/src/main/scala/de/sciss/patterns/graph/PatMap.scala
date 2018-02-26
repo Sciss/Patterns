@@ -62,8 +62,8 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
         buildNext() // advance()
       }
 
-    def reset(level: Int)(implicit tx: Tx): Unit = if (_valid()) {
-      logStream("PatMap.iterator.reset()")
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+//      logStream("PatMap.iterator.reset()")
       _valid() = false
       ctx.getStreams(ref).foreach {
         case m: MapItStream[Tx, _] => m.resetOuter(level)

@@ -43,11 +43,10 @@ final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
         _valid() = true
       }
 
-    def reset(level: Int)(implicit tx: Tx): Unit =
-      if (_valid()) {
-        _valid() = false
-        mapE.foreach(_._2.reset(level))
-      }
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      _valid() = false
+      mapE.foreach(_._2.reset(level))
+    }
 
     private def mkState()(implicit tx: Tx): Event = {
       val m = mapE.map {

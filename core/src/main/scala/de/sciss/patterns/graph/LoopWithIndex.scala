@@ -72,11 +72,10 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
     private[this] val _hasNext    = ctx.newVar(false)
     private[this] val _valid      = ctx.newVar(false)
 
-    def reset(level: Int)(implicit tx: Tx): Unit =
-      if (_valid()) {
-        _valid() = false
-        nStream.reset(level)
-      }
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      _valid() = false
+      nStream.reset(level)
+    }
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
@@ -107,8 +106,10 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
 //        }
 //        val itStream = () => Stream.single(i)
 //        ctx.provideOuterStream(it.token, itStream)
-        ctx.getStreams(ref).foreach(_.reset(innerLevel)) // LLL
-        innerStream.reset(innerLevel) // LLL
+        println(s"LOOP RESET $innerLevel")
+        val itStreams = ctx.getStreams(ref)
+        itStreams.foreach(_.reset(innerLevel))
+        innerStream.reset(innerLevel)
         val ihn = innerStream.hasNext
         _hasNext() = ihn
         if (!ihn) {

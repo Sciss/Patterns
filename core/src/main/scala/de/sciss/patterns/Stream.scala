@@ -103,12 +103,11 @@ abstract class Stream[Tx, +A] { outer =>
     private[this] val sub       = ctx.newVar[Stream[Tx, B]](null)
 //    private[this] val _hasSub   = ctx.newVar(false)
 
-    def reset(level: Int)(implicit tx: Tx): Unit =
-      if (_valid()) {
-        _valid() = false
-        outer.reset(level)
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      _valid() = false
+      outer.reset(level)
 //        if (_hasSub()) sub().reset()
-      }
+    }
 
     @tailrec
     private def step()(implicit tx: Tx): Unit = {

@@ -31,11 +31,10 @@ final case class Distinct[A](in: Pat[A]) extends Pattern[A] {
     private[this] val _hasNext = ctx.newVar[Boolean ](false)
     private[this] val _next    = ctx.newVar[A       ](null.asInstanceOf[A])
 
-    def reset(level: Int)(implicit tx: Tx): Unit =
-      if (_valid()) {
-        _valid() = false
-        inStream.reset(level)
-      }
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      _valid() = false
+      inStream.reset(level)
+    }
 
     @tailrec
     private def advance()(implicit tx: Tx): Unit = {

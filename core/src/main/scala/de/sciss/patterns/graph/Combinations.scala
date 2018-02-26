@@ -46,12 +46,11 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
 
     private[this] val _valid = ctx.newVar(false)
 
-    def reset(level: Int)(implicit tx: Tx): Unit =
-      if (_valid()) {
-        _valid() = false
-        inStream.reset(level)
-        nStream .reset(level)
-      }
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      _valid() = false
+      inStream.reset(level)
+      nStream .reset(level)
+    }
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()

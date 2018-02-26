@@ -39,11 +39,10 @@ final case class Sorted[A](in: Pat[A])(implicit ord: Ord[A]) extends Pattern[A] 
         sortedIt()  = Stream(xs.sortWith(ord.lt): _*)
       }
 
-    def reset(level: Int)(implicit tx: Tx): Unit =
-      if (_valid()) {
-        _valid() = false
-        inStream.reset(level)
-      }
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      _valid() = false
+      inStream.reset(level)
+    }
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()

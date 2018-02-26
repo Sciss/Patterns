@@ -55,8 +55,8 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
       advance()
     }
 
-  def resetOuter(level: Int)(implicit tx: Tx): Unit = if (_valid()) {
-    logStream(s"$simpleString.resetOuter()")
+  def resetOuter(level: Int)(implicit tx: Tx): Unit = {
+//    logStream(s"$simpleString.resetOuter()")
     _valid() = false
     outerStream.reset(level)
   }

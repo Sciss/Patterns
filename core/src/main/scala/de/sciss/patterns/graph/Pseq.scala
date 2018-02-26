@@ -52,12 +52,11 @@
 //      indexed(i).expand
 //    }
 //
-//    def reset()(implicit tx: Tx): Unit =
-//      if (_valid()) {
-//        _valid() = false
-//        repeatsStream .reset()
-//        offsetStream  .reset()
-//      }
+//    def reset()(implicit tx: Tx): Unit = {
+//      _valid() = false
+//      repeatsStream .reset()
+//      offsetStream  .reset()
+//    }
 //
 //    private def validate()(implicit tx: Tx): Unit =
 //      if (!_valid()) {

@@ -1,17 +1,17 @@
 package de.sciss.patterns
 
 class ResetSpec extends PatSpec {
-  "Map reset" should work in {
-    val pat = Graph {
-      Pat.loop(2) {
-        val in  = Pat(Pat(0, 6, 7))
-        val inM = in.map(identity)
-        inM
-      }
-    }
-
-    evalH(pat) shouldBe Seq(Seq(0, 6, 7), Seq(0, 6, 7))
-  }
+//  "Map reset" should work in {
+//    val pat = Graph {
+//      Pat.loop(2) {
+//        val in  = Pat(Pat(0, 6, 7))
+//        val inM = in.map(identity)
+//        inM
+//      }
+//    }
+//
+//    evalH(pat) shouldBe Seq(Seq(0, 6, 7), Seq(0, 6, 7))
+//  }
 
 //  "Nested reset" should work in {
 //    val pat: Pat[(String, Int)] = Graph {
