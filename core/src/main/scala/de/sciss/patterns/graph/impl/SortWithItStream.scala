@@ -55,7 +55,7 @@ final class SortWithItStream[Tx, A](tx0: Tx)(implicit ctx: Context[Tx])
 //    _valid() = false
 //  }
 
-  def reset()(implicit tx: Tx): Unit =
+  def reset(level: Int)(implicit tx: Tx): Unit =
     _valid() = false
 
   def hasNext(implicit tx: Tx): Boolean = {

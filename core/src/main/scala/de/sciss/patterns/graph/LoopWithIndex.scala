@@ -38,7 +38,8 @@ final case class LoopWithIndex[A](n: Pat[Int], it: It[Int], inner: Pat[A]) exten
 
     private[this] val _hasNext = ctx.newVar(true)
 
-    def reset()(implicit tx: Tx): Unit    = _hasNext() = true
+    def reset(level: Int)(implicit tx: Tx): Unit = _hasNext() = true
+
     def hasNext(implicit tx: Tx): Boolean = _hasNext()
 
     def next()(implicit tx: Tx): Int = {
@@ -69,10 +70,10 @@ final case class LoopWithIndex[A](n: Pat[Int], it: It[Int], inner: Pat[A]) exten
     private[this] val _hasNext    = ctx.newVar(false)
     private[this] val _valid      = ctx.newVar(false)
 
-    def reset()(implicit tx: Tx): Unit =
+    def reset(level: Int)(implicit tx: Tx): Unit =
       if (_valid()) {
         _valid() = false
-        nStream.reset()
+        nStream.reset(level)
       }
 
     private def validate()(implicit tx: Tx): Unit =
@@ -104,8 +105,8 @@ final case class LoopWithIndex[A](n: Pat[Int], it: It[Int], inner: Pat[A]) exten
 //        }
 //        val itStream = () => Stream.single(i)
 //        ctx.provideOuterStream(it.token, itStream)
-        ctx.getStreams(ref).foreach(_.reset())
-        innerStream.reset()
+        ctx.getStreams(ref).foreach(_.reset(???)) // LLL
+        innerStream.reset(???) // LLL
         val ihn = innerStream.hasNext
         _hasNext() = ihn
         if (!ihn) {

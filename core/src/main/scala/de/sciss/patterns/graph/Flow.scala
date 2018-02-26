@@ -28,8 +28,9 @@ final case class Flow[A](in: Pat[A]) extends Pattern[A] {
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val peer = in.expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = {
+    def reset(level: Int)(implicit tx: Tx): Unit = {
       logStream(s"Flow($in).iterator.reset()")
+      ??? // LLL
     }
 
     def hasNext(implicit tx: Tx): Boolean =

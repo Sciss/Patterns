@@ -28,11 +28,11 @@ abstract class TruncateStream[A, Tx](in: Pat[A], length: Pat[Int], tx0: Tx)(impl
 
   protected def truncate(it: Stream[Tx, A], n: Int)(implicit tx: Tx): Stream[Tx, A]
 
-  def reset()(implicit tx: Tx): Unit =
+  def reset(level: Int)(implicit tx: Tx): Unit =
     if (_valid()) {
       _valid() = false
-      lenStream .reset()
-      inStream  .reset()
+      lenStream .reset(level)
+      inStream  .reset(level)
 //      if (_hasPeer()) peer().reset()
     }
 

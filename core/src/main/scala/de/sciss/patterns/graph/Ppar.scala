@@ -43,12 +43,12 @@ final case class Ppar(list: Pat[Pat[Event]], repeats: Pat[Int] = 1, offset: Pat[
 
     private[this] val _valid      = ctx.newVar(false)
 
-    def reset()(implicit tx: Tx): Unit =
+    def reset(level: Int)(implicit tx: Tx): Unit =
       if (_valid()) {
         _valid() = false
-        listStream    .reset()
-        repeatsStream .reset()
-        offsetStream  .reset()
+        listStream    .reset(level)
+        repeatsStream .reset(level)
+        offsetStream  .reset(level)
       }
 
     private def validate()(implicit tx: Tx): Unit =

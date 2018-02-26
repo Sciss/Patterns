@@ -27,8 +27,8 @@ case class Length[A](in: Pat[A]) extends Pattern[Int] {
     private[this] val inStream  = in.expand(ctx, tx0)
     private[this] val _hasNext  = ctx.newVar(true)
 
-    def reset()(implicit tx: Tx): Unit = {
-      inStream.reset()
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      inStream.reset(level)
       _hasNext() = true
     }
 

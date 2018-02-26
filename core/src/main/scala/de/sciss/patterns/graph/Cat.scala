@@ -24,9 +24,9 @@ final case class Cat[A1, A2, A](a: Pat[A1], b: Pat[A2])
     private[this] val ai = a.expand(ctx, tx0) // .map(widen.lift1)
     private[this] val bi = b.expand(ctx, tx0) // .map(widen.lift2)
 
-    def reset()(implicit tx: Tx): Unit = {
-      ai.reset()
-      bi.reset()
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      ai.reset(level)
+      bi.reset(level)
     }
 
     def hasNext(implicit tx: Tx): Boolean = {

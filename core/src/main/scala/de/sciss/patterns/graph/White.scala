@@ -41,11 +41,11 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
     private[this] val _hasNext  = ctx.newVar(false)
     private[this] val _valid    = ctx.newVar(false)
 
-    def reset()(implicit tx: Tx): Unit =
+    def reset(level: Int)(implicit tx: Tx): Unit =
       if (_valid()) {
         _valid() = false
-        loStream.reset()
-        hiStream.reset()
+        loStream.reset(level: Int)
+        hiStream.reset(level: Int)
         // XXX TODO: r.reset()
       }
 

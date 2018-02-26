@@ -35,12 +35,12 @@ final case class IndexOfSlice[A1, A2](in: Pat[A1], sub: Pat[A2], from: Pat[Int])
     private[this] val _valid      = ctx.newVar(false)
     private[this] val _hasNext    = ctx.newVar(false)
 
-    def reset()(implicit tx: Tx): Unit =
+    def reset(level: Int)(implicit tx: Tx): Unit =
       if (_valid()) {
         _valid() = false
-        inStream  .reset()
-        subStream .reset()
-        fromStream.reset()
+        inStream  .reset(level)
+        subStream .reset(level)
+        fromStream.reset(level)
       }
 
     private def validate()(implicit tx: Tx): Unit =

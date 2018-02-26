@@ -62,14 +62,14 @@ final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
         buildNext() // advance()
       }
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset(level: Int)(implicit tx: Tx): Unit = if (_valid()) {
       logStream("PatMap.iterator.reset()")
       _valid() = false
       ctx.getStreams(ref).foreach {
-        case m: MapItStream[Tx, _] => m.resetOuter()
+        case m: MapItStream[Tx, _] => m.resetOuter(level)
         // case _ =>
       }
-      innerStream.reset()
+      innerStream.reset(level)
     }
 
     private def advance()(implicit tx: Tx): Unit = {
@@ -77,7 +77,7 @@ final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
         case m: MapItStream[Tx, _] => m.advance()
         // case _ =>
       }
-      innerStream.reset()
+      innerStream.reset(???)  // LLL
       buildNext()
     }
 

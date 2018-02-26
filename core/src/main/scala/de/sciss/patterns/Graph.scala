@@ -25,11 +25,13 @@ object Graph {
 
     def isOutside: Boolean
 
+    def level: Int
+
     def visit[P](ref: AnyRef, init: => P): P
   }
 
   /** This is analogous to `SynthGraph.Builder` in ScalaCollider. */
-  def builder: Builder  = builderRef.get()
+  def builder: Builder = builderRef.get()
 
   private[this] val builderRef = new ThreadLocal[Builder] {
     override protected def initialValue: Builder = BuilderDummy
@@ -38,7 +40,8 @@ object Graph {
   private[this] object BuilderDummy extends Builder {
     private def outOfContext: Nothing = sys.error("Out of context")
 
-    def isOutside = true
+    final val isOutside = true
+    final val level     = 0
 
     def addPattern(p: Pattern[_]): Unit = ()
 
@@ -64,7 +67,8 @@ object Graph {
     private[this] var sourceMap = Map.empty[AnyRef, Any]
     private[this] var tokenId   = 0
 
-    def isOutside = false
+    def isOutside : Boolean = false
+    val level     : Int     = parent.level + 1
 
     override def toString = s"patterns.Graph.Builder@${hashCode.toHexString}"
 

@@ -43,10 +43,10 @@ final case class Poll[A](in: Pat[A], gate: Pat[Boolean], label: Pat[String] = "p
     private[this] val gateStream  = gate  .expand(ctx, tx0)
     private[this] val labelStream = label .expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = {
-      inStream    .reset()
-      gateStream  .reset()
-      labelStream .reset()
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      inStream    .reset(level)
+      gateStream  .reset(level)
+      labelStream .reset(level)
     }
 
     def hasNext(implicit tx: Tx): Boolean = inStream.hasNext

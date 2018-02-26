@@ -38,10 +38,10 @@ final case class Apply[A](in: Pat[Pat[A]], idx: Pat[Int]) extends Pattern[A] {
     private[this] val _hasNext  = ctx.newVar(false)
     private[this] val state     = ctx.newVar[Stream[Tx, A]](null)
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset(level: Int)(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false
-      inStream  .reset()
-      idxStream .reset()
+      inStream  .reset(level)
+      idxStream .reset(level)
     }
 
     private def validate()(implicit tx: Tx): Unit = if (!_valid()) {

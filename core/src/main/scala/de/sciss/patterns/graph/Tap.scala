@@ -27,9 +27,9 @@ final case class Tap[A, A1](in: Pat[A], side: Pat[A1]) extends Pattern[A] {
     private[this] val inStream    = in  .expand(ctx, tx0)
     private[this] val sideStream  = side.expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = {
-      inStream  .reset()
-      sideStream.reset()
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      inStream  .reset(level)
+      sideStream.reset(level)
     }
 
     def hasNext(implicit tx: Tx): Boolean =

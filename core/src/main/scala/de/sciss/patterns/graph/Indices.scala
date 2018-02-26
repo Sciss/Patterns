@@ -27,8 +27,8 @@ case class Indices[A](in: Pat[A]) extends Pattern[Int] {
 
     private[this] val count     = ctx.newVar(0)
 
-    def reset()(implicit tx: Tx): Unit = {
-      inStream.reset()
+    def reset(level: Int)(implicit tx: Tx): Unit = {
+      inStream.reset(level)
       count() = 0
     }
 

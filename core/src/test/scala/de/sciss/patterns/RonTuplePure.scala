@@ -308,7 +308,7 @@ object RonTuplePure {
       // XXX TODO: The following is wrong -- `flow()`
       // should only be effective inside `parts.map` but not for
       // `Pat.loop`
-      val partsIndices = Indices(parts).flow() // <| (_.poll("partsIndices"))
+      val partsIndices = parts.indices.flow() // <| (_.poll("partsIndices"))
       val pats: Pat[Pat[Event]] = parts.map { part0: Pat[Double] =>
         val partsIdx = Hold(partsIndices) <| (_.poll("partsIdx"))
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())

@@ -32,11 +32,11 @@ final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] 
 
     private[this] val _valid      = ctx.newVar(false)
 
-    def reset()(implicit tx: Tx): Unit =
+    def reset(level: Int)(implicit tx: Tx): Unit =
       if (_valid()) {
         _valid() = false
-        inStream  .reset()
-        sizeStream.reset()
+        inStream  .reset(level)
+        sizeStream.reset(level)
       }
 
     private def validate()(implicit tx: Tx): Unit =
