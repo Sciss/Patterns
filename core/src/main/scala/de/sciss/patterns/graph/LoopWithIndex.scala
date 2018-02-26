@@ -14,16 +14,10 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.graph.impl.IndexItStream
+
 import scala.annotation.tailrec
 
-/*
-
-    Pat.flatFill(4) {
-      val b = Brown(0, 100, 2)
-      b.take(10)
-    }
-
- */
 final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], inner: Pat[A] /* , innerLevel: Int */)
   extends Pattern[A] {
 
@@ -35,30 +29,13 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
     if (nT.eq(n) && innerT.eq(inner)) this else copy(n = nT, inner = innerT)
   }
 
-  private final class ItStreamImpl[Tx](iteration: Context.Var[Tx, Int])(implicit ctx: Context[Tx])
-    extends Stream[Tx, Int] {
-
-    private[this] val _hasNext = ctx.newVar(true)
-
-    def reset()(implicit tx: Tx): Unit =
-      _hasNext() = true
-
-    def hasNext(implicit tx: Tx): Boolean = _hasNext()
-
-    def next()(implicit tx: Tx): Int = {
-      if (!hasNext) Stream.exhausted()
-      _hasNext() = false
-      iteration()
-    }
-  }
-
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     @transient final private[this] lazy val ref = new AnyRef
 
     private[this] val iteration = ctx.newVar(0)
 
     private def mkItStream(implicit tx: Tx) = {
-      val res = new ItStreamImpl(iteration)
+      val res = new IndexItStream(iteration)
       ctx.addStream(ref, res)
       res
     }

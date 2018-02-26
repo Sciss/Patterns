@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import graph._
+import de.sciss.patterns.graph._
 
 object BindTest extends App {
   implicit val ctx: Context.Plain = Context()

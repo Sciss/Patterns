@@ -222,11 +222,10 @@ class RonTupleSpec extends PatSpec {
   }
 
   "Pat.loop and PatMap.reset" should work in {
-    val cantus  = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
-//    val part    = Pat(6.4, 8.8, 13.6)
-    val parts: Pat[Pat[Double]] =
-      cantus.distinct.sorted.combinations(3)
     val g = Graph {
+      val cantus  = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
+      val parts: Pat[Pat[Double]] =
+        cantus.distinct.sorted.combinations(3)
       Pat.loop() {
         val bla = parts.map { part =>
           computeDurs_Pat(part, cantus)

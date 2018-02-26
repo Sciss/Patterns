@@ -187,7 +187,15 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
     PatMap(outer = x, it = it, inner = inner /* , innerLevel = level */)
   }
 
-  def mapWithIndex[B](f: (Pat[A], Pat[Int]) => Pat[B]): Pat[Pat[B]] = ???
+  def mapWithIndex[B](f: (Pat[A], Pat[Int]) => Pat[B]): Pat[Pat[B]] = {
+    val b     = Graph.builder
+    val itIn  = b.allocToken[A  ]()
+    val itIdx = b.allocToken[Int]()
+    val inner = Graph {
+      f(itIn, itIdx)
+    }
+    MapWithIndex(outer = x, itIn = itIn, itIdx = itIdx, inner = inner)
+  }
 
     /** Similar to a monadic `flatMap` but with the constraint
     * the element type must be a (nested) pattern.

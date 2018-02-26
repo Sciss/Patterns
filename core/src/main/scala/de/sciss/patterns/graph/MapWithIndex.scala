@@ -1,5 +1,5 @@
 /*
- *  PatMap.scala
+ *  MapWithIndex.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
@@ -14,13 +14,13 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.graph.impl.MapItStream
+import de.sciss.patterns.graph.impl.{IndexItStream, MapItStream}
 
-final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A] /* , innerLevel: Int */)
+final case class MapWithIndex[A1, A] private[patterns](outer: Pat[Pat[A1]], itIn: It[A1], itIdx: It[Int], inner: Pat[A])
   extends Pattern[Pat[A]] {
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = {
-    logStream("PatMap.iterator")
+    logStream("MapWithIndex.iterator")
     new StreamImpl(tx)
   }
 
@@ -28,28 +28,38 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
     val outerT  = t(outer)
     val innerT  = t(inner)
     if (outerT.eq(outer) && innerT.eq(inner)) this else {
-      val (itT, innerT1) = it.replaceIn(innerT)
-      copy(outer = outerT, it = itT, inner = innerT1)
+      val (itT, innerT1) = itIn.replaceIn(innerT)
+      copy(outer = outerT, itIn = itT, inner = innerT1)
     }
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
-    @transient final private[this] lazy val ref = new AnyRef
+    @transient final private[this] lazy val refIn   = new AnyRef
+    @transient final private[this] lazy val refIdx  = new AnyRef
 
-    private def mkItStream(implicit tx: Tx): Stream[Tx, A1] = {
+    private[this] val iteration     = ctx.newVar(0)
+
+    private def mkItInStream(implicit tx: Tx): Stream[Tx, A1] = {
       val res = new MapItStream(outer, tx)
-      ctx.addStream(ref, res)
+      ctx.addStream(refIn, res)
       res
     }
 
-    ctx.provideOuterStream[A1](it.token, mkItStream(_))(tx0)
+    private def mkItIdxStream(implicit tx: Tx): Stream[Tx, Int] = {
+      val res = new IndexItStream(iteration)
+      ctx.addStream(refIdx, res)
+      res
+    }
+
+    ctx.provideOuterStream[A1 ](itIn .token, mkItInStream (_))(tx0)
+    ctx.provideOuterStream[Int](itIdx.token, mkItIdxStream(_))(tx0)
 
     private[this] val innerStream: Stream[Tx, A] = inner.expand(ctx, tx0)
 
     // because `inner` is not guaranteed to depend on `It`, we must
     // pro-active create one instance of the it-stream which is used
     // as an additional constraint to determine `hasNext`!
-    private[this] val itStream      = mkItStream(tx0)
+    private[this] val itInStream    = mkItInStream(tx0)
 
     private[this] val mapStream     = ctx.newVar[Pat[A]](null) // Stream[Tx, T#Out[Tx]]](null)
     private[this] val _valid        = ctx.newVar(false)
@@ -57,15 +67,16 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {
-        logStream("PatMap.iterator.validate()")
-        _valid() = true
-        buildNext() // advance()
+        logStream("MapWithIndex.iterator.validate()")
+        _valid()    = true
+        iteration() = 0
+        buildNext()
       }
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
-//      logStream("PatMap.iterator.reset()")
+      //      logStream("MapWithIndex.iterator.reset()")
       _valid() = false
-      ctx.getStreams(ref).foreach {
+      ctx.getStreams(refIn).foreach {
         case m: MapItStream[Tx, _] => m.resetOuter()
         // case _ =>
       }
@@ -73,18 +84,21 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
     }
 
     private def advance()(implicit tx: Tx): Unit = {
-      ctx.getStreams(ref).foreach {
+      ctx.getStreams(refIn).foreach {
         case m: MapItStream[Tx, _] => m.advance()
         // case _ =>
       }
+      iteration() = iteration() + 1
       innerStream.reset()
       buildNext()
     }
 
     private def buildNext()(implicit tx: Tx): Unit = {
-      val hn = itStream.hasNext // && innerStream.hasNext
+      val hn = itInStream.hasNext // && innerStream.hasNext
       _hasNext() = hn
       if (hn) {
+        val itIdxStreams = ctx.getStreams(ref)
+        itIdxStreams.foreach(_.reset())
         // itStream.next()
         val b = Vector.newBuilder[A]
         var i = 0
