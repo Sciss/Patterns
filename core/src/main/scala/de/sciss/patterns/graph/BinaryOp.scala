@@ -23,6 +23,8 @@ object BinaryOp {
     override final def productPrefix = s"BinaryOp$$$name"
 
     def name: String
+
+    override def toString: String = name
   }
 
   // ---- (Num, Num) -> Num ----

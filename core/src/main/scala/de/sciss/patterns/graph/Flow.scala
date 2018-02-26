@@ -30,8 +30,9 @@ final case class Flow[A] private[patterns](in: Pat[A], level: Int) extends Patte
 
     def reset(levelR: Int)(implicit tx: Tx): Unit = {
       logStream(s"Flow($in).iterator.reset()")
-      println(s"FLOW reset($levelR) -- my level $level")
-      if (levelR < level) peer.reset(levelR)
+      val gated = levelR < level
+      println(s"FLOW ${hashCode().toHexString} reset($levelR) -- my level $level -- $gated")
+      if (gated) peer.reset(levelR)
     }
 
     def hasNext(implicit tx: Tx): Boolean =

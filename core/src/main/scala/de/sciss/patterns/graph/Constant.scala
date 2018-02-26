@@ -19,6 +19,8 @@ import de.sciss.patterns.Types.Aux
 final case class Constant[A](value: A) extends Pat[A] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = Stream.continually(value)
 
+  override def toString: String = value.toString
+
 //  def embed   [Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = Stream.single     (value)
 
 //  private[patterns] final def cClassTag: ClassTag[COut] = ClassTag(classOf[COut])

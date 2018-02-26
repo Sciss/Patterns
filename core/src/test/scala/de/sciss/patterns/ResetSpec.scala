@@ -29,34 +29,27 @@ class ResetSpec extends PatSpec {
 
   "Complex nested reset" should work in {
     val plain = (1 to 2).flatMap { _ =>
-      val xs  = Seq(Seq(1), Seq(2, 3), Seq(4, 5))
+      val xs  = Seq(Seq(1), Seq(2, 3))
       val xsi = xs.indices.iterator
       xs.foldLeft(Seq[Int]()) { (accum, x) =>
         val a = xsi.next()
-        val z = x.zipWithIndex.map { case (y, xi) =>
-          y + xi + a
+        val z = x.map { y =>
+          y + a
         }
         accum ++ z
       }
     }
 
-    /*
-
-    List(1, 2, 5, 4, 7, 1, 2, 5, 4, 7) was not equal to Vector(1, 3, 5, 6, 8, 1, 3, 5, 6, 8)
-
-     */
-
     val pat: Pat[Int] = Graph { // level 1
       Pat.loop(2) { // level 2
-        val xs  = Pat(Pat(1), Pat(2, 3), Pat(4, 5))
-        val xsi = xs.indices.flow()
+        val xs  = Pat(Pat(1), Pat(2, 3))
+        val xsi = xs.indices.flow()  // .poll("xsi")
         xs.foldLeft(Pat[Int]()) { (accum, x) => // level 3
-          val a   = xsi.take()
-          val xi  = x.indices.flow()
+          val a   = xsi.hold()
           val z   = x.bubble.flatMap { y => // level 4
-            y + xi + a
+            y + a
           }
-          accum ++ z
+          z ++ accum // ++ z
         }
       }
     }
