@@ -75,45 +75,6 @@ class PatternsSpec extends PatSpec {
     assert(values === plain)
   }
 
-  "Map" should work in {
-    val pat1 = Graph {
-      val in = Pat(1 to 4: _*).combinations(3)
-      in.map { x: Pat[Int] =>
-        x.drop(1)
-      }
-    }
-
-    val plain1 = List(1 to 4: _*).combinations(3)
-      .map(_.drop(1))
-      .toList
-
-    evalH(pat1) shouldBe plain1
-
-    // it must be possible t
-    val pat2 = Graph {
-      val in = Pat(1 to 4: _*).combinations(3)
-      in.map { _: Pat[Int] =>
-        Pat[Int](6)
-      }
-    }
-
-    val plain2 = List(1 to 4: _*).combinations(3)
-      .map(_ => Seq(6))
-      .toList
-
-    evalH(pat2) shouldBe plain2
-  }
-
-//  "Map reset" should work in {
-//    val pat = Graph {
-//      val in  = Pat(Pat(0, 6, 7))
-//      val inM = in.map(identity)
-//      Repeat(inM, 2)
-//    }
-//
-//    evalH(pat) shouldBe Seq(Seq(0, 6, 7), Seq(0, 6, 7))
-//  }
-
   "Copy" should work in {
     val res1 = Graph {
       val a = Pat[Int](1, 2, 3).flow()
@@ -158,13 +119,6 @@ class PatternsSpec extends PatSpec {
     evalH(res4) shouldBe List(List(1, 4), List(10, 13))
   }
 
-  "FoldLeft" should work in {
-    val inL   = List(1, 4, 7, 10, 13)
-    val in    = ArithmSeq(1, 3).take(5)
-    val sum   = Graph { in.bubble.foldLeft(0)(_ + _) }
-    eval(sum) shouldBe List(inL.sum)
-  }
-
   "SortWith" should work in {
     val inL     = List(1, 4, 7, 10, 13)
     val in      = ArithmSeq(1, 3).take(5)
@@ -195,53 +149,4 @@ class PatternsSpec extends PatSpec {
 
     eval(pat2) shouldBe plain2
   }
-
-  // XXX TODO: BubbleMap is broken ATM -- not sure we'll need it much, anyway
-//  "BubbleMap" should work in {
-//    val resSimple = Graph { Pat[Int](1, 2, 3).bubbleMap(x => x ++ Pat[Int](4)) }
-//    eval(resSimple) shouldBe List(1, 4, 2, 4, 3, 4)
-//
-// XXX TODO
-//    val resDup = Pat[Int](1, 2, 3).bubbleMap(x => x ++ x)
-//    eval(resDup) shouldBe List(1, 1, 2, 2, 3, 3)
-//
-//    def directProduct_Seq[A](a: Seq[Seq[A]], b: Seq[A]): Seq[Seq[A]] =
-//      a.flatMap { v => b.map { w => v :+ w } }
-//
-//    def directProduct_Pat[A <: Top](a: Pat[Pat[A]], b: Pat[A]): Pat[Pat[A]] =
-//      a.map { v: Pat[A] =>
-//        val bc = b.copy()
-//        bc.bubbleMap { w =>
-//          v.copy() ++ w
-//          // bc.take(1) // v.copy() ++ bc.take(1) // w
-//        }
-//      }
-//
-//    val aInSeq  = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
-//    val bInSeq  = Seq(7, 8)
-//    val plain   = directProduct_Seq(aInSeq, bInSeq)
-//    assert(plain === Seq(Seq(1, 2, 3, 7), Seq(1, 2, 3, 8), Seq(4, 5, 6, 7), Seq(4, 5, 6, 8)))
-//
-//    val outPat = Graph {
-//      val aInPat: Pat[Pat[Int]]  = aInSeq.map(xs => Pat[IntTop](xs: _*))
-//      val bInPat: Pat[Int]       = Pat[IntTop](bInSeq: _*)
-//      directProduct_Pat(aInPat, bInPat)
-//    }
-//    import ctx.tx
-//    val res = outPat.expand.map { in =>
-//      in.toList
-//    }.toList
-//
-////    {
-////      val v: Pat[Int] = Pat[IntTop](aInSeq(0): _*)
-////      val res22 = bInPat.bubbleMap { w =>
-////        v.copy() ++ w
-////        // bc.take(1) // v.copy() ++ bc.take(1) // w
-////      }
-////      val res23 = res22.expand.toList
-////      println(res23)
-////    }
-//
-//    assert(res === plain)  // XXX TODO fails
-//  }
 }

@@ -18,7 +18,7 @@ class MapSpec extends PatSpec {
     // it must be possible to ignore the function argument
     val pat2 = Graph {
       val in = Pat(1 to 4: _*).combinations(3)
-      in.map { _: Pat[Int] =>
+      in.map { _ =>
         Pat(6)
       }
     }
