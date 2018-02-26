@@ -281,81 +281,80 @@ object RonTuplePure {
 
 //    val stutterPat: Pat[Int] = White(1, 4).flow()
 
-    //    lPat.next(); rPat.next()
-    lPat.bubble.flatMap { len0 =>
-      val length = len0 // .poll("length")
-      // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
-      val brown = Brown(-6, 6, 3) * 2.4 + 4.0
-      brown.grouped(length).flatMap { cantus0 =>
-  //      val cantus0 = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
-  //      val cantus0 = Pat(6.4, 8.8, 6.4, 8.8, 8.8, 13.6, 8.8, 13.6).take(length)
-        //      val numPause  = (length * rPat /* .next() */).roundTo(1.0) // .toInt
-        //      println(numPause)
-        val cantus = cantus0 // <| (_.poll("cantus")) // .poll(label = Format("cantus %d", it)) // (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
-        if (DEBUG) println(s"starting ${mkElemString(cantus)}")
-  //      val cantusEvt = catPat(cantus)
-        //      val catter = sp.par(cantusEvt)
+    val xs = for {
+      len     <- lPat.bubble: Pat[Pat[Int]]
+      brown    = Brown(-6, 6, 3) * 2.4 + 4.0: Pat[Double]
+      cantus0 <- brown.grouped(len): Pat[Pat[Double]]
+    } yield {
+//      val cantus0 = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
+//      val cantus0 = Pat(6.4, 8.8, 6.4, 8.8, 8.8, 13.6, 8.8, 13.6).take(length)
+      //      val numPause  = (length * rPat /* .next() */).roundTo(1.0) // .toInt
+      //      println(numPause)
+      val cantus = cantus0 // <| (_.poll("cantus")) // .poll(label = Format("cantus %d", it)) // (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
+      if (DEBUG) println(s"starting ${mkElemString(cantus)}")
+//      val cantusEvt = catPat(cantus)
+      //      val catter = sp.par(cantusEvt)
 
-        //      println(s"CANTUS $cantus")
+      //      println(s"CANTUS $cantus")
 
-        val parts: Pat[Pat[Double]] =
-          cantus.distinct.sorted.combinations(3) // <| (_.size.poll("numParts"))
+      val parts: Pat[Pat[Double]] =
+        cantus.distinct.sorted.combinations(3) // <| (_.size.poll("numParts"))
 
-  //      if (DEBUG) println("PARTS:")
-        // if (DEBUG) parts.foreach(p => println(mkElemString(p)))
+//      if (DEBUG) println("PARTS:")
+      // if (DEBUG) parts.foreach(p => println(mkElemString(p)))
 
-        //      var durs = List.empty[Double]
+      //      var durs = List.empty[Double]
 
-        val numParts = parts.size.hold()
-        // XXX TODO: The following is wrong -- `flow()`
-        // should only be effective inside `parts.map` but not for
-        // `Pat.loop`
-        val pats: Pat[Pat[Event]] = parts.mapWithIndex { (part0: Pat[Double], partsIdx) =>
-          val partsIdxH = partsIdx.hold() // <| (_.poll("partsIdx"))
-  //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-          val part    = part0 // <| (_.poll("part"))
-          val (notePat0, durPat0) = makePart(part, cantus) // , stutter = stutterPat.take())
-          val notePat = notePat0 // <| (_.poll("notePat"))
-          val durPat  = durPat0  // <| (_.poll("durPat"))
-          val legato  = partsIdxH.linlin(0, numParts, 0.02, 1.0)
-          val i       = partsIdxH
-          val db      = partsIdxH.linlin(0, numParts, -40.0, -30.0)
+      val numParts = parts.size.hold()
+      // XXX TODO: The following is wrong -- `flow()`
+      // should only be effective inside `parts.map` but not for
+      // `Pat.loop`
+      val pats: Pat[Pat[Event]] = parts.mapWithIndex { (part0: Pat[Double], partsIdx) =>
+        val partsIdxH = partsIdx.hold() // <| (_.poll("partsIdx"))
+//          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
+        val part    = part0 // <| (_.poll("part"))
+        val (notePat0, durPat0) = makePart(part, cantus) // , stutter = stutterPat.take())
+        val notePat = notePat0 // <| (_.poll("notePat"))
+        val durPat  = durPat0  // <| (_.poll("durPat"))
+        val legato  = partsIdxH.linlin(0, numParts, 0.02, 1.0)
+        val i       = partsIdxH
+        val db      = partsIdxH.linlin(0, numParts, -40.0, -30.0)
 
-          Bind(
-  //          "instrument"  -> "sine4",
-            "note"        -> notePat,
-            "dur"         -> durPat,
-            "octave"      -> 5,
-            "legato"      -> legato,
-            "detune"      -> -2.0, // White(-2.0,2.0),
-            "i"           -> i,
-            "ar"          -> 0.001,
-            "dr"          -> 0.1,
-            "stretch"     -> 1,
-            "db"          -> db
-          )
-        }
-
-  //      val patsF: Pat.Event = pats.flatten
-
-        //      println(s"DURS IS ${mkElemString(durs)} - MAX ${mkElemString(durs.max)}")
-
-  //      val patsF: Pat[Event] = Ppar(pats)
-  //
-  //println("RonTuplePure: TODO")
-  //patsF
-
-        pats(0)
-
-  //      ... // sp.seq(patsF) // Ppar(patsF))
-  //      //      println(s"ending $cantus")
-  //      // at this point, it wouldn't have any effect:
-  //      // { cantus(cantus.size.rand) = 'r }.dup(5)
-  //      val stopTime = length * 2 * 0.2
-  //      ... // sp.advance(stopTime)
-  //      ... // sp.suspend(catter)
-  //      ...
+        Bind(
+//          "instrument"  -> "sine4",
+          "note"        -> notePat,
+          "dur"         -> durPat,
+          "octave"      -> 5,
+          "legato"      -> legato,
+          "detune"      -> -2.0, // White(-2.0,2.0),
+          "i"           -> i,
+          "ar"          -> 0.001,
+          "dr"          -> 0.1,
+          "stretch"     -> 1,
+          "db"          -> db
+        )
       }
+
+//      val patsF: Pat.Event = pats.flatten
+
+      //      println(s"DURS IS ${mkElemString(durs)} - MAX ${mkElemString(durs.max)}")
+
+//      val patsF: Pat[Event] = Ppar(pats)
+//
+//println("RonTuplePure: TODO")
+//patsF
+
+      pats(0)
+
+//      ... // sp.seq(patsF) // Ppar(patsF))
+//      //      println(s"ending $cantus")
+//      // at this point, it wouldn't have any effect:
+//      // { cantus(cantus.size.rand) = 'r }.dup(5)
+//      val stopTime = length * 2 * 0.2
+//      ... // sp.advance(stopTime)
+//      ... // sp.suspend(catter)
+//      ...
     }
+    xs.flatten
   }
 }

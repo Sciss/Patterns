@@ -35,6 +35,8 @@ trait Context[Tx] {
 //  def newVar[A](init: A): Var[A]
 //  def newIntVar(init: Int)(implicit tx: Tx): Var[Int]
 
+  def setRandomSeed(n: Long)(implicit tx: Tx): Unit
+
   def allocToken[A]()(implicit tx: Tx): It[A]
 }
 
@@ -44,11 +46,15 @@ object Context {
   type Var[Tx, A] = Sink[Tx, A] with Source[Tx, A]
 
   trait Plain extends Context[Unit] {
-    implicit val tx: Unit = ()
+    type Tx = Unit
+
+    implicit val tx: Tx = ()
   }
 
   private final class PlainRandom(seed: Long) extends Random[Unit] {
     private[this] val peer = new scala.util.Random(seed)
+
+    def setSeed(n: Long)(implicit tx: Unit): Unit = peer.setSeed(n)
 
     def nextDouble()(implicit tx: Unit): Double = peer.nextDouble()
     def nextLong  ()(implicit tx: Unit): Long   = peer.nextLong  ()
@@ -57,17 +63,19 @@ object Context {
   }
 
   private final class PlainImpl extends ContextLike[Unit] with Plain {
-    def newVar[A](init: A): Var[Unit, A] = new PlainVar[A](init)
+    def newVar[A](init: A): Var[Tx, A] = new PlainVar[A](init)
 
     private[this] lazy val seedRnd  = new PlainRandom(System.currentTimeMillis())
     private[this] var tokenId       = 1000000000 // 0x40000000
 
-    protected def nextSeed()(implicit tx: Unit): Long = seedRnd.nextLong()
+    protected def nextSeed()(implicit tx: Tx): Long = seedRnd.nextLong()
 
-    def mkRandomWithSeed(seed: Long)(implicit tx: Unit): Random[Unit] =
+    def setRandomSeed(n: Long)(implicit tx: Tx): Unit = seedRnd.setSeed(n)
+
+    def mkRandomWithSeed(seed: Long)(implicit tx: Tx): Random[Tx] =
       new PlainRandom(seed)
 
-    def allocToken[A]()(implicit tx: Unit): It[A] = {
+    def allocToken[A]()(implicit tx: Tx): It[A] = {
       val res = tokenId
       tokenId += 1
       It(res)

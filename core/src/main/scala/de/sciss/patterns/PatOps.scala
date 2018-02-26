@@ -33,8 +33,14 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   // binary
 
-  def ++[A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2]): Pat[A2] =
+  def ++ [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2]): Pat[A2] =
     Cat(x, that)
+
+  def :+ [A1, A2](elem: A1)(implicit br: Widen[A, A1, A2]): Pat[A2] =
+    x ++ Pat(elem)
+
+  def +: [A1, A2](elem: A1)(implicit br: Widen[A1, A, A2]): Pat[A2] =
+    Pat(elem) ++ x
 
   def + [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
     val op = BinaryOp.Plus[A2]()

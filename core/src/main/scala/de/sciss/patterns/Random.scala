@@ -5,4 +5,6 @@ trait Random[-Tx] {
   def nextLong  ()(implicit tx: Tx): Long
 
   def nextInt(n: Int)(implicit tx: Tx): Int
+
+  def setSeed(n: Long)(implicit tx: Tx): Unit
 }

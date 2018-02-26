@@ -30,6 +30,8 @@ object Context {
   }
 
   private final class RandomImpl(peer: TxnRandom[InTxn]) extends Random[InTxn] {
+    def setSeed(n: Long)(implicit tx: InTxn): Unit = peer.setSeed(n)
+
     def nextDouble()(implicit tx: InTxn): Double = peer.nextDouble()
     def nextLong  ()(implicit tx: InTxn): Long   = peer.nextLong()
 
@@ -49,6 +51,8 @@ object Context {
     private[this] val tokenId = newVar(1000000000) // 0x40000000
 
     protected def nextSeed()(implicit tx: InTxn): Long = seedRnd.nextLong()
+
+    def setRandomSeed(n: Long)(implicit tx: InTxn): Unit = seedRnd.setSeed(n)
 
     protected def mkRandomWithSeed(seed: Long)(implicit tx: InTxn): Random[InTxn] =
       new RandomImpl(TxnRandom.plain(seed))
