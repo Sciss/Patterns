@@ -51,13 +51,13 @@ final case class FlatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1
     // as an additional constraint to determine `hasNext`!
     private[this] val itStream      = mkItStream(tx0)
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: Tx): Unit = {
       logStream("FlatMap.iterator.reset()")
       ctx.getStreams(ref).foreach {
-        case m: MapItStream[Tx, _] => m.resetOuter(level)
+        case m: MapItStream[Tx, _] => m.resetOuter()
         // case _ =>
       }
-      innerStream.reset(level)
+      innerStream.reset()
     }
 
 //      ctx.getStreams(ref).foreach {
@@ -74,7 +74,7 @@ final case class FlatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1
         case m: MapItStream[Tx, _] => m.advance()
         // case _ =>
       }
-      innerStream.reset(innerLevel)
+      innerStream.reset()
     }
 
     def next()(implicit tx: Tx): A = {

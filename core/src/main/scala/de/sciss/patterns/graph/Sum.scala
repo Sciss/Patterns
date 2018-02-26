@@ -32,9 +32,9 @@ final case class Sum[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
     private[this] val _hasNext  = ctx.newVar(false)
     private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false
-      inStream.reset(level)
+      inStream.reset()
     }
 
     private def validate()(implicit tx: Tx): Unit =

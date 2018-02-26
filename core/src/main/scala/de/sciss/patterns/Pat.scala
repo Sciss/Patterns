@@ -28,11 +28,11 @@ object Pat {
   def loopWithIndex[A](n: Pat[Int] = scala.Int.MaxValue)(body: Pat[Int] => Pat[A]): Pat[A] = {
     val b     = Graph.builder
     val it    = b.allocToken[Int]()
-    val level = b.level + 1
+//    val level = b.level + 1
     val inner = Graph {
       body(it)
     }
-    LoopWithIndex(n = n, it = it, inner = inner, innerLevel = level)
+    LoopWithIndex(n = n, it = it, inner = inner /* , innerLevel = level */)
   }
 
   def apply[A](elems: A*): Pat[A] = PatSeq(elems: _*)

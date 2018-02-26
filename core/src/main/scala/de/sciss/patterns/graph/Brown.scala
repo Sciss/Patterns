@@ -65,11 +65,11 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
       _hasNext()
     }
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false
-      loStream  .reset(level)
-      hiStream  .reset(level)
-      stepStream.reset(level)
+      loStream  .reset()
+      hiStream  .reset()
+      stepStream.reset()
       // XXX TODO: r.reset()
     }
 

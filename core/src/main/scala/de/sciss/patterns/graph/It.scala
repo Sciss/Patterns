@@ -38,8 +38,7 @@ final case class It[A](token: Int) extends Pattern[A] { pat =>
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val refStream = ctx.mkOuterStream(token)(tx0)
 
-    def reset(level: Int)(implicit tx: Tx): Unit = refStream.reset(level)
-
+    def reset()(implicit tx: Tx): Unit      = refStream.reset()
     def hasNext(implicit tx: Tx): Boolean   = refStream.hasNext
     def next ()(implicit tx: Tx): A         = refStream.next()
   }

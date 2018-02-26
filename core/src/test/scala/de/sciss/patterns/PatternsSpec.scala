@@ -76,9 +76,15 @@ class PatternsSpec extends PatSpec {
   }
 
   "Copy" should work in {
+//    val res1 = Graph {
+//      val a = Pat[Int](1, 2, 3).flow()
+//      Pat.loop(3) { a }
+//    }
+//    eval(res1) shouldBe List(1, 2, 3)
+
     val res1 = Graph {
-      val a = Pat[Int](1, 2, 3).flow()
-      Pat.loop(3) { a }
+      val a = Pat[Int](1, 2, 3)
+      Pat(a).take(3) flatMap identity
     }
     eval(res1) shouldBe List(1, 2, 3)
 

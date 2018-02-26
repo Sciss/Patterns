@@ -147,10 +147,10 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
 //  def recur(): Pat[A] = Recur(x)
 
-  def flow(): Pat[A] = {
-    val level = Graph.builder.level
-    Flow(x, level = level)
-  }
+//  def flow(): Pat[A] = {
+//    val level = Graph.builder.level
+//    Flow(x, level = level)
+//  }
 
   def hold(): Pat[A] = Hold(x)
 
@@ -180,14 +180,16 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
   def map[B](f: Pat[A] => Pat[B]): Pat[Pat[B]] = {
     val b     = Graph.builder
     val it    = b.allocToken[A]()
-    val level = b.level + 1
+//    val level = b.level + 1
     val inner = Graph {
       f(it)
     }
-    PatMap(outer = x, it = it, inner = inner, innerLevel = level)
+    PatMap(outer = x, it = it, inner = inner /* , innerLevel = level */)
   }
 
-  /** Similar to a monadic `flatMap` but with the constraint
+  def mapWithIndex[B](f: (Pat[A], Pat[Int]) => Pat[B]): Pat[Pat[B]] = ???
+
+    /** Similar to a monadic `flatMap` but with the constraint
     * the element type must be a (nested) pattern.
     */
   def flatMap[B](f: Pat[A] => Pat[B]): Pat[B] = {

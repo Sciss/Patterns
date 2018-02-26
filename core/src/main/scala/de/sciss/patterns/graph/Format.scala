@@ -27,9 +27,9 @@ final case class Format(s: Pat[String], args: Pat[_]*) extends Pattern[String] {
     private[this] val sStream     = s.expand(ctx, tx0)
     private[this] val argStreams  = args.map(_.expand(ctx, tx0))
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
-      sStream.reset(level)
-      argStreams.foreach(_.reset(level))
+    def reset()(implicit tx: Tx): Unit = {
+      sStream.reset()
+      argStreams.foreach(_.reset())
     }
 
     def hasNext(implicit tx: Tx): Boolean = sStream.hasNext && argStreams.forall(_.hasNext)

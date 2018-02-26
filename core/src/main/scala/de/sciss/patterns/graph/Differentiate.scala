@@ -33,9 +33,9 @@ final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Patt
     private[this] val x1        = ctx.newVar[A](null.asInstanceOf[A])
     private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false
-      inStream.reset(level)
+      inStream.reset()
     }
 
     private def validate()(implicit tx: Tx): Unit =

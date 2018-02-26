@@ -55,15 +55,13 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
           t(inner)
         }
 
-        println("FOLD-LEFT expand")
         val res   = innerRewrite.expand[Tx]
         _result() = res
       }
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: Tx): Unit = if (_valid()) {
        _valid() = false
-      println(s"FOLD-LEFT reset $level")
-      outerStream.reset(level)
+      outerStream.reset()
     }
 
     def hasNext(implicit tx: Tx): Boolean = {

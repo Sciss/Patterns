@@ -42,12 +42,12 @@ final case class LinLin[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
     private[this] val outLoStream = outLo .expand(ctx, tx0).map(widen.lift2)
     private[this] val outHiStream = outHi .expand(ctx, tx0).map(widen.lift2)
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
-      inStream    .reset(level)
-      inLoStream  .reset(level)
-      inHiStream  .reset(level)
-      outLoStream .reset(level)
-      outHiStream .reset(level)
+    def reset()(implicit tx: Tx): Unit = {
+      inStream    .reset()
+      inLoStream  .reset()
+      inHiStream  .reset()
+      outLoStream .reset()
+      outHiStream .reset()
     }
 
     def hasNext(implicit tx: Tx): Boolean =

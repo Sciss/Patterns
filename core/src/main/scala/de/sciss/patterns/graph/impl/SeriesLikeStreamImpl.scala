@@ -38,10 +38,10 @@ abstract class SeriesLikeStreamImpl[A1, A2, A, Tx](start: Pat[A1], step: Pat[A2]
     _hasNext()
   }
 
-  final def reset(level: Int)(implicit tx: Tx): Unit = {
+  final def reset()(implicit tx: Tx): Unit = if (_valid()) {
     _valid() = false
-    startStream .reset(level)
-    stepStream  .reset(level)
+    startStream .reset()
+    stepStream  .reset()
   }
 
   private def validate()(implicit tx: Tx): Unit =

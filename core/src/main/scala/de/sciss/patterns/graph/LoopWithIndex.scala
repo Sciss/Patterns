@@ -24,7 +24,7 @@ import scala.annotation.tailrec
     }
 
  */
-final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], inner: Pat[A], innerLevel: Int)
+final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], inner: Pat[A] /* , innerLevel: Int */)
   extends Pattern[A] {
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
@@ -40,7 +40,8 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
 
     private[this] val _hasNext = ctx.newVar(true)
 
-    def reset(level: Int)(implicit tx: Tx): Unit = _hasNext() = true
+    def reset()(implicit tx: Tx): Unit =
+      _hasNext() = true
 
     def hasNext(implicit tx: Tx): Boolean = _hasNext()
 
@@ -72,9 +73,9 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
     private[this] val _hasNext    = ctx.newVar(false)
     private[this] val _valid      = ctx.newVar(false)
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false
-      nStream.reset(level)
+      nStream.reset()
     }
 
     private def validate()(implicit tx: Tx): Unit =
@@ -106,10 +107,9 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
 //        }
 //        val itStream = () => Stream.single(i)
 //        ctx.provideOuterStream(it.token, itStream)
-        println(s"LOOP RESET $innerLevel")
         val itStreams = ctx.getStreams(ref)
-        itStreams.foreach(_.reset(innerLevel))
-        innerStream.reset(innerLevel)
+        itStreams.foreach(_.reset())
+        innerStream.reset()
         val ihn = innerStream.hasNext
         _hasNext() = ihn
         if (!ihn) {

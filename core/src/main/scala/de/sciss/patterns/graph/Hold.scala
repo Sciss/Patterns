@@ -36,10 +36,10 @@ final case class Hold[A](in: Pat[A], hold: Pat[Boolean] = true) extends Pattern[
     private[this] val _hasIn      = ctx.newVar(false)
     private[this] val state       = ctx.newVar[A](null.asInstanceOf[A])
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false
-      inStream  .reset(level)
-      holdStream.reset(level)
+      inStream  .reset()
+      holdStream.reset()
     }
 
     private def validate()(implicit tx: Tx): Unit =

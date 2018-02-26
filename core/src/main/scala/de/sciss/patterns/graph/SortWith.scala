@@ -54,15 +54,15 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
     private[this] val sortedIt    = ctx.newVar[Stream[Tx, Pat[A]]](null)
     private[this] val _hasSorted  = ctx.newVar(false)
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: Tx): Unit = if (_valid()) {
 //      logStream("SortWith.iterator.reset()")
       _valid() = false
       val itStreams = ctx.getStreams(ref)
       itStreams.foreach {
-        case m: SortWithItStream[Tx, A] => m.reset(level)
+        case m: SortWithItStream[Tx, A] => m.reset()
       }
-      outerStream .reset(level)
-      ltStream    .reset(level)
+      outerStream .reset()
+      ltStream    .reset()
     }
 
     private def validate()(implicit tx: Tx): Unit =
@@ -80,7 +80,7 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
           itStreams.foreach {
             case m: SortWithItStream[Tx, A] => m.advance(x, y)
           }
-          ltStream.reset(???) // LLL
+          ltStream.reset()
           if (ltStream.hasNext) {
             ltStream.next()
           } else {

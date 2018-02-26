@@ -24,8 +24,7 @@ object Stream {
   def empty[Tx, A]: Stream[Tx, A] = new Stream[Tx, A] {
     override def toString = "Stream.empty"
 
-    def reset(level: Int)(implicit tx: Tx): Unit = ()
-
+    def reset()(implicit tx: Tx): Unit    = ()
     def hasNext(implicit tx: Tx): Boolean = false
     def next ()(implicit tx: Tx): A       = Stream.exhausted()
   }
@@ -35,7 +34,7 @@ object Stream {
   def continually[Tx, A](elem: => A): Stream[Tx, A] = new Stream[Tx, A] {
     override def toString = s"Stream.continually@${hashCode().toHexString}"
 
-    def reset(level: Int)(implicit tx: Tx): Unit = ()
+    def reset()(implicit tx: Tx): Unit = ()
 
     def hasNext(implicit tx: Tx): Boolean = true
     def next ()(implicit tx: Tx): A       = elem
@@ -50,7 +49,8 @@ object Stream {
 
     def hasNext(implicit tx: Tx): Boolean = _hasNext()
 
-    def reset(level: Int)(implicit tx: Tx): Unit = _hasNext() = true
+    def reset()(implicit tx: Tx): Unit =
+      _hasNext() = true
 
     def next()(implicit tx: Tx): A = {
       if (!_hasNext()) Stream.exhausted()
@@ -69,7 +69,8 @@ object Stream {
 
     override def toString = s"$simpleString; count = $count"
 
-    def reset(level: Int)(implicit tx: Tx): Unit = count() = 0
+    def reset()(implicit tx: Tx): Unit =
+      count() = 0
 
     def hasNext(implicit tx: Tx): Boolean = count() < xs.size
 
@@ -84,14 +85,13 @@ object Stream {
   }
 }
 abstract class Stream[Tx, +A] { outer =>
-  def reset(level: Int)(implicit tx: Tx): Unit
+  def reset()(implicit tx: Tx): Unit
 
   def hasNext(implicit tx: Tx): Boolean
   def next ()(implicit tx: Tx): A
 
   def map[B](f: A => B): Stream[Tx, B] = new Stream[Tx, B] {
-    def reset(level: Int)(implicit tx: Tx): Unit = outer.reset(level)
-
+    def reset()(implicit tx: Tx): Unit    = outer.reset()
     def hasNext(implicit tx: Tx): Boolean = outer.hasNext
     def next ()(implicit tx: Tx): B       = f(outer.next())
   }
@@ -103,9 +103,9 @@ abstract class Stream[Tx, +A] { outer =>
     private[this] val sub       = ctx.newVar[Stream[Tx, B]](null)
 //    private[this] val _hasSub   = ctx.newVar(false)
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false
-      outer.reset(level)
+      outer.reset()
 //        if (_hasSub()) sub().reset()
     }
 
@@ -146,9 +146,9 @@ abstract class Stream[Tx, +A] { outer =>
   }
 
   def zip[B](that: Stream[Tx, B]): Stream[Tx, (A, B)] = new Stream[Tx, (A, B)] {
-    def reset(level: Int)(implicit tx: Tx): Unit = {
-      outer.reset(level)
-      that .reset(level)
+    def reset()(implicit tx: Tx): Unit = {
+      outer.reset()
+      that .reset()
     }
 
     def hasNext(implicit tx: Tx): Boolean = outer.hasNext && that.hasNext
@@ -157,9 +157,9 @@ abstract class Stream[Tx, +A] { outer =>
   }
 
   def ++ [B >: A](that: Stream[Tx, B]): Stream[Tx, B] = new Stream[Tx, B] {
-    def reset(level: Int)(implicit tx: Tx): Unit = {
-      outer.reset(level)
-      that .reset(level)
+    def reset()(implicit tx: Tx): Unit = {
+      outer.reset()
+      that .reset()
     }
 
     def hasNext(implicit tx: Tx): Boolean = outer.hasNext || that.hasNext
@@ -171,7 +171,7 @@ abstract class Stream[Tx, +A] { outer =>
   def take(n: Int)(implicit ctx: Context[Tx]): Stream[Tx, A] = new Stream[Tx, A] {
     private[this] val i = ctx.newVar(0)
 
-    def reset(level: Int)(implicit tx: Tx): Unit = outer.reset(level)
+    def reset()(implicit tx: Tx): Unit = outer.reset()
 
     def hasNext(implicit tx: Tx): Boolean = i() < n && outer.hasNext
 

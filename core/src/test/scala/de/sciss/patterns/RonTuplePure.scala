@@ -276,17 +276,16 @@ object RonTuplePure {
         "dr"          -> 0.1,
         "stretch"     -> 1
       )
-    val lPat = Pat.loop()((8 to 12).mirror).flow() // .iterator
+    val lPat = Pat.loop()((8 to 12).mirror)
 //    val rPat  = Pat.loop((5 to  9).mirror.map(_/25.0)).flow() // .iterator
 
 //    val stutterPat: Pat[Int] = White(1, 4).flow()
 
     //    lPat.next(); rPat.next()
-    Pat.loop() {
+    lPat.bubble.flatMap { length =>
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
-      val length    = lPat // <| (_.poll("length")) // .next()
-//      val cantus0: Pat[Double] = ((Brown(-6, 6, 3): Pat[Int]) * 2.4 + 4.0).take(length) // .iterator.take(length).toList
-      val cantus0 = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
+      val cantus0   = (Brown(-6, 6, 3) * 2.4 + 4.0).take(length) // .iterator.take(length).toList
+//      val cantus0 = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
 //      val numPause  = (length * rPat /* .next() */).roundTo(1.0) // .toInt
       //      println(numPause)
       val cantus = cantus0 // <| (_.poll("cantus")) // .poll(label = Format("cantus %d", it)) // (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
@@ -308,17 +307,16 @@ object RonTuplePure {
       // XXX TODO: The following is wrong -- `flow()`
       // should only be effective inside `parts.map` but not for
       // `Pat.loop`
-      val partsIndices = parts.indices.flow() // <| (_.poll("partsIndices"))
-      val pats: Pat[Pat[Event]] = parts.map { part0: Pat[Double] =>
-        val partsIdx = Hold(partsIndices) <| (_.poll("partsIdx"))
+      val pats: Pat[Pat[Event]] = parts.mapWithIndex { (part0: Pat[Double], partsIdx) =>
+        val partsIdxH = partsIdx.hold() // <| (_.poll("partsIdx"))
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
         val part    = part0 // <| (_.poll("part"))
         val (notePat0, durPat0) = makePart(part, cantus) // , stutter = stutterPat.take())
         val notePat = notePat0 // <| (_.poll("notePat"))
         val durPat  = durPat0  // <| (_.poll("durPat"))
-        val legato  = partsIdx.linlin(0, numParts, 0.02, 1.0)
-        val i       = partsIdx
-        val db      = partsIdx.linlin(0, numParts, -40.0, -30.0)
+        val legato  = partsIdxH.linlin(0, numParts, 0.02, 1.0)
+        val i       = partsIdxH
+        val db      = partsIdxH.linlin(0, numParts, -40.0, -30.0)
 
         Bind(
 //          "instrument"  -> "sine4",

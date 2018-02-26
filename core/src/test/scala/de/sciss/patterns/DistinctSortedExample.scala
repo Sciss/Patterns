@@ -19,10 +19,18 @@ object DistinctSortedExample {
       }
     }
 
+//    val ex2 = Graph {
+//      val b = Brown(0, 100, 2).flow()
+//      Pat.loop(4) {
+//        val d = b.take(10).distinct.sorted
+//        d ++ Pat(-1)
+//      }
+//    }
+
     val ex2 = Graph {
-      val b = Brown(0, 100, 2).flow()
-      Pat.loop(4) {
-        val d = b.take(10).distinct.sorted
+      val b = Brown(0, 100, 2)
+      b.grouped(10).take(4).flatMap { block =>
+        val d = block.distinct.sorted
         d ++ Pat(-1)
       }
     }
