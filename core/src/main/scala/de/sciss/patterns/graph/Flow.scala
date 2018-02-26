@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-final case class Flow[A](in: Pat[A]) extends Pattern[A] {
+final case class Flow[A] private[patterns](in: Pat[A], level: Int) extends Pattern[A] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     logStream(s"Flow($in).iterator")
     new StreamImpl[Tx](tx)
@@ -28,9 +28,10 @@ final case class Flow[A](in: Pat[A]) extends Pattern[A] {
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val peer = in.expand(ctx, tx0)
 
-    def reset(level: Int)(implicit tx: Tx): Unit = {
+    def reset(levelR: Int)(implicit tx: Tx): Unit = {
       logStream(s"Flow($in).iterator.reset()")
-      ??? // LLL
+      println(s"reset($levelR) -- $level")
+      if (levelR < level) peer.reset(levelR)
     }
 
     def hasNext(implicit tx: Tx): Boolean =

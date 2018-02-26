@@ -147,7 +147,12 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
 //  def recur(): Pat[A] = Recur(x)
 
-  def flow(): Pat[A] = Flow(x)
+  def flow(): Pat[A] = {
+    val level = Graph.builder.level
+    Flow(x, level = level)
+  }
+
+  def hold(): Pat[A] = Hold(x)
 
   def loop(n: Pat[Int] = Int.MaxValue): Pat[A] = Pat.loop(n)(x)
 
@@ -173,22 +178,26 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
     * the element type must be a (nested) pattern.
     */
   def map[B](f: Pat[A] => Pat[B]): Pat[Pat[B]] = {
-    val it    = Graph.builder.allocToken[A]()
-    val inner = /* Graph */ {
+    val b     = Graph.builder
+    val it    = b.allocToken[A]()
+    val level = b.level + 1
+    val inner = Graph {
       f(it)
     }
-    PatMap(x, it, inner)
+    PatMap(outer = x, it = it, inner = inner, innerLevel = level)
   }
 
   /** Similar to a monadic `flatMap` but with the constraint
     * the element type must be a (nested) pattern.
     */
   def flatMap[B](f: Pat[A] => Pat[B]): Pat[B] = {
-    val it    = Graph.builder.allocToken[A]()
-    val inner = /* Graph */ {
+    val b     = Graph.builder
+    val it    = b.allocToken[A]()
+    val level = b.level + 1
+    val inner = Graph {
       f(it)
     }
-    FlatMap(x, it, inner)
+    FlatMap(outer = x, it = it, inner = inner, innerLevel = level)
   }
 
   def flatten: Pat[A] = Flatten(x)
@@ -207,7 +216,7 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
     val b       = Graph.builder
     val itIn    = b.allocToken[A]()
     val itCarry = b.allocToken[B]()
-    val inner   = /* Graph */ {
+    val inner   = Graph {
       op(itCarry, itIn)
     }
     FoldLeft[A, B](outer = x, z = z, itIn = itIn, itCarry = itCarry, inner = inner)

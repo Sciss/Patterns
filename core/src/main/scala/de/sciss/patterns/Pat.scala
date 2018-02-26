@@ -23,22 +23,16 @@ object Pat {
 //
 //  def loop[A](body: => Pat[A]): Pat[A] = loop[A](scala.Int.MaxValue)(body)
 
-  def loop[A](n: Pat[Int] = scala.Int.MaxValue)(body: => Pat[A]): Pat[A] = {
-    // val i = Series(start = 0, step = 1).take(n)
-    val it    = Graph.builder.allocToken[Int]()
-    val inner = /* Graph[A] */ {
-      body
-    }
-    LoopWithIndex(n, it, inner)
-  }
+  def loop[A](n: Pat[Int] = scala.Int.MaxValue)(body: => Pat[A]): Pat[A] = loopWithIndex(n)(_ => body)
 
   def loopWithIndex[A](n: Pat[Int] = scala.Int.MaxValue)(body: Pat[Int] => Pat[A]): Pat[A] = {
-    // val i = Series(start = 0, step = 1).take(n)
-    val it    = Graph.builder.allocToken[Int]()
-    val inner = /* Graph[A] */ {
+    val b     = Graph.builder
+    val it    = b.allocToken[Int]()
+    val level = b.level + 1
+    val inner = Graph {
       body(it)
     }
-    LoopWithIndex(n, it, inner)
+    LoopWithIndex(n = n, it = it, inner = inner, innerLevel = level)
   }
 
   def apply[A](elems: A*): Pat[A] = PatSeq(elems: _*)

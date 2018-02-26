@@ -16,7 +16,7 @@ package graph
 
 import de.sciss.patterns.graph.impl.MapItStream
 
-final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
+final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A], innerLevel: Int)
   extends Pattern[Pat[A]] {
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = {
@@ -77,7 +77,7 @@ final case class PatMap[A1, A](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A])
         case m: MapItStream[Tx, _] => m.advance()
         // case _ =>
       }
-      innerStream.reset(???)  // LLL
+      innerStream.reset(innerLevel)
       buildNext()
     }
 
