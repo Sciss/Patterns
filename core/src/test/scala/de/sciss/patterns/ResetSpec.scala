@@ -3,7 +3,7 @@ package de.sciss.patterns
 class ResetSpec extends PatSpec {
   "Map reset" should work in {
     val pat = Graph {
-      Pat.flatFill(2) {
+      Pat.loop(2) {
         val in  = Pat(Pat(0, 6, 7))
         val inM = in.map(identity)
         inM
@@ -15,11 +15,11 @@ class ResetSpec extends PatSpec {
 
   "Nested reset" should work in {
     val pat: Pat[(String, Int)] = Graph {
-      Pat.flatFill(2) {
+      Pat.loop(2) {
         val x = Pat("foo", "bar", "baz")
         val i = x.indices.flow()
         x.bubble.flatMap { s =>
-          s zip i.take()
+          s zip i
         }
       }
     }

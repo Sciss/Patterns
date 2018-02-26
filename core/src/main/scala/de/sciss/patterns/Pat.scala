@@ -14,31 +14,31 @@
 package de.sciss.patterns
 
 import de.sciss.patterns.Types.Aux
-import de.sciss.patterns.graph.{PatSeq, FlatTabulate}
+import de.sciss.patterns.graph.{PatSeq, LoopWithIndex}
 
 object Pat {
 //  def Int    (elems: scala.Int*    ): Pat[Int]      = apply[Int    ](elems: _*)
 //  def Double (elems: scala.Double* ): Pat[Double]   = apply[Double ](elems: _*)
 //  def Boolean(elems: scala.Boolean*): Pat[Boolean]  = apply[Boolean](elems: _*)
+//
+//  def loop[A](body: => Pat[A]): Pat[A] = loop[A](scala.Int.MaxValue)(body)
 
-  def loop[A](body: => Pat[A]): Pat[A] = flatFill[A](scala.Int.MaxValue)(body)
-
-  def flatFill[A](n: Pat[Int])(body: => Pat[A]): Pat[A] = {
+  def loop[A](n: Pat[Int] = scala.Int.MaxValue)(body: => Pat[A]): Pat[A] = {
     // val i = Series(start = 0, step = 1).take(n)
     val it    = Graph.builder.allocToken[Int]()
     val inner = /* Graph[A] */ {
       body
     }
-    FlatTabulate(n, it, inner)
+    LoopWithIndex(n, it, inner)
   }
 
-  def flatTabulate[A](n: Pat[Int])(body: Pat[Int] => Pat[A]): Pat[A] = {
+  def loopWithIndex[A](n: Pat[Int] = scala.Int.MaxValue)(body: Pat[Int] => Pat[A]): Pat[A] = {
     // val i = Series(start = 0, step = 1).take(n)
     val it    = Graph.builder.allocToken[Int]()
     val inner = /* Graph[A] */ {
       body(it)
     }
-    FlatTabulate(n, it, inner)
+    LoopWithIndex(n, it, inner)
   }
 
   def apply[A](elems: A*): Pat[A] = PatSeq(elems: _*)

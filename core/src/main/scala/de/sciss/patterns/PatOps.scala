@@ -149,6 +149,8 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def flow(): Pat[A] = Flow(x)
 
+  def loop(n: Pat[Int] = Int.MaxValue): Pat[A] = Pat.loop(n)(x)
+
   def zip[B](that: Pat[B]): Pat[(A, B)] = Zip2(x, that)
 
   def poll(label: Pat[String] = "poll", gate: Pat[Boolean] = true): Pat[A] =

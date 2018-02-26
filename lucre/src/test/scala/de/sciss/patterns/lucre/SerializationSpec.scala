@@ -55,7 +55,7 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
     val g = Graph {
       import graph._
       val b = Brown(lo = 10, hi = 40, step = 4)
-      val c = Pat.flatFill(4) {
+      val c = Pat.loop(4) {
         b.take(10).distinct.sorted * 0.5
       }
       val d = c.drop(4).stutter(2)

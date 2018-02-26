@@ -232,7 +232,7 @@ object RonTuplePure {
     //      Seq(Pseq(Seq.fill(stutter)('r)),
     //        Pseq(pattern.grouped(stutter).stutter(stutter).flatten, inf))
     //    }
-    val ptrnOut = Pat.loop(pattern) // Pseq(pattern, inf)
+    val ptrnOut = Pat.loop()(pattern) // Pseq(pattern, inf)
 
     //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
     log("makePart - durs", durs)
@@ -252,7 +252,7 @@ object RonTuplePure {
     //      Seq(Pseq(Seq.fill(stutter)('r)),
     //        Pseq(pattern.grouped(stutter).stutter(stutter).flatten, inf))
     //    }
-    val ptrnOut: Pat[A] = Pat.loop(pattern) // Pseq(List(pattern), inf)
+    val ptrnOut: Pat[A] = pattern.loop() // Pseq(List(pattern), inf)
 
     //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
     // (Pseq(ptrnOut), Pseq(durs.map(_ * 0.02)))
@@ -276,13 +276,13 @@ object RonTuplePure {
         "dr"          -> 0.1,
         "stretch"     -> 1
       )
-    val lPat  = Pat.loop((8 to 12).mirror            ).flow() // .iterator
+    val lPat = Pat.loop()((8 to 12).mirror).flow() // .iterator
 //    val rPat  = Pat.loop((5 to  9).mirror.map(_/25.0)).flow() // .iterator
 
 //    val stutterPat: Pat[Int] = White(1, 4).flow()
 
     //    lPat.next(); rPat.next()
-    Pat.loop {
+    Pat.loop() {
       // XXX TODO: ~tupletempo.tempo = ((10..20)/30).choose /2;
       val length    = lPat // <| (_.poll("length")) // .next()
 //      val cantus0: Pat[Double] = ((Brown(-6, 6, 3): Pat[Int]) * 2.4 + 4.0).take(length) // .iterator.take(length).toList

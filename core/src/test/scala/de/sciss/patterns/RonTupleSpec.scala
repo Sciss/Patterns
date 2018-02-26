@@ -227,7 +227,7 @@ class RonTupleSpec extends PatSpec {
     val parts: Pat[Pat[Double]] =
       cantus.distinct.sorted.combinations(3)
     val g = Graph {
-      Pat.loop {
+      Pat.loop() {
         val bla = parts.map { part =>
           computeDurs_Pat(part, cantus)
         }

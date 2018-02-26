@@ -18,7 +18,7 @@ object ResetExample {
     import graph._
 
     val ex1 = Graph {
-      Pat.flatFill(4) {
+      Pat.loop(4) {
         val b = Brown(0, 100, 2)
         b.take(10)
       }
@@ -26,7 +26,7 @@ object ResetExample {
 
     val ex2 = Graph {
       val b = Brown(0, 100, 2)
-      Pat.flatFill(4) {
+      Pat.loop(4) {
         b.take(10)
       }
     }
