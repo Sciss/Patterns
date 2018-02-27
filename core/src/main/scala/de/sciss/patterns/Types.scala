@@ -17,38 +17,8 @@ import de.sciss.numbers.{DoubleFunctions => rd, IntFunctions => ri}
 import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.annotation.switch
-import scala.language.higherKinds
 
 object Types {
-//  type TopT[A] = Top { type Out[Tx] = A }
-//
-//  object Top {
-//    type Seq[T <: Top] = Top { type Out[Tx] = scala.Seq[T#Out[Tx]] }
-//
-//    type CSeq[T <: CTop] = CTop { type COut = scala.Seq[T#COut] }
-//
-//    //    def Seq[T <: Top](implicit peer: T): Seq[T] = new Seq(peer)
-////    final class Seq[T <: Top](val peer: T) extends Top {
-////      type Out = scala.Seq[T#Out]
-////    }
-//  }
-
-//  trait Top {
-//    type Out[Tx]
-//
-////    private[patterns] implicit def classTag[Tx]: ClassTag[Out[Tx]]
-//  }
-//
-//  trait CTop extends Top {
-//    type Out[Tx] = COut
-//
-//    type COut
-//
-////    private[patterns] final implicit def classTag[Tx]: ClassTag[Out[Tx]] = cClassTag
-////
-////    private[patterns] implicit def cClassTag: ClassTag[COut]
-//  }
-
   object Aux {
     private val COOKIE = 0x4175   // "Au"
 
@@ -61,7 +31,7 @@ object Types {
         case IntSeqTop        .id => IntSeqTop
         case DoubleTop        .id => DoubleTop
         case DoubleSeqTop     .id => DoubleSeqTop
-//        case BooleanTop       .id => BooleanTop
+        case BooleanTop       .id => BooleanTop
 //        case BooleanSeqTop    .id => BooleanSeqTop
 //        case StringTop        .id => StringTop
         case Widen.idIdentity    => Widen.identity[Any]
@@ -145,6 +115,11 @@ object Types {
 //    def rem [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
 //  }
 
+  trait ToNum[A] extends Aux {
+    def toInt   (a: A): Int
+    def toDouble(a: A): Double
+  }
+
   trait SeqLikeNum[A] extends Num[Seq[A]] {
 //    type P // <: CTop { type COut = A }
     protected val peer: Num[A] // Num[P]
@@ -203,78 +178,78 @@ object Types {
   }
 
   trait DoubleLikeNum extends SeqLikeNumFrac[Double] {
-    type P = DoubleTop
+//    type P = DoubleTop
     protected final val peer: NumFrac[Double] = DoubleTop
   }
 
-  object Applicative {
-    implicit object Iterator extends Applicative[scala.Iterator] {
-      def pure[A](x: A): scala.Iterator[A] = scala.Iterator.single(x)
+//  object Applicative {
+//    implicit object Iterator extends Applicative[scala.Iterator] {
+//      def pure[A](x: A): scala.Iterator[A] = scala.Iterator.single(x)
+//
+//      def map[A, B](fa: Iterator[A])(f: A => B): Iterator[B] = fa.map(f)
+//
+//      def flatMap[A, B](fa: Iterator[A])(f: A => Iterator[B]): Iterator[B] =
+//        fa.flatMap(f)
+//    }
+//  }
+//  // XXX TODO -- a bit ad-hoc; we could just depend on Cats
+//  trait Applicative[F[_]] {
+//    def pure[A](x: A): F[A]
+//
+//    def map    [A, B](fa: F[A])(f: A =>   B ): F[B]
+//    def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
+//
+//    def ap     [A, B   ](ff: F[A => B])(fa: F[A]): F[B]             = flatMap(ff)(f => map(fa)(f))
+//    def product[A, B   ](fa: F[A], fb: F[B]): F[(A, B)]             = ap(map(fa)(a => (b: B) => (a, b)))(fb)
+//    def map2   [A, B, Z](fa: F[A], fb: F[B])(f: (A, B) => Z): F[Z]  = map(product(fa, fb)) { case (a, b) => f(a, b) }
+//  }
 
-      def map[A, B](fa: Iterator[A])(f: A => B): Iterator[B] = fa.map(f)
+//  trait ScalarOrSeqTop[A] { // extends CTop {
+//    def lift(in: COut): Seq[A]
 
-      def flatMap[A, B](fa: Iterator[A])(f: A => Iterator[B]): Iterator[B] =
-        fa.flatMap(f)
-    }
-  }
-  // XXX TODO -- a bit ad-hoc; we could just depend on Cats
-  trait Applicative[F[_]] {
-    def pure[A](x: A): F[A]
+//    type Index[_]
+//    type COut = Index[A]
+//
+//    def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C]
+//
+//    def traverseIndex[G[_], B, C](fa: Index[B])(f: B => G[C])(implicit app: Applicative[G]): G[Index[C]]
+//  }
 
-    def map    [A, B](fa: F[A])(f: A =>   B ): F[B]
-    def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
+//  trait SeqTop[A] extends ScalarOrSeqTop[A] {
+//    type Index[B] = Seq[B]
 
-    def ap     [A, B   ](ff: F[A => B])(fa: F[A]): F[B]             = flatMap(ff)(f => map(fa)(f))
-    def product[A, B   ](fa: F[A], fb: F[B]): F[(A, B)]             = ap(map(fa)(a => (b: B) => (a, b)))(fb)
-    def map2   [A, B, Z](fa: F[A], fb: F[B])(f: (A, B) => Z): F[Z]  = map(product(fa, fb)) { case (a, b) => f(a, b) }
-  }
+//    final def lift(in: Seq[A]): Seq[A] = in
 
-  trait ScalarOrSeqTop[A] { // extends CTop {
-    def lift(in: COut): Seq[A]
+//    final def lift1[Tx](a: Seq[A]): Seq[A] = a
+//    final def lift2[Tx](a: Seq[A]): Seq[A] = a
 
-    type Index[_]
-    type COut = Index[A]
+//    final def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C] = i.map(fun)
+//
+//    final def traverseIndex[G[_], B, C](fa: Index[B])(f: B => G[C])(implicit app: Applicative[G]): G[Index[C]] =
+//      fa.foldRight[G[Index[C]]](app.pure(Seq.empty)) { (a, lglb) =>
+//        app.map2(f(a), lglb)(_ +: _)
+//      }
+//  }
 
-    def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C]
+//  trait ScalarTop[A] extends ScalarOrSeqTop[A] {
+//    type Index[B] = B
 
-    def traverseIndex[G[_], B, C](fa: Index[B])(f: B => G[C])(implicit app: Applicative[G]): G[Index[C]]
-  }
+//    final def lift(in: A): Seq[A] = in :: Nil
 
-  trait SeqTop[A] extends ScalarOrSeqTop[A] {
-    type Index[B] = Seq[B]
+//    final def lift1[Tx](a: A): A = a
+//    final def lift2[Tx](a: A): A = a
 
-    final def lift(in: Seq[A]): Seq[A] = in
+//    final def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C] = fun(i)
+//
+//    final def traverseIndex[G[_], B, C](fa: Index[B])(f: B => G[C])(implicit app: Applicative[G]): G[Index[C]] = f(fa)
+//  }
 
-    final def lift1[Tx](a: Seq[A]): Seq[A] = a
-    final def lift2[Tx](a: Seq[A]): Seq[A] = a
+//  sealed trait IntLikeTop extends ScalarOrSeqTop[Int] // with Top
 
-    final def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C] = i.map(fun)
-
-    final def traverseIndex[G[_], B, C](fa: Index[B])(f: B => G[C])(implicit app: Applicative[G]): G[Index[C]] =
-      fa.foldRight[G[Index[C]]](app.pure(Seq.empty)) { (a, lglb) =>
-        app.map2(f(a), lglb)(_ +: _)
-      }
-  }
-
-  trait ScalarTop[A] extends ScalarOrSeqTop[A] {
-    type Index[B] = B
-
-    final def lift(in: A): Seq[A] = in :: Nil
-
-    final def lift1[Tx](a: A): A = a
-    final def lift2[Tx](a: A): A = a
-
-    final def mapIndex[B, C](i: Index[B])(fun: B => C): Index[C] = fun(i)
-
-    final def traverseIndex[G[_], B, C](fa: Index[B])(f: B => G[C])(implicit app: Applicative[G]): G[Index[C]] = f(fa)
-  }
-
-  sealed trait IntLikeTop extends ScalarOrSeqTop[Int] // with Top
-
-  sealed trait IntSeqTop extends IntLikeTop with SeqTop[Int]
+//  sealed trait IntSeqTop extends IntLikeTop with SeqTop[Int]
   implicit object IntSeqTop
-    extends IntSeqTop
-      with  IntLikeNum
+//    extends IntSeqTop
+      extends IntLikeNum
       with  Num[Seq[Int]] {
 
     final val id = 1
@@ -282,11 +257,12 @@ object Types {
 //    private[patterns] val cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
   }
 
-  sealed trait IntTop extends IntLikeTop with ScalarTop[Int]
+//  sealed trait IntTop extends IntLikeTop with ScalarTop[Int]
   implicit object IntTop
-    extends IntTop
-      with  Num /* NumIntegral */[Int]
-      with  Ord[Int] {
+//    extends IntTop
+      extends Num /* NumIntegral */[Int]
+      with    ToNum[Int]
+      with    Ord[Int] {
 
     final val id = 0
 
@@ -298,6 +274,9 @@ object Types {
 
     def negate (a: Int): Int = -a
     def abs    (a: Int): Int = math.abs(a)
+
+    def toInt   (a: Int): Int     = a
+    def toDouble(a: Int): Double  = a.toDouble
 
     def plus   (a: Int, b: Int): Int = a + b
     def minus  (a: Int, b: Int): Int = a - b
@@ -323,12 +302,12 @@ object Types {
 //    private[patterns] val cClassTag: ClassTag[COut] = ClassTag.Int
   }
 
-  sealed trait DoubleLikeTop extends ScalarOrSeqTop[Double] // with Top
+//  sealed trait DoubleLikeTop extends ScalarOrSeqTop[Double] // with Top
 
-  sealed trait DoubleSeqTop extends DoubleLikeTop with SeqTop[Double]
+//  sealed trait DoubleSeqTop extends DoubleLikeTop with SeqTop[Double]
   implicit object DoubleSeqTop
-    extends DoubleSeqTop
-      with  DoubleLikeNum
+//    extends DoubleSeqTop
+      extends DoubleLikeNum
       with  Num[Seq[Double]] {
 
     final val id = 3
@@ -336,11 +315,12 @@ object Types {
 //    private[patterns] val cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
   }
 
-  sealed trait DoubleTop extends DoubleLikeTop with ScalarTop[Double]
+//  sealed trait DoubleTop extends DoubleLikeTop with ScalarTop[Double]
   implicit object DoubleTop
-    extends DoubleTop
-      with  NumFrac[Double]
-      with  Ord    [Double] {
+//    extends DoubleTop
+      extends NumFrac[Double]
+      with    ToNum  [Double]
+      with    Ord    [Double] {
 
     final val id = 2
 
@@ -352,6 +332,9 @@ object Types {
 
     def negate (a: Double): Double = -a
     def abs    (a: Double): Double = math.abs(a)
+
+    def toInt   (a: Double): Int     = a.toInt
+    def toDouble(a: Double): Double  = a
 
     def plus   (a: Double, b: Double): Double = a + b
     def minus  (a: Double, b: Double): Double = a - b
@@ -378,22 +361,26 @@ object Types {
 //    private[patterns] val cClassTag: ClassTag[COut] = ClassTag.Double
   }
 
-  sealed trait BooleanLikeTop extends ScalarOrSeqTop[Boolean] // with Top
+//  sealed trait BooleanLikeTop extends ScalarOrSeqTop[Boolean] // with Top
 
-  sealed trait BooleanSeqTop extends BooleanLikeTop with SeqTop[Boolean]
-  implicit object BooleanSeqTop extends BooleanSeqTop {
+//  sealed trait BooleanSeqTop extends BooleanLikeTop with SeqTop[Boolean]
+//  implicit object BooleanSeqTop extends BooleanSeqTop {
+//
+//    final val id = 5
+//
+////    private[patterns] val cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
+//  }
 
-    final val id = 5
-
-//    private[patterns] val cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
-  }
-
-  sealed trait BooleanTop extends BooleanLikeTop with ScalarTop[Boolean]
-  implicit object BooleanTop extends BooleanTop {
+//  sealed trait BooleanTop extends BooleanLikeTop with ScalarTop[Boolean]
+  implicit object BooleanTop
+    extends ToNum[Boolean] {
 
     final val id = 4
 
-//    private[patterns] val cClassTag: ClassTag[COut] = ClassTag.Boolean
+    def toInt   (a: Boolean): Int     = if (a) 1   else 0
+    def toDouble(a: Boolean): Double  = if (a) 1.0 else 0.0
+
+  //    private[patterns] val cClassTag: ClassTag[COut] = ClassTag.Boolean
   }
 
   implicit object intSeqWiden1 extends /* IntLikeNum with */ Widen[Int, Seq[Int], Seq[Int]] {

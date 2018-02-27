@@ -26,7 +26,7 @@ object RonTuplePure {
     println("Done.")
     var time = 0.0
 //    showStreamLog = true
-    val xs = it.take(30).toList
+    val xs = it.take(1000).toList
     println(s"Size = ${xs.size}")
     xs.foreach { elem0: Event =>
       val elem  = elem0 +
@@ -207,7 +207,7 @@ object RonTuplePure {
         ad > bd
 //        }
     }
-    val cantusSz = cantus.size
+    val cantusSz = cantus.size   // .poll("cantusSz")
     val clump: Pat[Pat[Int]] = ((start mod cantusSz) ++ tuples.flatten).sliding(2)
     val durs      = clump.flatMap { pr: Pat[Int] =>
       val (pr0, pr1) = pr.splitAt(1)
@@ -261,10 +261,13 @@ object RonTuplePure {
 
   def mkGraph[Tx](): Pat[Event] = {
 //    val inf = Int.MaxValue
-    def catPat(cantus: Pat[Double]): Pat[Event] =
+
+    def mkNotes(in: Pat[Int]): Pat[Double] = in * 2.4 + 4.0
+
+    def catPat(cantus: Pat[Int]): Pat[Event] =
       Bind(
         "instrument"  -> "sine4",
-        "note"        -> cantus, // Pseq(cantus, inf), // Prout({ loop{ Pseq(~cantus).embedInStream } }),
+        "note"        -> mkNotes(cantus),
         "dur"         -> 0.2,
         "db"          -> -45,
         "octave"      -> 5,
@@ -277,43 +280,47 @@ object RonTuplePure {
         "stretch"     -> 1
       )
     val lPat = Pat.loop()((8 to 12).mirror)
-//    val rPat  = Pat.loop((5 to  9).mirror.map(_/25.0)).flow() // .iterator
-
-//    val stutterPat: Pat[Int] = White(1, 4).flow()
+    val rPat = Pat.loop()((5 to  9).mirror.map(_/25.0))
+//    val sPat = White(1, 4)
 
     val xs = for {
-      len     <- lPat.bubble: Pat[Pat[Int]]
-      brown    = Brown(-6, 6, 3) * 2.4 + 4.0: Pat[Double]
-      cantus0 <- brown.grouped(len): Pat[Pat[Double]]
+      len     <- lPat.bubble
+      rests   <- rPat.bubble
+//      stutter <- sPat.bubble
+      cantus0 <- Brown(-6, 6, 3).grouped(len)
     } yield {
 //      val cantus0 = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
 //      val cantus0 = Pat(6.4, 8.8, 6.4, 8.8, 8.8, 13.6, 8.8, 13.6).take(length)
-      //      val numPause  = (length * rPat /* .next() */).roundTo(1.0) // .toInt
+      val numPause  = (len * rests).toInt
       //      println(numPause)
-      val cantus = cantus0 // <| (_.poll("cantus")) // .poll(label = Format("cantus %d", it)) // (cantus0 /: (1 to numPause))((in, _) => in) // in.update(in.size.rand) = 'r)
+      val cantus = cantus0 // Pat.fold(cantus0, numPause)(in => in.update(in.size.rand, 'r))
       if (DEBUG) println(s"starting ${mkElemString(cantus)}")
 //      val cantusEvt = catPat(cantus)
       //      val catter = sp.par(cantusEvt)
 
       //      println(s"CANTUS $cantus")
 
-      val parts: Pat[Pat[Double]] =
+      val pitchSets0: Pat[Pat[Int]] =
         cantus.distinct.sorted.combinations(3) // <| (_.size.poll("numParts"))
+
+      val pitchSets = pitchSets0.map(_.shuffle)
 
 //      if (DEBUG) println("PARTS:")
       // if (DEBUG) parts.foreach(p => println(mkElemString(p)))
 
       //      var durs = List.empty[Double]
 
-      val numParts = parts.size.hold()
+      val numParts0 = pitchSets.size // .poll("numParts")
+      val numParts = numParts0.hold()
       // XXX TODO: The following is wrong -- `flow()`
       // should only be effective inside `parts.map` but not for
       // `Pat.loop`
-      val pats: Pat[Pat[Event]] = parts.mapWithIndex { (part0: Pat[Double], partsIdx) =>
+      val pats: Pat[Pat[Event]] = pitchSets.mapWithIndex { (part0, partsIdx0) =>
+        val partsIdx  = partsIdx0  // .poll("partsIdx")
         val partsIdxH = partsIdx.hold() // <| (_.poll("partsIdx"))
 //          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
         val part    = part0 // <| (_.poll("part"))
-        val (notePat0, durPat0) = makePart(part, cantus) // , stutter = stutterPat.take())
+        val (notePat0, durPat0) = makePart(part, cantus) // , stutter = stutter)
         val notePat = notePat0 // <| (_.poll("notePat"))
         val durPat  = durPat0  // <| (_.poll("durPat"))
         val legato  = partsIdxH.linlin(0, numParts, 0.02, 1.0)
@@ -322,7 +329,7 @@ object RonTuplePure {
 
         Bind(
 //          "instrument"  -> "sine4",
-          "note"        -> notePat,
+          "note"        -> mkNotes(notePat),
           "dur"         -> durPat,
           "octave"      -> 5,
           "legato"      -> legato,
@@ -344,7 +351,7 @@ object RonTuplePure {
 //println("RonTuplePure: TODO")
 //patsF
 
-      pats(0)
+      pats.flatten // (0)
 
 //      ... // sp.seq(patsF) // Ppar(patsF))
 //      //      println(s"ending $cantus")

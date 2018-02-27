@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Num, NumFrac, Ord, Widen}
+import de.sciss.patterns.Types.{Num, NumFrac, Ord, ToNum, Widen}
 import de.sciss.patterns.graph._
 
 final class PatOps[A](private val x: Pat[A]) extends AnyVal {
@@ -30,6 +30,16 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def differentiate(implicit num: Num[A]): Pat[A] = Differentiate(x)
 
   def sum(implicit num: Num[A]): Pat[A] = Sum(x)
+
+  def toInt(implicit num: ToNum[A]): Pat[Int] = {
+    val op = UnaryOp.ToInt[A]()
+    UnaryOp(op, x)
+  }
+
+  def toDouble(implicit num: ToNum[A]): Pat[Double] = {
+    val op = UnaryOp.ToDouble[A]()
+    UnaryOp(op, x)
+  }
 
   // binary
 
@@ -118,6 +128,8 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def sorted(implicit ord: Ord[A]): Pat[A] = Sorted(x)
 
+  def shuffle: Pat[A] = ???
+
   /** Short-cut for `grouped(1)`. For example,
     * `Pat(1, 2, 3)` becomes `Pat(Pat(1), Pat(2), Pat(3))`.
     */
@@ -177,6 +189,24 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
     * Similar to `runWith` for standard Scala collections.
     */
   def <| [B](f: Pat[A] => Pat[B]): Pat[A] = Tap(x, f(x))
+
+  // ---- requiring nested type A ----
+
+// because we need `ev`, this damages Scala type inference on the use site
+
+//  /** Similar to a monadic `map` but with the constraint
+//    * the element type must be a (nested) pattern.
+//    */
+//  def map[B, C](f: Pat[C] => Pat[B])(implicit ev: A <:< Pat[C]): Pat[Pat[B]] = {
+//    val xc    = x.asInstanceOf[Pat[Pat[C]]]
+//    val b     = Graph.builder
+//    val it    = b.allocToken[C]()
+//    //    val level = b.level + 1
+//    val inner = Graph {
+//      f(it)
+//    }
+//    PatMap[C, B](outer = xc, it = it, inner = inner /* , innerLevel = level */)
+//  }
 }
 
 final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
