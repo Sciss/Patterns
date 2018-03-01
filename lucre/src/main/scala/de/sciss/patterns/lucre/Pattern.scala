@@ -265,10 +265,27 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
           var j = 0
           while (m == null && j < ms.length) {
             val mj = ms(j)
-            if (mj.getName == "apply" && mj.getParameterTypes.length == numElem) m = mj
+            if (mj.getName == "apply") {
+              if (mj.getParameterCount == numElem) {
+                val types = mj.getParameterTypes
+                // actually check the types to deal with overloaded `apply` method.
+                var k = 0
+                while (k < types.length) {
+                  val tpe = types(k)
+                  // XXX TODO --- cheesy shortcut for https://stackoverflow.com/questions/7082997/
+                  if (tpe.isPrimitive || tpe.isAssignableFrom(elems(k).getClass)) k += 1
+                  else {
+                    k = Int.MaxValue
+                  }
+                }
+                if (k == types.length) m = mj
+              }
+            }
             j += 1
           }
-          if (m == null) sys.error(s"No apply method found on $companion")
+          if (m == null) {
+            sys.error(s"No apply method found on $companion")
+          }
 
           m.invoke(companion, elems: _*).asInstanceOf[Product]
         }
