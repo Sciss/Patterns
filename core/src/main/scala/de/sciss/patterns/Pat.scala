@@ -36,6 +36,8 @@ object Pat {
   }
 
   def apply[A](elems: A*): Pat[A] = PatSeq(elems: _*)
+
+//  var COUNT = 0
 }
 
 trait ProductWithAux extends Product {
@@ -43,6 +45,8 @@ trait ProductWithAux extends Product {
 }
 
 trait Pat[+A] extends ProductWithAux {
+//  Pat.COUNT += 1
+
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A]
 
   def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A]

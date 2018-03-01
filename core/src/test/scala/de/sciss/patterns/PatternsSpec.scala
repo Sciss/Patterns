@@ -11,8 +11,20 @@ class PatternsSpec extends PatSpec {
 
   "White" should work in {
     val pat1 = White(lo = 2.0, hi = 3.0)
-    val values: Seq[Double] = eval(pat1, 30)
-    values.foreach { v => assert(v >= 2.0 && v <= 3.0) }
+    val values1: Seq[Double] = eval(pat1, 30)
+    values1.foreach { v => assert(v >= 2.0 && v <= 3.0) }
+
+    val pat2 = Graph {
+      Pat.loop(10) {
+        val w = White(1, 100).take(4)
+        w + w   // should yield even numbers, because the pattern is supposed to expand the same twice
+      }
+    }
+
+    val values2: Seq[Int] = eval(pat2)
+    assert(values2.forall(x => x >= 2 && x <= 200 && (x % 2) == 0))
+    // XXX TODO ok, this _could_ fail... We should probably set the RNG seed to ensure it doesn't
+    assert(values2.grouped(10).toList.combinations(2).exists { case _a :: _b => _a != _b })
   }
 
   "Brown" should work in {

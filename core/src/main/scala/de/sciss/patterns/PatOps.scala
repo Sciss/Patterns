@@ -128,7 +128,7 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def sorted(implicit ord: Ord[A]): Pat[A] = Sorted(x)
 
-  def shuffle: Pat[A] = ???
+  def shuffle: Pat[A] = Shuffle(x)
 
   /** Short-cut for `grouped(1)`. For example,
     * `Pat(1, 2, 3)` becomes `Pat(Pat(1), Pat(2), Pat(3))`.

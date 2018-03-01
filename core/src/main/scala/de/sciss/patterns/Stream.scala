@@ -83,8 +83,12 @@ object Stream {
       res
     }
   }
+
+//  var COUNT = 0
 }
 abstract class Stream[Tx, +A] { outer =>
+//  Stream.COUNT += 1
+
   def reset()(implicit tx: Tx): Unit
 
   def hasNext(implicit tx: Tx): Boolean

@@ -19,15 +19,31 @@ object RonTuplePure {
   }
 
   def main(args: Array[String]): Unit = {
+    run(10)
+  }
+
+  def run(n: Int): Unit = {
     implicit val ctx: Context.Plain = Context()
     import ctx.tx
+    ctx.setRandomSeed(0L)
+    val t0 = System.currentTimeMillis()
     val x = Graph { mkGraph[Unit]() }
+//    println(s"NUM PATS    = ${Pat   .COUNT}")
+
+    val t1 = System.currentTimeMillis()
     val it = x.expand[Unit]
+    val t2 = System.currentTimeMillis()
     println("Done.")
     var time = 0.0
 //    showStreamLog = true
-    val xs = it.take(1000).toList
+    val xs = it.take(400).toList
+    val t3 = System.currentTimeMillis()
     println(s"Size = ${xs.size}")
+    println(s"Graph {} took ${t1-t0}ms")
+    println(s"expand   took ${t2-t1}ms")
+    println(s"toList   took ${t3-t2}ms")
+//    println(s"NUM STREAMS = ${Stream.COUNT}")
+//    println(s"NUM PATS    = ${Pat   .COUNT}")
     xs.foreach { elem0: Event =>
       val elem  = elem0 +
         (Event.keyDetunedFreq -> Event.detunedFreq(elem0)) +
@@ -41,6 +57,8 @@ object RonTuplePure {
       time += Event.delta(elem)
     }
     println(f"Stop time = $time%g")   // should last around 6 minutes
+
+    if (n > 0) run(n - 1)
   }
 
   // some extra operations
@@ -217,8 +235,7 @@ object RonTuplePure {
     durs
   }
 
-  def makePart_Sq[A](pattern: Seq[A], cantus: Seq[A], start: Int = 0, stutter: Int = 1)
-                    (implicit view: A => Pat[A]): (Pat[A], Pat[Double]) = {
+  def makePart_Sq[A](pattern: Seq[A], cantus: Seq[A], start: Int = 0, stutter: Int = 1): (Pat[A], Pat[Double]) = {
     log("makePart", pattern, cantus, start, stutter)
     val durs = {
       val durs0 = computeDurs_Sq(pattern, cantus, start).map(_.toDouble)
@@ -264,57 +281,52 @@ object RonTuplePure {
 
     def mkNotes(in: Pat[Int]): Pat[Double] = in * 2.4 + 4.0
 
-    def catPat(cantus: Pat[Int]): Pat[Event] =
-      Bind(
+    val baseBind: Bind.Map = Map(
+      "instrument"  -> "sine4",
+      "octave"      -> 5,
+      "detune"      -> White(-2.0,2.0),
+      "dr"          -> 0.1,
+      "stretch"     -> 1
+    )
+
+    def catPat(cantus: Pat[Int]): Pat[Event] = {
+      val map = baseBind ++ Bind.Map(
         "instrument"  -> "sine4",
         "note"        -> mkNotes(cantus),
         "dur"         -> 0.2,
         "db"          -> -45,
-        "octave"      -> 5,
-        "detune"      -> White(-2.0,2.0),
         "pan"         -> 0,
         "out"         -> White(0, 23),
-        "i"           -> 4,
-        "ar"          -> 0.001,
-        "dr"          -> 0.1,
-        "stretch"     -> 1
+        "i"           -> ArithmSeq(0, 1).mod(24),
+        "ar"          -> 0.001
       )
+      Bind(map)
+    }
+
     val lPat = Pat.loop()((8 to 12).mirror)
-    val rPat = Pat.loop()((5 to  9).mirror.map(_/25.0))
-//    val sPat = White(1, 4)
+//    val rPat = Pat.loop()((5 to  8).mirror.map(_/25.0))
 
     val xs = for {
       len     <- lPat.bubble
-      rests   <- rPat.bubble
+//      rests   <- rPat.bubble
+      offset  <- ArithmSeq(0, 1).bubble
 //      stutter <- sPat.bubble
       cantus0 <- Brown(-6, 6, 3).grouped(len)
     } yield {
 //      val cantus0 = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
 //      val cantus0 = Pat(6.4, 8.8, 6.4, 8.8, 8.8, 13.6, 8.8, 13.6).take(length)
-      val numPause  = (len * rests).toInt
-      //      println(numPause)
+//      val numPause  = (len * rests).toInt
       val cantus = cantus0 // Pat.fold(cantus0, numPause)(in => in.update(in.size.rand, 'r))
       if (DEBUG) println(s"starting ${mkElemString(cantus)}")
-//      val cantusEvt = catPat(cantus)
-      //      val catter = sp.par(cantusEvt)
-
-      //      println(s"CANTUS $cantus")
+      val cantusEvt = catPat(cantus)
 
       val pitchSets0: Pat[Pat[Int]] =
         cantus.distinct.sorted.combinations(3) // <| (_.size.poll("numParts"))
 
       val pitchSets = pitchSets0.map(_.shuffle)
+      val numParts0 = pitchSets.size
+      val numParts  = numParts0.hold()
 
-//      if (DEBUG) println("PARTS:")
-      // if (DEBUG) parts.foreach(p => println(mkElemString(p)))
-
-      //      var durs = List.empty[Double]
-
-      val numParts0 = pitchSets.size // .poll("numParts")
-      val numParts = numParts0.hold()
-      // XXX TODO: The following is wrong -- `flow()`
-      // should only be effective inside `parts.map` but not for
-      // `Pat.loop`
       val pats: Pat[Pat[Event]] = pitchSets.mapWithIndex { (part0, partsIdx0) =>
         val partsIdx  = partsIdx0  // .poll("partsIdx")
         val partsIdxH = partsIdx.hold() // <| (_.poll("partsIdx"))
@@ -324,43 +336,22 @@ object RonTuplePure {
         val notePat = notePat0 // <| (_.poll("notePat"))
         val durPat  = durPat0  // <| (_.poll("durPat"))
         val legato  = partsIdxH.linlin(0, numParts, 0.02, 1.0)
-        val i       = partsIdxH
+        val i       = (partsIdxH + offset) mod 24
         val db      = partsIdxH.linlin(0, numParts, -40.0, -30.0)
 
-        Bind(
-//          "instrument"  -> "sine4",
-          "note"        -> mkNotes(notePat),
-          "dur"         -> durPat,
-          "octave"      -> 5,
-          "legato"      -> legato,
-          "detune"      -> -2.0, // White(-2.0,2.0),
-          "i"           -> i,
-          "ar"          -> 0.001,
-          "dr"          -> 0.1,
-          "stretch"     -> 1,
-          "db"          -> db
+        val map     = baseBind ++ Bind.Map(
+          "note"    -> mkNotes(notePat),
+          "dur"     -> durPat,
+          "legato"  -> legato,
+          "i"       -> i,
+          "ar"      -> 0.001,
+          "db"      -> db
         )
+        Bind(map)
       }
 
-//      val patsF: Pat.Event = pats.flatten
-
-      //      println(s"DURS IS ${mkElemString(durs)} - MAX ${mkElemString(durs.max)}")
-
-//      val patsF: Pat[Event] = Ppar(pats)
-//
-//println("RonTuplePure: TODO")
-//patsF
-
-      pats.flatten // (0)
-
-//      ... // sp.seq(patsF) // Ppar(patsF))
-//      //      println(s"ending $cantus")
-//      // at this point, it wouldn't have any effect:
-//      // { cantus(cantus.size.rand) = 'r }.dup(5)
-//      val stopTime = length * 2 * 0.2
-//      ... // sp.advance(stopTime)
-//      ... // sp.suspend(catter)
-//      ...
+      val patsF = Par(pats :+ cantusEvt)
+      patsF
     }
     xs.flatten
   }

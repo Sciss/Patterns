@@ -14,6 +14,12 @@
 package de.sciss.patterns
 package graph
 
+object Bind {
+  type Map = scala.collection.immutable.Map[String, Pat[_]]
+  def  Map(elems: (String, Pat[_])*): Map = scala.collection.immutable.Map[String, Pat[_]](elems: _*)
+
+  def apply(map: Map): Bind = Bind(map.toSeq: _*)
+}
 final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Event] = new StreamImpl(tx)
 
