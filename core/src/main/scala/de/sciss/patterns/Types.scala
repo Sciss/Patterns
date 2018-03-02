@@ -40,6 +40,7 @@ object Types {
         case doubleSeqWiden1  .id => doubleSeqWiden1
         case doubleSeqWiden2  .id => doubleSeqWiden2
         case intDoubleWiden1  .id => intDoubleWiden1
+        case intDoubleWiden2  .id => intDoubleWiden2
       }
     }
 
@@ -418,6 +419,12 @@ object Types {
     final val id = 0x104
   }
 
+  implicit object intDoubleWiden2 extends Widen[Double, Int, Double] {
+    def lift1(a: Double ): Double = a
+    def lift2(a: Int    ): Double = a.toDouble
+
+    final val id = 0x105
+  }
   ////////////////////////////
 
 //  sealed trait StringTop extends CTop {

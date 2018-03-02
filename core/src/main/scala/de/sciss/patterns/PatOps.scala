@@ -67,6 +67,11 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
     BinaryOp(op, x, that)
   }
 
+  def / [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], num: NumFrac[A2]): Pat[A2] = {
+    val op = BinaryOp.Div[A2]()
+    BinaryOp(op, x, that)
+  }
+
   def % [A1, A2](that: Pat[A1])(implicit br: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
     val op = BinaryOp.%[A2]()
     BinaryOp(op, x, that)
@@ -129,6 +134,7 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def sorted(implicit ord: Ord[A]): Pat[A] = Sorted(x)
 
   def shuffle: Pat[A] = Shuffle(x)
+  def choose : Pat[A] = Choose (x)
 
   /** Short-cut for `grouped(1)`. For example,
     * `Pat(1, 2, 3)` becomes `Pat(Pat(1), Pat(2), Pat(3))`.

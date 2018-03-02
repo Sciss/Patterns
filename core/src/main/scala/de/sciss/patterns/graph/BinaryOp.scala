@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Num, Ord, Widen}
+import de.sciss.patterns.Types.{Aux, Num, NumFrac, Ord, Widen}
 
 object BinaryOp {
   sealed abstract class Op[A1, A2] extends ProductWithAux {
@@ -49,6 +49,14 @@ object BinaryOp {
     def apply(a: A, b: A): A = num.times(a, b)
 
     def name = "Times"
+
+    private[patterns] def aux: List[Aux] = num :: Nil
+  }
+
+  final case class Div[A]()(implicit num: NumFrac[A]) extends Op[A, A] {
+    def apply(a: A, b: A): A = num.div(a, b)
+
+    def name = "Div"
 
     private[patterns] def aux: List[Aux] = num :: Nil
   }

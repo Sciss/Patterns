@@ -19,7 +19,7 @@ object RonTuplePure {
   }
 
   def main(args: Array[String]): Unit = {
-    run(10)
+    run(0)
   }
 
   def run(n: Int): Unit = {
@@ -36,7 +36,9 @@ object RonTuplePure {
     println("Done.")
     var time = 0.0
 //    showStreamLog = true
-    val xs = it.take(400).toList
+//    it.take(4000).foreach(_ => ())
+//    val xs = Nil
+    val xs = it.take(40).toList
     val t3 = System.currentTimeMillis()
     println(s"Size = ${xs.size}")
     println(s"Graph {} took ${t1-t0}ms")
@@ -239,7 +241,8 @@ object RonTuplePure {
     log("makePart", pattern, cantus, start, stutter)
     val durs = {
       val durs0 = computeDurs_Sq(pattern, cantus, start).map(_.toDouble)
-      durs0 // if (stutter == 1) durs0 else durs0.stutter(stutter).map(_ / stutter)
+      val durs1 = durs0.grouped(stutter).toList.stutter(stutter).flatten[Double]
+      durs1.map(_ / stutter)
     }
 //    val inf   = Int.MaxValue
 
@@ -257,11 +260,10 @@ object RonTuplePure {
   }
 
   def makePart[A](pattern: Pat[A], cantus: Pat[A], start: Pat[Int] = 0, stutter: Pat[Int] = 1): (Pat[A], Pat[Double]) = {
-    val durs: Pat[Int] = {
-      val durs0 = computeDurs(pattern, cantus, start) // <| (_.poll("computeDurs")) // .map(_.toDouble)
-      durs0 // if (stutter == 1) durs0 else durs0.stutter(stutter).map(_ / stutter)
+    val durs = {
+      val durs0 = computeDurs(pattern, cantus, start).toDouble // <| (_.poll("computeDurs")) // .map(_.toDouble)
+      durs0.grouped(stutter).stutter(stutter).flatten / stutter.hold()
     }
-//    val inf = Int.MaxValue
 
     //    val ptrnOut = if (stutter == 1) {
     //      Seq('r, Pseq(pattern, inf))
@@ -269,10 +271,7 @@ object RonTuplePure {
     //      Seq(Pseq(Seq.fill(stutter)('r)),
     //        Pseq(pattern.grouped(stutter).stutter(stutter).flatten, inf))
     //    }
-    val ptrnOut: Pat[A] = pattern.loop() // Pseq(List(pattern), inf)
-
-    //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
-    // (Pseq(ptrnOut), Pseq(durs.map(_ * 0.02)))
+    val ptrnOut: Pat[A] = pattern.loop()
     (ptrnOut, durs * 0.02)
   }
 
@@ -310,11 +309,8 @@ object RonTuplePure {
       len     <- lPat.bubble
 //      rests   <- rPat.bubble
       offset  <- ArithmSeq(0, 1).bubble
-//      stutter <- sPat.bubble
       cantus0 <- Brown(-6, 6, 3).grouped(len)
     } yield {
-//      val cantus0 = Pat(13.6, 8.8, 6.4, 13.6, 18.4, 16.0, 18.4, 18.4)
-//      val cantus0 = Pat(6.4, 8.8, 6.4, 8.8, 8.8, 13.6, 8.8, 13.6).take(length)
 //      val numPause  = (len * rests).toInt
       val cantus = cantus0 // Pat.fold(cantus0, numPause)(in => in.update(in.size.rand, 'r))
       if (DEBUG) println(s"starting ${mkElemString(cantus)}")
@@ -327,25 +323,16 @@ object RonTuplePure {
       val numParts0 = pitchSets.size
       val numParts  = numParts0.hold()
 
-      val pats: Pat[Pat[Event]] = pitchSets.mapWithIndex { (part0, partsIdx0) =>
-        val partsIdx  = partsIdx0  // .poll("partsIdx")
+      val pats: Pat[Pat[Event]] = pitchSets.mapWithIndex { (part, partsIdx) =>
         val partsIdxH = partsIdx.hold() // <| (_.poll("partsIdx"))
-//          val (notePat, durPat) = makePart(part, cantus, 0, Seq(1,1,2,2,4).choose())
-        val part    = part0 // <| (_.poll("part"))
-        val (notePat0, durPat0) = makePart(part, cantus) // , stutter = stutter)
-        val notePat = notePat0 // <| (_.poll("notePat"))
-        val durPat  = durPat0  // <| (_.poll("durPat"))
-        val legato  = partsIdxH.linlin(0, numParts, 0.02, 1.0)
-        val i       = (partsIdxH + offset) mod 24
-        val db      = partsIdxH.linlin(0, numParts, -40.0, -30.0)
-
-        val map     = baseBind ++ Bind.Map(
+        val (notePat, durPat) = makePart(part, cantus, stutter = Pat(1, 1, 2, 2, 4).choose) // .poll("stutter")
+        val map = baseBind ++ Bind.Map(
           "note"    -> mkNotes(notePat),
           "dur"     -> durPat,
-          "legato"  -> legato,
-          "i"       -> i,
+          "legato"  -> partsIdxH.linlin(0, numParts, 0.02, 1.0),
+          "i"       -> (partsIdxH + offset).mod(24),
           "ar"      -> 0.001,
-          "db"      -> db
+          "db"      -> partsIdxH.linlin(0, numParts, -40.0, -30.0)
         )
         Bind(map)
       }
