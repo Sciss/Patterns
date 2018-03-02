@@ -196,6 +196,7 @@ object RonTuplePure {
   }
 
   // ---------------------------------------------------------------------------------
+  // purely pattern based version of the piece's note production
   // ---------------------------------------------------------------------------------
 
   // all pairs from two arrays
