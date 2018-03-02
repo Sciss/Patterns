@@ -17,6 +17,7 @@ import de.sciss.numbers.{DoubleFunctions => rd, IntFunctions => ri}
 import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.annotation.switch
+import scala.language.higherKinds
 
 object Types {
   object Aux {
@@ -118,18 +119,76 @@ object Types {
     def not(a: A): A
   }
 
+  trait NumDouble[A] extends NumFrac[A] {
+    def sqrt      (a: A): A
+    def exp       (a: A): A
+    def midicps   (a: A): A
+    def cpsmidi   (a: A): A
+    def midiratio (a: A): A
+    def ratiomidi (a: A): A
+    def dbamp     (a: A): A
+    def ampdb     (a: A): A
+    def octcps    (a: A): A
+    def cpsoct    (a: A): A
+    def log       (a: A): A
+    def log2      (a: A): A
+    def log10     (a: A): A
+    def sin       (a: A): A
+    def cos       (a: A): A
+    def tan       (a: A): A
+    def asin      (a: A): A
+    def acos      (a: A): A
+    def atan      (a: A): A
+    def sinh      (a: A): A
+    def cosh      (a: A): A
+    def tanh      (a: A): A
+  }
+
 //  trait NumIntegral[T <: Top] extends Num[T] {
 //    def %   [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
 //    def quot[Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
 //    def rem [Tx](a: T#Out[Tx], b: T#Out[Tx]): T#Out[Tx]
 //  }
 
-  trait ToNum[A] extends Aux {
-    def toInt   (a: A): Int
-    def toDouble(a: A): Double
+  trait ToNum[Shape[_], A] extends Aux {
+    def toInt   (a: A): Shape[Int]
+    def toDouble(a: A): Shape[Double]
+
+    def int   : Num      [Shape[Int   ]]
+    def double: NumDouble[Shape[Double]]
   }
 
-  trait SeqLikeNum[A] extends Num[Seq[A]] {
+  type Id[B] = B
+
+  trait ScalarToNum[A] extends ToNum[Id, A] {
+    final def int   : Num      [Int   ] = IntTop
+    final def double: NumDouble[Double] = DoubleTop
+  }
+
+  trait SeqLike[A] {
+    final protected def unOp[B](a: Seq[A])(op: A => B): Seq[B] = a.map(op)
+
+    final protected def binOp(a: Seq[A], b: Seq[A])(op: (A, A) => A): Seq[A] = {
+      val as = a.size
+      val bs = b.size
+      val sz = math.max(as, bs)
+      Seq.tabulate(sz) { i =>
+        op(a(i % as), b(i % bs))
+      }
+    }
+
+    final protected def ternOp(a: Seq[A], b: Seq[A], c: Seq[A])(op: (A, A, A) => A): Seq[A] = {
+      val as = a.size
+      val bs = b.size
+      val cs = c.size
+      val sz = math.max(math.max(as, bs), cs)
+      Seq.tabulate(sz) { i =>
+        op(a(i % as), b(i % bs), c(i % cs))
+      }
+    }
+  }
+
+  trait SeqLikeNum[A] extends SeqLike[A] with Num[Seq[A]] {
 //    type P // <: CTop { type COut = A }
     protected val peer: Num[A] // Num[P]
 
@@ -153,46 +212,65 @@ object Types {
     def rrand[Tx](a: Seq[A], b: Seq[A])(implicit r: Random[Tx], tx: Tx): Seq[A] = binOp(a, b)(peer.rrand[Tx])
 
     def fold(a: Seq[A], lo: Seq[A], hi: Seq[A]): Seq[A] = ternOp(a, lo, hi)(peer.fold)
-
-    final protected def unOp(a: Seq[A])(op: A => A): Seq[A] = a.map(op)
-
-    final protected def binOp(a: Seq[A], b: Seq[A])(op: (A, A) => A): Seq[A] = {
-      val as = a.size
-      val bs = b.size
-      val sz = math.max(as, bs)
-      Seq.tabulate(sz) { i =>
-        op(a(i % as), b(i % bs))
-      }
-    }
-
-    final protected def ternOp(a: Seq[A], b: Seq[A], c: Seq[A])(op: (A, A, A) => A): Seq[A] = {
-      val as = a.size
-      val bs = b.size
-      val cs = c.size
-      val sz = math.max(math.max(as, bs), cs)
-      Seq.tabulate(sz) { i =>
-        op(a(i % as), b(i % bs), c(i % cs))
-      }
-    }
   }
 
   trait SeqLikeNumFrac[A] extends SeqLikeNum[A] with NumFrac[Seq[A]] {
     override protected val peer: NumFrac[A]
 
-    final def floor(a: Seq[A]): Seq[A] = unOp(a)(peer.floor)
-    final def ceil (a: Seq[A]): Seq[A] = unOp(a)(peer.ceil )
-    final def frac (a: Seq[A]): Seq[A] = unOp(a)(peer.frac )
+    final def floor (a: Seq[A]): Seq[A] = unOp(a)(peer.floor)
+    final def ceil  (a: Seq[A]): Seq[A] = unOp(a)(peer.ceil )
+    final def frac  (a: Seq[A]): Seq[A] = unOp(a)(peer.frac )
 
-    final def div(a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.div)
+    final def div   (a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.div)
   }
 
-  trait IntLikeNum extends SeqLikeNum[Int] {
-    protected final val peer: Num[Int] = IntTop
+  trait SeqLikeNumDouble[A] extends SeqLikeNum[A] with NumDouble[Seq[A]] {
+    override protected val peer: NumDouble[A]
+
+    final def sqrt      (a: Seq[A]): Seq[A] = unOp(a)(peer.sqrt     )
+    final def exp       (a: Seq[A]): Seq[A] = unOp(a)(peer.exp      )
+
+    final def midicps   (a: Seq[A]): Seq[A] = unOp(a)(peer.midicps  )
+    final def cpsmidi   (a: Seq[A]): Seq[A] = unOp(a)(peer.cpsmidi  )
+    final def midiratio (a: Seq[A]): Seq[A] = unOp(a)(peer.midiratio)
+    final def ratiomidi (a: Seq[A]): Seq[A] = unOp(a)(peer.ratiomidi)
+    final def dbamp     (a: Seq[A]): Seq[A] = unOp(a)(peer.dbamp    )
+    final def ampdb     (a: Seq[A]): Seq[A] = unOp(a)(peer.ampdb    )
+    final def octcps    (a: Seq[A]): Seq[A] = unOp(a)(peer.octcps   )
+    final def cpsoct    (a: Seq[A]): Seq[A] = unOp(a)(peer.cpsoct   )
+    final def log       (a: Seq[A]): Seq[A] = unOp(a)(peer.log      )
+    final def log2      (a: Seq[A]): Seq[A] = unOp(a)(peer.log2     )
+    final def log10     (a: Seq[A]): Seq[A] = unOp(a)(peer.log10    )
+    final def sin       (a: Seq[A]): Seq[A] = unOp(a)(peer.sin      )
+    final def cos       (a: Seq[A]): Seq[A] = unOp(a)(peer.cos      )
+    final def tan       (a: Seq[A]): Seq[A] = unOp(a)(peer.tan      )
+    final def asin      (a: Seq[A]): Seq[A] = unOp(a)(peer.asin     )
+    final def acos      (a: Seq[A]): Seq[A] = unOp(a)(peer.acos     )
+    final def atan      (a: Seq[A]): Seq[A] = unOp(a)(peer.atan     )
+    final def sinh      (a: Seq[A]): Seq[A] = unOp(a)(peer.sinh     )
+    final def cosh      (a: Seq[A]): Seq[A] = unOp(a)(peer.cosh     )
+    final def tanh      (a: Seq[A]): Seq[A] = unOp(a)(peer.tanh     )
   }
 
-  trait DoubleLikeNum extends SeqLikeNumFrac[Double] {
+  trait SeqLikeToNum[A] extends SeqLike[A] with ToNum[Seq, Seq[A]] {
+    protected val peer: ScalarToNum[A]
+
+    final type Shape[B] = Seq[B]
+
+    final def toInt   (a: Seq[A]): Seq[Int]     = unOp(a)(peer.toInt   )
+    final def toDouble(a: Seq[A]): Seq[Double]  = unOp(a)(peer.toDouble)
+
+    final def int    : Num      [Seq[Int   ]] = IntSeqTop
+    final def double : NumDouble[Seq[Double]] = DoubleSeqTop
+  }
+
+  trait IntLikeNum extends SeqLikeNum[Int] with SeqLikeToNum[Int] {
+    protected final val peer: IntTop.type = IntTop
+  }
+
+  trait DoubleLikeNum extends SeqLikeNumFrac[Double] with SeqLikeToNum[Double] with SeqLikeNumDouble[Double] {
 //    type P = DoubleTop
-    protected final val peer: NumFrac[Double] = DoubleTop
+    protected final val peer: DoubleTop.type = DoubleTop
   }
 
 //  object Applicative {
@@ -262,8 +340,7 @@ object Types {
 //  sealed trait IntSeqTop extends IntLikeTop with SeqTop[Int]
   implicit object IntSeqTop
 //    extends IntSeqTop
-      extends IntLikeNum
-      with  Num[Seq[Int]] {
+      extends IntLikeNum {
 
     final val id = 1
 
@@ -274,7 +351,7 @@ object Types {
   implicit object IntTop
 //    extends IntTop
       extends Num /* NumIntegral */[Int]
-      with    ToNum[Int]
+      with    ScalarToNum[Int]
       with    Ord[Int] {
 
     final val id = 0
@@ -320,20 +397,16 @@ object Types {
 //  sealed trait DoubleSeqTop extends DoubleLikeTop with SeqTop[Double]
   implicit object DoubleSeqTop
 //    extends DoubleSeqTop
-      extends DoubleLikeNum
-      with  Num[Seq[Double]] {
+      extends DoubleLikeNum {
 
     final val id = 3
-
-//    private[patterns] val cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
   }
 
-//  sealed trait DoubleTop extends DoubleLikeTop with ScalarTop[Double]
   implicit object DoubleTop
-//    extends DoubleTop
-      extends NumFrac[Double]
-      with    ToNum  [Double]
-      with    Ord    [Double] {
+      extends NumFrac     [Double]
+      with    NumDouble   [Double]
+      with    ScalarToNum [Double]
+      with    Ord         [Double] {
 
     final val id = 2
 
@@ -343,15 +416,35 @@ object Types {
 //    def zeroPat: Pat[Double] = 0.0
 //    def onePat : Pat[Double] = 1.0
 
-    def negate  (a: Double): Double = -a
-    def abs     (a: Double): Double = rd.abs(a)
+    def negate    (a: Double): Double = -a
+    def abs       (a: Double): Double = rd.abs(a)
 
-    def toInt   (a: Double): Int     = a.toInt
-    def toDouble(a: Double): Double  = a
+    def toInt     (a: Double): Int    = a.toInt
+    def toDouble  (a: Double): Double = a
 
-    def floor   (a: Double): Double  = rd.floor(a)
-    def ceil    (a: Double): Double  = rd.ceil (a)
-    def frac    (a: Double): Double  = rd.frac (a)
+    def floor     (a: Double): Double = rd.floor    (a)
+    def ceil      (a: Double): Double = rd.ceil     (a)
+    def frac      (a: Double): Double = rd.frac     (a)
+    def midicps   (a: Double): Double = rd.midicps  (a)
+    def cpsmidi   (a: Double): Double = rd.cpsmidi  (a)
+    def midiratio (a: Double): Double = rd.midiratio(a)
+    def ratiomidi (a: Double): Double = rd.ratiomidi(a)
+    def dbamp     (a: Double): Double = rd.dbamp    (a)
+    def ampdb     (a: Double): Double = rd.ampdb    (a)
+    def octcps    (a: Double): Double = rd.octcps   (a)
+    def cpsoct    (a: Double): Double = rd.cpsoct   (a)
+    def log       (a: Double): Double = rd.log      (a)
+    def log2      (a: Double): Double = rd.log2     (a)
+    def log10     (a: Double): Double = rd.log10    (a)
+    def sin       (a: Double): Double = rd.sin      (a)
+    def cos       (a: Double): Double = rd.cos      (a)
+    def tan       (a: Double): Double = rd.tan      (a)
+    def asin      (a: Double): Double = rd.asin     (a)
+    def acos      (a: Double): Double = rd.acos     (a)
+    def atan      (a: Double): Double = rd.atan     (a)
+    def sinh      (a: Double): Double = rd.sinh     (a)
+    def cosh      (a: Double): Double = rd.cosh     (a)
+    def tanh      (a: Double): Double = rd.tanh     (a)
 
     def plus    (a: Double, b: Double): Double = rd.+(a, b)
     def minus   (a: Double, b: Double): Double = rd.-(a, b)
@@ -361,6 +454,9 @@ object Types {
 
     def %       (a: Double, b: Double): Double = rd.%  (a, b)
     def mod     (a: Double, b: Double): Double = rd.mod(a, b)
+
+    def sqrt(a: Double): Double = rd.sqrt(a)
+    def exp (a: Double): Double = rd.exp (a)
 
     def rand2[Tx](a: Double)(implicit r: Random[Tx], tx: Tx): Double =
       (r.nextDouble() * 2 - 1) * a
@@ -389,30 +485,22 @@ object Types {
 //  }
 
   implicit object BooleanSeqTop
-    extends NumBool[Seq[Boolean]] {
+    extends NumBool[Seq[Boolean]]
+    with SeqLikeToNum[Boolean] {
+
+    final val peer: BooleanTop.type = BooleanTop
 
     final val id = 5
 
     type A = Boolean
 
     def not(a: Seq[A]): Seq[A] = unOp(a)(!_)
-
-    final protected def unOp(a: Seq[A])(op: A => A): Seq[A] = a.map(op)
-
-    final protected def binOp(a: Seq[A], b: Seq[A])(op: (A, A) => A): Seq[A] = {
-      val as = a.size
-      val bs = b.size
-      val sz = math.max(as, bs)
-      Seq.tabulate(sz) { i =>
-        op(a(i % as), b(i % bs))
-      }
-    }
   }
 
   //  sealed trait BooleanTop extends BooleanLikeTop with ScalarTop[Boolean]
   implicit object BooleanTop
     extends NumBool[Boolean]
-    with ToNum[Boolean] {
+    with ScalarToNum[Boolean] {
 
     final val id = 4
 

@@ -24,7 +24,10 @@ class PatternsSpec extends PatSpec {
     val values2: Seq[Int] = eval(pat2)
     assert(values2.forall(x => x >= 2 && x <= 200 && (x % 2) == 0))
     // XXX TODO ok, this _could_ fail... We should probably set the RNG seed to ensure it doesn't
-    assert(values2.grouped(10).toList.combinations(2).exists { case _a :: _b => _a != _b })
+    assert(values2.grouped(10).toList.combinations(2).exists {
+      case _a :: _b => _a != _b
+      case _ => false
+    })
   }
 
   "Brown" should work in {
