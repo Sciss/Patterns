@@ -14,7 +14,7 @@
 package de.sciss.patterns
 
 import de.sciss.patterns.Types.Aux
-import de.sciss.patterns.graph.{PatSeq, LoopWithIndex}
+import de.sciss.patterns.graph.{Constant, LoopWithIndex, PatSeq}
 
 object Pat {
 //  def Int    (elems: scala.Int*    ): Pat[Int]      = apply[Int    ](elems: _*)
@@ -37,7 +37,12 @@ object Pat {
 
   def apply[A](elems: A*): Pat[A] = PatSeq(elems: _*)
 
-//  var COUNT = 0
+  def fold[A](in: Pat[A], n: Pat[Int])(fun: Pat[A] => Pat[A]): Pat[A] = {
+    // XXX TODO --- introduce an optimised version of this
+    Constant(Pat(0)).take(n).foldLeft(in)((y, _) => fun(y))
+  }
+
+  //  var COUNT = 0
 }
 
 trait ProductWithAux extends Product {

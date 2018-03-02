@@ -27,6 +27,16 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def splitAt(index: Pat[Int]): (Pat[A], Pat[A]) = (take(index), drop(index))
 
+  /** Updates a single element. */
+  def updated[B >: A](index: Pat[Int], elem: B): Pat[B] = Updated(x, index, elem)
+
+  /** Zips the indices with the elements, and then replaces these pairs.
+    * Eagerly expands the entire input pattern.
+    *
+    * Be careful that this hang if both `index` and `elem` are constants!
+    */
+  def updatedAll[B >: A](index: Pat[Int], elem: Pat[B]): Pat[B] = UpdatedAll(x, index, elem)
+
   // unary across sequence
 
   def differentiate(implicit num: Num[A]): Pat[A] = Differentiate(x)
@@ -74,6 +84,9 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def sinh      [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Sinh      [C, A](), x)
   def cosh      [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Cosh      [C, A](), x)
   def tanh      [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Tanh      [C, A](), x)
+
+  def rand            (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Rand  [A](), x)
+  def rand2           (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Rand2 [A](), x)
 
   // binary
 

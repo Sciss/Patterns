@@ -20,7 +20,11 @@ import scala.language.higherKinds
 
 object UnaryOp {
   sealed abstract class Op[A1, A2] extends ProductWithAux {
-    def apply(a: A1): A2
+    type State[Tx]
+
+    def prepare[Tx](ref: AnyRef)(implicit ctx: Context[Tx], tx: Tx): State[Tx]
+
+    def next[Tx](a: A1)(implicit state: State[Tx], tx: Tx): A2
 
     override final def productPrefix = s"UnaryOp$$$name"
 
@@ -29,9 +33,25 @@ object UnaryOp {
     override def toString: String = name
   }
 
+  abstract class PureOp[A1, A2] extends Op[A1, A2] {
+    final type State[_] = Unit
+
+    final def prepare[Tx](ref: AnyRef)(implicit ctx: Context[Tx], tx: Tx): State[Tx] = ()
+
+    def next[Tx](a: A1)(implicit state: State[Tx], tx: Tx): A2 = apply(a)
+
+    def apply(a: A1): A2
+  }
+
+  abstract class RandomOp[A1, A2] extends Op[A1, A2] {
+    final type State[Tx] = Random[Tx]
+
+    final def prepare[Tx](ref: AnyRef)(implicit ctx: Context[Tx], tx: Tx): State[Tx] = ctx.mkRandom(ref)
+  }
+
   // ---- analogous to UGens ----
 
-  final case class Neg[A]()(implicit num: Num[A]) extends Op[A, A] {
+  final case class Neg[A]()(implicit num: Num[A]) extends PureOp[A, A] {
     def apply(a: A): A = num.negate(a)
 
     def name = "Neg"
@@ -39,7 +59,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Not[A]()(implicit num: NumBool[A]) extends Op[A, A] {
+  final case class Not[A]()(implicit num: NumBool[A]) extends PureOp[A, A] {
     def apply(a: A): A = num.not(a)
 
     def name = "Not"
@@ -47,7 +67,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Abs[A]()(implicit num: Num[A]) extends Op[A, A] {
+  final case class Abs[A]()(implicit num: Num[A]) extends PureOp[A, A] {
     def apply(a: A): A = num.abs(a)
 
     def name = "Abs"
@@ -55,7 +75,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class ToDouble[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class ToDouble[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.toDouble(a)
 
     def name = "ToDouble"
@@ -63,7 +83,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class ToInt[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Int]] {
+  final case class ToInt[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Int]] {
     def apply(a: A): C[Int] = num.toInt(a)
 
     def name = "ToInt"
@@ -71,7 +91,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Ceil[A]()(implicit num: NumFrac[A]) extends Op[A, A] {
+  final case class Ceil[A]()(implicit num: NumFrac[A]) extends PureOp[A, A] {
     def apply(a: A): A = num.ceil(a)
 
     def name = "Ceil"
@@ -79,7 +99,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Floor[A]()(implicit num: NumFrac[A]) extends Op[A, A] {
+  final case class Floor[A]()(implicit num: NumFrac[A]) extends PureOp[A, A] {
     def apply(a: A): A = num.floor(a)
 
     def name = "Floor"
@@ -87,7 +107,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Frac[A]()(implicit num: NumFrac[A]) extends Op[A, A] {
+  final case class Frac[A]()(implicit num: NumFrac[A]) extends PureOp[A, A] {
     def apply(a: A): A = num.frac(a)
 
     def name = "Frac"
@@ -103,7 +123,7 @@ object UnaryOp {
 //    private[patterns] def aux: List[Aux] = num :: Nil
 //  }
 
-  final case class Squared[A]()(implicit num: Num[A]) extends Op[A, A] {
+  final case class Squared[A]()(implicit num: Num[A]) extends PureOp[A, A] {
     def apply(a: A): A = num.times(a, a)
 
     def name = "Squared"
@@ -111,7 +131,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Cubed[A]()(implicit num: Num[A]) extends Op[A, A] {
+  final case class Cubed[A]()(implicit num: Num[A]) extends PureOp[A, A] {
     def apply(a: A): A = num.times(num.times(a, a), a)
 
     def name = "Cubed"
@@ -119,7 +139,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Sqrt[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Sqrt[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.sqrt(num.toDouble(a))
 
     def name = "Sqrt"
@@ -127,7 +147,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Exp[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Exp[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.exp(num.toDouble(a))
 
     def name = "Exp"
@@ -135,7 +155,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Reciprocal[A]()(implicit num: NumFrac[A]) extends Op[A, A] {
+  final case class Reciprocal[A]()(implicit num: NumFrac[A]) extends PureOp[A, A] {
     def apply(a: A): A = num.div(num.one, a)
 
     def name = "Reciprocal"
@@ -143,7 +163,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Midicps[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Midicps[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.midicps(num.toDouble(a))
 
     def name = "Midicps"
@@ -151,7 +171,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Cpsmidi[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Cpsmidi[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.cpsmidi(num.toDouble(a))
 
     def name = "Cpsmidi"
@@ -159,7 +179,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Midiratio[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Midiratio[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.midiratio(num.toDouble(a))
 
     def name = "Midiratio"
@@ -167,7 +187,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Ratiomidi[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Ratiomidi[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.ratiomidi(num.toDouble(a))
 
     def name = "Ratiomidi"
@@ -175,7 +195,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Dbamp[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Dbamp[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.dbamp(num.toDouble(a))
 
     def name = "Dbamp"
@@ -183,7 +203,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Ampdb[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Ampdb[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.ampdb(num.toDouble(a))
 
     def name = "Ampdb"
@@ -191,7 +211,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Octcps[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Octcps[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.octcps(num.toDouble(a))
 
     def name = "Octcps"
@@ -199,7 +219,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Cpsoct[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Cpsoct[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.cpsoct(num.toDouble(a))
 
     def name = "Cpsoct"
@@ -207,7 +227,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Log[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Log[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.log(num.toDouble(a))
 
     def name = "Log"
@@ -215,7 +235,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Log2[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Log2[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.log2(num.toDouble(a))
 
     def name = "Log2"
@@ -223,7 +243,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Log10[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Log10[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.log10(num.toDouble(a))
 
     def name = "Log10"
@@ -231,7 +251,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Sin[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Sin[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.sin(num.toDouble(a))
 
     def name = "Sin"
@@ -239,7 +259,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Cos[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Cos[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.cos(num.toDouble(a))
 
     def name = "Cos"
@@ -247,7 +267,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Tan[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Tan[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.tan(num.toDouble(a))
 
     def name = "Tan"
@@ -255,7 +275,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Asin[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Asin[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.asin(num.toDouble(a))
 
     def name = "Asin"
@@ -263,7 +283,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Acos[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Acos[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.acos(num.toDouble(a))
 
     def name = "Acos"
@@ -271,7 +291,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Atan[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Atan[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.atan(num.toDouble(a))
 
     def name = "Atan"
@@ -279,7 +299,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Sinh[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Sinh[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.sinh(num.toDouble(a))
 
     def name = "Sinh"
@@ -287,7 +307,7 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Cosh[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Cosh[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.cosh(num.toDouble(a))
 
     def name = "Cosh"
@@ -295,25 +315,60 @@ object UnaryOp {
     private[patterns] def aux: List[Aux] = num :: Nil
   }
 
-  final case class Tanh[C[_], A]()(implicit num: ToNum[C, A]) extends Op[A, C[Double]] {
+  final case class Tanh[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
     def apply(a: A): C[Double] = num.double.tanh(num.toDouble(a))
 
     def name = "Tanh"
 
     private[patterns] def aux: List[Aux] = num :: Nil
   }
+
+  final case class Rand[A]()(implicit num: Num[A]) extends RandomOp[A, A] {
+    def next[Tx](a: A)(implicit state: Random[Tx], tx: Tx): A = num.rand(a)
+
+    def name = "Rand"
+
+    private[patterns] def aux: List[Aux] = num :: Nil
+  }
+
+  final case class Rand2[A]()(implicit num: Num[A]) extends RandomOp[A, A] {
+    def next[Tx](a: A)(implicit state: Random[Tx], tx: Tx): A = num.rand2(a)
+
+    def name = "Rand2"
+
+    private[patterns] def aux: List[Aux] = num :: Nil
+  }
+
+  // class Linrand
+  // class Bilinrand
+  // class Sum3rand
+  // class Coin
 }
 
 final case class UnaryOp[A1, A](op: UnaryOp.Op[A1, A], a: Pat[A1])
-  extends Pattern[A] {
+  extends Pattern[A] { pat =>
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
-    val ai = a.expand
-    ai.map { av => op(av) }
-  }
+  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
   def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
     val aT = t(a)
     if (aT.eq(a)) this else copy(a = aT)
+  }
+
+  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+    private[this] val aStream = a.expand(ctx, tx0)
+
+    private[this] implicit val state: op.State[Tx]  = op.prepare(pat.ref)(ctx, tx0)
+
+    def reset()(implicit tx: Tx): Unit =
+      aStream.reset()
+
+    def hasNext(implicit tx: Tx): Boolean =
+      aStream.hasNext
+
+    def next()(implicit tx: Tx): A = {
+      val aVal = aStream.next()
+      op.next(aVal)
+    }
   }
 }

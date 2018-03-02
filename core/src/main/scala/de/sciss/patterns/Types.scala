@@ -101,6 +101,7 @@ object Types {
 //    def zeroPat: Pat[A]
 //    def onePat : Pat[A]
 
+    def rand [Tx](a: A      )(implicit r: Random[Tx], tx: Tx): A
     def rand2[Tx](a: A      )(implicit r: Random[Tx], tx: Tx): A
     def rrand[Tx](a: A, b: A)(implicit r: Random[Tx], tx: Tx): A
 
@@ -208,6 +209,7 @@ object Types {
 //    def zeroPat : Pat[Seq[A]] = ... // Pat[Top.CSeq[A]](peer.zero :: Nil)
 //    def onePat  : Pat[Seq[A]] = ... // Pat[Top.CSeq[A]](peer.one  :: Nil)
 
+    def rand [Tx](a: Seq[A]           )(implicit r: Random[Tx], tx: Tx): Seq[A] = unOp (a   )(peer.rand [Tx])
     def rand2[Tx](a: Seq[A]           )(implicit r: Random[Tx], tx: Tx): Seq[A] = unOp (a   )(peer.rand2[Tx])
     def rrand[Tx](a: Seq[A], b: Seq[A])(implicit r: Random[Tx], tx: Tx): Seq[A] = binOp(a, b)(peer.rrand[Tx])
 
@@ -377,10 +379,23 @@ object Types {
     def mod    (a: Int, b: Int): Int = ri.mod(a, b)
 //    def quot   [Tx](a: Int, b: Int): Int = a / b
 
-    def rand2[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int = r.nextInt(2 * a + 1) - a
+//    def rand[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int =
+//      if      (a > 0) r.nextInt( a)
+//      else if (a < 0) r.nextInt(-a) + a
+//      else 0  // SC style ... or should we throw exception?
+
+    def rand[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int =
+      if (a >= 0) r.nextInt( a)     // may throw exception
+      else        r.nextInt(-a) + a
+
+    def rand2[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int = {
+      val a1 = math.abs(a)
+      r.nextInt(2 * a1 + 1) - a1
+    }
 
     def rrand[Tx](a: Int, b: Int)(implicit r: Random[Tx], tx: Tx): Int =
-      r.nextInt(b - a + 1) + a
+      if (a < b) r.nextInt(b - a + 1) + a
+      else       r.nextInt(a - b + 1) + b
 
     def lt  (a: Int, b: Int): Boolean = a <  b
     def leq (a: Int, b: Int): Boolean = a <= b
@@ -457,6 +472,9 @@ object Types {
 
     def sqrt(a: Double): Double = rd.sqrt(a)
     def exp (a: Double): Double = rd.exp (a)
+
+    def rand[Tx](a: Double)(implicit r: Random[Tx], tx: Tx): Double =
+      r.nextDouble() * a
 
     def rand2[Tx](a: Double)(implicit r: Random[Tx], tx: Tx): Double =
       (r.nextDouble() * 2 - 1) * a

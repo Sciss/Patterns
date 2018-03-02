@@ -97,9 +97,8 @@ object Event {
   def dur         (out: Event): Double = getOrElseDouble(out, keyDur        , 0.0)
   def stretch     (out: Event): Double = getOrElseDouble(out, keyStretch    , 1.0)
   def legato      (out: Event): Double = getOrElseDouble(out, keyLegato     , 0.8)
-  def sustain     (out: Event): Double = getOrElseDouble(out, keySustain    , dur(out) * legato(out) * stretch(out))
-
   def delta       (out: Event): Double = getOrElseDouble(out, keyDelta      , stretch(out) * dur(out))
+  def sustain     (out: Event): Double = getOrElseDouble(out, keySustain    , delta(out) * legato(out))
 
   def db          (out: Event): Double = getOrElseDouble(out, keyDb         , -20.0)
   def amp         (out: Event): Double = getOrElseDouble(out, keyAmp        , db(out).dbamp)

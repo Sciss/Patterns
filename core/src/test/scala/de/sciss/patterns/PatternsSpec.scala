@@ -125,6 +125,25 @@ class PatternsSpec extends PatSpec {
     evalH(res4) shouldBe List(List(1, 4, 7, 10, 13))
   }
 
+  "Updated" should work in {
+    val p1  = Pat(1 to 4: _*)
+    val p2  = p1.updatedAll(Pat(0, 3), Pat(5, 6))
+    val values: Seq[Int] = eval(p2)
+    val plain = List(1, 2, 3, 4).updated(0, 5).updated(3, 6)
+
+    assert(values === plain)
+  }
+
+  "Stutter" should work in {
+    val in      = 1 to 4
+    val st      = 3
+    val pat     = Pat(in: _*).grouped(st).stutter(st).flatten
+    val values  = eval(pat)
+    val plain   = in.grouped(st).flatMap(xs => Seq.fill(st)(xs)).flatten.toList
+
+    assert(values === plain)
+  }
+
   "Sliding" should work in {
     val in    = ArithmSeq(1, 3).take(5)
     val res1  = in.sliding(2)
