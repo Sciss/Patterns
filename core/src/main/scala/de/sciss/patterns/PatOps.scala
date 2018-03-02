@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Num, NumFrac, Ord, ToNum, Widen}
+import de.sciss.patterns.Types.{Num, NumBool, NumFrac, Ord, ToNum, Widen}
 import de.sciss.patterns.graph._
 
 final class PatOps[A](private val x: Pat[A]) extends AnyVal {
@@ -25,11 +25,28 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def splitAt(index: Pat[Int]): (Pat[A], Pat[A]) = (take(index), drop(index))
 
-  // unary
+  // unary across sequence
 
   def differentiate(implicit num: Num[A]): Pat[A] = Differentiate(x)
 
   def sum(implicit num: Num[A]): Pat[A] = Sum(x)
+
+  // unary element-wise
+
+  def unary_- (implicit num: Num[A]): Pat[A] = {
+    val op = UnaryOp.Neg[A]()
+    UnaryOp(op, x)
+  }
+
+  def unary_! (implicit num: NumBool[A]): Pat[A] = {
+    val op = UnaryOp.Not[A]()
+    UnaryOp(op, x)
+  }
+
+  def abs(implicit num: Num[A]): Pat[A] = {
+    val op = UnaryOp.Abs[A]()
+    UnaryOp(op, x)
+  }
 
   def toInt(implicit num: ToNum[A]): Pat[Int] = {
     val op = UnaryOp.ToInt[A]()
@@ -38,6 +55,36 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def toDouble(implicit num: ToNum[A]): Pat[Double] = {
     val op = UnaryOp.ToDouble[A]()
+    UnaryOp(op, x)
+  }
+
+  def ceil(implicit num: NumFrac[A]): Pat[A] = {
+    val op = UnaryOp.Ceil[A]()
+    UnaryOp(op, x)
+  }
+
+  def floor(implicit num: NumFrac[A]): Pat[A] = {
+    val op = UnaryOp.Floor[A]()
+    UnaryOp(op, x)
+  }
+
+  def frac(implicit num: NumFrac[A]): Pat[A] = {
+    val op = UnaryOp.Frac[A]()
+    UnaryOp(op, x)
+  }
+
+  def squared(implicit num: Num[A]): Pat[A] = {
+    val op = UnaryOp.Squared[A]()
+    UnaryOp(op, x)
+  }
+
+  def cubed(implicit num: Num[A]): Pat[A] = {
+    val op = UnaryOp.Cubed[A]()
+    UnaryOp(op, x)
+  }
+
+  def reciprocal(implicit num: NumFrac[A]): Pat[A] = {
+    val op = UnaryOp.Reciprocal[A]()
     UnaryOp(op, x)
   }
 

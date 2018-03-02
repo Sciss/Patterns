@@ -32,7 +32,7 @@ object Types {
         case DoubleTop        .id => DoubleTop
         case DoubleSeqTop     .id => DoubleSeqTop
         case BooleanTop       .id => BooleanTop
-//        case BooleanSeqTop    .id => BooleanSeqTop
+        case BooleanSeqTop    .id => BooleanSeqTop
 //        case StringTop        .id => StringTop
         case Widen.idIdentity    => Widen.identity[Any]
         case intSeqWiden1     .id => intSeqWiden1
@@ -107,7 +107,15 @@ object Types {
   }
 
   trait NumFrac[A] extends Num[A] {
+    def floor (a: A): A
+    def ceil  (a: A): A
+    def frac  (a: A): A
+
     def div(a: A, b: A): A
+  }
+
+  trait NumBool[A] extends Aux {
+    def not(a: A): A
   }
 
 //  trait NumIntegral[T <: Top] extends Num[T] {
@@ -170,6 +178,10 @@ object Types {
 
   trait SeqLikeNumFrac[A] extends SeqLikeNum[A] with NumFrac[Seq[A]] {
     override protected val peer: NumFrac[A]
+
+    final def floor(a: Seq[A]): Seq[A] = unOp(a)(peer.floor)
+    final def ceil (a: Seq[A]): Seq[A] = unOp(a)(peer.ceil )
+    final def frac (a: Seq[A]): Seq[A] = unOp(a)(peer.frac )
 
     final def div(a: Seq[A], b: Seq[A]): Seq[A] = binOp(a, b)(peer.div)
   }
@@ -331,20 +343,24 @@ object Types {
 //    def zeroPat: Pat[Double] = 0.0
 //    def onePat : Pat[Double] = 1.0
 
-    def negate (a: Double): Double = -a
-    def abs    (a: Double): Double = math.abs(a)
+    def negate  (a: Double): Double = -a
+    def abs     (a: Double): Double = rd.abs(a)
 
     def toInt   (a: Double): Int     = a.toInt
     def toDouble(a: Double): Double  = a
 
-    def plus   (a: Double, b: Double): Double = a + b
-    def minus  (a: Double, b: Double): Double = a - b
-    def times  (a: Double, b: Double): Double = a * b
-    def div    (a: Double, b: Double): Double = a / b
-    def roundTo(a: Double, b: Double): Double = rd.roundTo(a, b)
+    def floor   (a: Double): Double  = rd.floor(a)
+    def ceil    (a: Double): Double  = rd.ceil (a)
+    def frac    (a: Double): Double  = rd.frac (a)
 
-    def %      (a: Double, b: Double): Double = a % b
-    def mod    (a: Double, b: Double): Double = rd.mod(a, b)
+    def plus    (a: Double, b: Double): Double = rd.+(a, b)
+    def minus   (a: Double, b: Double): Double = rd.-(a, b)
+    def times   (a: Double, b: Double): Double = rd.*(a, b)
+    def div     (a: Double, b: Double): Double = rd./(a, b)
+    def roundTo (a: Double, b: Double): Double = rd.roundTo(a, b)
+
+    def %       (a: Double, b: Double): Double = rd.%  (a, b)
+    def mod     (a: Double, b: Double): Double = rd.mod(a, b)
 
     def rand2[Tx](a: Double)(implicit r: Random[Tx], tx: Tx): Double =
       (r.nextDouble() * 2 - 1) * a
@@ -372,16 +388,38 @@ object Types {
 ////    private[patterns] val cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
 //  }
 
-//  sealed trait BooleanTop extends BooleanLikeTop with ScalarTop[Boolean]
+  implicit object BooleanSeqTop
+    extends NumBool[Seq[Boolean]] {
+
+    final val id = 5
+
+    type A = Boolean
+
+    def not(a: Seq[A]): Seq[A] = unOp(a)(!_)
+
+    final protected def unOp(a: Seq[A])(op: A => A): Seq[A] = a.map(op)
+
+    final protected def binOp(a: Seq[A], b: Seq[A])(op: (A, A) => A): Seq[A] = {
+      val as = a.size
+      val bs = b.size
+      val sz = math.max(as, bs)
+      Seq.tabulate(sz) { i =>
+        op(a(i % as), b(i % bs))
+      }
+    }
+  }
+
+  //  sealed trait BooleanTop extends BooleanLikeTop with ScalarTop[Boolean]
   implicit object BooleanTop
-    extends ToNum[Boolean] {
+    extends NumBool[Boolean]
+    with ToNum[Boolean] {
 
     final val id = 4
 
     def toInt   (a: Boolean): Int     = if (a) 1   else 0
     def toDouble(a: Boolean): Double  = if (a) 1.0 else 0.0
 
-  //    private[patterns] val cClassTag: ClassTag[COut] = ClassTag.Boolean
+    def not(a: Boolean): Boolean = !a
   }
 
   implicit object intSeqWiden1 extends /* IntLikeNum with */ Widen[Int, Seq[Int], Seq[Int]] {
