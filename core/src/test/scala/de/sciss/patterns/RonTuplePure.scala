@@ -250,9 +250,9 @@ object RonTuplePure {
   def makePart[A](pattern: Pat[A], cantus: Pat[A], rest: A, start: Pat[Int] = 0,
                   stutter: Pat[Int] = 1): (Pat[A], Pat[Double]) = {
     val durs0   = computeDurs(pattern, cantus, start).toDouble
-    val durs    = durs0.grouped(stutter).stutter(stutter).flatten / stutter.hold()
-    val pre     = Constant(rest).take(stutter)
+    val durs    = durs0  .grouped(stutter).stutter(stutter).flatten / stutter.hold()
     val post    = pattern.grouped(stutter).stutter(stutter).flatten
+    val pre     = Constant(rest).take(stutter)
     val ptrnOut = (pre ++ post).loop()
     (ptrnOut, durs * 0.02)
   }
