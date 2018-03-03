@@ -1,13 +1,13 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Widen}
+import de.sciss.patterns.Types.{Aux, Widen2}
 
 final case class Cat[A1, A2, A](a: Pat[A1], b: Pat[A2])
-                               (implicit protected val widen: Widen[A1, A2, A])
+                               (implicit w: Widen2[A1, A2, A])
   extends Pattern[A] {
 
-  override private[patterns] def aux: List[Aux] = widen :: Nil
+  override private[patterns] def aux: List[Aux] = w :: Nil
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     logStream("Cat.iterator")
@@ -39,10 +39,10 @@ final case class Cat[A1, A2, A](a: Pat[A1], b: Pat[A2])
       val ahn = ai.hasNext
       val res = if (ahn) {
         val aVal = ai.next()
-        widen.lift1(aVal)
+        w.widen1(aVal)
       } else {
         val bVal = bi.next()
-        widen.lift2(bVal)
+        w.widen2(bVal)
       }
       logStream(s"Cat.iterator.next(); ai.hasNext = $ahn; res = $res") // ${stream.hashCode().toHexString}
       res

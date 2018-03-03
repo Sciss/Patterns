@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{DoubleTop, IntTop, Num}
+import de.sciss.patterns.Types.{DoubleTop, Eq, IntTop, Num}
 import de.sciss.patterns.graph._
 
 object RonTuplePure {
@@ -206,7 +206,7 @@ object RonTuplePure {
     }
 
   // collects the indices of every occurrence of elements of t in s
-  def extract[A](s: Pat[A], t: Pat[A]): Pat[Pat[Int]] =
+  def extract[A: Eq](s: Pat[A], t: Pat[A]): Pat[Pat[Int]] =
     t.bubble.map { tj =>
       val same      = s sig_== tj.hold()
       val indices   = s.indices
@@ -231,13 +231,13 @@ object RonTuplePure {
   }
 
   // computes and sorts all possible sub patterns of a pattern
-  def computeDurs[A](pattern: Pat[A], cantus: Pat[A], start: Pat[Int] = 0): Pat[Int] = {
+  def computeDurs[A: Eq](pattern: Pat[A], cantus: Pat[A], start: Pat[Int] = 0): Pat[Int] = {
     val positions = extract(cantus, pattern)
     val tuples0   = allTuples(positions)
     val tuples    = tuples0.sortWith { (a, b) =>
-      val ad = computeDur(a, 7)
-      val bd = computeDur(b, 7)
-      ad > bd
+      val ad: Pat[Int] = computeDur(a, 7)
+      val bd: Pat[Int] = computeDur(b, 7)
+      ad sig_> bd
     }
     val cantusSz  = cantus.size
     val clump     = ((start mod cantusSz) ++ tuples.flatten).sliding(2)
@@ -247,8 +247,8 @@ object RonTuplePure {
     }
   }
 
-  def makePart[A](pattern: Pat[A], cantus: Pat[A], rest: A, start: Pat[Int] = 0,
-                  stutter: Pat[Int] = 1): (Pat[A], Pat[Double]) = {
+  def makePart[A: Eq](pattern: Pat[A], cantus: Pat[A], rest: A, start: Pat[Int] = 0,
+                      stutter: Pat[Int] = 1): (Pat[A], Pat[Double]) = {
     val durs0   = computeDurs(pattern, cantus, start).toDouble
     val durs    = durs0  .grouped(stutter).stutter(stutter).flatten / stutter.hold()
     val post    = pattern.grouped(stutter).stutter(stutter).flatten

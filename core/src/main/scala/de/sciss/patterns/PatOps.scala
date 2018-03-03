@@ -13,8 +13,8 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Num, NumBool, NumFrac, Ord, ToNum, Widen}
-import de.sciss.patterns.graph.{UnaryOp => UnOp, BinaryOp => BinOp, _}
+import de.sciss.patterns.Types.{EqC, Id, Num, NumBool, NumDoubleC, NumFrac, Ord, OrdC, ToNum, Widen, Widen2}
+import de.sciss.patterns.graph.{BinaryOp => BinOp, UnaryOp => UnOp, _}
 
 import scala.language.higherKinds
 
@@ -49,8 +49,8 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def unary_!         (implicit num: NumBool[A] ): Pat[A]         = UnOp(UnOp.Not[A](), x)
   def abs             (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Abs[A](), x)
 
-  def toInt     [C[_]](implicit num: ToNum[C, A]): Pat[C[Int]]    = UnOp(UnOp.ToInt   [C, A](), x)
-  def toDouble  [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.ToDouble[C, A](), x)
+  def toInt     [C[_]](implicit to: ToNum[C, A]): Pat[C[Int]]     = UnOp(UnOp.ToInt   [C, A](), x)
+  def toDouble  [C[_]](implicit to: ToNum[C, A]): Pat[C[Double]]  = UnOp(UnOp.ToDouble[C, A](), x)
 
   def ceil            (implicit num: NumFrac[A] ): Pat[A]         = UnOp(UnOp.Ceil    [A](), x)
   def floor           (implicit num: NumFrac[A] ): Pat[A]         = UnOp(UnOp.Floor   [A](), x)
@@ -58,114 +58,67 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def squared         (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Squared [A](), x)
   def cubed           (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Cubed   [A](), x)
 
-  def sqrt      [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Sqrt[C, A](), x)
-  def exp       [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Exp [C, A](), x)
+  def sqrt      [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Sqrt[C, A](), x)
+  def exp       [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Exp [C, A](), x)
 
-  def reciprocal      (implicit num: NumFrac[A] ): Pat[A]         = UnOp(UnOp.Reciprocal[A](), x)
+  def reciprocal[C[_], A1](implicit w: Widen[A, A1], num: NumFrac[A1]): Pat[A1] = UnOp(UnOp.Reciprocal[C, A1, A](), x)
 
-  def midicps   [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Midicps   [C, A](), x)
-  def cpsmidi   [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Cpsmidi   [C, A](), x)
-  def midiratio [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Midiratio [C, A](), x)
-  def ratiomidi [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Ratiomidi [C, A](), x)
-  def dbamp     [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Dbamp     [C, A](), x)
-  def ampdb     [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Ampdb     [C, A](), x)
+  def midicps   [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Midicps   [C, A](), x)
+  def cpsmidi   [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Cpsmidi   [C, A](), x)
+  def midiratio [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Midiratio [C, A](), x)
+  def ratiomidi [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Ratiomidi [C, A](), x)
+  def dbamp     [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Dbamp     [C, A](), x)
+  def ampdb     [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Ampdb     [C, A](), x)
 
-  def octcps    [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Octcps    [C, A](), x)
-  def cpsoct    [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Cpsoct    [C, A](), x)
-  def log       [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Log       [C, A](), x)
-  def log2      [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Log2      [C, A](), x)
-  def log10     [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Log10     [C, A](), x)
-  def sin       [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Sin       [C, A](), x)
-  def cos       [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Cos       [C, A](), x)
-  def tan       [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Tan       [C, A](), x)
-  def asin      [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Asin      [C, A](), x)
-  def acos      [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Acos      [C, A](), x)
-  def atan      [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Atan      [C, A](), x)
-  def sinh      [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Sinh      [C, A](), x)
-  def cosh      [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Cosh      [C, A](), x)
-  def tanh      [C[_]](implicit num: ToNum[C, A]): Pat[C[Double]] = UnOp(UnOp.Tanh      [C, A](), x)
+  def octcps    [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Octcps    [C, A](), x)
+  def cpsoct    [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Cpsoct    [C, A](), x)
+  def log       [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Log       [C, A](), x)
+  def log2      [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Log2      [C, A](), x)
+  def log10     [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Log10     [C, A](), x)
+  def sin       [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Sin       [C, A](), x)
+  def cos       [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Cos       [C, A](), x)
+  def tan       [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Tan       [C, A](), x)
+  def asin      [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Asin      [C, A](), x)
+  def acos      [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Acos      [C, A](), x)
+  def atan      [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Atan      [C, A](), x)
+  def sinh      [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Sinh      [C, A](), x)
+  def cosh      [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Cosh      [C, A](), x)
+  def tanh      [C[_]](implicit w: Widen[A, C[Double]], d: NumDoubleC[C]): Pat[C[Double]] = UnOp(UnOp.Tanh      [C, A](), x)
 
   def rand            (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Rand  [A](), x)
   def rand2           (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Rand2 [A](), x)
 
   // binary
 
-  def ++ [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2]): Pat[A2] =
-    Cat(x, that)
+  def ++ [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2]): Pat[A2] = Cat(x, that)
+  def :+ [A1, A2](elem: A1)     (implicit w: Widen2[A, A1, A2]): Pat[A2] = x ++ Pat(elem)
+  def +: [A1, A2](elem: A1)     (implicit w: Widen2[A1, A, A2]): Pat[A2] = Pat(elem) ++ x
 
-  def :+ [A1, A2](elem: A1)(implicit w: Widen[A, A1, A2]): Pat[A2] =
-    x ++ Pat(elem)
+  def +         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num     [A2]): Pat[A2] = BinOp(BinOp.Plus     [A2](), x, that)
+  def -         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num     [A2]): Pat[A2] = BinOp(BinOp.Minus    [A2](), x, that)
+  def *         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num     [A2]): Pat[A2] = BinOp(BinOp.Times    [A2](), x, that)
+  def /         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumFrac [A2]): Pat[A2] = BinOp(BinOp.Div      [A2](), x, that)
+  def %         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num     [A2]): Pat[A2] = BinOp(BinOp.%        [A2](), x, that)
+  def mod       [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num     [A2]): Pat[A2] = BinOp(BinOp.Mod      [A2](), x, that)
+  def roundTo   [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num     [A2]): Pat[A2] = BinOp(BinOp.RoundTo  [A2](), x, that)
+  def roundUpTo [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num     [A2]): Pat[A2] = BinOp(BinOp.RoundUpTo[A2](), x, that)
+  def trunc     [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num     [A2]): Pat[A2] = BinOp(BinOp.Trunc    [A2](), x, that)
 
-  def +: [A1, A2](elem: A1)(implicit w: Widen[A1, A, A2]): Pat[A2] =
-    Pat(elem) ++ x
+  def sig_<  [C[_]](that: Pat[A])(implicit ord: OrdC[C, A]): Pat[C[Boolean]] = BinOp(BinOp.Lt [C, A](), x, that)
+  def sig_<= [C[_]](that: Pat[A])(implicit ord: OrdC[C, A]): Pat[C[Boolean]] = BinOp(BinOp.Leq[C, A](), x, that)
+  def sig_>  [C[_]](that: Pat[A])(implicit ord: OrdC[C, A]): Pat[C[Boolean]] = BinOp(BinOp.Gt [C, A](), x, that)
+  def sig_>= [C[_]](that: Pat[A])(implicit ord: OrdC[C, A]): Pat[C[Boolean]] = BinOp(BinOp.Geq[C, A](), x, that)
 
-  def + [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
-    val op = BinOp.Plus[A2]()
-    BinOp(op, x, that)
-  }
+  def <  (that: Pat[A])(implicit ord: Ord[A]): Pat[Boolean] = BinOp(BinOp.Lt [Id, A](), x, that)
+  def <= (that: Pat[A])(implicit ord: Ord[A]): Pat[Boolean] = BinOp(BinOp.Leq[Id, A](), x, that)
+  def >  (that: Pat[A])(implicit ord: Ord[A]): Pat[Boolean] = BinOp(BinOp.Gt [Id, A](), x, that)
+  def >= (that: Pat[A])(implicit ord: Ord[A]): Pat[Boolean] = BinOp(BinOp.Geq[Id, A](), x, that)
 
-  def - [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
-    val op = BinOp.Minus[A2]()
-    BinOp(op, x, that)
-  }
-
-  def * [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
-    val op = BinOp.Times[A2]()
-    BinOp(op, x, that)
-  }
-
-  def / [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2], num: NumFrac[A2]): Pat[A2] = {
-    val op = BinOp.Div[A2]()
-    BinOp(op, x, that)
-  }
-
-  def % [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
-    val op = BinOp.%[A2]()
-    BinOp(op, x, that)
-  }
-
-  def mod[A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
-    val op = BinOp.Mod[A2]()
-    BinOp(op, x, that)
-  }
-
-  def roundTo[A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2], num: Num[A2]): Pat[A2] = {
-    val op = BinOp.RoundTo[A2]()
-    BinOp(op, x, that)
-  }
-
-  def <  [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2], ord: Ord[A2]): Pat[Boolean] = {
-    val op = BinOp.Lt[A2]()
-    BinOp(op, x, that)
-  }
-
-  def <= [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2], ord: Ord[A2]): Pat[Boolean] = {
-    val op = BinOp.Leq[A2]()
-    BinOp(op, x, that)
-  }
-
-  def >  [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2], ord: Ord[A2]): Pat[Boolean] = {
-    val op = BinOp.Gt[A2]()
-    BinOp(op, x, that)
-  }
-
-  def >= [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2], ord: Ord[A2]): Pat[Boolean] = {
-    val op = BinOp.Geq[A2]()
-    BinOp(op, x, that)
-  }
-
-  def sig_== [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2]): Pat[Boolean] = {
-    val op = BinOp.Eq[A2]()
-    BinOp(op, x, that)
-  }
-
-  def sig_!= [A1, A2](that: Pat[A1])(implicit w: Widen[A, A1, A2]): Pat[Boolean] = {
-    val op = BinOp.Neq[A2]()
-    BinOp(op, x, that)
-  }
+  def sig_== [C[_]](that: Pat[A])(implicit eq: EqC[C, A]): Pat[C[Boolean]] = BinOp(BinOp.Eq [C, A](), x, that)
+  def sig_!= [C[_]](that: Pat[A])(implicit eq: EqC[C, A]): Pat[C[Boolean]] = BinOp(BinOp.Neq[C, A](), x, that)
 
   def linlin[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
-                    (implicit w: Widen[A, A1, A2], num: NumFrac[A2]): Pat[A2] =
+                    (implicit w: Widen2[A, A1, A2], num: NumFrac[A2]): Pat[A2] =
     LinLin[A, A1, A2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
 
   def stutter(n: Pat[Int]): Pat[A] = Stutter(x, n)
@@ -321,7 +274,7 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
     FoldLeft[A, B](outer = x, z = z, itIn = itIn, itCarry = itCarry, inner = inner)
   }
 
-  def sortWith(lt: (Pat[A], Pat[A]) => Pat[Boolean]): Pat[Pat[A]] = {
+  def sortWith(lt: (Pat[A], Pat[A]) => Pat[Id[Boolean]]): Pat[Pat[A]] = {
     val b     = Graph.builder
     val it    = b.allocToken[(A, A)]()
     val inner = /* Graph */ {

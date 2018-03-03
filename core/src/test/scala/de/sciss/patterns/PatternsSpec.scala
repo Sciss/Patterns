@@ -162,7 +162,7 @@ class PatternsSpec extends PatSpec {
   "SortWith" should work in {
     val inL     = List(1, 4, 7, 10, 13)
     val in      = ArithmSeq(1, 3).take(5)
-    val sorted  = Graph { in.bubble.sortWith((a, b) => a >= b).flatten }
+    val sorted  = Graph { in.bubble.sortWith(_ >= _).flatten }
     eval(sorted) shouldBe inL.sorted.reverse
   }
 

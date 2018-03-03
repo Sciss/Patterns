@@ -14,12 +14,12 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Num, Widen}
+import de.sciss.patterns.Types.{Aux, Num, Widen2}
 import de.sciss.patterns.graph.impl.SeriesLikeStreamImpl
 
 /** A pattern that generates an arithmetic series. Corresponds to `Pseries` in SuperCollider. */
 final case class ArithmSeq[A1, A2, A](start: Pat[A1], step: Pat[A2])
-                                     (implicit protected val widen: Widen[A1, A2, A], num: Num[A])
+                                     (implicit protected val widen: Widen2[A1, A2, A], num: Num[A])
   extends Pattern[A] {
 
   override private[patterns] def aux: List[Aux] = widen :: num :: Nil
