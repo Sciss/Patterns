@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, EqC, Num, NumFrac, NumInt, OrdC, ToNum, Widen2}
+import de.sciss.patterns.Types.{Aux, Num, NumDouble, NumFrac, NumInt, Ord, Widen2}
 
 import scala.language.higherKinds
 
@@ -84,43 +84,43 @@ object BinaryOp {
   // ---- (Ord, Ord) -> Boolean ----
 
   /** Equal */
-  final case class Eq[C[_], A]()(implicit eq: EqC[C, A]) extends PureOp[A, C[Boolean]] {
-    def apply(a: A, b: A)     : C[Boolean]  = eq.eq(a, b)
+  final case class Eq[A, B]()(implicit eq: Types.Eq[A] { type Boolean = B }) extends PureOp[A, B] {
+    def apply(a: A, b: A)     : B           = eq.eq(a, b)
     def name                  : String      = "Eq"
     private[patterns] def aux : List[Aux]   = Nil
   }
 
   /** Not equal */
-  final case class Neq[C[_], A]()(implicit eq: EqC[C, A]) extends PureOp[A, C[Boolean]] {
-    def apply(a: A, b: A)     : C[Boolean]  = eq.neq(a, b)
+  final case class Neq[A, B]()(implicit eq: Types.Eq[A] { type Boolean = B}) extends PureOp[A, B] {
+    def apply(a: A, b: A)     : B           = eq.neq(a, b)
     def name                  : String      = "Neq"
     private[patterns] def aux : List[Aux]   = Nil
   }
 
   /** Less than */
-  final case class Lt[C[_], A]()(implicit ord: OrdC[C, A]) extends PureOp[A, C[Boolean]] {
-    def apply(a: A, b: A)     : C[Boolean]  = ord.lt(a, b)
+  final case class Lt[A, B]()(implicit ord: Ord[A] { type Boolean = B }) extends PureOp[A, B] {
+    def apply(a: A, b: A)     : B           = ord.lt(a, b)
     def name                  : String      = "Lt"
     private[patterns] def aux : List[Aux]   = ord :: Nil
   }
 
   /** Greater than */
-  final case class Gt[C[_], A]()(implicit ord: OrdC[C, A]) extends PureOp[A, C[Boolean]] {
-    def apply(a: A, b: A)     : C[Boolean]  = ord.gt(a, b)
+  final case class Gt[A, B]()(implicit ord: Ord[A] { type Boolean = B }) extends PureOp[A, B] {
+    def apply(a: A, b: A)     : B           = ord.gt(a, b)
     def name                  : String      = "Gt"
     private[patterns] def aux : List[Aux]   = ord :: Nil
   }
 
   /** Less than or equal */
-  final case class Leq[C[_], A]()(implicit ord: OrdC[C, A]) extends PureOp[A, C[Boolean]] {
-    def apply(a: A, b: A)     : C[Boolean]  = ord.leq(a, b)
+  final case class Leq[A, B]()(implicit ord: Ord[A] { type Boolean = B }) extends PureOp[A, B] {
+    def apply(a: A, b: A)     : B           = ord.leq(a, b)
     def name                  : String      = "Leq"
     private[patterns] def aux : List[Aux]   = ord :: Nil
   }
 
   /** Greater than or equal */
-  final case class Geq[C[_], A]()(implicit ord: OrdC[C, A]) extends PureOp[A, C[Boolean]] {
-    def apply(a: A, b: A)     : C[Boolean]  = ord.geq(a, b)
+  final case class Geq[A, B]()(implicit ord: Ord[A] { type Boolean = B }) extends PureOp[A, B] {
+    def apply(a: A, b: A)     : B           = ord.geq(a, b)
     def name                  : String      = "Geq"
     private[patterns] def aux : List[Aux]   = ord :: Nil
   }
@@ -187,26 +187,26 @@ object BinaryOp {
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
-  final case class Atan2[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
-    def apply(a: A, b: A)     : C[Double] = num.double.atan2(num.toDouble(a), num.toDouble(b))
+  final case class Atan2[A]()(implicit num: NumDouble[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.atan2(a, b)
     def name                  : String    = "Atan2"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
-  final case class Hypot[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
-    def apply(a: A, b: A)     : C[Double] = num.double.hypot(num.toDouble(a), num.toDouble(b))
+  final case class Hypot[A]()(implicit num: NumDouble[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.hypot(a, b)
     def name                  : String    = "Hypot"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
-  final case class Hypotx[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
-    def apply(a: A, b: A)     : C[Double] = num.double.hypotx(num.toDouble(a), num.toDouble(b))
+  final case class Hypotx[A]()(implicit num: NumDouble[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.hypotx(a, b)
     def name                  : String    = "Hypotx"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
-  final case class Pow[C[_], A]()(implicit num: ToNum[C, A]) extends PureOp[A, C[Double]] {
-    def apply(a: A, b: A)     : C[Double] = num.double.pow(num.toDouble(a), num.toDouble(b))
+  final case class Pow[A]()(implicit num: NumDouble[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.pow(a, b)
     def name                  : String    = "Pow"
     private[patterns] def aux : List[Aux] = num :: Nil
   }

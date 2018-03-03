@@ -14,9 +14,9 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Ord}
+import de.sciss.patterns.Types.{Aux, ScalarOrd}
 
-final case class Sorted[A](in: Pat[A])(implicit ord: Ord[A]) extends Pattern[A] {
+final case class Sorted[A](in: Pat[A])(implicit ord: ScalarOrd[A]) extends Pattern[A] {
   override private[patterns] def aux: List[Aux] = ord :: Nil
 
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)

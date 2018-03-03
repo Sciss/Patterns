@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Num, NumBool, NumDoubleC, NumFrac, ToNum, Widen}
+import de.sciss.patterns.Types.{Aux, Num, NumBool, NumDouble, NumFrac, ToNum, Widen}
 
 import scala.language.higherKinds
 
@@ -69,16 +69,16 @@ object UnaryOp {
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
-  final case class ToDouble[C[_], A]()(implicit to: ToNum[C, A]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = to.toDouble(a)
+  final case class ToDouble[A, B]()(implicit to: ToNum[A] { type Double = B }) extends PureOp[A, B] {
+    def apply(a: A)           : B         = to.toDouble(a)
     def name                  : String    = "ToDouble"
     private[patterns] def aux : List[Aux] = to :: Nil
   }
 
-  final case class ToInt[C[_], A]()(implicit to: ToNum[C, A]) extends PureOp[A, C[Int]] {
-    def apply(a: A): C[Int] = to.toInt(a)
-    def name = "ToInt"
-    private[patterns] def aux: List[Aux] = to :: Nil
+  final case class ToInt[A, B]()(implicit to: ToNum[A] { type Int = B }) extends PureOp[A, B] {
+    def apply(a: A)           : B         = to.toInt(a)
+    def name                  : String    = "ToInt"
+    private[patterns] def aux : List[Aux] = to :: Nil
   }
 
   final case class Ceil[A]()(implicit num: NumFrac[A]) extends PureOp[A, A] {
@@ -117,140 +117,140 @@ object UnaryOp {
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
-  final case class Sqrt[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.sqrt(w.widen1(a))
+  final case class Sqrt[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.sqrt(w.widen1(a))
     def name                  : String    = "Sqrt"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Exp[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.exp(w.widen1(a))
+  final case class Exp[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.exp(w.widen1(a))
     def name                  : String    = "Exp"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Reciprocal[C[_], A, A1]()(implicit w: Widen[A1, A], num: NumFrac[A]) extends PureOp[A1, A] {
-    def apply(a: A1)          : A         = num.reciprocal(w.widen1(a))
+  final case class Reciprocal[A, B]()(implicit w: Widen[A, B], num: NumFrac[B]) extends PureOp[A, B] {
+    def apply(a: A )          : B         = num.reciprocal(w.widen1(a))
     def name                  : String    = "Reciprocal"
     private[patterns] def aux : List[Aux] = w :: num :: Nil
   }
 
-  final case class Midicps[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.midicps(w.widen1(a))
+  final case class Midicps[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.midicps(w.widen1(a))
     def name                  : String    = "Midicps"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Cpsmidi[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.cpsmidi(w.widen1(a))
+  final case class Cpsmidi[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.cpsmidi(w.widen1(a))
     def name                  : String    = "Cpsmidi"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Midiratio[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.midiratio(w.widen1(a))
+  final case class Midiratio[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.midiratio(w.widen1(a))
     def name                  : String    = "Midiratio"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Ratiomidi[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.ratiomidi(w.widen1(a))
+  final case class Ratiomidi[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.ratiomidi(w.widen1(a))
     def name                  : String    = "Ratiomidi"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Dbamp[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.dbamp(w.widen1(a))
+  final case class Dbamp[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.dbamp(w.widen1(a))
     def name                  : String    = "Dbamp"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Ampdb[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.ampdb(w.widen1(a))
+  final case class Ampdb[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.ampdb(w.widen1(a))
     def name                  : String    = "Ampdb"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Octcps[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.octcps(w.widen1(a))
+  final case class Octcps[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.octcps(w.widen1(a))
     def name                  : String    = "Octcps"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Cpsoct[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.cpsoct(w.widen1(a))
+  final case class Cpsoct[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.cpsoct(w.widen1(a))
     def name                  : String    = "Cpsoct"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Log[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.log(w.widen1(a))
+  final case class Log[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.log(w.widen1(a))
     def name                  : String    = "Log"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Log2[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A): C[Double] = d.log2(w.widen1(a))
+  final case class Log2[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A): B         = d.log2(w.widen1(a))
     def name = "Log2"
     private[patterns] def aux: List[Aux] = w :: d :: Nil
   }
 
-  final case class Log10[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A): C[Double] = d.log10(w.widen1(a))
+  final case class Log10[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A): B         = d.log10(w.widen1(a))
     def name = "Log10"
     private[patterns] def aux: List[Aux] = w :: d :: Nil
   }
 
-  final case class Sin[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A): C[Double] = d.sin(w.widen1(a))
+  final case class Sin[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A): B         = d.sin(w.widen1(a))
     def name = "Sin"
     private[patterns] def aux: List[Aux] = w :: d :: Nil
   }
 
-  final case class Cos[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A): C[Double] = d.cos(w.widen1(a))
+  final case class Cos[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A): B         = d.cos(w.widen1(a))
     def name = "Cos"
     private[patterns] def aux: List[Aux] = w :: d :: Nil
   }
 
-  final case class Tan[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A): C[Double] = d.tan(w.widen1(a))
+  final case class Tan[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A): B         = d.tan(w.widen1(a))
     def name = "Tan"
     private[patterns] def aux: List[Aux] = w :: d :: Nil
   }
 
-  final case class Asin[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A): C[Double] = d.asin(w.widen1(a))
+  final case class Asin[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A): B         = d.asin(w.widen1(a))
     def name = "Asin"
     private[patterns] def aux: List[Aux] = w :: d :: Nil
   }
 
-  final case class Acos[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A): C[Double] = d.acos(w.widen1(a))
+  final case class Acos[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A): B         = d.acos(w.widen1(a))
     def name = "Acos"
     private[patterns] def aux: List[Aux] = w :: d :: Nil
   }
 
-  final case class Atan[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A): C[Double] = d.atan(w.widen1(a))
+  final case class Atan[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A): B         = d.atan(w.widen1(a))
     def name = "Atan"
     private[patterns] def aux: List[Aux] = w :: d :: Nil
   }
 
-  final case class Sinh[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.sinh(w.widen1(a))
+  final case class Sinh[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.sinh(w.widen1(a))
     def name                  : String    = "Sinh"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Cosh[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.cosh(w.widen1(a))
+  final case class Cosh[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.cosh(w.widen1(a))
     def name                  : String    = "Cosh"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }
 
-  final case class Tanh[C[_], A]()(implicit w: Widen[A, C[Double]], d: NumDoubleC[C]) extends PureOp[A, C[Double]] {
-    def apply(a: A)           : C[Double] = d.tanh(w.widen1(a))
+  final case class Tanh[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = d.tanh(w.widen1(a))
     def name                  : String    = "Tanh"
     private[patterns] def aux : List[Aux] = w :: d :: Nil
   }

@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Eq, Num}
+import de.sciss.patterns.Types.{Num, ScalarEq}
 import de.sciss.patterns.graph.{Constant, Gate, Hold}
 
 class RonTupleSpec extends PatSpec {
@@ -35,7 +35,7 @@ class RonTupleSpec extends PatSpec {
       }
     }
 
-  def extract_Pat[A: Eq](s: Pat[A], t: Pat[A]): Pat[Pat[Int]] =
+  def extract_Pat[A: ScalarEq](s: Pat[A], t: Pat[A]): Pat[Pat[Int]] =
     t.bubble.map { tj: Pat[A] =>
       val same      = s sig_== Hold(tj)
       val indices   = s.indices
@@ -96,7 +96,7 @@ class RonTupleSpec extends PatSpec {
     durs
   }
 
-  def computeDurs_Pat[A: Eq](pattern: Pat[A], cantus: Pat[A], start: Pat[Int] = 0): Pat[Int] = {
+  def computeDurs_Pat[A: ScalarEq](pattern: Pat[A], cantus: Pat[A], start: Pat[Int] = 0): Pat[Int] = {
     val positions = extract_Pat(cantus, pattern) // <| (_.size.poll("positions.size"))
     val tuples0   = allTuples_Pat(positions)     // <| (_.size.poll("tuple0.size"))
     val tuples    = tuples0.sortWith { (a, b) =>
