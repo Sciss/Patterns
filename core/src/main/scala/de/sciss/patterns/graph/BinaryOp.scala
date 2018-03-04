@@ -69,15 +69,15 @@ object BinaryOp {
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
-  final case class Mod[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.mod(a, b)
-    def name                  : String    = "Mod"
-    private[patterns] def aux : List[Aux] = num :: Nil
-  }
-
   final case class % [A]()(implicit num: Num[A]) extends PureOp[A, A] {
     def apply(a: A, b: A)     : A         = num.%(a, b)
     def name                  : String    = "%"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
+
+  final case class Mod[A]()(implicit num: Num[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.mod(a, b)
+    def name                  : String    = "Mod"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
@@ -211,48 +211,85 @@ object BinaryOp {
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
-// XXX TODO:
-//  LeftShift
-//  RightShift
+  final case class LeftShift[A]()(implicit num: NumInt[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.<<(a, b)
+    def name                  : String    = "LeftShift"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
 
-// XXX TODO:
-//  Ring1
-//  Ring2
-//  Ring3
-//  Ring4
-//  Difsqr
-//  Sumsqr
-//  Sqrsum
-//  Sqrdif
-//  Absdif
+  final case class RightShift[A]()(implicit num: NumInt[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.>>(a, b)
+    def name                  : String    = "RightShift"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
+
+  final case class UnsignedRightShift[A]()(implicit num: NumInt[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.>>>(a, b)
+    def name                  : String    = "UnsignedRightShift"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
+
+  //  Ring1
+  //  Ring2
+  //  Ring3
+  //  Ring4
+
+  final case class Difsqr[A]()(implicit num: Num[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.difsqr(a, b)
+    def name                  : String    = "Difsqr"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
+
+  final case class Sumsqr[A]()(implicit num: Num[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.sumsqr(a, b)
+    def name                  : String    = "Sumsqr"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
+
+  final case class Sqrsum[A]()(implicit num: Num[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.sqrsum(a, b)
+    def name                  : String    = "Sqrsum"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
+
+  final case class Sqrdif[A]()(implicit num: Num[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.sqrdif(a, b)
+    def name                  : String    = "Sqrdif"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
+
+  final case class Absdif[A]()(implicit num: Num[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.absdif(a, b)
+    def name                  : String    = "Absdif"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
+
 //  Thresh
 //  Amclip
 //  Scaleneg
 
   final case class Clip2[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A): A = num.clip2(a, b)
-
-    def name = "Clip2"
-
-    private[patterns] def aux: List[Aux] = num :: Nil
+    def apply(a: A, b: A)     : A         = num.clip2(a, b)
+    def name                  : String    = "Clip2"
+    private[patterns] def aux : List[Aux] = num :: Nil
   }
 
-//  XXX TODO: Excess
+  final case class Excess[A]()(implicit num: Num[A]) extends PureOp[A, A] {
+    def apply(a: A, b: A)     : A         = num.excess(a, b)
+    def name                  : String    = "Excess"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
 
   final case class Fold2[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A): A = num.fold2(a, b)
-
-    def name = "Fold2"
-
-    private[patterns] def aux: List[Aux] = num :: Nil
+    def apply(a: A, b: A)     : A         = num.fold2(a, b)
+    def name                  : String    = "Fold2"
+    private[patterns] def aux : List[Aux] = num :: Nil
   }
 
   final case class Wrap2[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A): A = num.wrap2(a, b)
-
-    def name = "Wrap2"
-
-    private[patterns] def aux: List[Aux] = num :: Nil
+    def apply(a: A, b: A)     : A         = num.wrap2(a, b)
+    def name                  : String    = "Wrap2"
+    private[patterns] def aux : List[Aux] = num :: Nil
   }
 }
 

@@ -145,32 +145,47 @@ object Types {
     def plus      (a: A, b: A): A
     def minus     (a: A, b: A): A
     def times     (a: A, b: A): A
-    def roundTo   (a: A, b: A): A
-    def roundUpTo (a: A, b: A): A
-    def trunc     (a: A, b: A): A
     def %         (a: A, b: A): A
     def mod       (a: A, b: A): A
     def min       (a: A, b: A): A
     def max       (a: A, b: A): A
+    def roundTo   (a: A, b: A): A
+    def roundUpTo (a: A, b: A): A
+    def trunc     (a: A, b: A): A
+    //    def ring1     (a: A, b: A): A
+    //    def ring2     (a: A, b: A): A
+    //    def ring3     (a: A, b: A): A
+    //    def ring4     (a: A, b: A): A
+    def difsqr    (a: A, b: A): A
+    def sumsqr    (a: A, b: A): A
+    def sqrsum    (a: A, b: A): A
+    def sqrdif    (a: A, b: A): A
+    def absdif    (a: A, b: A): A
+    //    def thresh    (a: A, b: A): A
+    //    def amclip    (a: A, b: A): A
+    //    def scaleneg  (a: A, b: A): A
     def clip2     (a: A, b: A): A
+    def excess    (a: A, b: A): A
     def fold2     (a: A, b: A): A
     def wrap2     (a: A, b: A): A
-
-    def squared   (a: A): A
-    def cubed     (a: A): A
 
     // unary
     def negate (a: A): A
     def abs    (a: A): A
     def signum (a: A): A
 
+    def squared   (a: A): A
+    def cubed     (a: A): A
+
     def zero: A
     def one : A
 
+    // random
     def rand [Tx](a: A      )(implicit r: Random[Tx], tx: Tx): A
     def rand2[Tx](a: A      )(implicit r: Random[Tx], tx: Tx): A
     def rrand[Tx](a: A, b: A)(implicit r: Random[Tx], tx: Tx): A
 
+    // ternary
     def fold (a: A, lo: A, hi: A): A
   }
 
@@ -203,6 +218,10 @@ object Types {
 
     def lcm     (a: A, b: A): A
     def gcd     (a: A, b: A): A
+
+    def <<      (a: A, b: A): A
+    def >>      (a: A, b: A): A
+    def >>>     (a: A, b: A): A
   }
 
   type ScalarNumInt[A] = NumInt[A] with Scalar[A]
@@ -269,7 +288,7 @@ object Types {
     with    SeqLikeNum  [Int]
     with    SeqLikeToNum[Int] {
 
-    protected final val peer: IntTop.type = IntTop
+    protected val peer: IntTop.type = IntTop
 
     def unary_~(a: In): In = unOp(a)(peer.unary_~)
 
@@ -279,6 +298,10 @@ object Types {
 
     def lcm (a: In, b: In): In = binOp(a, b)(peer.lcm)
     def gcd (a: In, b: In): In = binOp(a, b)(peer.gcd)
+
+    def <<  (a: In, b: In): In = binOp(a, b)(peer.<<)
+    def >>  (a: In, b: In): In = binOp(a, b)(peer.>>)
+    def >>> (a: In, b: In): In = binOp(a, b)(peer.>>>)
 
     final val id = 1
   }
@@ -293,39 +316,50 @@ object Types {
     def zero   : Int = 0
     def one    : Int = 1
 
-    def negate    (a: Int): Int     = -a
-    def abs       (a: Int): Int     = ri.abs(a)
-    def signum    (a: Int): Int     = ri.signum(a)
-
     def toInt     (a: Int): Int     = a
     def toDouble  (a: Int): Double  = a.toDouble
 
     def plus      (a: Int, b: Int): Int = a + b
     def minus     (a: Int, b: Int): Int = a - b
     def times     (a: Int, b: Int): Int = a * b
-    def roundTo   (a: Int, b: Int): Int = if (b == 0) a else math.round(a.toDouble / b).toInt * b
-    def roundUpTo (a: Int, b: Int): Int = ???
-    def trunc     (a: Int, b: Int): Int = ???
-
     def %         (a: Int, b: Int): Int = a % b
     def mod       (a: Int, b: Int): Int = ri.mod(a, b)
     def min       (a: Int, b: Int): Int = ri.min(a, b)
     def max       (a: Int, b: Int): Int = ri.max(a, b)
+
+    def &         (a: Int, b: Int): Int = a & b
+    def |         (a: Int, b: Int): Int = a | b
+    def ^         (a: Int, b: Int): Int = a ^ b
     def lcm       (a: Int, b: Int): Int = ri.lcm(a, b)
     def gcd       (a: Int, b: Int): Int = ri.gcd(a, b)
 
+    def roundTo   (a: Int, b: Int): Int = if (b == 0) a else math.round(a.toDouble / b).toInt * b
+    def roundUpTo (a: Int, b: Int): Int = ???
+    def trunc     (a: Int, b: Int): Int = ???
+
+    def <<        (a: Int, b: Int): Int = a << b
+    def >>        (a: Int, b: Int): Int = a >> b
+    def >>>       (a: Int, b: Int): Int = a >>> b
+
+    def difsqr    (a: Int, b: Int): Int = ???
+    def sumsqr    (a: Int, b: Int): Int = ???
+    def sqrsum    (a: Int, b: Int): Int = ???
+    def sqrdif    (a: Int, b: Int): Int = ???
+    def absdif    (a: Int, b: Int): Int = ???
+
     def clip2     (a: Int, b: Int): Int = ri.clip2(a, b)
+    def excess    (a: Int, b: Int): Int = ??? // ri.excess(a, b)
     def fold2     (a: Int, b: Int): Int = ri.fold2(a, b)
     def wrap2     (a: Int, b: Int): Int = ri.wrap2(a, b)
+
+    def negate    (a: Int): Int     = -a
+    def abs       (a: Int): Int     = ri.abs(a)
+    def signum    (a: Int): Int     = ri.signum(a)
 
     def unary_~   (a: Int): Int = ~a
 
     def squared   (a: Int): Int = a * a       // ri.squared: Long
     def cubed     (a: Int): Int = a * a * a   // ri2.cubed : Long
-
-    def &         (a: Int, b: Int): Int = a & b
-    def |         (a: Int, b: Int): Int = a | b
-    def ^         (a: Int, b: Int): Int = a ^ b
 
     def rand[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int =
       if (a >= 0) r.nextInt( a)     // may throw exception
@@ -368,6 +402,45 @@ object Types {
     def zero   : In = 0.0
     def one    : In = 1.0
 
+    // binary
+
+    def plus      (a: In, b: In): In = rd.+(a, b)
+    def minus     (a: In, b: In): In = rd.-(a, b)
+    def times     (a: In, b: In): In = rd.*(a, b)
+    def div       (a: In, b: In): In = rd./(a, b)
+    def %         (a: In, b: In): In = rd.%  (a, b)
+    def mod       (a: In, b: In): In = rd.mod(a, b)
+
+    def lt        (a: In, b: In): Boolean = a <  b
+    def leq       (a: In, b: In): Boolean = a <= b
+    def gt        (a: In, b: In): Boolean = a >  b
+    def geq       (a: In, b: In): Boolean = a >= b
+
+    def min       (a: In, b: In): In = rd.min(a, b)
+    def max       (a: In, b: In): In = rd.max(a, b)
+
+    def roundTo   (a: In, b: In): In = rd.roundTo(a, b)
+    def roundUpTo (a: In, b: In): In = rd.roundUpTo(a, b)
+    def trunc     (a: In, b: In): In = rd.trunc(a, b)
+
+    def atan2     (a: In, b: In): In = rd.atan2 (a, b)
+    def hypot     (a: In, b: In): In = rd.hypot (a, b)
+    def hypotx    (a: In, b: In): In = rd.hypotx(a, b)
+    def pow       (a: In, b: In): In = rd.pow   (a, b)
+
+    def difsqr    (a: In, b: In): In = rd.difsqr(a, b)
+    def sumsqr    (a: In, b: In): In = rd.sumsqr(a, b)
+    def sqrsum    (a: In, b: In): In = rd.sqrsum(a, b)
+    def sqrdif    (a: In, b: In): In = rd.sqrdif(a, b)
+    def absdif    (a: In, b: In): In = rd.absdif(a, b)
+
+    def clip2     (a: In, b: In): In = rd.clip2(a, b)
+    def excess    (a: In, b: In): In = rd.excess(a, b)
+    def fold2     (a: In, b: In): In = rd.fold2(a, b)
+    def wrap2     (a: In, b: In): In = rd.wrap2(a, b)
+
+    // unary
+
     def negate    (a: In): In = -a
     def abs       (a: In): In = rd.abs(a)
     def signum    (a: In): In = rd.signum(a)
@@ -399,29 +472,6 @@ object Types {
     def cosh      (a: In): In     = rd.cosh     (a)
     def tanh      (a: In): In     = rd.tanh     (a)
 
-    def atan2     (a: In, b: In): In = rd.atan2 (a, b)
-    def hypot     (a: In, b: In): In = rd.hypot (a, b)
-    def hypotx    (a: In, b: In): In = rd.hypotx(a, b)
-    def pow       (a: In, b: In): In = rd.pow   (a, b)
-
-    def plus      (a: In, b: In): In = rd.+(a, b)
-    def minus     (a: In, b: In): In = rd.-(a, b)
-    def times     (a: In, b: In): In = rd.*(a, b)
-    def div       (a: In, b: In): In = rd./(a, b)
-    def roundTo   (a: In, b: In): In = rd.roundTo(a, b)
-    def roundUpTo (a: In, b: In): In = rd.roundUpTo(a, b)
-    def trunc     (a: In, b: In): In = rd.trunc(a, b)
-
-    def %         (a: In, b: In): In = rd.%  (a, b)
-    def mod       (a: In, b: In): In = rd.mod(a, b)
-
-    def min       (a: In, b: In): In = rd.min(a, b)
-    def max       (a: In, b: In): In = rd.max(a, b)
-
-    def clip2     (a: In, b: In): In = rd.clip2(a, b)
-    def fold2     (a: In, b: In): In = rd.fold2(a, b)
-    def wrap2     (a: In, b: In): In = rd.wrap2(a, b)
-
     def sqrt(a: In): In = rd.sqrt(a)
     def exp (a: In): In = rd.exp (a)
 
@@ -441,11 +491,6 @@ object Types {
 
     def coin[Tx](a: In)(implicit r: Random[Tx], tx: Tx): Boolean =
       r.nextDouble() < a
-
-    def lt (a: In, b: In): Boolean = a <  b
-    def leq(a: In, b: In): Boolean = a <= b
-    def gt (a: In, b: In): Boolean = a >  b
-    def geq(a: In, b: In): Boolean = a >= b
 
     def fold(a: In, lo: In, hi: In): In = rd.fold(a, lo, hi)
   }

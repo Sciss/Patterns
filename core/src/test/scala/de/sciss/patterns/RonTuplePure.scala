@@ -307,7 +307,7 @@ object RonTuplePure {
           "note"    -> mkNotes(notePat),
           "rest"    -> (notePat sig_== -100),
           "dur"     -> durPat,
-          "legato"  -> partsIdxH.linlin(0, numParts, 0.02, 1.0),
+          "legato"  -> partsIdxH.linlin(0, numParts, 0.02, 1.0),  // XXX TODO: lincurve instead
           "i"       -> (partsIdxH + offset).mod(24),
           "ar"      -> 0.001,
           "db"      -> partsIdxH.linlin(0, numParts, -40.0, -30.0)

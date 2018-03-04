@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Eq, Num, NumBool, NumDouble, NumFrac, Ord, ScalarOrd, ToNum, Widen, Widen2}
+import de.sciss.patterns.Types.{Eq, Num, NumBool, NumDouble, NumFrac, NumInt, Ord, ScalarOrd, ToNum, Widen, Widen2}
 import de.sciss.patterns.graph.{BinaryOp => BinOp, UnaryOp => UnOp, _}
 
 final class PatOps[A](private val x: Pat[A]) extends AnyVal {
@@ -98,23 +98,64 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def /         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumFrac   [A2]): Pat[A2] = BinOp(BinOp.Div      [A2](), x, that)
   def %         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.%        [A2](), x, that)
   def mod       [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.Mod      [A2](), x, that)
+
+  def sig_== (that: Pat[A])(implicit eq: Eq[A]): Pat[eq.Boolean] = BinOp(BinOp.Eq [A, eq.Boolean]()(eq), x, that)
+  def sig_!= (that: Pat[A])(implicit eq: Eq[A]): Pat[eq.Boolean] = BinOp(BinOp.Neq[A, eq.Boolean]()(eq), x, that)
+
+  def <  (that: Pat[A])(implicit ord: Ord[A]): Pat[ord.Boolean] = BinOp(BinOp.Lt [A, ord.Boolean]()(ord), x, that)
+  def >  (that: Pat[A])(implicit ord: Ord[A]): Pat[ord.Boolean] = BinOp(BinOp.Gt [A, ord.Boolean]()(ord), x, that)
+  def <= (that: Pat[A])(implicit ord: Ord[A]): Pat[ord.Boolean] = BinOp(BinOp.Leq[A, ord.Boolean]()(ord), x, that)
+  def >= (that: Pat[A])(implicit ord: Ord[A]): Pat[ord.Boolean] = BinOp(BinOp.Geq[A, ord.Boolean]()(ord), x, that)
+
+  def min       [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.Min      [A2](), x, that)
+  def max       [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.Max      [A2](), x, that)
+
+  def &   (that: Pat[A])(implicit num: NumInt[A]): Pat[A] = BinOp(BinOp.BitAnd[A](), x, that)
+  def |   (that: Pat[A])(implicit num: NumInt[A]): Pat[A] = BinOp(BinOp.BitOr [A](), x, that)
+  def ^   (that: Pat[A])(implicit num: NumInt[A]): Pat[A] = BinOp(BinOp.BitXor[A](), x, that)
+
+  def lcm (that: Pat[A])(implicit num: NumInt[A]): Pat[A] = BinOp(BinOp.Lcm   [A](), x, that)
+  def gcd (that: Pat[A])(implicit num: NumInt[A]): Pat[A] = BinOp(BinOp.Gcd   [A](), x, that)
+
   def roundTo   [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.RoundTo  [A2](), x, that)
   def roundUpTo [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.RoundUpTo[A2](), x, that)
   def trunc     [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.Trunc    [A2](), x, that)
 
   def atan2     [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumDouble [A2]): Pat[A2] = BinOp(BinOp.Atan2    [A2](), x, that)
+  def hypot     [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumDouble [A2]): Pat[A2] = BinOp(BinOp.Hypot    [A2](), x, that)
+  def hypotx    [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumDouble [A2]): Pat[A2] = BinOp(BinOp.Hypotx   [A2](), x, that)
+  def pow       [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumDouble [A2]): Pat[A2] = BinOp(BinOp.Pow      [A2](), x, that)
 
-  def <  (that: Pat[A])(implicit ord: Ord[A]): Pat[ord.Boolean] = BinOp(BinOp.Lt [A, ord.Boolean]()(ord), x, that)
-  def <= (that: Pat[A])(implicit ord: Ord[A]): Pat[ord.Boolean] = BinOp(BinOp.Leq[A, ord.Boolean]()(ord), x, that)
-  def >  (that: Pat[A])(implicit ord: Ord[A]): Pat[ord.Boolean] = BinOp(BinOp.Gt [A, ord.Boolean]()(ord), x, that)
-  def >= (that: Pat[A])(implicit ord: Ord[A]): Pat[ord.Boolean] = BinOp(BinOp.Geq[A, ord.Boolean]()(ord), x, that)
+  def <<  (that: Pat[A])(implicit num: NumInt[A]): Pat[A] = BinOp(BinOp.LeftShift         [A](), x, that)
+  def >>  (that: Pat[A])(implicit num: NumInt[A]): Pat[A] = BinOp(BinOp.RightShift        [A](), x, that)
+  def >>> (that: Pat[A])(implicit num: NumInt[A]): Pat[A] = BinOp(BinOp.UnsignedRightShift[A](), x, that)
 
-  def sig_== (that: Pat[A])(implicit eq: Eq[A]): Pat[eq.Boolean] = BinOp(BinOp.Eq [A, eq.Boolean]()(eq), x, that)
-  def sig_!= (that: Pat[A])(implicit eq: Eq[A]): Pat[eq.Boolean] = BinOp(BinOp.Neq[A, eq.Boolean]()(eq), x, that)
+  def difsqr[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Difsqr[A2](), x, that)
+  def sumsqr[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Sumsqr[A2](), x, that)
+  def sqrsum[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Sqrsum[A2](), x, that)
+  def sqrdif[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Sqrdif[A2](), x, that)
+  def absdif[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Absdif[A2](), x, that)
+
+  def clip2 [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Clip2 [A2](), x, that)
+  def excess[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Excess[A2](), x, that)
+  def fold2 [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Fold2 [A2](), x, that)
+  def wrap2 [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Wrap2 [A2](), x, that)
 
   def linlin[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
                     (implicit w: Widen2[A, A1, A2], num: NumFrac[A2]): Pat[A2] =
     LinLin[A, A1, A2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
+
+  def linexp[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
+                    (implicit w: Widen2[A, A1, A2], num: NumDouble[A2]): Pat[A2] =
+    LinExp[A, A1, A2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
+
+  def explin[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
+                    (implicit w: Widen2[A, A1, A2], num: NumDouble[A2]): Pat[A2] =
+    ExpLin[A, A1, A2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
+
+  def expexp[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
+                    (implicit w: Widen2[A, A1, A2], num: NumDouble[A2]): Pat[A2] =
+    ExpExp[A, A1, A2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
 
   def stutter(n: Pat[Int]): Pat[A] = Stutter(x, n)
 
