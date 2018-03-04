@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Types.{Aux, Num, NumBool, NumDouble, NumFrac, ToNum, Widen}
+import de.sciss.patterns.Types.{Aux, Num, NumBool, NumDouble, NumFrac, NumInt, ToNum, Widen}
 
 import scala.language.higherKinds
 
@@ -60,6 +60,12 @@ object UnaryOp {
   final case class Not[A]()(implicit num: NumBool[A]) extends PureOp[A, A] {
     def apply(a: A)           : A         = num.not(a)
     def name                  : String    = "Not"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
+
+  final case class BitNot[A]()(implicit num: NumInt[A]) extends PureOp[A, A] {
+    def apply(a: A)           : A         = num.unary_~(a)
+    def name                  : String    = "BitNot"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
@@ -257,25 +263,37 @@ object UnaryOp {
 
   final case class Rand[A]()(implicit num: Num[A]) extends RandomOp[A, A] {
     def next[Tx](a: A)(implicit state: Random[Tx], tx: Tx): A = num.rand(a)
-
-    def name = "Rand"
-
-    private[patterns] def aux: List[Aux] = num :: Nil
+    def name                  : String    = "Rand"
+    private[patterns] def aux : List[Aux] = num :: Nil
   }
 
   final case class Rand2[A]()(implicit num: Num[A]) extends RandomOp[A, A] {
     def next[Tx](a: A)(implicit state: Random[Tx], tx: Tx): A = num.rand2(a)
-
-    def name = "Rand2"
-
-    private[patterns] def aux: List[Aux] = num :: Nil
+    def name                  : String    = "Rand2"
+    private[patterns] def aux : List[Aux] = num :: Nil
   }
 
   // XXX TODO:
   // Linrand
   // Bilinrand
   // Sum3rand
-  // Coin
+
+  // Distort
+  // Softclip
+
+  final case class Coin[A, B]()(implicit num: NumDouble[A] { type Boolean = B }) extends RandomOp[A, B] {
+    def next[Tx](a: A)(implicit state: Random[Tx], tx: Tx): B = num.coin(a)
+    def name                  : String    = "Coin"
+    private[patterns] def aux : List[Aux] = num :: Nil
+  }
+
+  // RectWindow
+  // HanWindow
+  // WelWindow
+  // TriWindow
+
+  // Ramp
+  // Scurve
 }
 
 final case class UnaryOp[A1, A](op: UnaryOp.Op[A1, A], a: Pat[A1])

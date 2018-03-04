@@ -45,16 +45,18 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def unary_-   (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Neg[A](), x)
   def unary_!   (implicit num: NumBool[A] ): Pat[A]         = UnOp(UnOp.Not[A](), x)
+  def unary_~   (implicit num: NumInt[A]  ): Pat[A]         = UnOp(UnOp.BitNot[A](), x)
   def abs       (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Abs[A](), x)
 
-  def toInt     (implicit to: ToNum[A]): Pat[to.Int]        = UnOp(UnOp.ToInt   [A, to.Int   ]()(to), x)
   def toDouble  (implicit to: ToNum[A]): Pat[to.Double]     = UnOp(UnOp.ToDouble[A, to.Double]()(to), x)
+  def toInt     (implicit to: ToNum[A]): Pat[to.Int]        = UnOp(UnOp.ToInt   [A, to.Int   ]()(to), x)
 
   def ceil      (implicit num: NumFrac[A] ): Pat[A]         = UnOp(UnOp.Ceil    [A](), x)
   def floor     (implicit num: NumFrac[A] ): Pat[A]         = UnOp(UnOp.Floor   [A](), x)
   def frac      (implicit num: NumFrac[A] ): Pat[A]         = UnOp(UnOp.Frac    [A](), x)
+  def signum    (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Signum  [A](), x)
   def squared   (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Squared [A](), x)
-  def cubed           (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Cubed   [A](), x)
+  def cubed     (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Cubed   [A](), x)
 
   def sqrt   [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Sqrt[A, B](), x)
   def exp    [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Exp [A, B](), x)
@@ -83,8 +85,9 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def cosh     [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Cosh      [A, B](), x)
   def tanh     [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Tanh      [A, B](), x)
 
-  def rand      (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Rand  [A](), x)
-  def rand2     (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Rand2 [A](), x)
+  def rand      (implicit num: Num[A]       ): Pat[A]           = UnOp(UnOp.Rand  [A](), x)
+  def rand2     (implicit num: Num[A]       ): Pat[A]           = UnOp(UnOp.Rand2 [A](), x)
+  def coin      (implicit num: NumDouble[A] ): Pat[num.Boolean] = UnOp(UnOp.Coin  [A, num.Boolean]()(num), x)
 
   // binary
 
