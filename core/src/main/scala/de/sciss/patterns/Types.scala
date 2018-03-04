@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.numbers.{DoubleFunctions => rd, IntFunctions => ri}
+import de.sciss.numbers.{DoubleFunctions => rd, IntFunctions => ri, IntFunctions2 => ri2}
 import de.sciss.patterns.impl.{ScalarEqImpl, ScalarToNumImpl, SeqLikeEq, SeqLikeNum, SeqLikeNumDouble, SeqLikeNumFrac, SeqLikeToNum}
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -142,9 +142,9 @@ object Types {
 
   trait Num[A] extends Ord[A] {
     // binary
-    def plus      (a: A, b: A): A
-    def minus     (a: A, b: A): A
-    def times     (a: A, b: A): A
+    def +         (a: A, b: A): A
+    def -         (a: A, b: A): A
+    def *         (a: A, b: A): A
     def %         (a: A, b: A): A
     def mod       (a: A, b: A): A
     def min       (a: A, b: A): A
@@ -196,7 +196,7 @@ object Types {
     def ceil  (a: A): A
     def frac  (a: A): A
 
-    def div(a: A, b: A): A
+    def /     (a: A, b: A): A
 
     def reciprocal(a: A): A
   }
@@ -319,9 +319,9 @@ object Types {
     def toInt     (a: Int): Int     = a
     def toDouble  (a: Int): Double  = a.toDouble
 
-    def plus      (a: Int, b: Int): Int = a + b
-    def minus     (a: Int, b: Int): Int = a - b
-    def times     (a: Int, b: Int): Int = a * b
+    def +(a: Int, b: Int): Int = a + b
+    def -(a: Int, b: Int): Int = a - b
+    def *(a: Int, b: Int): Int = a * b
     def %         (a: Int, b: Int): Int = a % b
     def mod       (a: Int, b: Int): Int = ri.mod(a, b)
     def min       (a: Int, b: Int): Int = ri.min(a, b)
@@ -333,24 +333,24 @@ object Types {
     def lcm       (a: Int, b: Int): Int = ri.lcm(a, b)
     def gcd       (a: Int, b: Int): Int = ri.gcd(a, b)
 
-    def roundTo   (a: Int, b: Int): Int = if (b == 0) a else math.round(a.toDouble / b).toInt * b
-    def roundUpTo (a: Int, b: Int): Int = ???
-    def trunc     (a: Int, b: Int): Int = ???
+    def roundTo   (a: Int, b: Int): Int = ri2.roundTo  (a, b)
+    def roundUpTo (a: Int, b: Int): Int = ri2.roundUpTo(a, b)
+    def trunc     (a: Int, b: Int): Int = ri2.trunc    (a, b)
 
     def <<        (a: Int, b: Int): Int = a << b
     def >>        (a: Int, b: Int): Int = a >> b
     def >>>       (a: Int, b: Int): Int = a >>> b
 
-    def difsqr    (a: Int, b: Int): Int = ???
-    def sumsqr    (a: Int, b: Int): Int = ???
-    def sqrsum    (a: Int, b: Int): Int = ???
-    def sqrdif    (a: Int, b: Int): Int = ???
-    def absdif    (a: Int, b: Int): Int = ???
+    def difsqr    (a: Int, b: Int): Int = ri2.difsqr(a, b).toInt
+    def sumsqr    (a: Int, b: Int): Int = ri2.sumsqr(a, b).toInt
+    def sqrsum    (a: Int, b: Int): Int = ri2.sqrsum(a, b).toInt
+    def sqrdif    (a: Int, b: Int): Int = ri2.sqrdif(a, b).toInt
+    def absdif    (a: Int, b: Int): Int = ri2.absdif(a, b)
 
-    def clip2     (a: Int, b: Int): Int = ri.clip2(a, b)
-    def excess    (a: Int, b: Int): Int = ??? // ri.excess(a, b)
-    def fold2     (a: Int, b: Int): Int = ri.fold2(a, b)
-    def wrap2     (a: Int, b: Int): Int = ri.wrap2(a, b)
+    def clip2     (a: Int, b: Int): Int = ri.clip2  (a, b)
+    def excess    (a: Int, b: Int): Int = ri.excess (a, b)
+    def fold2     (a: Int, b: Int): Int = ri.fold2  (a, b)
+    def wrap2     (a: Int, b: Int): Int = ri.wrap2  (a, b)
 
     def negate    (a: Int): Int     = -a
     def abs       (a: Int): Int     = ri.abs(a)
@@ -358,8 +358,8 @@ object Types {
 
     def unary_~   (a: Int): Int = ~a
 
-    def squared   (a: Int): Int = a * a       // ri.squared: Long
-    def cubed     (a: Int): Int = a * a * a   // ri2.cubed : Long
+    def squared   (a: Int): Int = ri.squared(a).toInt
+    def cubed     (a: Int): Int = ri2.cubed (a).toInt
 
     def rand[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int =
       if (a >= 0) r.nextInt( a)     // may throw exception
@@ -404,10 +404,10 @@ object Types {
 
     // binary
 
-    def plus      (a: In, b: In): In = rd.+(a, b)
-    def minus     (a: In, b: In): In = rd.-(a, b)
-    def times     (a: In, b: In): In = rd.*(a, b)
-    def div       (a: In, b: In): In = rd./(a, b)
+    def +(a: In, b: In): In = rd.+(a, b)
+    def -(a: In, b: In): In = rd.-(a, b)
+    def *(a: In, b: In): In = rd.*(a, b)
+    def /         (a: In, b: In): In = rd./(a, b)
     def %         (a: In, b: In): In = rd.%  (a, b)
     def mod       (a: In, b: In): In = rd.mod(a, b)
 

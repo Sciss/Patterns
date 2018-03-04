@@ -51,9 +51,9 @@ trait SeqLikeOrd[A] extends SeqLikeEq[A] with Ord[Seq[A]] {
 trait SeqLikeNum[A] extends SeqLikeOrd[A] with Num[Seq[A]] {
   override protected val peer: ScalarNum[A]
 
-  final def plus      (a: In, b: In): In = binOp(a, b)(peer.plus      )
-  final def minus     (a: In, b: In): In = binOp(a, b)(peer.minus     )
-  final def times     (a: In, b: In): In = binOp(a, b)(peer.times     )
+  final def +(a: In, b: In): In = binOp(a, b)(peer.+      )
+  final def -(a: In, b: In): In = binOp(a, b)(peer.-     )
+  final def *(a: In, b: In): In = binOp(a, b)(peer.*     )
   final def %         (a: In, b: In): In = binOp(a, b)(peer.%         )
   final def mod       (a: In, b: In): In = binOp(a, b)(peer.mod       )
   final def min       (a: In, b: In): In = binOp(a, b)(peer.min       )
@@ -97,7 +97,7 @@ trait SeqLikeNumFrac[A] extends SeqLikeNum[A] with NumFrac[Seq[A]] {
   final def frac      (a: In): In = unOp(a)(peer.frac       )
   final def reciprocal(a: In): In = unOp(a)(peer.reciprocal )
 
-  final def div       (a: In, b: In): In = binOp(a, b)(peer.div)
+  final def /         (a: In, b: In): In = binOp(a, b)(peer./)
 }
 
 trait SeqLikeNumDouble[A] extends SeqLikeNumFrac[A] with NumDouble[Seq[A]] {

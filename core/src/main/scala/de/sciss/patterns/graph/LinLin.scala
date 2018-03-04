@@ -41,7 +41,7 @@ final case class LinLin[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
 
     // (in - inLow) / (inHigh - inLow) * (outHigh - outLow) + outLow
     protected def calc(inVal: A, inLoVal: A, inHiVal: A, outLoVal: A, outHiVal: A): A =
-      num.plus(num.times(num.div(num.minus(inVal, inLoVal), num.minus(inHiVal, inLoVal)),
-        num.minus(outHiVal, outLoVal)), outLoVal)
+      num.+(num.*(num./(num.-(inVal, inLoVal), num.-(inHiVal, inLoVal)),
+        num.-(outHiVal, outLoVal)), outLoVal)
   }
 }

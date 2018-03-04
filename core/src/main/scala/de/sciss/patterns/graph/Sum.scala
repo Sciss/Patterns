@@ -45,7 +45,7 @@ final case class Sum[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
         if (ihn) {
           var acc = inStream.next()
           while (inStream.hasNext) {
-            acc = num.plus(acc, inStream.next())
+            acc = num.+(acc, inStream.next())
           }
           state() = acc
         }

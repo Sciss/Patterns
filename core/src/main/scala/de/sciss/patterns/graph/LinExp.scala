@@ -41,10 +41,10 @@ final case class LinExp[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
 
     // math.pow(outHigh / outLow, (in - inLow) / (inHigh - inLow)) * outLow
     protected def calc(inVal: A, inLoVal: A, inHiVal: A, outLoVal: A, outHiVal: A): A =
-      num.times(
+      num.*(
         num.pow(
-          num.div(outHiVal, outLoVal),
-          num.div(num.minus(inVal, inLoVal), num.minus(inHiVal, inLoVal))),
+          num./(outHiVal, outLoVal),
+          num./(num.-(inVal, inLoVal), num.-(inHiVal, inLoVal))),
         outLoVal)
   }
 }

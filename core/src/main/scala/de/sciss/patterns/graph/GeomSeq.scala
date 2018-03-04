@@ -34,6 +34,6 @@ final case class GeomSeq[A1, A2, A](start: Pat[A1], step: Pat[A2] /* , length: P
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends SeriesLikeStreamImpl[A1, A2, A, Tx](start, step /* , length */, tx0) {
 
-    protected def op(a: A, b: A): A = num.times(a, b)
+    protected def op(a: A, b: A): A = num.*(a, b)
   }
 }

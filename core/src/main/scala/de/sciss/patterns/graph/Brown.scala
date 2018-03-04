@@ -49,7 +49,7 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
 
     @inline
     private def calcNext(cur: A, step: A)(implicit r: Random[Tx], tx: Tx): A =
-      num.plus(cur, num.rand2(step))
+      num.+(cur, num.rand2(step))
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {

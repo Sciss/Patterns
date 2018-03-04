@@ -41,12 +41,12 @@ final case class ExpExp[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
 
     // math.pow(outHigh / outLow, math.log(in / inLow) / math.log(inHigh / inLow)) * outLow
     protected def calc(inVal: A, inLoVal: A, inHiVal: A, outLoVal: A, outHiVal: A): A =
-      num.times(
+      num.*(
         num.pow(
-          num.div(outHiVal, outLoVal),
-          num.div(
-            num.log(num.div(inVal  , inLoVal)),
-            num.log(num.div(inHiVal, inLoVal))
+          num./(outHiVal, outLoVal),
+          num./(
+            num.log(num./(inVal  , inLoVal)),
+            num.log(num./(inHiVal, inLoVal))
           )
         ),
         outLoVal

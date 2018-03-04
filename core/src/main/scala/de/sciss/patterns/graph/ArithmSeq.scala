@@ -35,6 +35,6 @@ final case class ArithmSeq[A1, A2, A](start: Pat[A1], step: Pat[A2])
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends SeriesLikeStreamImpl[A1, A2, A, Tx](start, step /* , length */, tx0) {
 
-    protected def op(a: A, b: A): A = num.plus(a, b)
+    protected def op(a: A, b: A): A = num.+(a, b)
   }
 }

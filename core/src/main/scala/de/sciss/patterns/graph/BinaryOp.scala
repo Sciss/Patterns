@@ -46,25 +46,26 @@ object BinaryOp {
   // ---- (Num, Num) -> Num ----
 
   final case class Plus[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.plus(a, b)
+    def apply(a: A, b: A)     : A         = num.+(a, b)
     def name                  : String    = "Plus"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
   final case class Minus[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.minus(a, b)
+    def apply(a: A, b: A)     : A         = num.-(a, b)
     def name                  : String    = "Minus"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
   final case class Times[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.times(a, b)
+    def apply(a: A, b: A)     : A         = num.*(a, b)
     def name                  : String    = "Times"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
+  /** Division, _not_ integer division */
   final case class Div[A]()(implicit num: NumFrac[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.div(a, b)
+    def apply(a: A, b: A)     : A         = num./(a, b)
     def name                  : String    = "Div"
     private[patterns] def aux : List[Aux] = num :: Nil
   }

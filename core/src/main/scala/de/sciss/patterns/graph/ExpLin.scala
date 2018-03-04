@@ -41,12 +41,12 @@ final case class ExpLin[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
 
     // math.log(in / inLow) / math.log(inHigh / inLow) * (outHigh - outLow) + outLow
     protected def calc(inVal: A, inLoVal: A, inHiVal: A, outLoVal: A, outHiVal: A): A =
-      num.plus(
-        num.times(
-          num.div(
-            num.log(num.div(inVal  , inLoVal)),
-            num.log(num.div(inHiVal, inLoVal))),
-          num.minus(outHiVal, outLoVal)
+      num.+(
+        num.*(
+          num./(
+            num.log(num./(inVal  , inLoVal)),
+            num.log(num./(inHiVal, inLoVal))),
+          num.-(outHiVal, outLoVal)
         ),
         outLoVal
       )
