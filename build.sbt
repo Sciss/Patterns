@@ -1,6 +1,6 @@
 lazy val baseName             = "Patterns"
 lazy val baseNameL            = baseName.toLowerCase
-lazy val projectVersion       = "0.1.0-SNAPSHOT"
+lazy val projectVersion       = "0.1.0"
 
 val deps = new {
   val main = new {
@@ -14,7 +14,7 @@ val deps = new {
   val test = new {
     val scalaCollider       = "1.23.0"
     val scalaColliderSwing  = "1.35.0"
-    val scalaTest           = "3.0.4"
+    val scalaTest           = "3.0.5"
     val ugens               = "1.17.1"
   }
 }
@@ -29,7 +29,7 @@ lazy val commonSettings = Seq(
   licenses            := Seq(lgpl2),
   scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint"),
   resolvers           += "Oracle Repository" at "http://download.oracle.com/maven"  // required for sleepycat
-)
+) ++ publishSettings
 
 lazy val lgpl2 = "LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")
 
@@ -40,6 +40,33 @@ lazy val root = project.in(file("."))
   .settings(
     name := baseName
   )
+
+lazy val publishSettings = Seq(
+  // ---- publishing ----
+  publishMavenStyle := true,
+  publishTo := {
+    Some(if (isSnapshot.value)
+      "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+    else
+      "Sonatype Releases"  at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+    )
+  },
+  publishArtifact in Test := false,
+  pomIncludeRepository := { _ => false },
+  pomExtra := { val n = baseName
+  <scm>
+    <url>git@github.com:Sciss/{n}.git</url>
+    <connection>scm:git:git@github.com:Sciss/{n}.git</connection>
+  </scm>
+    <developers>
+      <developer>
+        <id>sciss</id>
+        <name>Hanns Holger Rutz</name>
+        <url>http://www.sciss.de</url>
+      </developer>
+    </developers>
+  }
+)
 
 lazy val core = project.in(file("core"))
   .settings(commonSettings)

@@ -16,7 +16,7 @@ To link to it:
 
     libraryDependencies += "de.sciss" %% "patterns" % v
 
-The current version `v` is `"0.1.0-SNAPSHOT"`
+The current version `v` is `"0.1.0"`
 
 ## contributing
 
