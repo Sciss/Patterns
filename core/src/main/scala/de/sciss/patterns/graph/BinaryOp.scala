@@ -88,14 +88,14 @@ object BinaryOp {
   final case class Eq[A, B]()(implicit eq: Types.Eq[A] { type Boolean = B }) extends PureOp[A, B] {
     def apply(a: A, b: A)     : B           = eq.eq(a, b)
     def name                  : String      = "Eq"
-    private[patterns] def aux : List[Aux]   = Nil
+    private[patterns] def aux : List[Aux]   = eq :: Nil
   }
 
   /** Not equal */
   final case class Neq[A, B]()(implicit eq: Types.Eq[A] { type Boolean = B}) extends PureOp[A, B] {
     def apply(a: A, b: A)     : B           = eq.neq(a, b)
     def name                  : String      = "Neq"
-    private[patterns] def aux : List[Aux]   = Nil
+    private[patterns] def aux : List[Aux]   = eq :: Nil
   }
 
   /** Less than */

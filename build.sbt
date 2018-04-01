@@ -1,6 +1,7 @@
 lazy val baseName             = "Patterns"
 lazy val baseNameL            = baseName.toLowerCase
-lazy val projectVersion       = "0.1.0"
+lazy val projectVersion       = "0.1.1-SNAPSHOT"
+lazy val mimaVersion          = "0.1.0"
 
 val deps = new {
   val main = new {
@@ -13,6 +14,7 @@ val deps = new {
 
   val test = new {
     val scalaCollider       = "1.23.0"
+    val kollFlitz           = "0.2.2"
     val scalaColliderSwing  = "1.35.0"
     val scalaTest           = "3.0.5"
     val ugens               = "1.17.1"
@@ -77,18 +79,20 @@ lazy val core = project.in(file("core"))
       "de.sciss"      %% "optional"                     % deps.main.optional,
       "de.sciss"      %% "serial"                       % deps.main.serial,
       "de.sciss"      %% "lucre-core"                   % deps.main.lucre,
+      "de.sciss"      %% "kollflitz"                    % deps.test.kollFlitz           % "test",
       "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % "test",
       "de.sciss"      %% "scalacolliderswing-plotting"  % deps.test.scalaColliderSwing  % "test",
       "de.sciss"      %% "scalacolliderugens-plugins"   % deps.test.ugens               % "test",
       "org.scalatest" %% "scalatest"                    % deps.test.scalaTest           % "test"
     ),
+    mimaPreviousArtifacts := Set("de.sciss" %% baseNameL % mimaVersion),
     mainClass in (Test, run) := Some("de.sciss.patterns.RonWithESP")
   )
 
 lazy val bdb = "bdb"  // either "bdb" or "bdb6"
 
 lazy val lucre = project.in(file("lucre"))
-  .dependsOn(core)
+  .dependsOn(core % "compile->compile;test->test")
   .settings(commonSettings)
   .settings(
     name := s"$baseName-lucre",
@@ -96,5 +100,6 @@ lazy val lucre = project.in(file("lucre"))
       "de.sciss"      %% "soundprocesses-core"  % deps.main.soundProcesses,
       "de.sciss"      %% s"lucre-$bdb"          % deps.main.lucre           % "test",
       "org.scalatest" %% "scalatest"            % deps.test.scalaTest       % "test"
-    )
+    ),
+    mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)
   )

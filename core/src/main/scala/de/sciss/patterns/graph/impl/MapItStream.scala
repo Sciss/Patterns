@@ -34,6 +34,7 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
   private[this] val _hasNext    = ctx.newVar(false)
 
   def advance()(implicit tx: Tx): Unit = {
+    _valid()    = true // require(_valid())
     val ohn     = outerStream.hasNext
     _hasNext()  = ohn
     _hasIn()    = false
@@ -51,7 +52,7 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
 
   private def validate()(implicit tx: Tx): Unit =
     if (!_valid()) {
-      _valid() = true
+//      _valid() = true
       advance()
     }
 
@@ -65,9 +66,10 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
     val hi = _hasIn()
     logStream(s"$simpleString.reset(); hasIn = $hi")
     if (hi) {
-      val inValue = inStream()
+      val inValue   = inStream()
       inValue.reset()
-      _hasNext() = inValue.hasNext
+      val ihn     = inValue.hasNext
+      _hasNext()  = ihn
     }
   }
 

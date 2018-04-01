@@ -1,5 +1,6 @@
 package de.sciss.patterns
 
+import de.sciss.kollflitz
 import de.sciss.patterns.Types.{DoubleTop, IntTop, Num, ScalarEq}
 import de.sciss.patterns.graph._
 
@@ -19,13 +20,13 @@ object RonTuplePure {
   }
 
   def main(args: Array[String]): Unit = {
-    run(0)
+    run(1, 47)
   }
 
-  def run(n: Int): Unit = {
+  def run(n: Int, numEvt: Int): Unit = {
     implicit val ctx: Context.Plain = Context()
     import ctx.tx
-    ctx.setRandomSeed(0L)
+    ctx.setRandomSeed(2L)
     val t0 = System.currentTimeMillis()
     val x = Graph { mkGraph[Unit]() }
 //    println(s"NUM PATS    = ${Pat   .COUNT}")
@@ -38,7 +39,7 @@ object RonTuplePure {
 //    showStreamLog = true
 //    it.take(4000).foreach(_ => ())
 //    val xs = Nil
-    val xs = it.take(400).toList
+    val xs = it.take(numEvt).toList
     val t3 = System.currentTimeMillis()
     println(s"Size = ${xs.size}")
     println(s"Graph {} took ${t1-t0}ms")
@@ -60,23 +61,10 @@ object RonTuplePure {
     }
     println(f"Stop time = $time%g")   // should last around 6 minutes
 
-    if (n > 0) run(n - 1)
+    if (n > 0) run(n - 1, numEvt = numEvt)
   }
 
-  // some extra operations
-  implicit class SeqOps[A](xs: Seq[A]) {
-    // like Kollflitz' `differentiate`
-    def differentiate(implicit num: Numeric[A]): Seq[A] = {
-      import num._
-      xs.sliding(2).map { case Seq(a, b) => b - a }.toList
-    }
-
-    def stutter(n: Int): Seq[A] = xs.flatMap(a => Seq.fill(n)(a))
-
-    def mirror: Seq[A] = if (xs.isEmpty) xs else xs ++ xs.reverse.tail
-
-    def choose[Tx]()(implicit r: Random[Tx], tx: Tx): A = xs(r.nextInt(xs.size))
-  }
+  import kollflitz.Ops._
 
   // N.B. SuperCollider `mod` is different from `%` for negative numbers!
   def mod[A](a: A, b: A)(implicit num: Integral[A]): A = {

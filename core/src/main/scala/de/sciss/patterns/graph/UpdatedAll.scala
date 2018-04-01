@@ -24,6 +24,8 @@ final case class UpdatedAll[A1, A >: A1](in: Pat[A1], idx: Pat[Int], elem: Pat[A
     if (inT.eq(in) && idxT.eq(idx) && elemT.eq(elem)) this else copy(in = inT, idx = idxT, elem = elemT)
   }
 
+//  private var DEBUG = 0
+
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends Stream[Tx, A] {
 
@@ -38,14 +40,25 @@ final case class UpdatedAll[A1, A >: A1](in: Pat[A1], idx: Pat[Int], elem: Pat[A
       _valid() = false
       inStream  .reset()
       idxStream .reset()
+      elemStream.reset()
     }
 
     private def validate()(implicit tx: Tx): Unit = if (!_valid()) {
       _valid()  = true
-      var vec   = inStream.toVector: Vector[A]
+//      DEBUG += 1
+//      if (DEBUG == 7106) {
+//        println("BOO")
+//      }
+//      if (DEBUG == 7107) {
+//        println("AQUI")
+//      }
+      var vec = inStream.toVector: Vector[A]
       while (idxStream.hasNext && elemStream.hasNext) {
         val idxVal  = idxStream .next()
         val elemVal = elemStream.next()
+//        if (idxVal > vec.size) {
+//          println("Potzblitz")
+//        }
         vec         = vec.updated(idxVal, elemVal)
       }
       val _state  = Stream(vec: _*)

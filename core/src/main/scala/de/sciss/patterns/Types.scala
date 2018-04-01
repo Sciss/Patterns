@@ -361,9 +361,14 @@ object Types {
     def squared   (a: Int): Int = ri.squared(a).toInt
     def cubed     (a: Int): Int = ri2.cubed (a).toInt
 
-    def rand[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int =
-      if (a >= 0) r.nextInt( a)     // may throw exception
-      else        r.nextInt(-a) + a
+    def rand[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int = {
+      val res = if (a >= 0) r.nextInt(a) // may throw exception
+      else r.nextInt(-a) + a
+
+      // assert(res >= 0 && res < a, s"a = $a, res = $res")
+
+      res
+    }
 
     def rand2[Tx](a: Int)(implicit r: Random[Tx], tx: Tx): Int = {
       val a1 = math.abs(a)

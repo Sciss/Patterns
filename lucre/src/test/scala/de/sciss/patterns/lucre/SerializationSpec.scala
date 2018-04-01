@@ -3,7 +3,7 @@ package de.sciss.patterns.lucre
 import de.sciss.lucre.stm.Durable
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.patterns.Types.IntTop
-import de.sciss.patterns.{Graph, Pat, graph}
+import de.sciss.patterns.{Graph, Pat, RonTuplePure, graph}
 import de.sciss.serial.{DataInput, DataOutput}
 import de.sciss.synth.proc.SoundProcesses
 import org.scalatest.{Matchers, Outcome, fixture}
@@ -51,6 +51,13 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
     }
   }
 
+  def roundTrip(g: Pat[_]): Pat[_] = {
+    val out = DataOutput()
+    Pattern.valueSerializer.write(g, out)
+    val in = DataInput(out.toByteArray)
+    Pattern.valueSerializer.read(in)
+  }
+
   "Another Pattern object" should "be serializable" in { _ =>
     val g = Graph {
       import graph._
@@ -61,10 +68,7 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
       val d = c.drop(4).stutter(2)
       c ++ d
     }
-    val out = DataOutput()
-    Pattern.valueSerializer.write(g, out)
-    val in = DataInput(out.toByteArray)
-    val g1 = Pattern.valueSerializer.read(in)
+    val g1 = roundTrip(g)
     assert(g1 === g)
 //    assert(g1.sources === g.sources)
 //    assert(g1.out     ==  g.out    ) // bloody triple-equals macro breaks
@@ -77,12 +81,17 @@ class SerializationSpec extends fixture.FlatSpec with Matchers {
       val c = b.size
       Bind("foo" -> b, "bar" -> c)
     }
-    val out = DataOutput()
-    Pattern.valueSerializer.write(g, out)
-    val in = DataInput(out.toByteArray)
-    val g1 = Pattern.valueSerializer.read(in)
+    val g1 = roundTrip(g)
     assert(g1 === g)
 //    assert(g1.sources === g.sources)
 //    assert(g1.out     ==  g.out    ) // bloody triple-equals macro breaks
+  }
+
+  "The tuple example" should "be serializable" in { _ =>
+    val g = Graph {
+      RonTuplePure.mkGraph()
+    }
+    val g1 = roundTrip(g)
+    assert(g1 === g)
   }
 }

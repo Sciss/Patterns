@@ -22,7 +22,7 @@ import de.sciss.lucre.stm.{Copy, Elem, Obj, Sys}
 import de.sciss.model.Change
 import de.sciss.patterns.Types.Aux
 import de.sciss.patterns.graph.Constant
-import de.sciss.patterns.{Pat, ProductWithAux}
+import de.sciss.patterns.{Graph, Pat, ProductWithAux}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 import de.sciss.synth.proc
 import de.sciss.synth.proc.impl.CodeImpl
@@ -64,7 +64,7 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
     def id: Int = Pattern.Code.id
     def binding = Option.empty[String]
 
-    def wrap(in: Unit)(fun: => Any): Pat[_] = {
+    def wrap(in: Unit)(fun: => Any): Pat[_] = Graph {
       fun match {
         case ok: Pat[_] => ok // .asInstanceOf[Pat[Top]]
         case other => throw new IllegalArgumentException(s"Not a pattern: $other")
@@ -84,6 +84,8 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
       proc.Code.registerImports(id, Vec(
         // doesn't work:
         //        "Predef.{any2stringadd => _, _}", // cf. http://stackoverflow.com/questions/7634015/
+        "de.sciss.numbers.Implicits._",
+        "de.sciss.kollflitz.Ops._",
         "de.sciss.patterns._",
         "de.sciss.patterns.Types._",
         "de.sciss.patterns.graph._"
