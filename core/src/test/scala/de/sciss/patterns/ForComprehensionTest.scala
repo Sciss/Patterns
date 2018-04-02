@@ -27,7 +27,6 @@ object ForComprehensionTest extends App {
   println("\n===== b1 =====\n")
   val res1 = {
     implicit val ctx: Context.Plain = Context()
-    import ctx.tx
     ctx.setRandomSeed(0L)
     b1.expand.take(30).toList
   }
@@ -36,7 +35,6 @@ object ForComprehensionTest extends App {
   println("\n===== b2 =====\n")
   val res2 = {
     implicit val ctx: Context.Plain = Context()
-    import ctx.tx
     ctx.setRandomSeed(0L)
     b2.expand.take(30).toList
   }

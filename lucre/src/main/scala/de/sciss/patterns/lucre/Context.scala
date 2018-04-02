@@ -14,19 +14,28 @@
 package de.sciss.patterns.lucre
 
 import de.sciss.lucre.confluent.TxnRandom
-import de.sciss.lucre.stm.{Sink, Source, Txn}
+import de.sciss.lucre.stm
+import de.sciss.lucre.stm.{Sink, Source, Sys, Txn}
 import de.sciss.patterns
 import de.sciss.patterns.Context.Var
 import de.sciss.patterns.graph.It
 import de.sciss.patterns.{ContextLike, Random}
 
-import scala.concurrent.stm.{InTxn, Ref}
+import scala.concurrent.stm.{InTxn, Ref, TxnExecutor}
 
 object Context {
-  def InMemory(): InMemory = new InMemoryImpl
+  def InMemory(): InMemory = TxnExecutor.defaultAtomic(new InMemoryImpl(_))
 
-  trait InMemory extends patterns.Context[InTxn] {
-    def step[A](fun: InTxn => A): A = Txn.atomic(fun)
+  def apply[S <: Sys[S]](implicit cursor: stm.Cursor[S], tx: S#Tx): Context[S#Tx] = new SysImpl[S](tx)
+
+  trait Transactional[Tx] extends Context[Tx] {
+    def step[A](fun: Tx => A): A
+  }
+
+  trait InMemory extends Transactional[InTxn] {
+    type Tx = InTxn
+
+    def step[A](fun: Tx => A): A = Txn.atomic(fun)
   }
 
   private final class RandomImpl(peer: TxnRandom[InTxn]) extends Random[InTxn] {
@@ -46,23 +55,42 @@ object Context {
     def apply()(implicit tx: InTxn): A = peer()
   }
 
-  private final class InMemoryImpl extends ContextLike[InTxn] with InMemory {
+  private final class InMemoryImpl(tx0: InTxn) extends ContextLike[InTxn](tx0) with InMemory {
     private[this] val seedRnd = TxnRandom.plain()
-    private[this] val tokenId = newVar(1000000000) // 0x40000000
+    private[this] val tokenId = newVar(1000000000)(tx0) // 0x40000000
 
-    protected def nextSeed()(implicit tx: InTxn): Long = seedRnd.nextLong()
+    protected def nextSeed()(implicit tx: Tx): Long = seedRnd.nextLong()
 
-    def setRandomSeed(n: Long)(implicit tx: InTxn): Unit = seedRnd.setSeed(n)
+    def setRandomSeed(n: Long)(implicit tx: Tx): Unit = seedRnd.setSeed(n)
 
-    protected def mkRandomWithSeed(seed: Long)(implicit tx: InTxn): Random[InTxn] =
+    protected def mkRandomWithSeed(seed: Long)(implicit tx: Tx): Random[Tx] =
       new RandomImpl(TxnRandom.plain(seed))
 
-    def newVar[A](init: A): Var[InTxn, A] = new VarImpl[A](init)
+    def newVar[A](init: A)(implicit tx: Tx): Var[Tx, A] = new VarImpl[A](init)
 
-    def allocToken[A]()(implicit tx: InTxn): It[A] = {
+    def allocToken[A]()(implicit tx: Tx): It[A] = {
       val res = tokenId()
       tokenId() = res + 1
       It(res)
     }
   }
+
+  private final class SysImpl[S <: Sys[S]](tx0: S#Tx)(implicit cursor: stm.Cursor[S])
+    extends ContextLike[S#Tx](tx0) with Context[S#Tx] {
+
+    protected def nextSeed()(implicit tx: S#Tx): Long = ???
+
+    protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx] = ???
+
+    def step[A](fun: S#Tx => A): A = cursor.step(fun)
+
+    def newVar[A](init: A)(implicit tx: S#Tx): Var[S#Tx, A] = ???
+
+    def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = ???
+
+    def allocToken[A]()(implicit tx: S#Tx): It[A] = ???
+  }
+}
+trait Context[Tx] extends patterns.Context[Tx] {
+  def step[A](fun: Tx => A): A
 }

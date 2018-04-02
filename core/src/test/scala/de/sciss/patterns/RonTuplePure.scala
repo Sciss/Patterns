@@ -1,6 +1,7 @@
 package de.sciss.patterns
 
 import de.sciss.kollflitz
+import de.sciss.patterns.Context.NoTx
 import de.sciss.patterns.Types.{DoubleTop, IntTop, Num, ScalarEq}
 import de.sciss.patterns.graph._
 
@@ -25,14 +26,13 @@ object RonTuplePure {
 
   def run(n: Int, numEvt: Int): Unit = {
     implicit val ctx: Context.Plain = Context()
-    import ctx.tx
     ctx.setRandomSeed(2L)
     val t0 = System.currentTimeMillis()
     val x = Graph { mkGraph[Unit]() }
 //    println(s"NUM PATS    = ${Pat   .COUNT}")
 
     val t1 = System.currentTimeMillis()
-    val it = x.expand[Unit]
+    val it = x.expand[NoTx]
     val t2 = System.currentTimeMillis()
     println("Done.")
     var time = 0.0

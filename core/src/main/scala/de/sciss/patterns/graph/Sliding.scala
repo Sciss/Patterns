@@ -31,11 +31,11 @@ final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends 
     private[this] val sizeStream  = pat.size.expand(ctx, tx0)
     private[this] val stepStream  = pat.step.expand(ctx, tx0)
 
-    private[this] val innerStream = ctx.newVar[Pat[A]](null) // Stream[Tx, A]](null)
-    private[this] val _valid      = ctx.newVar(false)
-    private[this] val _hasNext    = ctx.newVar(false)
-    private[this] val _hasStep    = ctx.newVar(true)
-    private[this] val _buf        = ctx.newVar[Vector[A]](null)
+    private[this] val innerStream = ctx.newVar[Pat[A]](null)(tx0)
+    private[this] val _valid      = ctx.newVar(false)(tx0)
+    private[this] val _hasNext    = ctx.newVar(false)(tx0)
+    private[this] val _hasStep    = ctx.newVar(true)(tx0)
+    private[this] val _buf        = ctx.newVar[Vector[A]](null)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

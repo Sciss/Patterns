@@ -18,7 +18,7 @@ import scala.annotation.tailrec
 object Stream {
   def exhausted(): Nothing = throw new NoSuchElementException("next on empty iterator")
 
-  def fill[Tx, A](n: Int)(elem: => A)(implicit ctx: Context[Tx]): Stream[Tx, A] =
+  def fill[Tx, A](n: Int)(elem: => A)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
     continually(elem).take(n) // XXX TODO -- more efficient
 
   def empty[Tx, A]: Stream[Tx, A] = new Stream[Tx, A] {
@@ -40,8 +40,10 @@ object Stream {
     def next ()(implicit tx: Tx): A       = elem
   }
 
-  def single[Tx, A](elem: A)(implicit ctx: Context[Tx]): Stream[Tx, A] = new Stream[Tx, A] {
-    private[this] val _hasNext = ctx.newVar(true)
+  def single[Tx, A](elem: A)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new Single[Tx, A](elem, tx)
+
+  private final class Single[Tx, A](elem: A, tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+    private[this] val _hasNext = ctx.newVar(true)(tx0)
 
     private def simpleString = s"Stream.single($elem)"
 
@@ -60,8 +62,10 @@ object Stream {
     }
   }
 
-  def apply[Tx, A](elems: A*)(implicit ctx: Context[Tx]): Stream[Tx, A] = new Stream[Tx, A] {
-    private[this] val count = ctx.newVar(0)
+  def apply[Tx, A](elems: A*)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new Seq(elems, tx)
+
+  private final class Seq[Tx, A](elems: scala.Seq[A], tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+    private[this] val count = ctx.newVar(0)(tx0)
     private[this] val xs    = elems.toIndexedSeq
 
     private[this] lazy val simpleString =
@@ -84,33 +88,19 @@ object Stream {
     }
   }
 
-//  var COUNT = 0
-}
-abstract class Stream[Tx, +A] { outer =>
-//  Stream.COUNT += 1
+  private final class FlatMap[Tx, A, B](outer: Stream[Tx, A], f: A => Stream[Tx, B], tx0: Tx)
+                                       (implicit ctx: Context[Tx])
+    extends Stream[Tx, B] {
 
-  def reset()(implicit tx: Tx): Unit
-
-  def hasNext(implicit tx: Tx): Boolean
-  def next ()(implicit tx: Tx): A
-
-  def map[B](f: A => B): Stream[Tx, B] = new Stream[Tx, B] {
-    def reset()(implicit tx: Tx): Unit    = outer.reset()
-    def hasNext(implicit tx: Tx): Boolean = outer.hasNext
-    def next ()(implicit tx: Tx): B       = f(outer.next())
-  }
-
-  def flatMap[B](f: A => Stream[Tx, B])(implicit ctx: Context[Tx]): Stream[Tx, B] = new Stream[Tx, B] {
-
-    private[this] val _valid    = ctx.newVar(false)
-    private[this] val _hasNext  = ctx.newVar(false)
-    private[this] val sub       = ctx.newVar[Stream[Tx, B]](null)
-//    private[this] val _hasSub   = ctx.newVar(false)
+    private[this] val _valid    = ctx.newVar(false)(tx0)
+    private[this] val _hasNext  = ctx.newVar(false)(tx0)
+    private[this] val sub       = ctx.newVar[Stream[Tx, B]](null)(tx0)
+    //    private[this] val _hasSub   = ctx.newVar(false)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false
       outer.reset()
-//        if (_hasSub()) sub().reset()
+      //        if (_hasSub()) sub().reset()
     }
 
     @tailrec
@@ -119,12 +109,12 @@ abstract class Stream[Tx, +A] { outer =>
       if (ohn) {
         val _sub    = f(outer.next())
         sub()       = _sub
-//        _hasSub()   = true
+        //        _hasSub()   = true
         val shn     = _sub.hasNext
         _hasNext()  = shn
         if (!shn) step()
       } else {
-//        _hasSub()   = false
+        //        _hasSub()   = false
         _hasNext()  = false
       }
     }
@@ -149,7 +139,13 @@ abstract class Stream[Tx, +A] { outer =>
     }
   }
 
-  def zip[B](that: Stream[Tx, B]): Stream[Tx, (A, B)] = new Stream[Tx, (A, B)] {
+  private final class Map[Tx, A, B](outer: Stream[Tx, A], f: A => B) extends Stream[Tx, B] {
+    def reset()(implicit tx: Tx): Unit    = outer.reset()
+    def hasNext(implicit tx: Tx): Boolean = outer.hasNext
+    def next ()(implicit tx: Tx): B       = f(outer.next())
+  }
+
+  private final class Zip[Tx, A, B](outer: Stream[Tx, A], that: Stream[Tx, B]) extends Stream[Tx, (A, B)] {
     def reset()(implicit tx: Tx): Unit = {
       outer.reset()
       that .reset()
@@ -160,7 +156,7 @@ abstract class Stream[Tx, +A] { outer =>
     def next()(implicit tx: Tx): (A, B) = (outer.next(), that.next())
   }
 
-  def ++ [B >: A](that: Stream[Tx, B]): Stream[Tx, B] = new Stream[Tx, B] {
+  private final class ++ [Tx, A, B >: A](outer: Stream[Tx, A], that: Stream[Tx, B]) extends Stream[Tx, B] {
     def reset()(implicit tx: Tx): Unit = {
       outer.reset()
       that .reset()
@@ -172,8 +168,10 @@ abstract class Stream[Tx, +A] { outer =>
       if (outer.hasNext) outer.next() else that.next()
   }
 
-  def take(n: Int)(implicit ctx: Context[Tx]): Stream[Tx, A] = new Stream[Tx, A] {
-    private[this] val i = ctx.newVar(0)
+  private final class Take[Tx, A](outer: Stream[Tx, A], n: Int, tx0: Tx)(implicit ctx: Context[Tx])
+    extends Stream[Tx, A] {
+
+    private[this] val i = ctx.newVar(0)(tx0)
 
     def reset()(implicit tx: Tx): Unit = outer.reset()
 
@@ -185,8 +183,28 @@ abstract class Stream[Tx, +A] { outer =>
       outer.next()
     }
   }
+}
+abstract class Stream[Tx, +A] { outer =>
+//  Stream.COUNT += 1
 
-  def drop(n: Int)(implicit tx: Tx): Stream[Tx, A] = {
+  def reset()(implicit tx: Tx): Unit
+
+  def hasNext(implicit tx: Tx): Boolean
+  def next ()(implicit tx: Tx): A
+
+  def map[B](f: A => B)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, B] = new Stream.Map(outer, f)
+
+  def flatMap[B](f: A => Stream[Tx, B])(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, B] =
+    new Stream.FlatMap(outer, f, tx)
+
+  def zip[B](that: Stream[Tx, B])(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, (A, B)] =
+    new Stream.Zip(outer, that)
+
+  def ++ [B >: A](that: Stream[Tx, B]): Stream[Tx, B] = new Stream.++(outer, that)
+
+  def take(n: Int)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new Stream.Take(outer, n, tx)
+
+  def drop(n: Int)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
     var j = 0
     while (j < n && hasNext) {
       next()

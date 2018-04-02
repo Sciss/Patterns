@@ -21,10 +21,9 @@ abstract class TruncateStream[A, Tx](in: Pat[A], length: Pat[Int], tx0: Tx)(impl
   private[this] val lenStream = length.expand(ctx, tx0)
   private[this] val inStream  = in    .expand(ctx, tx0)
 
-  private[this] val peer      = ctx.newVar[Stream[Tx, A]](null)
-//  private[this] val _hasPeer  = ctx.newVar(false)
-  private[this] val _hasNext  = ctx.newVar(false)
-  private[this] val _valid    = ctx.newVar(false)
+  private[this] val peer      = ctx.newVar[Stream[Tx, A]](null)(tx0)
+  private[this] val _hasNext  = ctx.newVar(false)(tx0)
+  private[this] val _valid    = ctx.newVar(false)(tx0)
 
   protected def truncate(it: Stream[Tx, A], n: Int)(implicit tx: Tx): Stream[Tx, A]
 

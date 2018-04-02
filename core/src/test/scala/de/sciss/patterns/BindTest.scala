@@ -4,7 +4,6 @@ import de.sciss.patterns.graph._
 
 object BindTest extends App {
   implicit val ctx: Context.Plain = Context()
-  import ctx.tx
 
   val b     = Graph {
     val pitch = Brown(30, 140, 4).take(10)

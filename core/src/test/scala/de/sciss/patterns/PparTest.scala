@@ -4,7 +4,6 @@ import graph._
 
 object PparTest extends App {
   implicit val ctx: Context.Plain = Context()
-  import ctx.tx
 
   val p1  = Pat( 0 to 10: _*)
   val p2  = Pat(20 to 30: _*)

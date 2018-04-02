@@ -20,11 +20,11 @@ import de.sciss.patterns.Types.Widen2
 abstract class ScaleLikeStream[Tx, A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
                                               outLo: Pat[A2], outHi: Pat[A2], tx0: Tx)
                                              (implicit ctx: Context[Tx], w: Widen2[A1, A2, A]) extends Stream[Tx, A] {
-  private[this] val inStream    = in    .expand(ctx, tx0).map(w.widen1)
-  private[this] val inLoStream  = inLo  .expand(ctx, tx0).map(w.widen1)
-  private[this] val inHiStream  = inHi  .expand(ctx, tx0).map(w.widen1)
-  private[this] val outLoStream = outLo .expand(ctx, tx0).map(w.widen2)
-  private[this] val outHiStream = outHi .expand(ctx, tx0).map(w.widen2)
+  private[this] val inStream    = in    .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
+  private[this] val inLoStream  = inLo  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
+  private[this] val inHiStream  = inHi  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
+  private[this] val outLoStream = outLo .expand(ctx, tx0).map(w.widen2)(ctx, tx0)
+  private[this] val outHiStream = outHi .expand(ctx, tx0).map(w.widen2)(ctx, tx0)
 
   protected def calc(inVal: A, inLoVal: A, inHiVal: A, outLoVal: A, outHiVal: A): A
 

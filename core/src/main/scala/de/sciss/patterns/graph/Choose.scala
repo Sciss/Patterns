@@ -24,9 +24,9 @@ final case class Choose[A](in: Pat[A]) extends Pattern[A] { pat =>
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream  = in.expand(ctx, tx0)
-    private[this] val _valid    = ctx.newVar(false)
-    private[this] val _hasNext  = ctx.newVar(false)
-    private[this] val choice    = ctx.newVar[A](null.asInstanceOf[A])
+    private[this] val _valid    = ctx.newVar(false)(tx0)
+    private[this] val _hasNext  = ctx.newVar(false)(tx0)
+    private[this] val choice    = ctx.newVar[A](null.asInstanceOf[A])(tx0)
 
     private[this] implicit val r: Random[Tx] = ctx.mkRandom(pat.ref)(tx0)
 

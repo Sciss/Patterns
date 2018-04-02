@@ -1,12 +1,12 @@
 package de.sciss.patterns
 
+import de.sciss.patterns.Context.NoTx
 import org.scalatest.{FlatSpec, Matchers}
 
 trait PatSpec extends FlatSpec with Matchers {
-  type Tx = Unit
+  type Tx = NoTx
 
   implicit val ctx: Context.Plain = Context()
-  import ctx.tx
 
   def work: String = "produce the expected output"
 

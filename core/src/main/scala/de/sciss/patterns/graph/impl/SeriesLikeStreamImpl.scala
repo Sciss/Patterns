@@ -23,15 +23,13 @@ abstract class SeriesLikeStreamImpl[A1, A2, A, Tx](start: Pat[A1], step: Pat[A2]
 
   protected def op(a: A, b: A): A
 
-  private[this] val startStream   = start .expand(ctx, tx0).map(w.widen1)
-  private[this] val stepStream    = step  .expand(ctx, tx0).map(w.widen2)
+  private[this] val startStream   = start .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
+  private[this] val stepStream    = step  .expand(ctx, tx0).map(w.widen2)(ctx, tx0)
 //  private[this] val lengthStream  = length.expand(ctx, tx0)
 
-  private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])
-//  private[this] val lengthVal = ctx.newVar(0)
-//  private[this] val count     = ctx.newVar(0)
-  private[this] val _hasNext  = ctx.newVar(false)
-  private[this] val _valid    = ctx.newVar(false)
+  private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])(tx0)
+  private[this] val _hasNext  = ctx.newVar(false)(tx0)
+  private[this] val _valid    = ctx.newVar(false)(tx0)
 
   final def hasNext(implicit tx: Tx): Boolean = {
     validate()

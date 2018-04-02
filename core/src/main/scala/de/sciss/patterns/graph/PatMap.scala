@@ -51,9 +51,9 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
     // as an additional constraint to determine `hasNext`!
     private[this] val itStream      = mkItStream(tx0)
 
-    private[this] val mapStream     = ctx.newVar[Pat[A]](null) // Stream[Tx, T#Out[Tx]]](null)
-    private[this] val _valid        = ctx.newVar(false)
-    private[this] val _hasNext      = ctx.newVar(false)
+    private[this] val mapStream     = ctx.newVar[Pat[A]](null)(tx0)
+    private[this] val _valid        = ctx.newVar(false)(tx0)
+    private[this] val _hasNext      = ctx.newVar(false)(tx0)
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {

@@ -31,7 +31,7 @@ trait Context[Tx] {
   /** Creates a new pseudo-random number generator. */
   def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: Tx): Random[Tx]
 
-  def newVar[A](init: A): Var[Tx, A]
+  def newVar[A](init: A)(implicit tx: Tx): Var[Tx, A]
 //  def newVar[A](init: A): Var[A]
 //  def newIntVar(init: Int)(implicit tx: Tx): Var[Int]
 
@@ -45,25 +45,26 @@ object Context {
 
   type Var[Tx, A] = Sink[Tx, A] with Source[Tx, A]
 
-  trait Plain extends Context[Unit] {
-    type Tx = Unit
+  implicit object NoTx extends NoTx
+  sealed trait NoTx
 
-    implicit val tx: Tx = ()
+  trait Plain extends Context[NoTx] {
+    type Tx = NoTx
   }
 
-  private final class PlainRandom(seed: Long) extends Random[Unit] {
+  private final class PlainRandom(seed: Long) extends Random[NoTx] {
     private[this] val peer = new scala.util.Random(seed)
 
-    def setSeed(n: Long)(implicit tx: Unit): Unit = peer.setSeed(n)
+    def setSeed(n: Long)(implicit tx: NoTx): Unit = peer.setSeed(n)
 
-    def nextDouble()(implicit tx: Unit): Double = peer.nextDouble()
-    def nextLong  ()(implicit tx: Unit): Long   = peer.nextLong  ()
+    def nextDouble()(implicit tx: NoTx): Double = peer.nextDouble()
+    def nextLong  ()(implicit tx: NoTx): Long   = peer.nextLong  ()
 
-    def nextInt(n: Int)(implicit tx: Unit): Int = peer.nextInt(n)
+    def nextInt(n: Int)(implicit tx: NoTx): Int = peer.nextInt(n)
   }
 
-  private final class PlainImpl extends ContextLike[Unit] with Plain {
-    def newVar[A](init: A): Var[Tx, A] = new PlainVar[A](init)
+  private final class PlainImpl extends ContextLike[NoTx](NoTx) with Plain {
+    def newVar[A](init: A)(implicit tx: Tx): Var[Tx, A] = new PlainVar[A](init)
 
     private[this] lazy val seedRnd  = new PlainRandom(System.currentTimeMillis())
     private[this] var tokenId       = 1000000000 // 0x40000000
@@ -82,21 +83,21 @@ object Context {
     }
   }
 
-  private final class PlainVar[A](private[this] var current: A) extends Sink[Unit, A] with Source[Unit, A] {
+  private final class PlainVar[A](private[this] var current: A) extends Sink[NoTx, A] with Source[NoTx, A] {
     override def toString: String = s"Var($current)"
 
-    def apply()(implicit tx: Unit): A =
+    def apply()(implicit tx: NoTx): A =
       current
 
-    def update(v: A)(implicit tx: Unit): Unit =
+    def update(v: A)(implicit tx: NoTx): Unit =
       current = v
   }
 }
 
-private[patterns] abstract class ContextLike[Tx] extends Context[Tx] {
+private[patterns] abstract class ContextLike[Tx](tx0: Tx) extends Context[Tx] {
   private[this] var streamMap = Map.empty[AnyRef, List[Stream[Tx, _]]]
-  private[this] val tokenMap  = newVar(Map.empty[Int, Tx => Stream[Tx, _]])
-  private[this] val seedMap   = newVar(Map.empty[AnyRef, Long])
+  private[this] val tokenMap  = newVar(Map.empty[Int, Tx => Stream[Tx, _]])(tx0)
+  private[this] val seedMap   = newVar(Map.empty[AnyRef, Long])(tx0)
 
   protected def nextSeed()(implicit tx: Tx): Long
 

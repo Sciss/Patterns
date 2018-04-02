@@ -36,7 +36,6 @@ object DistinctSortedExample {
     }
 
     implicit val ctx: Context.Plain = Context()
-    import ctx.tx
 
     def plot(g: Pat[Int], title: String): Unit =
       g.expand.toList.plot(title = title, discrete = true)

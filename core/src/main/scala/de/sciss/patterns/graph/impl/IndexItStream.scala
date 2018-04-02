@@ -15,10 +15,10 @@ package de.sciss.patterns
 package graph
 package impl
 
-final class IndexItStream[Tx](iteration: Context.Var[Tx, Int])(implicit ctx: Context[Tx])
+final class IndexItStream[Tx](iteration: Context.Var[Tx, Int], tx0: Tx)(implicit ctx: Context[Tx])
   extends Stream[Tx, Int] {
 
-  private[this] val _hasNext = ctx.newVar(true)
+  private[this] val _hasNext = ctx.newVar(true)(tx0)
 
   def reset()(implicit tx: Tx): Unit =
     _hasNext() = true
