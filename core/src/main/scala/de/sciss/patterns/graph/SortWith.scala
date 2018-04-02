@@ -39,6 +39,11 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
 
     @transient final private[this] lazy val ref = new AnyRef
 
+    private[this] val id          = ctx.newID()(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val sortedIt    = ??? : Var[Tx, Stream[Tx, Pat[A]]] // ctx.newVar[Stream[Tx, Pat[A]]](null)(tx0)
+    private[this] val _hasSorted  = ctx.newBooleanVar(id, false)(tx0)
+
     private def mkItStream(implicit tx: Tx) = {
       val res = new SortWithItStream[Tx, A](tx)
       ctx.addStream(ref, res)
@@ -49,10 +54,6 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
 
     private[this] val outerStream: Stream[Tx, Pat[A]]  = outer.expand(ctx, tx0)
     private[this] val ltStream   : Stream[Tx, Boolean] = lt   .expand(ctx, tx0)
-
-    private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
-    private[this] val sortedIt    = ??? : Var[Tx, Stream[Tx, Pat[A]]] // ctx.newVar[Stream[Tx, Pat[A]]](null)(tx0)
-    private[this] val _hasSorted  = ctx.newBooleanVar(false)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
 //      logStream("SortWith.iterator.reset()")

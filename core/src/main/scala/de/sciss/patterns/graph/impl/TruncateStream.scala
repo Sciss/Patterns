@@ -20,12 +20,13 @@ import de.sciss.patterns.Context.Var
 abstract class TruncateStream[A, Tx](in: Pat[A], length: Pat[Int], tx0: Tx)(implicit ctx: Context[Tx])
   extends Stream[Tx, A] {
 
+  private[this] val id        = ctx.newID()(tx0)
   private[this] val lenStream = length.expand(ctx, tx0)
   private[this] val inStream  = in    .expand(ctx, tx0)
 
   private[this] val peer      = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
-  private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
-  private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
+  private[this] val _hasNext  = ctx.newBooleanVar(id, false)(tx0)
+  private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
 
   protected def truncate(it: Stream[Tx, A], n: Int)(implicit tx: Tx): Stream[Tx, A]
 

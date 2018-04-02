@@ -36,9 +36,9 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
 
+    private[this] val id            = ctx.newID()(tx0)
     private[this] val outerStream   = outer .expand(ctx, tx0)
-
-    private[this] val _valid        = ctx.newBooleanVar(false)(tx0)
+    private[this] val _valid        = ctx.newBooleanVar(id, false)(tx0)
     private[this] val _result       = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
 
     private def validate()(implicit tx: Tx): Unit =

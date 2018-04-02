@@ -23,9 +23,9 @@ case class Indices[A](in: Pat[A]) extends Pattern[Int] {
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Int] {
+    private[this] val id        = ctx.newID()(tx0)
     private[this] val inStream  = in.expand(ctx, tx0)
-
-    private[this] val count     = ctx.newIntVar(0)(tx0)
+    private[this] val count     = ctx.newIntVar(id, 0)(tx0)
 
     def reset()(implicit tx: Tx): Unit = {
       inStream.reset()

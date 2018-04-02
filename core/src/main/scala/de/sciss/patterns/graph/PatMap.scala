@@ -37,6 +37,11 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
     @transient final private[this] lazy val ref = new AnyRef
 
+    private[this] val id          = ctx.newID()(tx0)
+    private[this] val mapStream   = ??? : Var[Tx, Pat[A]] // ctx.newVar[Pat[A]](null)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
+
     private def mkItStream(implicit tx: Tx): Stream[Tx, A1] = {
       val res = new MapItStream(outer, tx)
       ctx.addStream(ref, res)
@@ -51,10 +56,6 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
     // pro-active create one instance of the it-stream which is used
     // as an additional constraint to determine `hasNext`!
     private[this] val itStream      = mkItStream(tx0)
-
-    private[this] val mapStream     = ??? : Var[Tx, Pat[A]] // ctx.newVar[Pat[A]](null)(tx0)
-    private[this] val _valid        = ctx.newBooleanVar(false)(tx0)
-    private[this] val _hasNext      = ctx.newBooleanVar(false)(tx0)
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {

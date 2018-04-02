@@ -26,12 +26,12 @@ final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] 
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
-    private[this] val inStream  : Stream[Tx, A]   = pat.in  .expand(ctx, tx0)
-    private[this] val sizeStream: Stream[Tx, Int] = pat.size.expand(ctx, tx0)
-
+    private[this] val id          = ctx.newID()(tx0)
+    private[this] val inStream    = pat.in  .expand(ctx, tx0)
+    private[this] val sizeStream  = pat.size.expand(ctx, tx0)
     private[this] val innerStream = ??? : Var[Tx, Pat[A]] // ctx.newVar[Pat[A]](null)(tx0) // Stream[Tx, A]](null)
-    private[this] val _hasNext    = ctx.newBooleanVar(false)(tx0)
-    private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

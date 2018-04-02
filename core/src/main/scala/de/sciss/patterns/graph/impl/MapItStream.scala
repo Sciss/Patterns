@@ -20,6 +20,13 @@ import de.sciss.patterns.Context.Var
 final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Context[Tx])
   extends Stream[Tx, A] {
 
+  private[this] val id          = ctx.newID()(tx0)
+  private[this] val outerStream = outer.expand(ctx, tx0)
+  private[this] val inStream    = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
+  private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
+  private[this] val _hasIn      = ctx.newBooleanVar(id, false)(tx0)
+  private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
+
   private[this] lazy val simpleString = {
     val os0 = outer.toString
     val os  = if (os0.length <= 24) os0 else s"${os0.substring(0, 23)}..."
@@ -27,13 +34,6 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
   }
 
   override def toString: String = simpleString
-
-  private[this] val outerStream: Stream[Tx, Pat[A]] = outer.expand(ctx, tx0)
-
-  private[this] val inStream    = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
-  private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
-  private[this] val _hasIn      = ctx.newBooleanVar(false)(tx0)
-  private[this] val _hasNext    = ctx.newBooleanVar(false)(tx0)
 
   def advance()(implicit tx: Tx): Unit = {
     _valid()    = true // require(_valid())

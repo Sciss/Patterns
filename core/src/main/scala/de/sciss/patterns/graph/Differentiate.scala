@@ -28,9 +28,10 @@ final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Patt
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+    private[this] val id        = ctx.newID()(tx0)
     private[this] val inStream  = in.expand(ctx, tx0)
-    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
-    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(id, false)(tx0)
     private[this] val x1        = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
     private[this] val state     = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
 

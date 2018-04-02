@@ -28,14 +28,15 @@ final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends 
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
+    private[this] val id          = ctx.newID()(tx0)
     private[this] val inStream    = pat.in  .expand(ctx, tx0)
     private[this] val sizeStream  = pat.size.expand(ctx, tx0)
     private[this] val stepStream  = pat.step.expand(ctx, tx0)
 
     private[this] val innerStream = ??? : Var[Tx, Pat[A]] // ctx.newVar[Pat[A]](null)(tx0)
-    private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
-    private[this] val _hasNext    = ctx.newBooleanVar(false)(tx0)
-    private[this] val _hasStep    = ctx.newBooleanVar(true)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _hasStep    = ctx.newBooleanVar(id, true)(tx0)
     private[this] val _buf        = ??? : Var[Tx, Vector[A]] // ctx.newVar[Vector[A]](null)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {

@@ -15,7 +15,7 @@ package de.sciss.patterns.lucre
 
 import de.sciss.lucre.confluent.TxnRandom
 import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Sink, Source, Sys, Txn}
+import de.sciss.lucre.stm.{Sink, Source, Txn}
 import de.sciss.patterns
 import de.sciss.patterns.Context.Var
 import de.sciss.patterns.graph.It
@@ -26,14 +26,17 @@ import scala.concurrent.stm.{InTxn, Ref, TxnExecutor}
 object Context {
   def InMemory(): InMemory = TxnExecutor.defaultAtomic(new InMemoryImpl(_))
 
-  def apply[S <: Sys[S]](implicit cursor: stm.Cursor[S], tx: S#Tx): Context[S#Tx] = new SysImpl[S](tx)
+  def apply[S <: stm.Sys[S]](implicit cursor: stm.Cursor[S], tx: S#Tx): Context[S#Tx] = new SysImpl[S](tx)
 
-  trait Transactional[Tx] extends Context[Tx] {
-    def step[A](fun: Tx => A): A
+  trait Sys[S <: stm.Sys[S]] extends Context[S#Tx] {
+    type ID = S#ID
+
+    def step[A](fun: S#Tx => A): A
   }
 
-  trait InMemory extends Transactional[InTxn] {
+  trait InMemory extends Context[InTxn] {
     type Tx = InTxn
+    type ID = Unit
 
     def step[A](fun: Tx => A): A = Txn.atomic(fun)
   }
@@ -73,7 +76,7 @@ object Context {
 
   private final class InMemoryImpl(tx0: InTxn) extends ContextLike[InTxn](tx0) with InMemory {
     private[this] val seedRnd = TxnRandom.plain()
-    private[this] val tokenId = newVar(1000000000)(tx0) // 0x40000000
+    private[this] val tokenId = newVar((), 1000000000)(tx0) // 0x40000000
 
     protected def nextSeed()(implicit tx: Tx): Long = seedRnd.nextLong()
 
@@ -82,9 +85,11 @@ object Context {
     protected def mkRandomWithSeed(seed: Long)(implicit tx: Tx): Random[Tx] =
       new RandomImpl(TxnRandom.plain(seed))
 
-    def newVar[A]     (init: A      )(implicit tx: Tx): Var[Tx, A]        = new VarImpl[A]    (init)
-    def newBooleanVar (init: Boolean)(implicit tx: Tx): Var[Tx, Boolean]  = new BooleanVarImpl(init)
-    def newIntVar     (init: Int    )(implicit tx: Tx): Var[Tx, Int]      = new IntVarImpl    (init)
+    def newID()(implicit tx: Tx): Unit = ()
+
+    def newVar[A]     (id: Unit, init: A      )(implicit tx: Tx): Var[Tx, A]        = new VarImpl[A]    (init)
+    def newBooleanVar (id: Unit, init: Boolean)(implicit tx: Tx): Var[Tx, Boolean]  = new BooleanVarImpl(init)
+    def newIntVar     (id: Unit, init: Int    )(implicit tx: Tx): Var[Tx, Int]      = new IntVarImpl    (init)
 
     def allocToken[A]()(implicit tx: Tx): It[A] = {
       val res = tokenId()
@@ -93,24 +98,32 @@ object Context {
     }
   }
 
-  private final class SysImpl[S <: Sys[S]](tx0: S#Tx)(implicit cursor: stm.Cursor[S])
-    extends ContextLike[S#Tx](tx0) with Context[S#Tx] {
+  private final class SysImpl[S <: stm.Sys[S]](tx0: S#Tx)(implicit cursor: stm.Cursor[S])
+    extends ContextLike[S#Tx](tx0) with Sys[S] {
 
-    protected def nextSeed()(implicit tx: S#Tx): Long = ???
+    private[this] val id      = tx0.newID()
+    private[this] val seedRnd = TxnRandom[S](id)(tx0)
+    private[this] val tokenId = newVar(id, 1000000000)(tx0) // 0x40000000
+
+    protected def nextSeed()(implicit tx: S#Tx): Long = seedRnd.nextLong()
 
     protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx] = ???
 
     def step[A](fun: S#Tx => A): A = cursor.step(fun)
 
-    def newVar[A](init: A)(implicit tx: S#Tx): Var[S#Tx, A] = ???
+    def newID()(implicit tx: S#Tx): S#ID = tx.newID()
 
-    def newIntVar(init: Int)(implicit tx: S#Tx): Var[S#Tx, Int] = ???
+    def newVar[A]     (id: S#ID, init: A      )(implicit tx: S#Tx): Var[S#Tx, A]        = tx.newVar       (id, init)(???)
+    def newIntVar     (id: S#ID, init: Int    )(implicit tx: S#Tx): Var[S#Tx, Int]      = tx.newIntVar    (id, init)
+    def newBooleanVar (id: S#ID, init: Boolean)(implicit tx: S#Tx): Var[S#Tx, Boolean]  = tx.newBooleanVar(id, init)
 
-    def newBooleanVar(init: Boolean)(implicit tx: S#Tx): Var[S#Tx, Boolean] = ???
+    def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = seedRnd.setSeed(n)
 
-    def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = ???
-
-    def allocToken[A]()(implicit tx: S#Tx): It[A] = ???
+    def allocToken[A]()(implicit tx: S#Tx): It[A] = {
+      val res = tokenId()
+      tokenId() = res + 1
+      It(res)
+    }
   }
 }
 trait Context[Tx] extends patterns.Context[Tx] {

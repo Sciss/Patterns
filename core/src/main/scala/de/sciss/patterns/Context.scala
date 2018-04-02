@@ -18,7 +18,7 @@ import de.sciss.patterns.Context.Var
 import de.sciss.patterns.graph.It
 
 trait Context[Tx] {
-//  def visit[U](ref: AnyRef, init: => U): U
+  type ID
 
   def addStream[A](ref: AnyRef, stream: Stream[Tx, A]): Stream[Tx, A]
 
@@ -31,10 +31,12 @@ trait Context[Tx] {
   /** Creates a new pseudo-random number generator. */
   def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: Tx): Random[Tx]
 
-  def newVar[A](init: A)(implicit tx: Tx): Var[Tx, A]
+  def newID()(implicit tx: Tx): ID
 
-  def newIntVar     (init: Int    )(implicit tx: Tx): Var[Tx, Int     ]
-  def newBooleanVar (init: Boolean)(implicit tx: Tx): Var[Tx, Boolean ]
+  def newVar[A](id: ID, init: A)(implicit tx: Tx): Var[Tx, A]
+
+  def newIntVar     (id: ID, init: Int    )(implicit tx: Tx): Var[Tx, Int     ]
+  def newBooleanVar (id: ID, init: Boolean)(implicit tx: Tx): Var[Tx, Boolean ]
 
   def setRandomSeed(n: Long)(implicit tx: Tx): Unit
 
@@ -50,6 +52,7 @@ object Context {
   sealed trait NoTx
 
   trait Plain extends Context[NoTx] {
+    type ID = Unit
     type Tx = NoTx
   }
 
@@ -65,9 +68,11 @@ object Context {
   }
 
   private final class PlainImpl extends ContextLike[NoTx](NoTx) with Plain {
-    def newVar[A]     (init: A       )(implicit tx: Tx): Var[Tx, A]        = new PlainVar[A]     (init)
-    def newIntVar     (init: Int     )(implicit tx: Tx): Var[Tx, Int]      = new PlainIntVar     (init)
-    def newBooleanVar (init: Boolean )(implicit tx: Tx): Var[Tx, Boolean]  = new PlainBooleanVar (init)
+    def newID()(implicit tx: Tx): Unit = ()
+
+    def newVar[A]     (id: Unit, init: A       )(implicit tx: Tx): Var[Tx, A]        = new PlainVar[A]     (init)
+    def newIntVar     (id: Unit, init: Int     )(implicit tx: Tx): Var[Tx, Int]      = new PlainIntVar     (init)
+    def newBooleanVar (id: Unit, init: Boolean )(implicit tx: Tx): Var[Tx, Boolean]  = new PlainBooleanVar (init)
 
     private[this] lazy val seedRnd  = new PlainRandom(System.currentTimeMillis())
     private[this] var tokenId       = 1000000000 // 0x40000000

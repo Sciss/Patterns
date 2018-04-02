@@ -33,12 +33,14 @@ final case class Apply[A](in: Pat[Pat[A]], idx: Pat[Int]) extends Pattern[A] {
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends Stream[Tx, A] {
 
-    private[this] val inStream  = in  .expand(ctx, tx0)
-    private[this] val idxStream = idx .expand(ctx, tx0)
+    private[this] val id          = ctx.newID()(tx0)
 
-    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
-    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
-    private[this] val state     = ??? : Var[Tx, Stream[Tx, A]] //  ctx.newVar[Stream[Tx, A]](null)(tx0)
+    private[this] val inStream    = in  .expand(ctx, tx0)
+    private[this] val idxStream   = idx .expand(ctx, tx0)
+
+    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val state       = ??? : Var[Tx, Stream[Tx, A]] //  ctx.newVar[Stream[Tx, A]](null)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

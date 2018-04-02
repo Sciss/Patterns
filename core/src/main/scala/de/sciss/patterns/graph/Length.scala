@@ -24,8 +24,9 @@ case class Length[A](in: Pat[A]) extends Pattern[Int] {
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Int] {
 
+    private[this] val id        = ctx.newID()(tx0)
     private[this] val inStream  = in.expand(ctx, tx0)
-    private[this] val _hasNext  = ctx.newBooleanVar(true)(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(id, true)(tx0)
 
     def reset()(implicit tx: Tx): Unit = {
       inStream.reset()

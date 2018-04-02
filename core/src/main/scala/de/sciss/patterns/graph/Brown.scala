@@ -35,8 +35,7 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends Stream[Tx, A] {
 
-    // println("Brown.iterator")
-    // (new Exception).fillInStackTrace().printStackTrace()
+    private[this] val id          = ctx.newID()(tx0)
 
     private[this] val loStream    = lo  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
     private[this] val hiStream    = hi  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
@@ -44,9 +43,9 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
 
     private[this] implicit val r: Random[Tx] = ctx.mkRandom(pat.ref)(tx0)
 
-    private[this] val state     = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
-    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
-    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
+    private[this] val state       = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
 
     @inline
     private def calcNext(cur: A, step: A)(implicit r: Random[Tx], tx: Tx): A =

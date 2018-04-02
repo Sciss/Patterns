@@ -31,16 +31,16 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+    private[this] val id        = ctx.newID()(tx0)
     private[this] val loStream  = lo.expand(ctx, tx0)
     private[this] val hiStream  = hi.expand(ctx, tx0)
+    private[this] val state     = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
 
     private[this] implicit val r: Random[Tx] = ctx.mkRandom(pat.ref)(tx0)
 
     private def mkState()(implicit tx: Tx): A = num.rrand(loStream.next(), hiStream.next())
-
-    private[this] val state     = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
-    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
-    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

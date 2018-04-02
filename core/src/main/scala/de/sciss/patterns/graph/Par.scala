@@ -31,12 +31,12 @@ final case class Par(in: Pat[Pat[Event]])
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Event] {
+    private[this] val id          = ctx.newID()(tx0)
     private[this] val inStream    = in.expand(ctx, tx0)
-
     private[this] val pq          = ??? : Var[Tx, ISortedMap[TimeRef, Stream[Tx, Event]]] // ctx.newVar[ISortedMap[TimeRef, Stream[Tx, Event]]](null)(tx0)
-    private[this] val _hasNext    = ctx.newBooleanVar(false)(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
     private[this] val elem        = ??? : Var[Tx, Event] // ctx.newVar[Event   ](null)(tx0)
-    private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

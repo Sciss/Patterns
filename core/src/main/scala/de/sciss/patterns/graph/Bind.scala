@@ -29,14 +29,15 @@ final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Event] {
+    private[this] val id        = ctx.newID()(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(id, false)(tx0)
+
     val mapE: Map[String, Stream[Tx, _]] = entries.map {
       case (key, value) => key -> value.expand(ctx, tx0)
     } .toMap  // (breakOut)
 
     def checkNext()(implicit tx: Tx): Boolean = mapE.forall(_._2.hasNext)
-
-    private[this] val _valid   = ctx.newBooleanVar(false)(tx0)
-    private[this] val _hasNext = ctx.newBooleanVar(false)(tx0)
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()

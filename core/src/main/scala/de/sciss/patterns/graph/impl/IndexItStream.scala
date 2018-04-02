@@ -18,7 +18,8 @@ package impl
 final class IndexItStream[Tx](iteration: Context.Var[Tx, Int], tx0: Tx)(implicit ctx: Context[Tx])
   extends Stream[Tx, Int] {
 
-  private[this] val _hasNext = ctx.newBooleanVar(true)(tx0)
+  private[this] val id        = ctx.newID()(tx0)
+  private[this] val _hasNext  = ctx.newBooleanVar(id, true)(tx0)
 
   def reset()(implicit tx: Tx): Unit =
     _hasNext() = true

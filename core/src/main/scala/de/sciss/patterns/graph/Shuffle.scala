@@ -27,10 +27,11 @@ final case class Shuffle[A](in: Pat[A]) extends Pattern[A] { pat =>
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+    private[this] val id        = ctx.newID()(tx0)
     private[this] val inStream  = in.expand(ctx, tx0)
-    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
-    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
-    private[this] val count     = ctx.newIntVar(0)(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val count     = ctx.newIntVar(id, 0)(tx0)
     private[this] val shuffled  = ??? : Var[Tx, Vec[A]] // ctx.newVar[Vec[A]](null)(tx0)
 
     private[this] implicit val r: Random[Tx] = ctx.mkRandom(pat.ref)(tx0)

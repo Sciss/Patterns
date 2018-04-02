@@ -38,7 +38,11 @@ final case class MapWithIndex[A1, A] private[patterns](outer: Pat[Pat[A1]], itIn
     @transient final private[this] lazy val refIn   = new AnyRef
     @transient final private[this] lazy val refIdx  = new AnyRef
 
-    private[this] val iteration     = ctx.newIntVar(0)(tx0)
+    private[this] val id          = ctx.newID()(tx0)
+    private[this] val iteration   = ctx.newIntVar(id, 0)(tx0)
+    private[this] val mapStream   = ??? : Var[Tx, Pat[A]] // ctx.newVar[Pat[A]](null)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
 
     private def mkItInStream(implicit tx: Tx): Stream[Tx, A1] = {
       val res = new MapItStream(outer, tx)
@@ -61,10 +65,6 @@ final case class MapWithIndex[A1, A] private[patterns](outer: Pat[Pat[A1]], itIn
     // pro-active create one instance of the it-stream which is used
     // as an additional constraint to determine `hasNext`!
     private[this] val itInStream    = mkItInStream(tx0)
-
-    private[this] val mapStream     = ??? : Var[Tx, Pat[A]] // ctx.newVar[Pat[A]](null)(tx0)
-    private[this] val _valid        = ctx.newBooleanVar(false)(tx0)
-    private[this] val _hasNext      = ctx.newBooleanVar(false)(tx0)
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {

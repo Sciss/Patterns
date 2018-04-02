@@ -31,6 +31,8 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
     extends Stream[Tx, Pat[A]] {
 
+    private[this] val id        = ctx.newID()(tx0)
+
     // Adapted from scala.collection.SeqLike#CombinationsItr
     // Scala license: BSD 3-clause
 
@@ -44,8 +46,8 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
     private[this] val counts    = ??? : Var[Tx, Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
     private[this] val numbers   = ??? : Var[Tx, Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
     private[this] val offsets   = ??? : Var[Tx, Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
-    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
-    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

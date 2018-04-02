@@ -45,7 +45,8 @@ object Stream {
   def single[Tx, A](elem: A)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new Single[Tx, A](elem, tx)
 
   private final class Single[Tx, A](elem: A, tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-    private[this] val _hasNext = ctx.newBooleanVar(true)(tx0)
+    private[this] val id      = ctx.newID()(tx0)
+    private[this] val _hasNext = ctx.newBooleanVar(id, true)(tx0)
 
     private def simpleString = s"Stream.single($elem)"
 
@@ -67,7 +68,8 @@ object Stream {
   def apply[Tx, A](elems: A*)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new Seq(elems, tx)
 
   private final class Seq[Tx, A](elems: scala.Seq[A], tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-    private[this] val count = ctx.newIntVar(0)(tx0)
+    private[this] val id    = ctx.newID()(tx0)
+    private[this] val count = ctx.newIntVar(id, 0)(tx0)
     private[this] val xs    = elems.toIndexedSeq
 
     private[this] lazy val simpleString =
@@ -94,8 +96,9 @@ object Stream {
                                        (implicit ctx: Context[Tx])
     extends Stream[Tx, B] {
 
-    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
-    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
+    private[this] val id        = ctx.newID()(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(id, false)(tx0)
     private[this] val sub       = ??? : Var[Tx, Stream[Tx, B]] // ctx.newVar[Stream[Tx, B]](null)(tx0)
     //    private[this] val _hasSub   = ctx.newVar(false)
 
@@ -173,15 +176,16 @@ object Stream {
   private final class Take[Tx, A](outer: Stream[Tx, A], n: Int, tx0: Tx)(implicit ctx: Context[Tx])
     extends Stream[Tx, A] {
 
-    private[this] val i = ctx.newIntVar(0)(tx0)
+    private[this] val id      = ctx.newID()(tx0)
+    private[this] val _count  = ctx.newIntVar(id, 0)(tx0)
 
     def reset()(implicit tx: Tx): Unit = outer.reset()
 
-    def hasNext(implicit tx: Tx): Boolean = i() < n && outer.hasNext
+    def hasNext(implicit tx: Tx): Boolean = _count() < n && outer.hasNext
 
     def next()(implicit tx: Tx): A = {
       if (!hasNext) Stream.exhausted()
-      i() = i() + 1
+      _count() = _count() + 1
       outer.next()
     }
   }
