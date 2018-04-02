@@ -7,13 +7,13 @@ import de.sciss.patterns.Graph
 import de.sciss.synth
 import de.sciss.synth.proc.AuralContext
 
-object AuralPatternTest extends AuralTestLike.Factory {
+object AuralPatternAttributeTest extends AuralTestLike.Factory {
   def main(args: Array[String]): Unit = init(args)
 
   def run[S <: Sys[S]](name: String)(implicit cursor: Cursor[S]): Unit =
-    new AuralPatternTest[S](name)
+    new AuralPatternAttributeTest[S](name)
 }
-class AuralPatternTest[S <: Sys[S]](name: String)(implicit cursor: stm.Cursor[S]) extends AuralTestLike[S] {
+class AuralPatternAttributeTest[S <: Sys[S]](name: String)(implicit cursor: stm.Cursor[S]) extends AuralTestLike[S] {
   protected def run()(implicit context: AuralContext[S]): Unit = test1()
 
   def test1()(implicit context: AuralContext[S]): Unit = {

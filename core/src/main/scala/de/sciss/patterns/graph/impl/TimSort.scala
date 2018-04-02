@@ -64,11 +64,11 @@ object TimSort {
       return
     }
 
-    /**
-      * March over the array once, left to right, finding natural runs,
-      * extending short natural runs to minRun elements, and merging runs
-      * to maintain stack invariant.
-      */
+    /*
+     * March over the array once, left to right, finding natural runs,
+     * extending short natural runs to minRun elements, and merging runs
+     * to maintain stack invariant.
+     */
     val ts = new TimSort[A](a, c)
     val minRun = minRunLength(nRemaining)
     var lo = lo0
