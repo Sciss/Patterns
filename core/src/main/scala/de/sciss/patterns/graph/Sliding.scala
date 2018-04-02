@@ -13,6 +13,7 @@
 
 package de.sciss.patterns.graph
 
+import de.sciss.patterns.Context.Var
 import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
 
 final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends Pattern[Pat[A]] { pat =>
@@ -31,11 +32,11 @@ final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends 
     private[this] val sizeStream  = pat.size.expand(ctx, tx0)
     private[this] val stepStream  = pat.step.expand(ctx, tx0)
 
-    private[this] val innerStream = ctx.newVar[Pat[A]](null)(tx0)
-    private[this] val _valid      = ctx.newVar(false)(tx0)
-    private[this] val _hasNext    = ctx.newVar(false)(tx0)
-    private[this] val _hasStep    = ctx.newVar(true)(tx0)
-    private[this] val _buf        = ctx.newVar[Vector[A]](null)(tx0)
+    private[this] val innerStream = ??? : Var[Tx, Pat[A]] // ctx.newVar[Pat[A]](null)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(false)(tx0)
+    private[this] val _hasStep    = ctx.newBooleanVar(true)(tx0)
+    private[this] val _buf        = ??? : Var[Tx, Vector[A]] // ctx.newVar[Vector[A]](null)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

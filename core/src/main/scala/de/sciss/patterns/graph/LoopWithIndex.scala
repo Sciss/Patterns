@@ -32,7 +32,7 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     @transient final private[this] lazy val ref = new AnyRef
 
-    private[this] val iteration = ctx.newVar(0)(tx0)
+    private[this] val iteration = ctx.newIntVar(0)(tx0)
 
     private def mkItStream(implicit tx: Tx) = {
       val res = new IndexItStream(iteration, tx)
@@ -45,9 +45,9 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
     private[this] val nStream     = n    .expand(ctx, tx0)
     private[this] val innerStream = inner.expand(ctx, tx0)
 
-    private[this] val nValue      = ctx.newVar(0)(tx0)
-    private[this] val _hasNext    = ctx.newVar(false)(tx0)
-    private[this] val _valid      = ctx.newVar(false)(tx0)
+    private[this] val nValue      = ctx.newIntVar(0)(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(false)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

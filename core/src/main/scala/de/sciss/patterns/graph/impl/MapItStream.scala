@@ -15,6 +15,8 @@ package de.sciss.patterns
 package graph
 package impl
 
+import de.sciss.patterns.Context.Var
+
 final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Context[Tx])
   extends Stream[Tx, A] {
 
@@ -28,10 +30,10 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
 
   private[this] val outerStream: Stream[Tx, Pat[A]] = outer.expand(ctx, tx0)
 
-  private[this] val inStream    = ctx.newVar[Stream[Tx, A]](null)(tx0)
-  private[this] val _valid      = ctx.newVar(false)(tx0)
-  private[this] val _hasIn      = ctx.newVar(false)(tx0)
-  private[this] val _hasNext    = ctx.newVar(false)(tx0)
+  private[this] val inStream    = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
+  private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
+  private[this] val _hasIn      = ctx.newBooleanVar(false)(tx0)
+  private[this] val _hasNext    = ctx.newBooleanVar(false)(tx0)
 
   def advance()(implicit tx: Tx): Unit = {
     _valid()    = true // require(_valid())

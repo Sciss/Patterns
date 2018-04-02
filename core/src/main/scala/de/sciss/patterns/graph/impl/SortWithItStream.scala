@@ -15,14 +15,16 @@ package de.sciss.patterns
 package graph
 package impl
 
+import de.sciss.patterns.Context.Var
+
 final class SortWithItStream[Tx, A](tx0: Tx)(implicit ctx: Context[Tx])
   extends Stream[Tx, (A, A)] {
 
-  private[this] val _valid      = ctx.newVar(false)(tx0)
-  private[this] val _hasZ       = ctx.newVar(false)(tx0)
-  private[this] val _hasNext    = ctx.newVar(false)(tx0)
-  private[this] val pairInRef   = ctx.newVar[(Vector[A], Vector[A])](null)(tx0)
-  private[this] val count       = ctx.newVar(0)(tx0)
+  private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
+  private[this] val _hasZ       = ctx.newBooleanVar(false)(tx0)
+  private[this] val _hasNext    = ctx.newBooleanVar(false)(tx0)
+  private[this] val pairInRef   = ??? : Var[Tx, (Vector[A], Vector[A])] // ctx.newVar[(Vector[A], Vector[A])](null)(tx0)
+  private[this] val count       = ctx.newIntVar(0)(tx0)
 
   def advance(x: Vector[A], y: Vector[A])(implicit tx: Tx): Unit = {
     pairInRef() = (x, y)

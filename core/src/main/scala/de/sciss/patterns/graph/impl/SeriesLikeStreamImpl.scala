@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 package impl
 
+import de.sciss.patterns.Context.Var
 import de.sciss.patterns.Types.Widen2
 
 abstract class SeriesLikeStreamImpl[A1, A2, A, Tx](start: Pat[A1], step: Pat[A2], tx0: Tx)
@@ -27,9 +28,9 @@ abstract class SeriesLikeStreamImpl[A1, A2, A, Tx](start: Pat[A1], step: Pat[A2]
   private[this] val stepStream    = step  .expand(ctx, tx0).map(w.widen2)(ctx, tx0)
 //  private[this] val lengthStream  = length.expand(ctx, tx0)
 
-  private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])(tx0)
-  private[this] val _hasNext  = ctx.newVar(false)(tx0)
-  private[this] val _valid    = ctx.newVar(false)(tx0)
+  private[this] val state     = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+  private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
+  private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
 
   final def hasNext(implicit tx: Tx): Boolean = {
     validate()

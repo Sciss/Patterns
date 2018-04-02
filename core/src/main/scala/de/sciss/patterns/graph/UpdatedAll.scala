@@ -14,6 +14,8 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.Context.Var
+
 final case class UpdatedAll[A1, A >: A1](in: Pat[A1], idx: Pat[Int], elem: Pat[A]) extends Pattern[A] {
   def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
 
@@ -33,8 +35,8 @@ final case class UpdatedAll[A1, A >: A1](in: Pat[A1], idx: Pat[Int], elem: Pat[A
     private[this] val idxStream   = idx .expand(ctx, tx0)
     private[this] val elemStream  = elem.expand(ctx, tx0)
 
-    private[this] val _valid      = ctx.newVar(false)(tx0)
-    private[this] val state       = ctx.newVar[Stream[Tx, A]](null)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
+    private[this] val state       = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

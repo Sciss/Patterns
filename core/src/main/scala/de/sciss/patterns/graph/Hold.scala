@@ -14,6 +14,8 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.Context.Var
+
 /** A pattern that holds (and repeats) input values whenever `hold` is true.
   * With the default of constant `true`, the pattern will repeat the first
   * input element forever.
@@ -31,10 +33,10 @@ final case class Hold[A](in: Pat[A], hold: Pat[Boolean] = true) extends Pattern[
     private[this] val inStream    = in  .expand(ctx, tx0)
     private[this] val holdStream  = hold.expand(ctx, tx0)
 
-    private[this] val _valid      = ctx.newVar(false)(tx0)
-    private[this] val _hasNext    = ctx.newVar(false)(tx0)
-    private[this] val _hasIn      = ctx.newVar(false)(tx0)
-    private[this] val state       = ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(false)(tx0)
+    private[this] val _hasIn      = ctx.newBooleanVar(false)(tx0)
+    private[this] val state       = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

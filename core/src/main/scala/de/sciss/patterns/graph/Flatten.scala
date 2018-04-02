@@ -14,6 +14,8 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.Context.Var
+
 import scala.annotation.tailrec
 
 final case class Flatten[A](in: Pat[Pat[A]]) extends Pattern[A] {
@@ -27,10 +29,10 @@ final case class Flatten[A](in: Pat[Pat[A]]) extends Pattern[A] {
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream: Stream[Tx, Pat[A]] = in.expand(ctx, tx0)
 
-    private[this] val hasInner    = ctx.newVar(false)(tx0)
-    private[this] val innerStream = ctx.newVar[Stream[Tx, A]](null)(tx0)
-    private[this] val _hasNext    = ctx.newVar(false)(tx0)
-    private[this] val _valid      = ctx.newVar(false)(tx0)
+    private[this] val hasInner    = ctx.newBooleanVar(false)(tx0)
+    private[this] val innerStream = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(false)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

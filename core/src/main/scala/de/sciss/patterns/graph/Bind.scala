@@ -35,8 +35,8 @@ final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
 
     def checkNext()(implicit tx: Tx): Boolean = mapE.forall(_._2.hasNext)
 
-    private[this] val _valid   = ctx.newVar(false)(tx0)
-    private[this] val _hasNext = ctx.newVar(false)(tx0)
+    private[this] val _valid   = ctx.newBooleanVar(false)(tx0)
+    private[this] val _hasNext = ctx.newBooleanVar(false)(tx0)
 
     def hasNext(implicit tx: Tx): Boolean = {
       validate()

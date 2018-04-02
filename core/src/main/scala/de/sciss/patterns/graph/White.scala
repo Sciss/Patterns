@@ -14,6 +14,7 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.Context.Var
 import de.sciss.patterns.Types.{Aux, Num}
 
 final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
@@ -37,9 +38,9 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
 
     private def mkState()(implicit tx: Tx): A = num.rrand(loStream.next(), hiStream.next())
 
-    private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])(tx0)
-    private[this] val _hasNext  = ctx.newVar(false)(tx0)
-    private[this] val _valid    = ctx.newVar(false)(tx0)
+    private[this] val state     = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

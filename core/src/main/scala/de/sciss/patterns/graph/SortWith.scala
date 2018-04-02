@@ -14,6 +14,7 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.Context.Var
 import de.sciss.patterns.graph.impl.SortWithItStream
 
 import scala.util.control.Breaks
@@ -49,9 +50,9 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
     private[this] val outerStream: Stream[Tx, Pat[A]]  = outer.expand(ctx, tx0)
     private[this] val ltStream   : Stream[Tx, Boolean] = lt   .expand(ctx, tx0)
 
-    private[this] val _valid      = ctx.newVar(false)(tx0)
-    private[this] val sortedIt    = ctx.newVar[Stream[Tx, Pat[A]]](null)(tx0)
-    private[this] val _hasSorted  = ctx.newVar(false)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
+    private[this] val sortedIt    = ??? : Var[Tx, Stream[Tx, Pat[A]]] // ctx.newVar[Stream[Tx, Pat[A]]](null)(tx0)
+    private[this] val _hasSorted  = ctx.newBooleanVar(false)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
 //      logStream("SortWith.iterator.reset()")

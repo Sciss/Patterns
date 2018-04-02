@@ -14,6 +14,8 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.Context.Var
+
 final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCarry: It[A],
                                 inner: Pat[A])
   extends Pattern[A] {
@@ -36,8 +38,8 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
 
     private[this] val outerStream   = outer .expand(ctx, tx0)
 
-    private[this] val _valid        = ctx.newVar(false)(tx0)
-    private[this] val _result       = ctx.newVar[Stream[Tx, A]](null)(tx0)
+    private[this] val _valid        = ctx.newBooleanVar(false)(tx0)
+    private[this] val _result       = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {

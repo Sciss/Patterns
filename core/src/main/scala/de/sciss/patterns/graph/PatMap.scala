@@ -14,6 +14,7 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.Context.Var
 import de.sciss.patterns.graph.impl.MapItStream
 
 final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A] /* , innerLevel: Int */)
@@ -51,9 +52,9 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
     // as an additional constraint to determine `hasNext`!
     private[this] val itStream      = mkItStream(tx0)
 
-    private[this] val mapStream     = ctx.newVar[Pat[A]](null)(tx0)
-    private[this] val _valid        = ctx.newVar(false)(tx0)
-    private[this] val _hasNext      = ctx.newVar(false)(tx0)
+    private[this] val mapStream     = ??? : Var[Tx, Pat[A]] // ctx.newVar[Pat[A]](null)(tx0)
+    private[this] val _valid        = ctx.newBooleanVar(false)(tx0)
+    private[this] val _hasNext      = ctx.newBooleanVar(false)(tx0)
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {

@@ -14,6 +14,7 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.Context.Var
 import de.sciss.patterns.Types.{Aux, ScalarOrd}
 
 final case class Sorted[A](in: Pat[A])(implicit ord: ScalarOrd[A]) extends Pattern[A] {
@@ -28,8 +29,8 @@ final case class Sorted[A](in: Pat[A])(implicit ord: ScalarOrd[A]) extends Patte
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
     private[this] val inStream  = in.expand(ctx, tx0)
-    private[this] val _valid    = ctx.newVar(false)(tx0)
-    private[this] val sortedIt  = ctx.newVar[Stream[Tx, A]](null)(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
+    private[this] val sortedIt  = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {

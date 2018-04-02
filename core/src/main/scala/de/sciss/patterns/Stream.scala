@@ -13,6 +13,8 @@
 
 package de.sciss.patterns
 
+import de.sciss.patterns.Context.Var
+
 import scala.annotation.tailrec
 
 object Stream {
@@ -43,7 +45,7 @@ object Stream {
   def single[Tx, A](elem: A)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new Single[Tx, A](elem, tx)
 
   private final class Single[Tx, A](elem: A, tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-    private[this] val _hasNext = ctx.newVar(true)(tx0)
+    private[this] val _hasNext = ctx.newBooleanVar(true)(tx0)
 
     private def simpleString = s"Stream.single($elem)"
 
@@ -65,7 +67,7 @@ object Stream {
   def apply[Tx, A](elems: A*)(implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new Seq(elems, tx)
 
   private final class Seq[Tx, A](elems: scala.Seq[A], tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-    private[this] val count = ctx.newVar(0)(tx0)
+    private[this] val count = ctx.newIntVar(0)(tx0)
     private[this] val xs    = elems.toIndexedSeq
 
     private[this] lazy val simpleString =
@@ -92,9 +94,9 @@ object Stream {
                                        (implicit ctx: Context[Tx])
     extends Stream[Tx, B] {
 
-    private[this] val _valid    = ctx.newVar(false)(tx0)
-    private[this] val _hasNext  = ctx.newVar(false)(tx0)
-    private[this] val sub       = ctx.newVar[Stream[Tx, B]](null)(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
+    private[this] val sub       = ??? : Var[Tx, Stream[Tx, B]] // ctx.newVar[Stream[Tx, B]](null)(tx0)
     //    private[this] val _hasSub   = ctx.newVar(false)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
@@ -171,7 +173,7 @@ object Stream {
   private final class Take[Tx, A](outer: Stream[Tx, A], n: Int, tx0: Tx)(implicit ctx: Context[Tx])
     extends Stream[Tx, A] {
 
-    private[this] val i = ctx.newVar(0)(tx0)
+    private[this] val i = ctx.newIntVar(0)(tx0)
 
     def reset()(implicit tx: Tx): Unit = outer.reset()
 

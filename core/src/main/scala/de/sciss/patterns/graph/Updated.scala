@@ -29,9 +29,9 @@ final case class Updated[A1, A >: A1](in: Pat[A1], idx: Pat[Int], elem: A) exten
     private[this] val inStream    = in  .expand(ctx, tx0)
     private[this] val idxStream   = idx .expand(ctx, tx0)
 
-    private[this] val _valid      = ctx.newVar(false)(tx0)
-    private[this] val _hasNext    = ctx.newVar(false)(tx0)
-    private[this] val takeRem     = ctx.newVar(0)(tx0)
+    private[this] val _valid      = ctx.newBooleanVar(false)(tx0)
+    private[this] val _hasNext    = ctx.newBooleanVar(false)(tx0)
+    private[this] val takeRem     = ctx.newIntVar(0)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

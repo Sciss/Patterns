@@ -14,6 +14,8 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.Context.Var
+
 import scala.collection.mutable
 
 final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]] {
@@ -32,19 +34,18 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
     // Adapted from scala.collection.SeqLike#CombinationsItr
     // Scala license: BSD 3-clause
 
-    // generating all nums such that:
-    // (1) nums(0) + .. + nums(length-1) = n
-    // (2) 0 <= nums(i) <= cnts(i), where 0 <= i <= cnts.length-1
-    private[this] val elements  = ctx.newVar[IndexedSeq[A]](null)(tx0)
-    private[this] val counts    = ctx.newVar[Vector[Int]](null)(tx0)
-    private[this] val numbers   = ctx.newVar[Vector[Int]](null)(tx0)
-    private[this] val offsets   = ctx.newVar[Vector[Int]](null)(tx0)
-    private[this] val _hasNext  = ctx.newVar(false)(tx0)
-
     private[this] val inStream: Stream[Tx, A]   = in.expand(ctx, tx0)
     private[this] val nStream : Stream[Tx, Int] = n .expand(ctx, tx0)
 
-    private[this] val _valid = ctx.newVar(false)(tx0)
+    // generating all nums such that:
+    // (1) nums(0) + .. + nums(length-1) = n
+    // (2) 0 <= nums(i) <= cnts(i), where 0 <= i <= cnts.length-1
+    private[this] val elements  = ??? : Var[Tx, IndexedSeq[A]] // ctx.newVar[IndexedSeq[A]](null)(tx0)
+    private[this] val counts    = ??? : Var[Tx, Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
+    private[this] val numbers   = ??? : Var[Tx, Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
+    private[this] val offsets   = ??? : Var[Tx, Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false

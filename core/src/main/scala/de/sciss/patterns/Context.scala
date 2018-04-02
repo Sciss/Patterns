@@ -32,8 +32,9 @@ trait Context[Tx] {
   def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: Tx): Random[Tx]
 
   def newVar[A](init: A)(implicit tx: Tx): Var[Tx, A]
-//  def newVar[A](init: A): Var[A]
-//  def newIntVar(init: Int)(implicit tx: Tx): Var[Int]
+
+  def newIntVar     (init: Int    )(implicit tx: Tx): Var[Tx, Int     ]
+  def newBooleanVar (init: Boolean)(implicit tx: Tx): Var[Tx, Boolean ]
 
   def setRandomSeed(n: Long)(implicit tx: Tx): Unit
 
@@ -64,7 +65,9 @@ object Context {
   }
 
   private final class PlainImpl extends ContextLike[NoTx](NoTx) with Plain {
-    def newVar[A](init: A)(implicit tx: Tx): Var[Tx, A] = new PlainVar[A](init)
+    def newVar[A]     (init: A       )(implicit tx: Tx): Var[Tx, A]        = new PlainVar[A]     (init)
+    def newIntVar     (init: Int     )(implicit tx: Tx): Var[Tx, Int]      = new PlainIntVar     (init)
+    def newBooleanVar (init: Boolean )(implicit tx: Tx): Var[Tx, Boolean]  = new PlainBooleanVar (init)
 
     private[this] lazy val seedRnd  = new PlainRandom(System.currentTimeMillis())
     private[this] var tokenId       = 1000000000 // 0x40000000
@@ -92,12 +95,37 @@ object Context {
     def update(v: A)(implicit tx: NoTx): Unit =
       current = v
   }
+
+
+  private final class PlainBooleanVar(private[this] var current: Boolean)
+    extends Sink[NoTx, Boolean] with Source[NoTx, Boolean] {
+
+    override def toString: String = s"Var($current)"
+
+    def apply()(implicit tx: NoTx): Boolean =
+      current
+
+    def update(v: Boolean)(implicit tx: NoTx): Unit =
+      current = v
+  }
+  
+  private final class PlainIntVar(private[this] var current: Int) 
+    extends Sink[NoTx, Int] with Source[NoTx, Int] {
+    
+    override def toString: String = s"Var($current)"
+
+    def apply()(implicit tx: NoTx): Int =
+      current
+
+    def update(v: Int)(implicit tx: NoTx): Unit =
+      current = v
+  }
 }
 
 private[patterns] abstract class ContextLike[Tx](tx0: Tx) extends Context[Tx] {
   private[this] var streamMap = Map.empty[AnyRef, List[Stream[Tx, _]]]
-  private[this] val tokenMap  = newVar(Map.empty[Int, Tx => Stream[Tx, _]])(tx0)
-  private[this] val seedMap   = newVar(Map.empty[AnyRef, Long])(tx0)
+  private[this] val tokenMap  = ??? : Var[Tx, Map[Int, Tx => Stream[Tx, _]]] // newVar(Map.empty[Int, Tx => Stream[Tx, _]])(tx0)
+  private[this] val seedMap   = ??? : Var[Tx, (Map[AnyRef, Long])] // newVar(Map.empty[AnyRef, Long])(tx0)
 
   protected def nextSeed()(implicit tx: Tx): Long
 

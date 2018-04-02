@@ -55,6 +55,22 @@ object Context {
     def apply()(implicit tx: InTxn): A = peer()
   }
 
+  private final class BooleanVarImpl(init: Boolean) extends Sink[InTxn, Boolean] with Source[InTxn, Boolean] {
+    private[this] val peer = Ref(init)
+
+    def update(v: Boolean)(implicit tx: InTxn): Unit = peer() = v
+
+    def apply()(implicit tx: InTxn): Boolean = peer()
+  }
+
+  private final class IntVarImpl(init: Int) extends Sink[InTxn, Int] with Source[InTxn, Int] {
+    private[this] val peer = Ref(init)
+
+    def update(v: Int)(implicit tx: InTxn): Unit = peer() = v
+
+    def apply()(implicit tx: InTxn): Int = peer()
+  }
+
   private final class InMemoryImpl(tx0: InTxn) extends ContextLike[InTxn](tx0) with InMemory {
     private[this] val seedRnd = TxnRandom.plain()
     private[this] val tokenId = newVar(1000000000)(tx0) // 0x40000000
@@ -66,7 +82,9 @@ object Context {
     protected def mkRandomWithSeed(seed: Long)(implicit tx: Tx): Random[Tx] =
       new RandomImpl(TxnRandom.plain(seed))
 
-    def newVar[A](init: A)(implicit tx: Tx): Var[Tx, A] = new VarImpl[A](init)
+    def newVar[A]     (init: A      )(implicit tx: Tx): Var[Tx, A]        = new VarImpl[A]    (init)
+    def newBooleanVar (init: Boolean)(implicit tx: Tx): Var[Tx, Boolean]  = new BooleanVarImpl(init)
+    def newIntVar     (init: Int    )(implicit tx: Tx): Var[Tx, Int]      = new IntVarImpl    (init)
 
     def allocToken[A]()(implicit tx: Tx): It[A] = {
       val res = tokenId()
@@ -85,6 +103,10 @@ object Context {
     def step[A](fun: S#Tx => A): A = cursor.step(fun)
 
     def newVar[A](init: A)(implicit tx: S#Tx): Var[S#Tx, A] = ???
+
+    def newIntVar(init: Int)(implicit tx: S#Tx): Var[S#Tx, Int] = ???
+
+    def newBooleanVar(init: Boolean)(implicit tx: S#Tx): Var[S#Tx, Boolean] = ???
 
     def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = ???
 

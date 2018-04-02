@@ -14,6 +14,8 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.Context.Var
+
 import scala.annotation.tailrec
 
 final case class Distinct[A](in: Pat[A]) extends Pattern[A] {
@@ -25,11 +27,12 @@ final case class Distinct[A](in: Pat[A]) extends Pattern[A] {
   }
 
   private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-    private[this] val inStream = in.expand(ctx, tx0)
+    private[this] val inStream  = in.expand(ctx, tx0)
 
-    private[this] val seen     = ctx.newVar[Set[A]  ](null)(tx0)
-    private[this] val _hasNext = ctx.newVar[Boolean ](false)(tx0)
-    private[this] val _next    = ctx.newVar[A       ](null.asInstanceOf[A])(tx0)
+    private[this] val seen      = ??? : Var[Tx, Set[A]] // ctx.newVar[Set[A]  ](null)(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
+    private[this] val _next     = ??? : Var[Tx, A] // ctx.newVar[A       ](null.asInstanceOf[A])(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
 
     def reset()(implicit tx: Tx): Unit = if (_valid()) {
       _valid() = false
@@ -49,8 +52,6 @@ final case class Distinct[A](in: Pat[A]) extends Pattern[A] {
         }
       }
     }
-
-    private[this] val _valid = ctx.newVar(false)(tx0)
 
     private def validate()(implicit tx: Tx): Unit =
       if (!_valid()) {

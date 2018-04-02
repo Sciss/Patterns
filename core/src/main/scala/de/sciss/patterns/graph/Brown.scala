@@ -14,6 +14,7 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.patterns.Context.Var
 import de.sciss.patterns.Types.{Aux, Num, Widen2}
 
 final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
@@ -43,9 +44,9 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
 
     private[this] implicit val r: Random[Tx] = ctx.mkRandom(pat.ref)(tx0)
 
-    private[this] val state     = ctx.newVar[A](null.asInstanceOf[A])(tx0)
-    private[this] val _hasNext  = ctx.newVar(false)(tx0)
-    private[this] val _valid    = ctx.newVar(false)(tx0)
+    private[this] val state     = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val _hasNext  = ctx.newBooleanVar(false)(tx0)
+    private[this] val _valid    = ctx.newBooleanVar(false)(tx0)
 
     @inline
     private def calcNext(cur: A, step: A)(implicit r: Random[Tx], tx: Tx): A =
