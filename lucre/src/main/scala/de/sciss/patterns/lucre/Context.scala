@@ -20,6 +20,7 @@ import de.sciss.patterns
 import de.sciss.patterns.Context.Var
 import de.sciss.patterns.graph.It
 import de.sciss.patterns.{ContextLike, Random}
+import de.sciss.serial.Serializer
 
 import scala.concurrent.stm.{InTxn, Ref, TxnExecutor}
 
@@ -29,7 +30,8 @@ object Context {
   def apply[S <: stm.Sys[S]](implicit cursor: stm.Cursor[S], tx: S#Tx): Context[S#Tx] = new SysImpl[S](tx)
 
   trait Sys[S <: stm.Sys[S]] extends Context[S#Tx] {
-    type ID = S#ID
+    type ID   = S#ID
+    type Acc  = S#Acc
 
     def step[A](fun: S#Tx => A): A
   }
@@ -76,7 +78,7 @@ object Context {
 
   private final class InMemoryImpl(tx0: InTxn) extends ContextLike[InTxn](tx0) with InMemory {
     private[this] val seedRnd = TxnRandom.plain()
-    private[this] val tokenId = newVar((), 1000000000)(tx0) // 0x40000000
+    private[this] val tokenId = newVar((), 1000000000)(tx0, null) // 0x40000000
 
     protected def nextSeed()(implicit tx: Tx): Long = seedRnd.nextLong()
 
@@ -87,7 +89,9 @@ object Context {
 
     def newID()(implicit tx: Tx): Unit = ()
 
-    def newVar[A]     (id: Unit, init: A      )(implicit tx: Tx): Var[Tx, A]        = new VarImpl[A]    (init)
+    def newVar[A](id: Unit, init: A)(implicit tx: Tx, serializer: Serializer[Tx, Acc, A]): Var[Tx, A] =
+      new VarImpl[A](init)
+
     def newBooleanVar (id: Unit, init: Boolean)(implicit tx: Tx): Var[Tx, Boolean]  = new BooleanVarImpl(init)
     def newIntVar     (id: Unit, init: Int    )(implicit tx: Tx): Var[Tx, Int]      = new IntVarImpl    (init)
 
@@ -103,7 +107,7 @@ object Context {
 
     private[this] val id      = tx0.newID()
     private[this] val seedRnd = TxnRandom[S](id)(tx0)
-    private[this] val tokenId = newVar(id, 1000000000)(tx0) // 0x40000000
+    private[this] val tokenId = newIntVar(id, 1000000000)(tx0) // 0x40000000
 
     protected def nextSeed()(implicit tx: S#Tx): Long = seedRnd.nextLong()
 
@@ -113,7 +117,9 @@ object Context {
 
     def newID()(implicit tx: S#Tx): S#ID = tx.newID()
 
-    def newVar[A]     (id: S#ID, init: A      )(implicit tx: S#Tx): Var[S#Tx, A]        = tx.newVar       (id, init)(???)
+    def newVar[A](id: S#ID, init: A)(implicit tx: S#Tx, serializer: Serializer[S#Tx, Acc, A]): Var[S#Tx, A] =
+      tx.newVar(id, init)
+
     def newIntVar     (id: S#ID, init: Int    )(implicit tx: S#Tx): Var[S#Tx, Int]      = tx.newIntVar    (id, init)
     def newBooleanVar (id: S#ID, init: Boolean)(implicit tx: S#Tx): Var[S#Tx, Boolean]  = tx.newBooleanVar(id, init)
 

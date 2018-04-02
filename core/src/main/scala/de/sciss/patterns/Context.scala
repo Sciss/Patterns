@@ -16,9 +16,11 @@ package de.sciss.patterns
 import de.sciss.lucre.stm.{Sink, Source}
 import de.sciss.patterns.Context.Var
 import de.sciss.patterns.graph.It
+import de.sciss.serial.Serializer
 
 trait Context[Tx] {
   type ID
+  type Acc
 
   def addStream[A](ref: AnyRef, stream: Stream[Tx, A]): Stream[Tx, A]
 
@@ -33,7 +35,7 @@ trait Context[Tx] {
 
   def newID()(implicit tx: Tx): ID
 
-  def newVar[A](id: ID, init: A)(implicit tx: Tx): Var[Tx, A]
+  def newVar[A](id: ID, init: A)(implicit tx: Tx, serializer: Serializer[Tx, Acc, A]): Var[Tx, A]
 
   def newIntVar     (id: ID, init: Int    )(implicit tx: Tx): Var[Tx, Int     ]
   def newBooleanVar (id: ID, init: Boolean)(implicit tx: Tx): Var[Tx, Boolean ]
@@ -70,7 +72,8 @@ object Context {
   private final class PlainImpl extends ContextLike[NoTx](NoTx) with Plain {
     def newID()(implicit tx: Tx): Unit = ()
 
-    def newVar[A]     (id: Unit, init: A       )(implicit tx: Tx): Var[Tx, A]        = new PlainVar[A]     (init)
+    def newVar[A](id: Unit, init: A)(implicit tx: Tx, serializer: Serializer[Tx, Acc, A]): Var[Tx, A] = new PlainVar[A](init)
+
     def newIntVar     (id: Unit, init: Int     )(implicit tx: Tx): Var[Tx, Int]      = new PlainIntVar     (init)
     def newBooleanVar (id: Unit, init: Boolean )(implicit tx: Tx): Var[Tx, Boolean]  = new PlainBooleanVar (init)
 
