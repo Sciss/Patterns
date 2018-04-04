@@ -14,33 +14,33 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num}
 
 final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
   override private[patterns] def aux: List[Aux] = num :: Nil
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT = t(in)
     if (inT eq in) this else copy(in = inT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-    private[this] val id        = ctx.newID()(tx0)
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
+    private[this] val id        = tx0.newId()
     private[this] val inStream  = in.expand(ctx, tx0)
-    private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val _hasNext  = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val x1        = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
-    private[this] val state     = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val _valid    = tx0.newBooleanVar(id, false)
+    private[this] val _hasNext  = tx0.newBooleanVar(id, false)
+    private[this] val x1        = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val state     = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false
       inStream.reset()
     }
 
-    private def validate()(implicit tx: Tx): Unit =
+    private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {
         _valid() = true
         if (inStream.hasNext) {
@@ -51,7 +51,7 @@ final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Patt
         }
       }
 
-    private def advance()(implicit tx: Tx): Unit = {
+    private def advance()(implicit tx: S#Tx): Unit = {
       if (inStream.hasNext) {
         val in1     = x1()
         val in0     = inStream.next()
@@ -63,12 +63,12 @@ final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Patt
       }
     }
 
-    def hasNext(implicit tx: Tx): Boolean = {
+    def hasNext(implicit tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): A = {
+    def next()(implicit tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = state()
       advance()

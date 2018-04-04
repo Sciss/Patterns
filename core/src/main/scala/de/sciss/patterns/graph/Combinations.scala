@@ -14,53 +14,53 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 
 import scala.collection.mutable
 
 final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]] {
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl(tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = new StreamImpl(tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Pat[A]] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Pat[A]] = {
     val inT = t(in)
     val nT  = t(n)
     if (inT.eq(in) && nT.eq(n)) this else copy(in = inT, n = nT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends Stream[Tx, Pat[A]] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S])
+    extends Stream[S, Pat[A]] {
 
-    private[this] val id        = ctx.newID()(tx0)
+    private[this] val id        = tx0.newId()
 
     // Adapted from scala.collection.SeqLike#CombinationsItr
     // Scala license: BSD 3-clause
 
-    private[this] val inStream: Stream[Tx, A]   = in.expand(ctx, tx0)
-    private[this] val nStream : Stream[Tx, Int] = n .expand(ctx, tx0)
+    private[this] val inStream: Stream[S, A]   = in.expand(ctx, tx0)
+    private[this] val nStream : Stream[S, Int] = n .expand(ctx, tx0)
 
     // generating all nums such that:
     // (1) nums(0) + .. + nums(length-1) = n
     // (2) 0 <= nums(i) <= cnts(i), where 0 <= i <= cnts.length-1
-    private[this] val elements  = ??? : Var[Tx, IndexedSeq[A]] // ctx.newVar[IndexedSeq[A]](null)(tx0)
-    private[this] val counts    = ??? : Var[Tx, Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
-    private[this] val numbers   = ??? : Var[Tx, Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
-    private[this] val offsets   = ??? : Var[Tx, Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
-    private[this] val _hasNext  = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val elements  = ??? : S#Var[IndexedSeq[A]] // ctx.newVar[IndexedSeq[A]](null)(tx0)
+    private[this] val counts    = ??? : S#Var[Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
+    private[this] val numbers   = ??? : S#Var[Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
+    private[this] val offsets   = ??? : S#Var[Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
+    private[this] val _hasNext  = tx0.newBooleanVar(id, false)
+    private[this] val _valid    = tx0.newBooleanVar(id, false)
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false
       inStream.reset()
       nStream .reset()
     }
 
-    def hasNext(implicit tx: Tx): Boolean = {
+    def hasNext(implicit tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Pat[A] = {
+    def next()(implicit tx: S#Tx): Pat[A] = {
       if (!hasNext) Stream.exhausted()
 
       /* Calculate this result. */
@@ -107,7 +107,7 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
     /* Rearranges seq to newSeq a0a0..a0a1..a1...ak..ak such that
      * seq.count(_ == aj) == counts(j)
      */
-    private def validate()(implicit tx: Tx): Unit = if (!_valid()) {
+    private def validate()(implicit tx: S#Tx): Unit = if (!_valid()) {
       _valid() = true
       _hasNext() = nStream.hasNext
       if (!_hasNext()) return

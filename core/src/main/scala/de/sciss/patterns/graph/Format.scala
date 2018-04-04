@@ -14,27 +14,29 @@
 package de.sciss.patterns
 package graph
 
-final case class Format(s: Pat[String], args: Pat[_]*) extends Pattern[String] {
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, String] = new StreamImpl[Tx](tx)
+import de.sciss.lucre.stm.Base
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[String] = {
+final case class Format(s: Pat[String], args: Pat[_]*) extends Pattern[String] {
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, String] = new StreamImpl[S](tx)
+
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[String] = {
     val sT    = t(s)
     val argsT = args.map(t(_))
     Format(sT, argsT: _*)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, String] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, String] {
     private[this] val sStream     = s.expand(ctx, tx0)
     private[this] val argStreams  = args.map(_.expand(ctx, tx0))
 
-    def reset()(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: S#Tx): Unit = {
       sStream.reset()
       argStreams.foreach(_.reset())
     }
 
-    def hasNext(implicit tx: Tx): Boolean = sStream.hasNext && argStreams.forall(_.hasNext)
+    def hasNext(implicit tx: S#Tx): Boolean = sStream.hasNext && argStreams.forall(_.hasNext)
 
-    def next()(implicit tx: Tx): String = {
+    def next()(implicit tx: S#Tx): String = {
       val sVal    = sStream.next()
       val argVals = argStreams.map(_.next())
       sVal.format(argVals: _*)

@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.impl.TimeRef
 
 import scala.collection.immutable.{SortedMap => ISortedMap}
@@ -23,34 +23,34 @@ import scala.collection.immutable.{SortedMap => ISortedMap}
 final case class Par(in: Pat[Pat[Event]])
   extends Pattern[Event] {
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Event] = new StreamImpl(tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Event] = new StreamImpl(tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Event] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Event] = {
     val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Event] {
-    private[this] val id          = ctx.newID()(tx0)
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, Event] {
+    private[this] val id          = tx0.newId()
     private[this] val inStream    = in.expand(ctx, tx0)
-    private[this] val pq          = ??? : Var[Tx, ISortedMap[TimeRef, Stream[Tx, Event]]] // ctx.newVar[ISortedMap[TimeRef, Stream[Tx, Event]]](null)(tx0)
-    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val elem        = ??? : Var[Tx, Event] // ctx.newVar[Event   ](null)(tx0)
-    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val pq          = ??? : S#Var[ISortedMap[TimeRef, Stream[S, Event]]] // ctx.newVar[ISortedMap[TimeRef, Stream[S, Event]]](null)(tx0)
+    private[this] val _hasNext    = tx0.newBooleanVar(id, false)
+    private[this] val elem        = ??? : S#Var[Event] // ctx.newVar[Event   ](null)(tx0)
+    private[this] val _valid      = tx0.newBooleanVar(id, false)
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false
       inStream.reset()
     }
 
-    private def validate()(implicit tx: Tx): Unit =
+    private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {
         _valid()  = true
         pq()      = ISortedMap.empty
 
         var refCnt = 0
         inStream.foreach { pat =>
-          val it = pat.expand[Tx]
+          val it = pat.expand[S]
           if (it.hasNext) {
             pq() = pq() + (new TimeRef(refCnt) -> it)
             refCnt += 1
@@ -60,7 +60,7 @@ final case class Par(in: Pat[Pat[Event]])
         advance()
       }
 
-    private def advance()(implicit tx: Tx): Unit =
+    private def advance()(implicit tx: S#Tx): Unit =
       if (pq().nonEmpty) {
         val (ref, it) = pq().head
         pq()      = pq().tail
@@ -81,12 +81,12 @@ final case class Par(in: Pat[Pat[Event]])
         _hasNext() = false
       }
 
-    def hasNext(implicit tx: Tx): Boolean = {
+    def hasNext(implicit tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Event = {
+    def next()(implicit tx: S#Tx): Event = {
       if (!hasNext) Stream.exhausted()
       val res = elem()
       advance()

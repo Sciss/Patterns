@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num}
 
 final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
@@ -22,39 +22,39 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
 
   override private[patterns] def aux: List[Aux] = num :: Nil
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val loT = t(lo)
     val hiT = t(hi)
     if (loT.eq(lo) && hiT.eq(hi)) this else copy(lo = loT, hi = hiT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-    private[this] val id        = ctx.newID()(tx0)
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
+    private[this] val id        = tx0.newId()
     private[this] val loStream  = lo.expand(ctx, tx0)
     private[this] val hiStream  = hi.expand(ctx, tx0)
-    private[this] val state     = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
-    private[this] val _hasNext  = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val state     = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val _hasNext  = tx0.newBooleanVar(id, false)
+    private[this] val _valid    = tx0.newBooleanVar(id, false)
 
-    private[this] implicit val r: Random[Tx] = ctx.mkRandom(pat.ref)(tx0)
+    private[this] implicit val r: Random[S#Tx] = ctx.mkRandom(pat.ref)(tx0)
 
-    private def mkState()(implicit tx: Tx): A = num.rrand(loStream.next(), hiStream.next())
+    private def mkState()(implicit tx: S#Tx): A = num.rrand(loStream.next(), hiStream.next())
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false
       loStream.reset()
       hiStream.reset()
       // XXX TODO: r.reset()
     }
 
-    def hasNext(implicit tx: Tx): Boolean = {
+    def hasNext(implicit tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    private def validate()(implicit tx: Tx): Unit =
+    private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {
         _valid() = true
         _hasNext() = loStream.hasNext && hiStream.hasNext
@@ -63,7 +63,7 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
         }
       }
 
-    def next()(implicit tx: Tx): A = {
+    def next()(implicit tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = state()
       _hasNext() = loStream.hasNext && hiStream.hasNext

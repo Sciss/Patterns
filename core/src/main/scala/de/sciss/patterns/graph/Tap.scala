@@ -14,28 +14,30 @@
 package de.sciss.patterns
 package graph
 
-final case class Tap[A, A1](in: Pat[A], side: Pat[A1]) extends Pattern[A] {
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+import de.sciss.lucre.stm.Base
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+final case class Tap[A, A1](in: Pat[A], side: Pat[A1]) extends Pattern[A] {
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl[S](tx)
+
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT   = t(in)
     val sideT = t(side)
     if (inT.eq(in) && sideT.eq(side)) this else copy(in = inT, side = sideT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
     private[this] val inStream    = in  .expand(ctx, tx0)
     private[this] val sideStream  = side.expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: S#Tx): Unit = {
       inStream  .reset()
       sideStream.reset()
     }
 
-    def hasNext(implicit tx: Tx): Boolean =
+    def hasNext(implicit tx: S#Tx): Boolean =
       inStream.hasNext
 
-    def next()(implicit tx: Tx): A = {
+    def next()(implicit tx: S#Tx): A = {
       val res = inStream.next()
       if (sideStream.hasNext) sideStream.next()
       res

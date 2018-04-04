@@ -14,6 +14,7 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.impl.IndexItStream
 
 import scala.annotation.tailrec
@@ -21,24 +22,24 @@ import scala.annotation.tailrec
 final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], inner: Pat[A] /* , innerLevel: Int */)
   extends Pattern[A] {
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl(tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val nT      = t(n)
     val innerT  = t(inner)
     if (nT.eq(n) && innerT.eq(inner)) this else copy(n = nT, inner = innerT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
     @transient final private[this] lazy val ref = new AnyRef
 
-    private[this] val id          = ctx.newID()(tx0)
-    private[this] val iteration   = ctx.newIntVar(id, 0)(tx0)
-    private[this] val nValue      = ctx.newIntVar(id, 0)(tx0)
-    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val id          = tx0.newId()
+    private[this] val iteration   = tx0.newIntVar(id, 0)
+    private[this] val nValue      = tx0.newIntVar(id, 0)
+    private[this] val _hasNext    = tx0.newBooleanVar(id, false)
+    private[this] val _valid      = tx0.newBooleanVar(id, false)
 
-    private def mkItStream(implicit tx: Tx) = {
+    private def mkItStream(implicit tx: S#Tx) = {
       val res = new IndexItStream(iteration, tx)
       ctx.addStream(ref, res)
       res
@@ -49,12 +50,12 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
     private[this] val nStream     = n    .expand(ctx, tx0)
     private[this] val innerStream = inner.expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false
       nStream.reset()
     }
 
-    private def validate()(implicit tx: Tx): Unit =
+    private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {
         _valid()      = true
         val nhn       = nStream.hasNext
@@ -66,13 +67,13 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
         }
       }
 
-    def hasNext(implicit tx: Tx): Boolean = {
+    def hasNext(implicit tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
     @tailrec
-    private def nextIteration()(implicit tx: Tx): Unit = {
+    private def nextIteration()(implicit tx: S#Tx): Unit = {
       val i       = iteration()
       val n       = nValue()
       val nhn     = i < n
@@ -95,7 +96,7 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
       }
     }
 
-    def next()(implicit tx: Tx): A = {
+    def next()(implicit tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = innerStream.next()
       val ihn = innerStream.hasNext

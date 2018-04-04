@@ -1,5 +1,6 @@
 package de.sciss.patterns
 
+import de.sciss.lucre.stm.Plain
 import de.sciss.synth.swing.Plotting.Implicits._
 
 import scala.swing.Swing
@@ -31,7 +32,7 @@ object ResetExample {
       }
     }
 
-    implicit val ctx: Context.Plain = Context()
+    implicit val ctx: Context[Plain] = Context()
 
     def plot(g: Pat[Int], title: String): Unit =
       g.expand.toList.plot(title = title, discrete = true)

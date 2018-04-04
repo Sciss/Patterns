@@ -14,16 +14,18 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
+
 final case class Stutter[A](in: Pat[A], n: Pat[Int])
   extends Pattern[A] {
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     val inIt = in.expand
     val nIt  = n .expand
     (inIt zip nIt).flatMap { case (xi, ni) => Stream.fill(ni)(xi) }
   }
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT = t(in) .transform(t)
     val nT  = t(n)  .transform(t)
     if (inT.eq(in) && nT.eq(n)) this else copy(in = inT, n = nT)

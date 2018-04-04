@@ -14,28 +14,30 @@
 package de.sciss.patterns
 package graph
 
-case class Indices[A](in: Pat[A]) extends Pattern[Int] {
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl(tx)
+import de.sciss.lucre.stm.Base
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Int] = {
+case class Indices[A](in: Pat[A]) extends Pattern[Int] {
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = new StreamImpl(tx)
+
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Int] = {
     val inT = t(in)
     if (inT eq in) this else copy(in = inT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Int] {
-    private[this] val id        = ctx.newID()(tx0)
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, Int] {
+    private[this] val id        = tx0.newId()
     private[this] val inStream  = in.expand(ctx, tx0)
-    private[this] val count     = ctx.newIntVar(id, 0)(tx0)
+    private[this] val count     = tx0.newIntVar(id, 0)
 
-    def reset()(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: S#Tx): Unit = {
       inStream.reset()
       count() = 0
     }
 
-    def hasNext(implicit tx: Tx): Boolean =
+    def hasNext(implicit tx: S#Tx): Boolean =
       inStream.hasNext
 
-    def next()(implicit tx: Tx): Int = {
+    def next()(implicit tx: S#Tx): Int = {
       val res = count()
       inStream.next()
       count() = res + 1

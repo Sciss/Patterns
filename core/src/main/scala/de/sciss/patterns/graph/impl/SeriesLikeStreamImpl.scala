@@ -15,34 +15,34 @@ package de.sciss.patterns
 package graph
 package impl
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.Widen2
 
-abstract class SeriesLikeStreamImpl[A1, A2, A, Tx](start: Pat[A1], step: Pat[A2], tx0: Tx)
-                                                  (implicit ctx: Context[Tx], w: Widen2[A1, A2, A])
-  extends Stream[Tx, A] {
+abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A](start: Pat[A1], step: Pat[A2], tx0: S#Tx)
+                                                  (implicit ctx: Context[S], w: Widen2[A1, A2, A])
+  extends Stream[S, A] {
 
   protected def op(a: A, b: A): A
 
-  private[this] val id          = ctx.newID()(tx0)
+  private[this] val id          = tx0.newId()
   private[this] val startStream = start .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
   private[this] val stepStream  = step  .expand(ctx, tx0).map(w.widen2)(ctx, tx0)
-  private[this] val state       = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
-  private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
-  private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
+  private[this] val state       = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+  private[this] val _hasNext    = tx0.newBooleanVar(id, false)
+  private[this] val _valid      = tx0.newBooleanVar(id, false)
 
-  final def hasNext(implicit tx: Tx): Boolean = {
+  final def hasNext(implicit tx: S#Tx): Boolean = {
     validate()
     _hasNext()
   }
 
-  final def reset()(implicit tx: Tx): Unit = if (_valid()) {
+  final def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
     _valid() = false
     startStream .reset()
     stepStream  .reset()
   }
 
-  private def validate()(implicit tx: Tx): Unit =
+  private def validate()(implicit tx: S#Tx): Unit =
     if (!_valid()) {
       _valid()    = true
 //      count()     = 0
@@ -53,7 +53,7 @@ abstract class SeriesLikeStreamImpl[A1, A2, A, Tx](start: Pat[A1], step: Pat[A2]
       }
     }
 
-  final def next()(implicit tx: Tx): A = {
+  final def next()(implicit tx: S#Tx): A = {
     if (!hasNext) Stream.exhausted()
     val res = state()
 //    val c   = count() + 1

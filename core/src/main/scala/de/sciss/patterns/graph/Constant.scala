@@ -14,22 +14,23 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.Aux
 
 final case class Constant[A](value: A) extends Pat[A] {
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = Stream.continually(value)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = Stream.continually(value)
 
   override def toString: String = value.toString
 
-//  def embed   [Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = Stream.single     (value)
+//  def embed   [Tx](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = Stream.single     (value)
 
 //  private[patterns] final def cClassTag: ClassTag[COut] = ClassTag(classOf[COut])
 
   private[patterns] def aux: List[Aux] = Nil
 
-//  private[patterns] def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = iterator
+//  private[patterns] def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = iterator
 //
-//  private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit = ()
+//  private[patterns] def reset[Tx]()(implicit ctx: Context[S], tx: S#Tx): Unit = ()
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = this
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = this
 }

@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.impl.SortWithItStream
 
 import scala.util.control.Breaks
@@ -22,10 +22,10 @@ import scala.util.control.Breaks
 final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean])
   extends Pattern[Pat[A]] {
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] =
-    new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] =
+    new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Pat[A]] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Pat[A]] = {
     val outerT  = t(outer)
     val ltT     = t(lt)
     if (outerT.eq(outer) && ltT.eq(lt)) this else {
@@ -34,52 +34,52 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
     }
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends Stream[Tx, Pat[A]] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S])
+    extends Stream[S, Pat[A]] {
 
     @transient final private[this] lazy val ref = new AnyRef
 
-    private[this] val id          = ctx.newID()(tx0)
-    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val sortedIt    = ??? : Var[Tx, Stream[Tx, Pat[A]]] // ctx.newVar[Stream[Tx, Pat[A]]](null)(tx0)
-    private[this] val _hasSorted  = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val id          = tx0.newId()
+    private[this] val _valid      = tx0.newBooleanVar(id, false)
+    private[this] val sortedIt    = ??? : S#Var[Stream[S, Pat[A]]] // ctx.newVar[Stream[S, Pat[A]]](null)(tx0)
+    private[this] val _hasSorted  = tx0.newBooleanVar(id, false)
 
-    private def mkItStream(implicit tx: Tx) = {
-      val res = new SortWithItStream[Tx, A](tx)
+    private def mkItStream(implicit tx: S#Tx) = {
+      val res = new SortWithItStream[S, A](tx)
       ctx.addStream(ref, res)
       res
     }
 
     ctx.provideOuterStream[(A, A)](it.token, mkItStream(_))(tx0)
 
-    private[this] val outerStream: Stream[Tx, Pat[A]]  = outer.expand(ctx, tx0)
-    private[this] val ltStream   : Stream[Tx, Boolean] = lt   .expand(ctx, tx0)
+    private[this] val outerStream: Stream[S, Pat[A]]  = outer.expand(ctx, tx0)
+    private[this] val ltStream   : Stream[S, Boolean] = lt   .expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
 //      logStream("SortWith.iterator.reset()")
       _valid() = false
       val itStreams = ctx.getStreams(ref)
       itStreams.foreach {
-        case m: SortWithItStream[Tx, A] => m.reset()
+        case m: SortWithItStream[S, A] => m.reset()
       }
       outerStream .reset()
       ltStream    .reset()
     }
 
-    private def validate()(implicit tx: Tx): Unit =
+    private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {
         _valid()      = true
         _hasSorted()  = false
         perform()
       }
 
-    private def perform()(implicit tx: Tx): Unit = {
+    private def perform()(implicit tx: S#Tx): Unit = {
       val vec: Vector[Vector[A]] = outerStream.map(_.expand.toVector).toVector
       val itStreams = ctx.getStreams(ref)
       Breaks.breakable {
         val sorted = vec.sortWith { (x, y) =>
           itStreams.foreach {
-            case m: SortWithItStream[Tx, A] => m.advance(x, y)
+            case m: SortWithItStream[S, A] => m.advance(x, y)
           }
           ltStream.reset()
           if (ltStream.hasNext) {
@@ -93,12 +93,12 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
       }
     }
 
-    def hasNext(implicit tx: Tx): Boolean = {
+    def hasNext(implicit tx: S#Tx): Boolean = {
       validate()
       _hasSorted() && sortedIt().hasNext
     }
 
-    def next()(implicit tx: Tx): Pat[A] = {
+    def next()(implicit tx: S#Tx): Pat[A] = {
       if (!hasNext) Stream.exhausted()
       sortedIt().next()
     }

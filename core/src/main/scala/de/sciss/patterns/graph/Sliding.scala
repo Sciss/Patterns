@@ -13,40 +13,40 @@
 
 package de.sciss.patterns.graph
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
 
 final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends Pattern[Pat[A]] { pat =>
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Pat[A]] = new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Pat[A]] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Pat[A]] = {
     val inT   = t(in)
     val sizeT = t(size)
     val stepT = t(step)
     if (inT.eq(in) && sizeT.eq(size) && stepT.eq(step)) this else copy(in = inT, size = sizeT, step = stepT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Pat[A]] {
-    private[this] val id          = ctx.newID()(tx0)
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, Pat[A]] {
+    private[this] val id          = tx0.newId()
     private[this] val inStream    = pat.in  .expand(ctx, tx0)
     private[this] val sizeStream  = pat.size.expand(ctx, tx0)
     private[this] val stepStream  = pat.step.expand(ctx, tx0)
 
-    private[this] val innerStream = ??? : Var[Tx, Pat[A]] // ctx.newVar[Pat[A]](null)(tx0)
-    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val _hasStep    = ctx.newBooleanVar(id, true)(tx0)
-    private[this] val _buf        = ??? : Var[Tx, Vector[A]] // ctx.newVar[Vector[A]](null)(tx0)
+    private[this] val innerStream = ??? : S#Var[Pat[A]] // ctx.newVar[Pat[A]](null)(tx0)
+    private[this] val _valid      = tx0.newBooleanVar(id, false)
+    private[this] val _hasNext    = tx0.newBooleanVar(id, false)
+    private[this] val _hasStep    = tx0.newBooleanVar(id, true)
+    private[this] val _buf        = ??? : S#Var[Vector[A]] // ctx.newVar[Vector[A]](null)(tx0)
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false
       inStream  .reset()
       sizeStream.reset()
       stepStream.reset()
     }
 
-    private def validate()(implicit tx: Tx): Unit =
+    private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {
         _valid()    = true
         _hasStep()  = true
@@ -54,7 +54,7 @@ final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends 
         advance()
       }
 
-    private def advance()(implicit tx: Tx): Unit = {
+    private def advance()(implicit tx: S#Tx): Unit = {
       val shn     = _hasStep() && sizeStream.hasNext && inStream.hasNext
       _hasNext()  = shn
       if (shn) {
@@ -72,7 +72,7 @@ final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends 
           i += 1
         }
         val vecNew    = b.result()
-        val inner     = Pat(vecNew: _*) // Stream[Tx, A](vecNew: _*)
+        val inner     = Pat(vecNew: _*) // Stream[S, A](vecNew: _*)
         innerStream() = inner
         val ihn       = sizeVal > 0
         _hasNext()    = ihn
@@ -92,12 +92,12 @@ final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends 
       }
     }
 
-    def hasNext(implicit tx: Tx): Boolean = {
+    def hasNext(implicit tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Pat[A] = {
+    def next()(implicit tx: S#Tx): Pat[A] = {
       if (!hasNext) Stream.exhausted()
       val res = innerStream()
       advance()

@@ -30,7 +30,7 @@ import de.sciss.synth.proc.impl.{AuralScheduledBase, DummySerializerFactory}
 import de.sciss.synth.proc.{AuralAttribute, AuralContext, AuralView, AuralViewBase, TimeRef}
 
 import scala.annotation.tailrec
-import scala.concurrent.stm.{InTxn, Ref}
+import scala.concurrent.stm.Ref
 
 /*
   XXX TODO: some DRY with AuralGraphemeBase
@@ -39,7 +39,7 @@ import scala.concurrent.stm.{InTxn, Ref}
 object AuralPatternAttribute extends Factory {
   type Repr[S <: stm.Sys[S]] = Pattern[S]
 
-  def typeID: Int = Pattern.typeID
+  def typeId: Int = Pattern.typeId
 
   private[this] lazy val _init: Unit = AuralAttribute.addFactory(this)
 
@@ -113,9 +113,9 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
 
   import TxnLike.peer
 
-  def typeID: Int = Pattern.typeID
+  def typeId: Int = Pattern.typeId
 
-  type ViewID     = Unit
+  type ViewId     = Unit
   type Elem       = AuralPatternAttribute.View[S]
   type ElemHandle = Elem // AuralGraphemeBase.ElemHandle[S, Elem]
   type Target     = AuralAttribute.Target[S]
@@ -127,7 +127,7 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
 
   private[this] var patObserver: Disposable[S#Tx] = _
 
-  private[this] val patContext      = Ref.make[patterns.lucre.Context.InMemory]
+  private[this] val patContext      = Ref.make[patterns.lucre.Context[I]]
 
   private def getSingleFloat(in: Any): Option[Float] = in match {
     case i: Int     => Some(i.toFloat)
@@ -151,13 +151,13 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     }
   }
 
-  private type St = patterns.Stream[InTxn, Any]
+  private type St = patterns.Stream[I, Any]
 
   private[this] val streamRef = Ref[St](patterns.Stream.empty)
 
   private def nextElemFromStream(time: Long)(implicit tx: S#Tx): Option[Elem] = {
-    val stream = streamRef()
-    // println(s"nextElemFromStream($time)")
+    implicit val itx: I#Tx = iSys(tx)
+    val stream = streamRef()(tx.peer)
 
     @tailrec
     def loop(count: Int): Option[Elem] = if (count == 10 || !stream.hasNext) {
@@ -176,7 +176,7 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
                 val numFrames = (TimeRef.SampleRate * delta).toLong
                 val span      = Span(time, time + numFrames)
                 val view      = new ViewImpl(attr, v, span)
-                viewTree.add(time -> view)(iSys(tx))
+                viewTree.add(time -> view)
                 // println(s"-> $view")
                 Some(view)
               }
@@ -196,7 +196,8 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
 
   private def setPattern(g: Pat[_])(implicit tx: S#Tx): Boolean = {
     // println("setGraph")
-    val _pr = playingRef()
+    implicit val itx: I#Tx = iSys(tx)
+    val _pr = playingRef()(tx.peer)
     _pr.foreach(elemRemoved(_, elemPlays = true))
 //    viewTree.iterator(iSys(tx)).toList.foreach { case (_, entry) =>
 //      val elemPlays = _pr.contains(entry)
@@ -204,18 +205,18 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
 //    }
 //
 //    assert(viewTree.isEmpty(iSys(tx)))
-    viewTree.clear()(iSys(tx))
+    viewTree.clear()
 
-    implicit val _ctx: Context.InMemory = patterns.lucre.Context.InMemory()
-    patContext() = _ctx
-    val stream = g.expand[InTxn]
-    streamRef() = stream
+    implicit val _ctx: Context[I] = patterns.lucre.Context[I](???, itx) // InMemory()
+    patContext.update(_ctx)(tx.peer)
+    val stream: patterns.Stream[I, Any] = ??? // g.expand[I]
+    streamRef.update(stream)(tx.peer)
 
     val headElem  = nextElemFromStream(0L)
     val isEmpty   = headElem.isEmpty
-    isEmptyRef()  = isEmpty
+    isEmptyRef.update(isEmpty)(tx.peer)
     val numCh     = if (isEmpty) -1 else headElem.get.value.numChannels
-    val oldCh     = prefChansNumRef.swap(numCh)
+    val oldCh     = prefChansNumRef.swap(numCh)(tx.peer)
     if (oldCh != -2 && oldCh != numCh) {
       observer.attrNumChannelsChanged(this)
     }

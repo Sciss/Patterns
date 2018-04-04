@@ -15,17 +15,17 @@ package de.sciss.patterns
 package graph
 package impl
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 
-final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Context[Tx])
-  extends Stream[Tx, A] {
+final class MapItStream[S <: Base[S], A](outer: Pat[Pat[A]], tx0: S#Tx)(implicit ctx: Context[S])
+  extends Stream[S, A] {
 
-  private[this] val id          = ctx.newID()(tx0)
+  private[this] val id          = tx0.newId()
   private[this] val outerStream = outer.expand(ctx, tx0)
-  private[this] val inStream    = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
-  private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
-  private[this] val _hasIn      = ctx.newBooleanVar(id, false)(tx0)
-  private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
+  private[this] val inStream    = ??? : S#Var[Stream[S, A]] // ctx.newVar[Stream[S, A]](null)(tx0)
+  private[this] val _valid      = tx0.newBooleanVar(id, false)
+  private[this] val _hasIn      = tx0.newBooleanVar(id, false)
+  private[this] val _hasNext    = tx0.newBooleanVar(id, false)
 
   private[this] lazy val simpleString = {
     val os0 = outer.toString
@@ -35,7 +35,7 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
 
   override def toString: String = simpleString
 
-  def advance()(implicit tx: Tx): Unit = {
+  def advance()(implicit tx: S#Tx): Unit = {
     _valid()    = true // require(_valid())
     val ohn     = outerStream.hasNext
     _hasNext()  = ohn
@@ -52,19 +52,19 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
     }
   }
 
-  private def validate()(implicit tx: Tx): Unit =
+  private def validate()(implicit tx: S#Tx): Unit =
     if (!_valid()) {
 //      _valid() = true
       advance()
     }
 
-  def resetOuter()(implicit tx: Tx): Unit = if (_valid()) {
+  def resetOuter()(implicit tx: S#Tx): Unit = if (_valid()) {
 //    logStream(s"$simpleString.resetOuter()")
     _valid() = false
     outerStream.reset()
   }
 
-  def reset()(implicit tx: Tx): Unit = {
+  def reset()(implicit tx: S#Tx): Unit = {
     val hi = _hasIn()
     logStream(s"$simpleString.reset(); hasIn = $hi")
     if (hi) {
@@ -75,12 +75,12 @@ final class MapItStream[Tx, A](outer: Pat[Pat[A]], tx0: Tx)(implicit ctx: Contex
     }
   }
 
-  def hasNext(implicit tx: Tx): Boolean = {
+  def hasNext(implicit tx: S#Tx): Boolean = {
     validate()
     _hasNext()
   }
 
-  def next()(implicit tx: Tx): A = {
+  def next()(implicit tx: S#Tx): A = {
     if (!hasNext) Stream.exhausted()
     val in      = inStream()
     val res     = in.next()

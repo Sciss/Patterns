@@ -102,24 +102,24 @@ object Graph {
 //  def isEmpty : Boolean = sources.isEmpty // && controlProxies.isEmpty
 //  def nonEmpty: Boolean = !isEmpty
 //
-//  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+//  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl(tx)
 //
-//  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+//  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
 //    val sourcesT = sources.map(t(_))
 //    val outT     = t(out)
 //    copy(sources = sourcesT, out = outT)
 //  }
 //
-//  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+//  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
 //
 //    private[this] val peer = out.expand(ctx, tx0)
 //
-//    def reset()(implicit tx: Tx): Unit = {
+//    def reset()(implicit tx: S#Tx): Unit = {
 ////      sources.foreach(_.reset())
 //      peer.reset()
 //    }
 //
-//    def hasNext(implicit tx: Tx): Boolean = peer.hasNext
-//    def next ()(implicit tx: Tx): A       = peer.next()
+//    def hasNext(implicit tx: S#Tx): Boolean = peer.hasNext
+//    def next ()(implicit tx: S#Tx): A       = peer.next()
 //  }
 //}

@@ -14,17 +14,18 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.impl.MapItStream
 
 final case class FlatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A], innerLevel: Int)
   extends Pattern[A] {
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     logStream("FlatMap.iterator")
     new StreamImpl(tx)
   }
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val outerT  = t(outer)
     val innerT  = t(inner)
     if (outerT.eq(outer) && innerT.eq(inner)) this else {
@@ -33,10 +34,10 @@ final case class FlatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1
     }
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
     @transient final private[this] lazy val ref = new AnyRef
 
-    private def mkItStream(implicit tx: Tx) = {
+    private def mkItStream(implicit tx: S#Tx) = {
       val res = new MapItStream(outer, tx)
       ctx.addStream(ref, res)
       res
@@ -44,40 +45,40 @@ final case class FlatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1
 
     ctx.provideOuterStream(it.token, mkItStream(_))(tx0)
 
-    private[this] val innerStream: Stream[Tx, A] = inner.expand(ctx, tx0)
+    private[this] val innerStream: Stream[S, A] = inner.expand(ctx, tx0)
 
     // because `inner` is not guaranteed to depend on `It`, we must
     // pro-active create one instance of the it-stream which is used
     // as an additional constraint to determine `hasNext`!
     private[this] val itStream      = mkItStream(tx0)
 
-    def reset()(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: S#Tx): Unit = {
       logStream("FlatMap.iterator.reset()")
       ctx.getStreams(ref).foreach {
-        case m: MapItStream[Tx, _] => m.resetOuter()
+        case m: MapItStream[S, _] => m.resetOuter()
         // case _ =>
       }
       innerStream.reset()
     }
 
 //      ctx.getStreams(ref).foreach {
-//        case m: MapItStream[Tx, _] => m.resetOuter()
+//        case m: MapItStream[S, _] => m.resetOuter()
 //        // case _ =>
 //      }
 
-    def hasNext(implicit tx: Tx): Boolean =
+    def hasNext(implicit tx: S#Tx): Boolean =
       itStream.hasNext && innerStream.hasNext
 
-    private def advance()(implicit tx: Tx): Unit = {
+    private def advance()(implicit tx: S#Tx): Unit = {
       logStream("FlatMap.iterator.advance()")
       ctx.getStreams(ref).foreach {
-        case m: MapItStream[Tx, _] => m.advance()
+        case m: MapItStream[S, _] => m.advance()
         // case _ =>
       }
       innerStream.reset()
     }
 
-    def next()(implicit tx: Tx): A = {
+    def next()(implicit tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = innerStream.next()
       logStream(s"FlatMap.iterator.next() = $res; innerStream.hasNext = ${innerStream.hasNext}; itStream.hasNext = ${itStream.hasNext}")

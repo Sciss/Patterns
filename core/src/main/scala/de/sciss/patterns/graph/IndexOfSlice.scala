@@ -14,35 +14,37 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
+
 import scala.collection.mutable
 
 final case class IndexOfSlice[A1, A2](in: Pat[A1], sub: Pat[A2], from: Pat[Int]) extends Pattern[Int] {
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, Int] = new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[Int] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Int] = {
     val inT   = t(in)
     val subT  = t(sub)
     val fromT = t(from)
     if (inT.eq(in) && subT.eq(sub) && fromT.eq(from)) this else copy(in = inT, sub = subT, from = fromT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, Int] {
-    private[this] val id          = ctx.newID()(tx0)
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, Int] {
+    private[this] val id          = tx0.newId()
     private[this] val inStream    = in  .expand(ctx, tx0)
     private[this] val subStream   = sub .expand(ctx, tx0)
     private[this] val fromStream  = from.expand(ctx, tx0)
-    private[this] val fromValue   = ctx.newIntVar    (id, 0    )(tx0)
-    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val fromValue   = tx0.newIntVar    (id, 0    )
+    private[this] val _valid      = tx0.newBooleanVar(id, false)
+    private[this] val _hasNext    = tx0.newBooleanVar(id, false)
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false
       inStream  .reset()
       subStream .reset()
       fromStream.reset()
     }
 
-    private def validate()(implicit tx: Tx): Unit =
+    private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {
         _valid() = true
         val hn = fromStream.hasNext
@@ -53,12 +55,12 @@ final case class IndexOfSlice[A1, A2](in: Pat[A1], sub: Pat[A2], from: Pat[Int])
         }
       }
 
-    def hasNext(implicit tx: Tx): Boolean = {
+    def hasNext(implicit tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: Tx): Int = {
+    def next()(implicit tx: S#Tx): Int = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       _hasNext()      = false   // there is only one run through

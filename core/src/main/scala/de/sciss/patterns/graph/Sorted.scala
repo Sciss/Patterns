@@ -14,43 +14,43 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, ScalarOrd}
 
 final case class Sorted[A](in: Pat[A])(implicit ord: ScalarOrd[A]) extends Pattern[A] {
   override private[patterns] def aux: List[Aux] = ord :: Nil
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl(tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT = t(in)
     if (inT eq in) this else copy(in = inT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
-    private[this] val id          = ctx.newID()(tx0)
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
+    private[this] val id          = tx0.newId()
     private[this] val inStream  = in.expand(ctx, tx0)
-    private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val sortedIt  = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
+    private[this] val _valid    = tx0.newBooleanVar(id, false)
+    private[this] val sortedIt  = ??? : S#Var[Stream[S, A]] // ctx.newVar[Stream[S, A]](null)(tx0)
 
-    private def validate()(implicit tx: Tx): Unit =
+    private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {
         _valid()    = true
         val xs      = inStream.toList
         sortedIt()  = Stream(xs.sortWith(ord.lt): _*)
       }
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false
       inStream.reset()
     }
 
-    def hasNext(implicit tx: Tx): Boolean = {
+    def hasNext(implicit tx: S#Tx): Boolean = {
       validate()
       sortedIt().hasNext
     }
 
-    def next()(implicit tx: Tx): A = {
+    def next()(implicit tx: S#Tx): A = {
       validate()
       sortedIt().next()
     }

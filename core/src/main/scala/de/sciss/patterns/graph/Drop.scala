@@ -1,23 +1,24 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.impl.TruncateStream
 
 final case class Drop[A](in: Pat[A], length: Pat[Int]) extends Pattern[A] {
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
-    new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+    new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT     = t(in)
     val lengthT = t(length)
     if (inT.eq(in) && lengthT.eq(length)) this else copy(in = inT, length = lengthT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends TruncateStream[A, Tx](in, length, tx0) {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S])
+    extends TruncateStream[S, A](in, length, tx0) {
 
-    protected def truncate(it: Stream[Tx, A], n: Int)(implicit tx: Tx): Stream[Tx, A] =
+    protected def truncate(it: Stream[S, A], n: Int)(implicit tx: S#Tx): Stream[S, A] =
       it.drop(n)
   }
 }

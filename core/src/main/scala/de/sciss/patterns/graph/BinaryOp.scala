@@ -14,6 +14,7 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num, NumDouble, NumFrac, NumInt, Ord, Widen2}
 
 import scala.language.higherKinds
@@ -22,9 +23,9 @@ object BinaryOp {
   sealed abstract class Op[A1, A2] extends ProductWithAux {
     type State[Tx]
 
-    def prepare[Tx](ref: AnyRef)(implicit ctx: Context[Tx], tx: Tx): State[Tx]
+    def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S#Tx]
 
-    def next[Tx](a: A1, b: A1)(implicit state: State[Tx], tx: Tx): A2
+    def next[S <: Base[S]](a: A1, b: A1)(implicit state: State[S#Tx], tx: S#Tx): A2
 
     override final def productPrefix = s"BinaryOp$$$name"
 
@@ -36,9 +37,9 @@ object BinaryOp {
   abstract class PureOp[A1, A2] extends Op[A1, A2] {
     final type State[_] = Unit
 
-    final def prepare[Tx](ref: AnyRef)(implicit ctx: Context[Tx], tx: Tx): State[Tx] = ()
+    final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S#Tx] = ()
 
-    def next[Tx](a: A1, b: A1)(implicit state: State[Tx], tx: Tx): A2 = apply(a, b)
+    def next[S <: Base[S]](a: A1, b: A1)(implicit state: State[S#Tx], tx: S#Tx): A2 = apply(a, b)
 
     def apply(a: A1, b: A1): A2
   }
@@ -300,29 +301,29 @@ final case class BinaryOp[A1, A2, A3, A](op: BinaryOp.Op[A3, A], a: Pat[A1], b: 
 
   override private[patterns] def aux: List[Aux] = w :: Nil
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val aT = t(a)
     val bT = t(b)
     if (aT.eq(a) && bT.eq(b)) this else copy(a = aT, b = bT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
     private[this] val aStream = a.expand(ctx, tx0)
     private[this] val bStream = b.expand(ctx, tx0)
 
-    private[this] implicit val state: op.State[Tx]  = op.prepare(ref)(ctx, tx0)
+    private[this] implicit val state: op.State[S#Tx]  = op.prepare(ref)(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit = {
+    def reset()(implicit tx: S#Tx): Unit = {
       aStream.reset()
       bStream.reset()
     }
 
-    def hasNext(implicit tx: Tx): Boolean =
+    def hasNext(implicit tx: S#Tx): Boolean =
       aStream.hasNext && bStream.hasNext
 
-    def next()(implicit tx: Tx): A = {
+    def next()(implicit tx: S#Tx): A = {
       val aVal = w.widen1(aStream.next())
       val bVal = w.widen2(bStream.next())
       op.next(aVal, bVal)

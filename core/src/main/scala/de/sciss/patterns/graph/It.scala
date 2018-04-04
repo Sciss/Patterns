@@ -14,16 +14,18 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
+
 /** A glue element to make `map` and `flatMap` work. */
 final case class It[A](token: Int) extends Pattern[A] { pat =>
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     logStream(s"$pat.iterator")
-    new StreamImpl[Tx](tx)
+    new StreamImpl[S](tx)
   }
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = this
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = this
 
-  def replaceIn[Tx, B](inner: Pat[B])(implicit ctx: Context[Tx], tx: Tx): (It[A], Pat[B]) = {
+  def replaceIn[S <: Base[S], B](inner: Pat[B])(implicit ctx: Context[S], tx: S#Tx): (It[A], Pat[B]) = {
     val itT = ctx.allocToken[A]()
     val t = new Transform {
       def applyOne[X](in: Pat[X]): Pat[X] = in match {
@@ -35,11 +37,11 @@ final case class It[A](token: Int) extends Pattern[A] { pat =>
     (itT, innerT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
     private[this] val refStream = ctx.mkOuterStream(token)(tx0)
 
-    def reset()(implicit tx: Tx): Unit      = refStream.reset()
-    def hasNext(implicit tx: Tx): Boolean   = refStream.hasNext
-    def next ()(implicit tx: Tx): A         = refStream.next()
+    def reset()(implicit tx: S#Tx): Unit      = refStream.reset()
+    def hasNext(implicit tx: S#Tx): Boolean   = refStream.hasNext
+    def next ()(implicit tx: S#Tx): A         = refStream.next()
   }
 }

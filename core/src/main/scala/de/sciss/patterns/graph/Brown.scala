@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num, Widen2}
 
 final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
@@ -23,35 +23,35 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
 
   override private[patterns] def aux: List[Aux] = w :: num :: Nil
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl(tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl(tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val loT   = t(lo)
     val hiT   = t(hi)
     val stepT = t(step)
     if (loT.eq(lo) && hiT.eq(hi) && stepT.eq(step)) this else copy(lo = loT, hi = hiT, step = stepT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends Stream[Tx, A] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S])
+    extends Stream[S, A] {
 
-    private[this] val id          = ctx.newID()(tx0)
+    private[this] val id          = tx0.newId()
 
     private[this] val loStream    = lo  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
     private[this] val hiStream    = hi  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
     private[this] val stepStream  = step.expand(ctx, tx0)
 
-    private[this] implicit val r: Random[Tx] = ctx.mkRandom(pat.ref)(tx0)
+    private[this] implicit val r: Random[S#Tx] = ctx.mkRandom(pat.ref)(tx0)
 
-    private[this] val state       = ??? : Var[Tx, A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
-    private[this] val _hasNext    = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val _valid      = ctx.newBooleanVar(id, false)(tx0)
+    private[this] val state       = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val _hasNext    = tx0.newBooleanVar(id, false)
+    private[this] val _valid      = tx0.newBooleanVar(id, false)
 
     @inline
-    private def calcNext(cur: A, step: A)(implicit r: Random[Tx], tx: Tx): A =
+    private def calcNext(cur: A, step: A)(implicit r: Random[S#Tx], tx: S#Tx): A =
       num.+(cur, num.rand2(step))
 
-    private def validate()(implicit tx: Tx): Unit =
+    private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {
         _valid() = true
         _hasNext() = loStream.hasNext && hiStream.hasNext
@@ -60,12 +60,12 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
         }
       }
 
-    def hasNext(implicit tx: Tx): Boolean = {
+    def hasNext(implicit tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false
       loStream  .reset()
       hiStream  .reset()
@@ -73,7 +73,7 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
       // XXX TODO: r.reset()
     }
 
-    def next()(implicit tx: Tx): A = {
+    def next()(implicit tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = state()
       _hasNext() = loStream.hasNext && hiStream.hasNext && stepStream.hasNext

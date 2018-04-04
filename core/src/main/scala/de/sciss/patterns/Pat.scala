@@ -13,6 +13,7 @@
 
 package de.sciss.patterns
 
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.Aux
 import de.sciss.patterns.graph.{Constant, LoopWithIndex, PatSeq}
 
@@ -52,9 +53,9 @@ trait ProductWithAux extends Product {
 trait Pat[+A] extends ProductWithAux {
 //  Pat.COUNT += 1
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A]
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A]
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A]
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A]
 }
 
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */
@@ -78,13 +79,13 @@ abstract class Pattern[+A] extends Pat[A] {
 //    * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
 //    *          or a single stream, or a group of streams)
 //    */
-//  final private[patterns] def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+//  final private[patterns] def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S#Tx, A] = {
 ////    ctx.visit(ref, iterator)
 //    ctx.addStream(_ref, iterator)
 //  }
 
-//  final private[patterns] def reset[Tx]()(implicit ctx: Context[Tx], tx: Tx): Unit =
+//  final private[patterns] def reset[Tx]()(implicit ctx: Context[S], tx: S#Tx): Unit =
 //    ctx.getStreams(_ref).foreach(_.reset())
 //
-//  final def embed[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = iterator
+//  final def embed[Tx](implicit ctx: Context[S], tx: S#Tx): Stream[S#Tx, A] = iterator
 }

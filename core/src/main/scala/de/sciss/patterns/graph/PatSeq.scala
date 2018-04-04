@@ -1,6 +1,8 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
+
 final case class PatSeq[A](elems: A*) extends Pattern[A] {
   private def simpleString: String = {
     val xs = elems.iterator.take(5).toList
@@ -11,12 +13,12 @@ final case class PatSeq[A](elems: A*) extends Pattern[A] {
 
   override def toString: String = simpleString
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = {
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     logStream(simpleString)
     Stream(elems: _*)
   }
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val elemsT: Seq[_] = elems.map {
       case e: Pat[_]  => t(e)
       case e          => e
@@ -26,16 +28,16 @@ final case class PatSeq[A](elems: A*) extends Pattern[A] {
   }
 
 //
-//  private final class StreamImpl[Tx](implicit ctx: Context[Tx]) extends Stream[Tx, T#COut] {
+//  private final class StreamImpl[S <: Base[S]](implicit ctx: Context[S]) extends Stream[S, T#COut] {
 //    private[this] val count = ctx.newVar(0)
 //    private[this] val xs    = elems.toIndexedSeq
 //
 //    override def toString = s"$simpleString; count = $count"
 //
-//    def reset()(implicit tx: Tx): Unit    = count() = 0
-//    def hasNext(implicit tx: Tx): Boolean = count() < xs.size
+//    def reset()(implicit tx: S#Tx): Unit    = count() = 0
+//    def hasNext(implicit tx: S#Tx): Boolean = count() < xs.size
 //
-//    def next ()(implicit tx: Tx): T#COut = {
+//    def next ()(implicit tx: S#Tx): T#COut = {
 //      if (!hasNext) Stream.exhausted()
 //      val i = count()
 //      count() = i + 1

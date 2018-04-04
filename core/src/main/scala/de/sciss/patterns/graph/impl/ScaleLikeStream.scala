@@ -15,11 +15,12 @@ package de.sciss.patterns
 package graph
 package impl
 
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.Widen2
 
-abstract class ScaleLikeStream[Tx, A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
-                                              outLo: Pat[A2], outHi: Pat[A2], tx0: Tx)
-                                             (implicit ctx: Context[Tx], w: Widen2[A1, A2, A]) extends Stream[Tx, A] {
+abstract class ScaleLikeStream[S <: Base[S], A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
+                                              outLo: Pat[A2], outHi: Pat[A2], tx0: S#Tx)
+                                             (implicit ctx: Context[S], w: Widen2[A1, A2, A]) extends Stream[S, A] {
   private[this] val inStream    = in    .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
   private[this] val inLoStream  = inLo  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
   private[this] val inHiStream  = inHi  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
@@ -28,7 +29,7 @@ abstract class ScaleLikeStream[Tx, A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: 
 
   protected def calc(inVal: A, inLoVal: A, inHiVal: A, outLoVal: A, outHiVal: A): A
 
-  final def reset()(implicit tx: Tx): Unit = {
+  final def reset()(implicit tx: S#Tx): Unit = {
     inStream    .reset()
     inLoStream  .reset()
     inHiStream  .reset()
@@ -36,14 +37,14 @@ abstract class ScaleLikeStream[Tx, A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: 
     outHiStream .reset()
   }
 
-  final def hasNext(implicit tx: Tx): Boolean =
+  final def hasNext(implicit tx: S#Tx): Boolean =
     inStream   .hasNext &&
       inLoStream .hasNext &&
       inHiStream .hasNext &&
       outLoStream.hasNext &&
       outHiStream.hasNext
 
-  final def next()(implicit tx: Tx): A = {
+  final def next()(implicit tx: S#Tx): A = {
     if (!hasNext) Stream.exhausted()
     val inVal     = inStream    .next()
     val inLoVal   = inLoStream  .next()

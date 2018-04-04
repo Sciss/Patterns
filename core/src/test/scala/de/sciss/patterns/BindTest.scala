@@ -1,9 +1,10 @@
 package de.sciss.patterns
 
+import de.sciss.lucre.stm.Plain
 import de.sciss.patterns.graph._
 
 object BindTest extends App {
-  implicit val ctx: Context.Plain = Context()
+  implicit val ctx: Context[Plain] = Context()
 
   val b     = Graph {
     val pitch = Brown(30, 140, 4).take(10)

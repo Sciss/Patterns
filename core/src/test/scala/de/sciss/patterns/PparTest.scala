@@ -1,9 +1,10 @@
 package de.sciss.patterns
 
+import de.sciss.lucre.stm.Plain
 import graph._
 
 object PparTest extends App {
-  implicit val ctx: Context.Plain = Context()
+  implicit val ctx: Context[Plain] = Context()
 
   val p1  = Pat( 0 to 10: _*)
   val p2  = Pat(20 to 30: _*)

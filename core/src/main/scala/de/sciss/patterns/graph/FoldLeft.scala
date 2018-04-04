@@ -14,16 +14,16 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 
 final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCarry: It[A],
                                 inner: Pat[A])
   extends Pattern[A] {
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] =
-    new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+    new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val outerT  = t(outer)
     val zT      = t(z)
     val innerT  = t(inner)
@@ -34,14 +34,14 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
     }
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
 
-    private[this] val id            = ctx.newID()(tx0)
+    private[this] val id            = tx0.newId()
     private[this] val outerStream   = outer .expand(ctx, tx0)
-    private[this] val _valid        = ctx.newBooleanVar(id, false)(tx0)
-    private[this] val _result       = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
+    private[this] val _valid        = tx0.newBooleanVar(id, false)
+    private[this] val _result       = ??? : S#Var[Stream[S, A]] // ctx.newVar[Stream[S, A]](null)(tx0)
 
-    private def validate()(implicit tx: Tx): Unit =
+    private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {
         _valid()      = true
         logStream("FoldLeft.iterator.validate()")
@@ -57,22 +57,22 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
           t(inner)
         }
 
-        val res   = innerRewrite.expand[Tx]
+        val res   = innerRewrite.expand[S]
         _result() = res
       }
 
-    def reset()(implicit tx: Tx): Unit = if (_valid()) {
+    def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
        _valid() = false
       outerStream.reset()
     }
 
-    def hasNext(implicit tx: Tx): Boolean = {
+    def hasNext(implicit tx: S#Tx): Boolean = {
       validate()
       val s = _result()
       s.hasNext
     }
 
-    def next()(implicit tx: Tx): A = {
+    def next()(implicit tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val s = _result()
       val res = s.next()

@@ -13,153 +13,91 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.{Sink, Source}
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.{Base, Plain}
 import de.sciss.patterns.graph.It
-import de.sciss.serial.Serializer
 
-trait Context[Tx] {
-  type ID
-  type Acc
+trait Context[S <: Base[S]] {
+  def addStream[A](ref: AnyRef, stream: Stream[S, A]): Stream[S, A]
 
-  def addStream[A](ref: AnyRef, stream: Stream[Tx, A]): Stream[Tx, A]
+  def getStreams(ref: AnyRef): List[Stream[S, _]]
 
-  def getStreams(ref: AnyRef): List[Stream[Tx, _]]
+  def mkOuterStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A]
 
-  def mkOuterStream[A](token: Int)(implicit tx: Tx): Stream[Tx, A]
-
-  def provideOuterStream[A](token: Int, outer: Tx => Stream[Tx, A])(implicit tx: Tx): Unit
+  def provideOuterStream[A](token: Int, outer: S#Tx => Stream[S, A])(implicit tx: S#Tx): Unit
 
   /** Creates a new pseudo-random number generator. */
-  def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: Tx): Random[Tx]
+  def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: S#Tx): Random[S#Tx]
 
-  def newID()(implicit tx: Tx): ID
+  def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit
 
-  def newVar[A](id: ID, init: A)(implicit tx: Tx, serializer: Serializer[Tx, Acc, A]): Var[Tx, A]
-
-  def newIntVar     (id: ID, init: Int    )(implicit tx: Tx): Var[Tx, Int     ]
-  def newBooleanVar (id: ID, init: Boolean)(implicit tx: Tx): Var[Tx, Boolean ]
-
-  def setRandomSeed(n: Long)(implicit tx: Tx): Unit
-
-  def allocToken[A]()(implicit tx: Tx): It[A]
+  def allocToken[A]()(implicit tx: S#Tx): It[A]
 }
 
 object Context {
-  def apply(): Plain = new PlainImpl
+  def apply(): Context[Plain] = new PlainImpl
 
-  type Var[Tx, A] = Sink[Tx, A] with Source[Tx, A]
+//  private final class PlainRandom(seed: Long) extends Random[NoB#S#Tx] {
+//    private[this] val peer = new scala.util.Random(seed)
+//
+//    def setSeed(n: Long)(implicit tx: NoB#S#Tx): Unit = peer.setSeed(n)
+//
+//    def nextDouble()(implicit tx: NoB#S#Tx): Double = peer.nextDouble()
+//    def nextLong  ()(implicit tx: NoB#S#Tx): Long   = peer.nextLong  ()
+//
+//    def nextInt(n: Int)(implicit tx: NoB#S#Tx): Int = peer.nextInt(n)
+//  }
 
-  implicit object NoTx extends NoTx
-  sealed trait NoTx
+  private final class PlainImpl extends ContextLike[Plain](Plain.instance) {
+    type S = Plain
 
-  trait Plain extends Context[NoTx] {
-    type ID = Unit
-    type Tx = NoTx
-  }
-
-  private final class PlainRandom(seed: Long) extends Random[NoTx] {
-    private[this] val peer = new scala.util.Random(seed)
-
-    def setSeed(n: Long)(implicit tx: NoTx): Unit = peer.setSeed(n)
-
-    def nextDouble()(implicit tx: NoTx): Double = peer.nextDouble()
-    def nextLong  ()(implicit tx: NoTx): Long   = peer.nextLong  ()
-
-    def nextInt(n: Int)(implicit tx: NoTx): Int = peer.nextInt(n)
-  }
-
-  private final class PlainImpl extends ContextLike[NoTx](NoTx) with Plain {
-    def newID()(implicit tx: Tx): Unit = ()
-
-    def newVar[A](id: Unit, init: A)(implicit tx: Tx, serializer: Serializer[Tx, Acc, A]): Var[Tx, A] = new PlainVar[A](init)
-
-    def newIntVar     (id: Unit, init: Int     )(implicit tx: Tx): Var[Tx, Int]      = new PlainIntVar     (init)
-    def newBooleanVar (id: Unit, init: Boolean )(implicit tx: Tx): Var[Tx, Boolean]  = new PlainBooleanVar (init)
-
-    private[this] lazy val seedRnd  = new PlainRandom(System.currentTimeMillis())
+    private[this] lazy val seedRnd  = ??? // new PlainRandom(System.currentTimeMillis())
     private[this] var tokenId       = 1000000000 // 0x40000000
 
-    protected def nextSeed()(implicit tx: Tx): Long = seedRnd.nextLong()
+    protected def nextSeed()(implicit tx: S#Tx): Long = ??? // seedRnd.nextLong()
 
-    def setRandomSeed(n: Long)(implicit tx: Tx): Unit = seedRnd.setSeed(n)
+    def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = ??? // seedRnd.setSeed(n)
 
-    def mkRandomWithSeed(seed: Long)(implicit tx: Tx): Random[Tx] =
-      new PlainRandom(seed)
+    def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx] =
+      ??? // new PlainRandom(seed)
 
-    def allocToken[A]()(implicit tx: Tx): It[A] = {
+    def allocToken[A]()(implicit tx: S#Tx): It[A] = {
       val res = tokenId
       tokenId += 1
       It(res)
     }
   }
-
-  private final class PlainVar[A](private[this] var current: A) extends Sink[NoTx, A] with Source[NoTx, A] {
-    override def toString: String = s"Var($current)"
-
-    def apply()(implicit tx: NoTx): A =
-      current
-
-    def update(v: A)(implicit tx: NoTx): Unit =
-      current = v
-  }
-
-
-  private final class PlainBooleanVar(private[this] var current: Boolean)
-    extends Sink[NoTx, Boolean] with Source[NoTx, Boolean] {
-
-    override def toString: String = s"Var($current)"
-
-    def apply()(implicit tx: NoTx): Boolean =
-      current
-
-    def update(v: Boolean)(implicit tx: NoTx): Unit =
-      current = v
-  }
-  
-  private final class PlainIntVar(private[this] var current: Int) 
-    extends Sink[NoTx, Int] with Source[NoTx, Int] {
-    
-    override def toString: String = s"Var($current)"
-
-    def apply()(implicit tx: NoTx): Int =
-      current
-
-    def update(v: Int)(implicit tx: NoTx): Unit =
-      current = v
-  }
 }
 
-private[patterns] abstract class ContextLike[Tx](tx0: Tx) extends Context[Tx] {
-  private[this] var streamMap = Map.empty[AnyRef, List[Stream[Tx, _]]]
-  private[this] val tokenMap  = ??? : Var[Tx, Map[Int, Tx => Stream[Tx, _]]] // newVar(Map.empty[Int, Tx => Stream[Tx, _]])(tx0)
-  private[this] val seedMap   = ??? : Var[Tx, (Map[AnyRef, Long])] // newVar(Map.empty[AnyRef, Long])(tx0)
+private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Context[S] {
+  private[this] var streamMap = Map.empty[AnyRef, List[Stream[S, _]]]
+  private[this] val tokenMap  = ??? : S#Var[Map[Int, S#Tx => Stream[S, _]]] // newVar(Map.empty[Int, S#Tx => Stream[S, _]])(tx0)
+  private[this] val seedMap   = ??? : S#Var[(Map[AnyRef, Long])] // newVar(Map.empty[AnyRef, Long])(tx0)
 
-  protected def nextSeed()(implicit tx: Tx): Long
+  protected def nextSeed()(implicit tx: S#Tx): Long
 
-  protected def mkRandomWithSeed(seed: Long)(implicit tx: Tx): Random[Tx]
+  protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx]
 
-  def addStream[A](ref: AnyRef, stream: Stream[Tx, A]): Stream[Tx, A] = {
+  def addStream[A](ref: AnyRef, stream: Stream[S, A]): Stream[S, A] = {
     streamMap += ref -> (stream :: streamMap.getOrElse(ref, Nil))
     stream
   }
 
-  def getStreams(ref: AnyRef): List[Stream[Tx, _]] = streamMap.getOrElse(ref, Nil)
+  def getStreams(ref: AnyRef): List[Stream[S, _]] = streamMap.getOrElse(ref, Nil)
 
-  def provideOuterStream[A](token: Int, outer: Tx => Stream[Tx, A])(implicit tx: Tx): Unit = {
+  def provideOuterStream[A](token: Int, outer: S#Tx => Stream[S, A])(implicit tx: S#Tx): Unit = {
     logStream(s"Context.provideOuterStream($token, ...)")
     tokenMap() = tokenMap() + (token -> outer)
   }
 
-  def mkOuterStream[A](token: Int)(implicit tx: Tx): Stream[Tx, A] = {
+  def mkOuterStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A] = {
     val fun                 = tokenMap().apply(token)
-    val res0: Stream[Tx, _] = fun(tx)
-    val res                 = res0.asInstanceOf[Stream[Tx, A]]
+    val res0: Stream[S, _] = fun(tx)
+    val res                 = res0.asInstanceOf[Stream[S, A]]
     logStream(s"Context.mkOuterStream($token) = $res")
     res
   }
 
-  def mkRandom(ref: AnyRef)(implicit tx: Tx): Random[Tx] = {
+  def mkRandom(ref: AnyRef)(implicit tx: S#Tx): Random[S#Tx] = {
     val m0 = seedMap()
     val seed = m0.getOrElse(ref, {
       val res = nextSeed()

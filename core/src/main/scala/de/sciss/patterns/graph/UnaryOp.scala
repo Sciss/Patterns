@@ -14,6 +14,7 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num, NumBool, NumDouble, NumFrac, NumInt, ToNum, Widen}
 
 import scala.language.higherKinds
@@ -22,9 +23,9 @@ object UnaryOp {
   sealed abstract class Op[A1, A2] extends ProductWithAux {
     type State[Tx]
 
-    def prepare[Tx](ref: AnyRef)(implicit ctx: Context[Tx], tx: Tx): State[Tx]
+    def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S#Tx]
 
-    def next[Tx](a: A1)(implicit state: State[Tx], tx: Tx): A2
+    def next[S <: Base[S]](a: A1)(implicit state: State[S#Tx], tx: S#Tx): A2
 
     override final def productPrefix = s"UnaryOp$$$name"
 
@@ -36,9 +37,9 @@ object UnaryOp {
   abstract class PureOp[A1, A2] extends Op[A1, A2] {
     final type State[_] = Unit
 
-    final def prepare[Tx](ref: AnyRef)(implicit ctx: Context[Tx], tx: Tx): State[Tx] = ()
+    final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S#Tx] = ()
 
-    def next[Tx](a: A1)(implicit state: State[Tx], tx: Tx): A2 = apply(a)
+    def next[S <: Base[S]](a: A1)(implicit state: State[S#Tx], tx: S#Tx): A2 = apply(a)
 
     def apply(a: A1): A2
   }
@@ -46,7 +47,7 @@ object UnaryOp {
   abstract class RandomOp[A1, A2] extends Op[A1, A2] {
     final type State[Tx] = Random[Tx]
 
-    final def prepare[Tx](ref: AnyRef)(implicit ctx: Context[Tx], tx: Tx): State[Tx] = ctx.mkRandom(ref)
+    final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S#Tx] = ctx.mkRandom(ref)
   }
 
   // ---- analogous to UGens ----
@@ -262,13 +263,13 @@ object UnaryOp {
   }
 
   final case class Rand[A]()(implicit num: Num[A]) extends RandomOp[A, A] {
-    def next[Tx](a: A)(implicit state: Random[Tx], tx: Tx): A = num.rand(a)
+    def next[S <: Base[S]](a: A)(implicit state: Random[S#Tx], tx: S#Tx): A = num.rand(a)
     def name                  : String    = "Rand"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
   final case class Rand2[A]()(implicit num: Num[A]) extends RandomOp[A, A] {
-    def next[Tx](a: A)(implicit state: Random[Tx], tx: Tx): A = num.rand2(a)
+    def next[S <: Base[S]](a: A)(implicit state: Random[S#Tx], tx: S#Tx): A = num.rand2(a)
     def name                  : String    = "Rand2"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
@@ -282,7 +283,7 @@ object UnaryOp {
   // Softclip
 
   final case class Coin[A, B]()(implicit num: NumDouble[A] { type Boolean = B }) extends RandomOp[A, B] {
-    def next[Tx](a: A)(implicit state: Random[Tx], tx: Tx): B = num.coin(a)
+    def next[S <: Base[S]](a: A)(implicit state: Random[S#Tx], tx: S#Tx): B = num.coin(a)
     def name                  : String    = "Coin"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
@@ -299,25 +300,25 @@ object UnaryOp {
 final case class UnaryOp[A1, A](op: UnaryOp.Op[A1, A], a: Pat[A1])
   extends Pattern[A] { pat =>
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val aT = t(a)
     if (aT.eq(a)) this else copy(a = aT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx]) extends Stream[Tx, A] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
     private[this] val aStream = a.expand(ctx, tx0)
 
-    private[this] implicit val state: op.State[Tx]  = op.prepare(pat.ref)(ctx, tx0)
+    private[this] implicit val state: op.State[S#Tx] = op.prepare(pat.ref)(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit =
+    def reset()(implicit tx: S#Tx): Unit =
       aStream.reset()
 
-    def hasNext(implicit tx: Tx): Boolean =
+    def hasNext(implicit tx: S#Tx): Boolean =
       aStream.hasNext
 
-    def next()(implicit tx: Tx): A = {
+    def next()(implicit tx: S#Tx): A = {
       val aVal = aStream.next()
       op.next(aVal)
     }

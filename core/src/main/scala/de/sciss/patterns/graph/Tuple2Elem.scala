@@ -14,49 +14,50 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns
 
 final case class Tuple2_1[A1, A2](in: Pat[(A1, A2)])
   extends Pattern[A1] {
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A1] =
-    new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A1] =
+    new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A1] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A1] = {
     val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends Stream[Tx, A1] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S])
+    extends Stream[S, A1] {
 
     private[this] val tupStream = in.expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit    = tupStream.reset()
-    def hasNext(implicit tx: Tx): Boolean = tupStream.hasNext
-    def next ()(implicit tx: Tx): A1      = tupStream.next()._1
+    def reset()(implicit tx: S#Tx): Unit    = tupStream.reset()
+    def hasNext(implicit tx: S#Tx): Boolean = tupStream.hasNext
+    def next ()(implicit tx: S#Tx): A1      = tupStream.next()._1
   }
 }
 
 final case class Tuple2_2[A1, A2](in: Pat[(A1, A2)])
   extends Pattern[A2] {
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): patterns.Stream[Tx, A2] =
-    new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A2] =
+    new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A2] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A2] = {
     val inT = t(in)
     if (inT.eq(in)) this else copy(in = inT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends Stream[Tx, A2] {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S])
+    extends Stream[S, A2] {
 
     private[this] val tupStream = in.expand(ctx, tx0)
 
-    def reset()(implicit tx: Tx): Unit    = tupStream.reset()
-    def hasNext(implicit tx: Tx): Boolean = tupStream.hasNext
-    def next ()(implicit tx: Tx): A2      = tupStream.next()._2
+    def reset()(implicit tx: S#Tx): Unit    = tupStream.reset()
+    def hasNext(implicit tx: S#Tx): Boolean = tupStream.hasNext
+    def next ()(implicit tx: S#Tx): A2      = tupStream.next()._2
   }
 }
 

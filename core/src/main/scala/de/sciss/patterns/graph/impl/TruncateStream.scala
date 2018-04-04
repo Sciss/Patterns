@@ -15,29 +15,29 @@ package de.sciss.patterns
 package graph
 package impl
 
-import de.sciss.patterns.Context.Var
+import de.sciss.lucre.stm.Base
 
-abstract class TruncateStream[A, Tx](in: Pat[A], length: Pat[Int], tx0: Tx)(implicit ctx: Context[Tx])
-  extends Stream[Tx, A] {
+abstract class TruncateStream[S <: Base[S], A](in: Pat[A], length: Pat[Int], tx0: S#Tx)(implicit ctx: Context[S])
+  extends Stream[S, A] {
 
-  private[this] val id        = ctx.newID()(tx0)
+  private[this] val id        = tx0.newId()
   private[this] val lenStream = length.expand(ctx, tx0)
   private[this] val inStream  = in    .expand(ctx, tx0)
 
-  private[this] val peer      = ??? : Var[Tx, Stream[Tx, A]] // ctx.newVar[Stream[Tx, A]](null)(tx0)
-  private[this] val _hasNext  = ctx.newBooleanVar(id, false)(tx0)
-  private[this] val _valid    = ctx.newBooleanVar(id, false)(tx0)
+  private[this] val peer      = ??? : S#Var[Stream[S, A]] // ctx.newVar[Stream[S, A]](null)(tx0)
+  private[this] val _hasNext  = tx0.newBooleanVar(id, false)
+  private[this] val _valid    = tx0.newBooleanVar(id, false)
 
-  protected def truncate(it: Stream[Tx, A], n: Int)(implicit tx: Tx): Stream[Tx, A]
+  protected def truncate(it: Stream[S, A], n: Int)(implicit tx: S#Tx): Stream[S, A]
 
-  def reset()(implicit tx: Tx): Unit = if (_valid()) {
+  def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
     _valid() = false
     lenStream .reset()
     inStream  .reset()
 //      if (_hasPeer()) peer().reset()
   }
 
-  private def validate()(implicit tx: Tx): Unit = if (!_valid()) {
+  private def validate()(implicit tx: S#Tx): Unit = if (!_valid()) {
     _valid() = true
     val lhn = lenStream.hasNext
     if (lhn) {
@@ -51,12 +51,12 @@ abstract class TruncateStream[A, Tx](in: Pat[A], length: Pat[Int], tx0: Tx)(impl
     }
   }
 
-  def hasNext(implicit tx: Tx): Boolean = {
+  def hasNext(implicit tx: S#Tx): Boolean = {
     validate()
     _hasNext()
   }
 
-  def next()(implicit tx: Tx): A = {
+  def next()(implicit tx: S#Tx): A = {
     if (!hasNext) Stream.exhausted()
     val res = peer().next()
     _hasNext() = peer().hasNext

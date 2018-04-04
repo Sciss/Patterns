@@ -14,6 +14,7 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num, Widen2}
 import de.sciss.patterns.graph.impl.SeriesLikeStreamImpl
 
@@ -23,16 +24,16 @@ final case class GeomSeq[A1, A2, A](start: Pat[A1], step: Pat[A2] /* , length: P
 
   override private[patterns] def aux: List[Aux] = widen :: num :: Nil
 
-  def expand[Tx](implicit ctx: Context[Tx], tx: Tx): Stream[Tx, A] = new StreamImpl[Tx](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl[S](tx)
 
-  def transform[Tx](t: Transform)(implicit ctx: Context[Tx], tx: Tx): Pat[A] = {
+  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val startT = t(start)
     val stepT  = t(step )
     if (startT.eq(start) && stepT.eq(step)) this else copy(start = startT, step = stepT)
   }
 
-  private final class StreamImpl[Tx](tx0: Tx)(implicit ctx: Context[Tx])
-    extends SeriesLikeStreamImpl[A1, A2, A, Tx](start, step /* , length */, tx0) {
+  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S])
+    extends SeriesLikeStreamImpl[S, A1, A2, A](start, step /* , length */, tx0) {
 
     protected def op(a: A, b: A): A = num.*(a, b)
   }

@@ -1,23 +1,24 @@
-lazy val baseName             = "Patterns"
-lazy val baseNameL            = baseName.toLowerCase
-lazy val projectVersion       = "0.1.1-SNAPSHOT"
-lazy val mimaVersion          = "0.1.0"
+lazy val baseName           = "Patterns"
+lazy val baseNameL          = baseName.toLowerCase
+lazy val projectVersion     = "0.1.1-SNAPSHOT"
+lazy val mimaVersion        = "0.1.0"
 
 val deps = new {
-  val main = new {
+  val core = new {
     val numbers             = "0.1.5"
     val optional            = "1.0.0"
     val serial              = "1.0.3"
-    val soundProcesses      = "3.17.0"
-    val lucre               = "3.5.0"
+    val lucre               = "3.6.0-SNAPSHOT"
   }
-
+  val lucre = new {
+    val soundProcesses      = "3.18.0-SNAPSHOT"
+  }
   val test = new {
-    val scalaCollider       = "1.23.0"
+    val scalaCollider       = "1.24.0"
     val kollFlitz           = "0.2.2"
-    val scalaColliderSwing  = "1.35.0"
+    val scalaColliderSwing  = "1.36.0"
     val scalaTest           = "3.0.5"
-    val ugens               = "1.17.1"
+    val ugens               = "1.18.0"
   }
 }
 
@@ -75,10 +76,10 @@ lazy val core = project.in(file("core"))
   .settings(
     name := s"$baseName-core",
     libraryDependencies ++= Seq(
-      "de.sciss"      %% "numbers"                      % deps.main.numbers,
-      "de.sciss"      %% "optional"                     % deps.main.optional,
-      "de.sciss"      %% "serial"                       % deps.main.serial,
-      "de.sciss"      %% "lucre-core"                   % deps.main.lucre,
+      "de.sciss"      %% "numbers"                      % deps.core.numbers,
+      "de.sciss"      %% "optional"                     % deps.core.optional,
+      "de.sciss"      %% "serial"                       % deps.core.serial,
+      "de.sciss"      %% "lucre-base"                   % deps.core.lucre,
       "de.sciss"      %% "kollflitz"                    % deps.test.kollFlitz           % "test",
       "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % "test",
       "de.sciss"      %% "scalacolliderswing-plotting"  % deps.test.scalaColliderSwing  % "test",
@@ -97,8 +98,8 @@ lazy val lucre = project.in(file("lucre"))
   .settings(
     name := s"$baseName-lucre",
     libraryDependencies ++= Seq(
-      "de.sciss"      %% "soundprocesses-core"  % deps.main.soundProcesses,
-      "de.sciss"      %% s"lucre-$bdb"          % deps.main.lucre           % "test",
+      "de.sciss"      %% "soundprocesses-core"  % deps.lucre.soundProcesses,
+      "de.sciss"      %% s"lucre-$bdb"          % deps.core.lucre           % "test",
       "org.scalatest" %% "scalatest"            % deps.test.scalaTest       % "test"
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)

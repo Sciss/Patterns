@@ -15,18 +15,20 @@ package de.sciss.patterns
 package graph
 package impl
 
-final class IndexItStream[Tx](iteration: Context.Var[Tx, Int], tx0: Tx)(implicit ctx: Context[Tx])
-  extends Stream[Tx, Int] {
+import de.sciss.lucre.stm.Base
 
-  private[this] val id        = ctx.newID()(tx0)
-  private[this] val _hasNext  = ctx.newBooleanVar(id, true)(tx0)
+final class IndexItStream[S <: Base[S]](iteration: S#Var[Int], tx0: S#Tx)(implicit ctx: Context[S])
+  extends Stream[S, Int] {
 
-  def reset()(implicit tx: Tx): Unit =
+  private[this] val id        = tx0.newId()
+  private[this] val _hasNext  = tx0.newBooleanVar(id, true)
+
+  def reset()(implicit tx: S#Tx): Unit =
     _hasNext() = true
 
-  def hasNext(implicit tx: Tx): Boolean = _hasNext()
+  def hasNext(implicit tx: S#Tx): Boolean = _hasNext()
 
-  def next()(implicit tx: Tx): Int = {
+  def next()(implicit tx: S#Tx): Int = {
     if (!hasNext) Stream.exhausted()
     _hasNext() = false
     iteration()
