@@ -45,13 +45,13 @@ final case class MapWithIndex[A1, A] private[patterns](outer: Pat[Pat[A1]], itIn
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
 
     private def mkItInStream(implicit tx: S#Tx): Stream[S, A1] = {
-      val res = new MapItStream(outer, tx)
+      val res = new MapItStream[S, A1](outer, tx)
       ctx.addStream(refIn, res)
       res
     }
 
     private def mkItIdxStream(implicit tx: S#Tx): Stream[S, Int] = {
-      val res = new IndexItStream(iteration, tx)
+      val res = new IndexItStream[S](iteration, tx)
       ctx.addStream(refIdx, res)
       res
     }

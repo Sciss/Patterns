@@ -40,7 +40,7 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
     private[this] val _valid      = tx0.newBooleanVar(id, false)
 
     private def mkItStream(implicit tx: S#Tx) = {
-      val res = new IndexItStream(iteration, tx)
+      val res = new IndexItStream[S](iteration, tx)
       ctx.addStream(ref, res)
       res
     }
