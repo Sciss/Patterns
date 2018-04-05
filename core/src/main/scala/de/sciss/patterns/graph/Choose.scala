@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.stm.{Base, Random}
 import de.sciss.patterns.impl.PatElem
 
 final case class Choose[A](in: Pat[A]) extends Pattern[A] { pat =>

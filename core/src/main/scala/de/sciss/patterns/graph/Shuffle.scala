@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.stm.{Base, Random}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 

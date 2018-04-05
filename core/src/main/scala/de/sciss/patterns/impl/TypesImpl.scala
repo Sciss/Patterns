@@ -2,6 +2,7 @@ package de.sciss.patterns
 
 package impl
 
+import de.sciss.lucre.stm.Random
 import de.sciss.patterns.Types._
 
 trait SeqLike[A] {

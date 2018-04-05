@@ -13,60 +13,16 @@
 
 package de.sciss.patterns.lucre
 
-import de.sciss.lucre.confluent.TxnRandom
 import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Sink, Source, Sys, Txn}
+import de.sciss.lucre.stm.{Random, Sys}
 import de.sciss.patterns
+import de.sciss.patterns.ContextLike
 import de.sciss.patterns.graph.It
-import de.sciss.patterns.{ContextLike, Random}
-import de.sciss.serial.Serializer
-
-import scala.concurrent.stm.{InTxn, Ref}
 
 object Context {
   // def InMemory(): InMemory = TxnExecutor.defaultAtomic(new InMemoryImpl(_))
 
   def apply[S <: stm.Sys[S]](implicit cursor: stm.Cursor[S], tx: S#Tx): Context[S] = new SysImpl[S](tx)
-
-//  trait InMemory extends Context[InTxn] {
-//    type Tx = InTxn
-//    type Id = Unit
-//
-//    def step[A](fun: Tx => A): A = Txn.atomic(fun)
-//  }
-
-  private final class RandomImpl(peer: TxnRandom[InTxn]) extends Random[InTxn] {
-    def setSeed(n: Long)(implicit tx: InTxn): Unit = peer.setSeed(n)
-
-    def nextDouble()(implicit tx: InTxn): Double = peer.nextDouble()
-    def nextLong  ()(implicit tx: InTxn): Long   = peer.nextLong()
-
-    def nextInt(n: Int)(implicit tx: InTxn): Int = peer.nextInt(n)
-  }
-
-  private final class VarImpl[A](init: A) extends Sink[InTxn, A] with Source[InTxn, A] {
-    private[this] val peer = Ref(init)
-
-    def update(v: A)(implicit tx: InTxn): Unit = peer() = v
-
-    def apply()(implicit tx: InTxn): A = peer()
-  }
-
-  private final class BooleanVarImpl(init: Boolean) extends Sink[InTxn, Boolean] with Source[InTxn, Boolean] {
-    private[this] val peer = Ref(init)
-
-    def update(v: Boolean)(implicit tx: InTxn): Unit = peer() = v
-
-    def apply()(implicit tx: InTxn): Boolean = peer()
-  }
-
-  private final class IntVarImpl(init: Int) extends Sink[InTxn, Int] with Source[InTxn, Int] {
-    private[this] val peer = Ref(init)
-
-    def update(v: Int)(implicit tx: InTxn): Unit = peer() = v
-
-    def apply()(implicit tx: InTxn): Int = peer()
-  }
 
 //  private final class InMemoryImpl(tx0: InTxn) extends ContextLike[InTxn](tx0) with InMemory {
 //    private[this] val seedRnd = TxnRandom.plain()
@@ -97,13 +53,13 @@ object Context {
   private final class SysImpl[S <: stm.Sys[S]](tx0: S#Tx)(implicit val cursor: stm.Cursor[S])
     extends ContextLike[S](tx0) with Context[S] {
 
-    private[this] val id      = tx0.newId()
-    private[this] val seedRnd = TxnRandom[S](id)(tx0)
+    private[this] val seedRnd = Random[S](id)(tx0)
     private[this] val tokenId = tx0.newIntVar(id, 1000000000) // 0x40000000
 
     protected def nextSeed()(implicit tx: S#Tx): Long = seedRnd.nextLong()
 
-    protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx] = ???
+    protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx] =
+      Random[S](tx.newId(), seed)(tx0)
 
     def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = seedRnd.setSeed(n)
 

@@ -13,13 +13,13 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.{Base, Plain}
+import de.sciss.lucre.stm.{Base, Plain, Random}
 import de.sciss.patterns.graph.It
 
 trait Context[S <: Base[S]] {
-  def addStream[A](ref: AnyRef, stream: Stream[S, A]): Stream[S, A]
+  def addStream[A](ref: AnyRef, stream: Stream[S, A])(implicit tx: S#Tx): Stream[S, A]
 
-  def getStreams(ref: AnyRef): List[Stream[S, _]]
+  def getStreams(ref: AnyRef)(implicit tx: S#Tx): List[Stream[S, _]]
 
   def mkOuterStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A]
 
@@ -36,29 +36,19 @@ trait Context[S <: Base[S]] {
 object Context {
   def apply(): Context[Plain] = new PlainImpl
 
-//  private final class PlainRandom(seed: Long) extends Random[NoB#S#Tx] {
-//    private[this] val peer = new scala.util.Random(seed)
-//
-//    def setSeed(n: Long)(implicit tx: NoB#S#Tx): Unit = peer.setSeed(n)
-//
-//    def nextDouble()(implicit tx: NoB#S#Tx): Double = peer.nextDouble()
-//    def nextLong  ()(implicit tx: NoB#S#Tx): Long   = peer.nextLong  ()
-//
-//    def nextInt(n: Int)(implicit tx: NoB#S#Tx): Int = peer.nextInt(n)
-//  }
-
   private final class PlainImpl extends ContextLike[Plain](Plain.instance) {
     type S = Plain
 
-    private[this] lazy val seedRnd  = ??? // new PlainRandom(System.currentTimeMillis())
+    private[this] lazy val seedRnd  = Random[Plain](id)
     private[this] var tokenId       = 1000000000 // 0x40000000
 
-    protected def nextSeed()(implicit tx: S#Tx): Long = ??? // seedRnd.nextLong()
+    protected def nextSeed()(implicit tx: S#Tx): Long = seedRnd.nextLong()
 
-    def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = ??? // seedRnd.setSeed(n)
+    def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = seedRnd.setSeed(n)
 
-    def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx] =
-      ??? // new PlainRandom(seed)
+    def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx] = {
+      Random[S](Plain.instance.newId(), seed)
+    }
 
     def allocToken[A]()(implicit tx: S#Tx): It[A] = {
       val res = tokenId
@@ -69,20 +59,24 @@ object Context {
 }
 
 private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Context[S] {
-  private[this] var streamMap = Map.empty[AnyRef, List[Stream[S, _]]]
+  protected final val id: S#Id = tx0.newId()
+
+  private[this] val streamMap = ??? : S#Var[Map[AnyRef, List[Stream[S, _]]]] // Map.empty[AnyRef, List[Stream[S, _]]]
   private[this] val tokenMap  = ??? : S#Var[Map[Int, S#Tx => Stream[S, _]]] // newVar(Map.empty[Int, S#Tx => Stream[S, _]])(tx0)
-  private[this] val seedMap   = ??? : S#Var[(Map[AnyRef, Long])] // newVar(Map.empty[AnyRef, Long])(tx0)
+  private[this] val seedMap   = ??? : S#Var[Map[AnyRef, Long]] // newVar(Map.empty[AnyRef, Long])(tx0)
 
   protected def nextSeed()(implicit tx: S#Tx): Long
 
   protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx]
 
-  def addStream[A](ref: AnyRef, stream: Stream[S, A]): Stream[S, A] = {
-    streamMap += ref -> (stream :: streamMap.getOrElse(ref, Nil))
+  def addStream[A](ref: AnyRef, stream: Stream[S, A])(implicit tx: S#Tx): Stream[S, A] = {
+    val map0 = streamMap()
+    val map1 = map0 + (ref -> (stream :: map0.getOrElse(ref, Nil)))
+    streamMap() = map1
     stream
   }
 
-  def getStreams(ref: AnyRef): List[Stream[S, _]] = streamMap.getOrElse(ref, Nil)
+  def getStreams(ref: AnyRef)(implicit tx: S#Tx): List[Stream[S, _]] = streamMap().getOrElse(ref, Nil)
 
   def provideOuterStream[A](token: Int, outer: S#Tx => Stream[S, A])(implicit tx: S#Tx): Unit = {
     logStream(s"Context.provideOuterStream($token, ...)")
