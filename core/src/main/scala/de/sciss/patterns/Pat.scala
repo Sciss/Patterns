@@ -87,7 +87,7 @@ abstract class Pattern[+A] extends Pat[A] {
 
   Graph.builder.addPattern(this)
 
-  protected final def ref: AnyRef = _ref
+  private[patterns] final def ref: AnyRef = _ref
 
   // default is _no aux_
   private[patterns] def aux: List[Aux] = Nil

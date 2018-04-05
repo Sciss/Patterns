@@ -17,7 +17,7 @@ import de.sciss.lucre.data.SkipList
 import de.sciss.lucre.event.impl.ObservableImpl
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.TxnLike.peer
-import de.sciss.lucre.stm.{Disposable, TxnLike}
+import de.sciss.lucre.stm.{Disposable, DummySerializerFactory, TxnLike}
 import de.sciss.lucre.synth.Sys
 import de.sciss.patterns
 import de.sciss.patterns.lucre.AuralPatternAttribute.ViewImpl
@@ -26,7 +26,7 @@ import de.sciss.serial.Serializer
 import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.proc.AuralAttribute.{Factory, Observer}
 import de.sciss.synth.proc.AuralView.{State, Stopped}
-import de.sciss.synth.proc.impl.{AuralScheduledBase, DummySerializerFactory}
+import de.sciss.synth.proc.impl.AuralScheduledBase
 import de.sciss.synth.proc.{AuralAttribute, AuralContext, AuralView, AuralViewBase, TimeRef}
 
 import scala.annotation.tailrec

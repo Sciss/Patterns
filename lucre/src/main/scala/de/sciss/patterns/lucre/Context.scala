@@ -14,7 +14,7 @@
 package de.sciss.patterns.lucre
 
 import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Random, Sys}
+import de.sciss.lucre.stm.{Random, Sys, TxnRandom}
 import de.sciss.patterns
 import de.sciss.patterns.ContextLike
 import de.sciss.patterns.graph.It
@@ -58,8 +58,8 @@ object Context {
 
     protected def nextSeed()(implicit tx: S#Tx): Long = seedRnd.nextLong()
 
-    protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx] =
-      Random[S](tx.newId(), seed)(tx0)
+    protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S] =
+      TxnRandom[S](seed)(tx0)
 
     def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = seedRnd.setSeed(n)
 

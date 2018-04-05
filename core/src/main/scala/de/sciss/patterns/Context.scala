@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.{Base, DummySerializerFactory, Plain, Random}
+import de.sciss.lucre.stm.{Base, DummySerializerFactory, Plain, Random, TxnRandom}
 import de.sciss.patterns.graph.It
 
 trait Context[S <: Base[S]] {
@@ -26,7 +26,7 @@ trait Context[S <: Base[S]] {
   def provideOuterStream[A](token: Int, outer: S#Tx => Stream[S, A])(implicit tx: S#Tx): Unit
 
   /** Creates a new pseudo-random number generator. */
-  def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: S#Tx): Random[S#Tx]
+  def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: S#Tx): TxnRandom[S]
 
   def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit
 
@@ -46,8 +46,8 @@ object Context {
 
     def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = seedRnd.setSeed(n)
 
-    def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx] = {
-      Random[S](Plain.instance.newId(), seed)
+    def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S] = {
+      TxnRandom[S](seed)
     }
 
     def allocToken[A]()(implicit tx: S#Tx): It[A] = {
@@ -70,7 +70,7 @@ private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Co
 
   protected def nextSeed()(implicit tx: S#Tx): Long
 
-  protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): Random[S#Tx]
+  protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S]
 
   def addStream[A](ref: AnyRef, stream: Stream[S, A])(implicit tx: S#Tx): Stream[S, A] = {
     val map0 = streamMap()
@@ -94,7 +94,7 @@ private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Co
     res
   }
 
-  def mkRandom(ref: AnyRef)(implicit tx: S#Tx): Random[S#Tx] = {
+  def mkRandom(ref: AnyRef)(implicit tx: S#Tx): TxnRandom[S] = {
     val m0 = seedMap()
     val seed = m0.getOrElse(ref, {
       val res = nextSeed()
