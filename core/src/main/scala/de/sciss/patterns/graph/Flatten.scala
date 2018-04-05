@@ -30,7 +30,7 @@ final case class Flatten[A](in: Pat[Pat[A]]) extends Pattern[A] {
     private[this] val id          = tx0.newId()
     private[this] val inStream    = in.expand(ctx, tx0)
     private[this] val hasInner    = tx0.newBooleanVar(id, false)
-    private[this] val innerStream = ??? : S#Var[Stream[S, A]] // ctx.newVar[Stream[S, A]](null)(tx0)
+    private[this] val innerStream = tx0.newVar[Stream[S, A]](id, null)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
 

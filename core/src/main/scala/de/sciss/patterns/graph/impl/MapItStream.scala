@@ -22,7 +22,7 @@ final class MapItStream[S <: Base[S], A](outer: Pat[Pat[A]], tx0: S#Tx)(implicit
 
   private[this] val id          = tx0.newId()
   private[this] val outerStream = outer.expand(ctx, tx0)
-  private[this] val inStream    = ??? : S#Var[Stream[S, A]] // ctx.newVar[Stream[S, A]](null)(tx0)
+  private[this] val inStream    = tx0.newVar[Stream[S, A]](id, null)
   private[this] val _valid      = tx0.newBooleanVar(id, false)
   private[this] val _hasIn      = tx0.newBooleanVar(id, false)
   private[this] val _hasNext    = tx0.newBooleanVar(id, false)

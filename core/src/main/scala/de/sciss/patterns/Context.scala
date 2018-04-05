@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.{Base, Plain, Random}
+import de.sciss.lucre.stm.{Base, DummySerializerFactory, Plain, Random}
 import de.sciss.patterns.graph.It
 
 trait Context[S <: Base[S]] {
@@ -61,9 +61,12 @@ object Context {
 private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Context[S] {
   protected final val id: S#Id = tx0.newId()
 
-  private[this] val streamMap = ??? : S#Var[Map[AnyRef, List[Stream[S, _]]]] // Map.empty[AnyRef, List[Stream[S, _]]]
-  private[this] val tokenMap  = ??? : S#Var[Map[Int, S#Tx => Stream[S, _]]] // newVar(Map.empty[Int, S#Tx => Stream[S, _]])(tx0)
-  private[this] val seedMap   = ??? : S#Var[Map[AnyRef, Long]] // newVar(Map.empty[AnyRef, Long])(tx0)
+  private[this] val serFact = DummySerializerFactory[S]
+  import serFact.dummySerializer
+
+  private[this] val streamMap = tx0.newVar[Map[AnyRef, List[Stream[S, _]]]](id, Map.empty)
+  private[this] val tokenMap  = tx0.newVar[Map[Int, S#Tx => Stream[S, _]]] (id, Map.empty)
+  private[this] val seedMap   = tx0.newVar[Map[AnyRef, Long]]              (id, Map.empty)
 
   protected def nextSeed()(implicit tx: S#Tx): Long
 

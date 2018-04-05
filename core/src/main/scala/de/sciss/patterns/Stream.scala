@@ -13,7 +13,8 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.stm.{Base, Plain}
+import de.sciss.serial.{DataInput, DataOutput, Serializer}
 
 import scala.annotation.tailrec
 
@@ -31,8 +32,6 @@ object Stream {
     def next ()(implicit tx: S#Tx): A       = Stream.exhausted()
   }
 
-//  def reverseIterator[Tx, A](that: Iterable[A]): Stream[S, A] = ...
-
   def continually[S <: Base[S], A](elem: => A): Stream[S, A] = new Stream[S, A] {
     override def toString = s"Stream.continually@${hashCode().toHexString}"
 
@@ -43,6 +42,16 @@ object Stream {
 
   def single[S <: Base[S], A](elem: A)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     new Single[S, A](elem, tx)
+
+  implicit def serializer[S <: Base[S], A]: Serializer[S#Tx, S#Acc, Stream[S, A]] = anySer.asInstanceOf[Ser[S, A]]
+
+  private val anySer = new Ser[Plain, Any]
+
+  private final class Ser[S <: Base[S], A] extends Serializer[S#Tx, S#Acc, Stream[S, A]] {
+    def read(in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = ???
+
+    def write(v: Stream[S, A], out: DataOutput): Unit = ???
+  }
 
   private final class Single[S <: Base[S], A](elem: A, tx0: S#Tx)(implicit ctx: Context[S])
     extends Stream[S, A] {
@@ -104,7 +113,7 @@ object Stream {
     private[this] val id        = tx0.newId()
     private[this] val _valid    = tx0.newBooleanVar(id, false)
     private[this] val _hasNext  = tx0.newBooleanVar(id, false)
-    private[this] val sub       = ??? : S#Var[Stream[S, B]] // ctx.newVar[Stream[S, B]](null)(tx0)
+    private[this] val sub       = tx0.newVar[Stream[S, B]](id, null)
     //    private[this] val _hasSub   = ctx.newVar(false)
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {

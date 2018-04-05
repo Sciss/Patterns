@@ -31,7 +31,7 @@ final case class Sorted[A](in: Pat[A])(implicit ord: ScalarOrd[A]) extends Patte
     private[this] val id          = tx0.newId()
     private[this] val inStream  = in.expand(ctx, tx0)
     private[this] val _valid    = tx0.newBooleanVar(id, false)
-    private[this] val sortedIt  = ??? : S#Var[Stream[S, A]] // ctx.newVar[Stream[S, A]](null)(tx0)
+    private[this] val sortedIt  = tx0.newVar[Stream[S, A]](id, null)
 
     private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {

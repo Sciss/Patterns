@@ -39,7 +39,7 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
     private[this] val id            = tx0.newId()
     private[this] val outerStream   = outer .expand(ctx, tx0)
     private[this] val _valid        = tx0.newBooleanVar(id, false)
-    private[this] val _result       = ??? : S#Var[Stream[S, A]] // ctx.newVar[Stream[S, A]](null)(tx0)
+    private[this] val _result       = tx0.newVar[Stream[S, A]](id, null)
 
     private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {

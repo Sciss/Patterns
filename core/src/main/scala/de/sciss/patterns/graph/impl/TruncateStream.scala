@@ -24,7 +24,7 @@ abstract class TruncateStream[S <: Base[S], A](in: Pat[A], length: Pat[Int], tx0
   private[this] val lenStream = length.expand(ctx, tx0)
   private[this] val inStream  = in    .expand(ctx, tx0)
 
-  private[this] val peer      = ??? : S#Var[Stream[S, A]] // ctx.newVar[Stream[S, A]](null)(tx0)
+  private[this] val peer      = tx0.newVar[Stream[S, A]](id, null)
   private[this] val _hasNext  = tx0.newBooleanVar(id, false)
   private[this] val _valid    = tx0.newBooleanVar(id, false)
 

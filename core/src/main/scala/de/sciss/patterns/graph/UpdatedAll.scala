@@ -36,7 +36,7 @@ final case class UpdatedAll[A1, A >: A1](in: Pat[A1], idx: Pat[Int], elem: Pat[A
     private[this] val idxStream   = idx .expand(ctx, tx0)
     private[this] val elemStream  = elem.expand(ctx, tx0)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
-    private[this] val state       = ??? : S#Var[Stream[S, A]] // ctx.newVar[Stream[S, A]](null)(tx0)
+    private[this] val state       = tx0.newVar[Stream[S, A]](id, null)
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

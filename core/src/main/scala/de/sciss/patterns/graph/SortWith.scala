@@ -41,7 +41,7 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
 
     private[this] val id          = tx0.newId()
     private[this] val _valid      = tx0.newBooleanVar(id, false)
-    private[this] val sortedIt    = ??? : S#Var[Stream[S, Pat[A]]] // ctx.newVar[Stream[S, Pat[A]]](null)(tx0)
+    private[this] val sortedIt    = tx0.newVar[Stream[S, Pat[A]]](id, null)
     private[this] val _hasSorted  = tx0.newBooleanVar(id, false)
 
     private def mkItStream(implicit tx: S#Tx) = {
