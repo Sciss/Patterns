@@ -27,17 +27,19 @@ object Stream {
   def empty[S <: Base[S], A]: Stream[S, A] = new Stream[S, A] {
     override def toString = "Stream.empty"
 
-    def reset()(implicit tx: S#Tx): Unit    = ()
-    def hasNext(implicit tx: S#Tx): Boolean = false
-    def next ()(implicit tx: S#Tx): A       = Stream.exhausted()
+    def reset()(implicit tx: S#Tx): Unit = ()
+
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = false
+    def next ()(implicit ctx: Context[S], tx: S#Tx): A       = Stream.exhausted()
   }
 
   def continually[S <: Base[S], A](elem: => A): Stream[S, A] = new Stream[S, A] {
     override def toString = s"Stream.continually@${hashCode().toHexString}"
 
-    def reset()(implicit tx: S#Tx): Unit    = ()
-    def hasNext(implicit tx: S#Tx): Boolean = true
-    def next ()(implicit tx: S#Tx): A       = elem
+    def reset()(implicit tx: S#Tx): Unit = ()
+
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = true
+    def next ()(implicit ctx: Context[S], tx: S#Tx): A       = elem
   }
 
   def single[S <: Base[S], A](elem: A)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
@@ -56,7 +58,7 @@ object Stream {
     def write(v: Stream[S, A], out: DataOutput): Unit = ???
   }
 
-  private final class Single[S <: Base[S], A](elem: A, tx0: S#Tx)(implicit ctx: Context[S])
+  private final class Single[S <: Base[S], A](elem: A, tx0: S#Tx)
     extends Stream[S, A] {
 
     private[this] val id        = tx0.newId()
@@ -66,12 +68,12 @@ object Stream {
 
     override def toString = s"$simpleString; hasNext = ${_hasNext}"
 
-    def hasNext(implicit tx: S#Tx): Boolean = _hasNext()
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _hasNext()
 
     def reset()(implicit tx: S#Tx): Unit =
       _hasNext() = true
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!_hasNext()) Stream.exhausted()
       _hasNext() = false
       logStream(s"$simpleString.next()")
@@ -82,7 +84,7 @@ object Stream {
   def apply[S <: Base[S], A](elems: A*)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     new Seq(elems, tx)
 
-  private final class Seq[S <: Base[S], A](elems: scala.Seq[A], tx0: S#Tx)(implicit ctx: Context[S])
+  private final class Seq[S <: Base[S], A](elems: scala.Seq[A], tx0: S#Tx)
     extends Stream[S, A] {
 
     private[this] val id    = tx0.newId()
@@ -97,9 +99,9 @@ object Stream {
     def reset()(implicit tx: S#Tx): Unit =
       count() = 0
 
-    def hasNext(implicit tx: S#Tx): Boolean = count() < xs.size
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = count() < xs.size
 
-    def next ()(implicit tx: S#Tx): A = {
+    def next ()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val i = count()
       count() = i + 1
@@ -147,12 +149,12 @@ object Stream {
         step()
       }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: S#Tx): B = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): B = {
       if (!hasNext) Stream.exhausted()
       val _sub = sub()
       val res = _sub.next()
@@ -162,9 +164,10 @@ object Stream {
   }
 
   private final class Map[S <: Base[S], A, B](outer: Stream[S, A], f: A => B) extends Stream[S, B] {
-    def reset()(implicit tx: S#Tx): Unit    = outer.reset()
-    def hasNext(implicit tx: S#Tx): Boolean = outer.hasNext
-    def next ()(implicit tx: S#Tx): B       = f(outer.next())
+    def reset()(implicit tx: S#Tx): Unit = outer.reset()
+
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = outer.hasNext
+    def next ()(implicit ctx: Context[S], tx: S#Tx): B       = f(outer.next())
   }
 
   private final class Zip[S <: Base[S], A, B](outer: Stream[S, A], that: Stream[S, B]) extends Stream[S, (A, B)] {
@@ -173,9 +176,9 @@ object Stream {
       that .reset()
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = outer.hasNext && that.hasNext
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = outer.hasNext && that.hasNext
 
-    def next()(implicit tx: S#Tx): (A, B) = (outer.next(), that.next())
+    def next()(implicit ctx: Context[S], tx: S#Tx): (A, B) = (outer.next(), that.next())
   }
 
   private final class ++ [S <: Base[S], A, B >: A](outer: Stream[S, A], that: Stream[S, B]) extends Stream[S, B] {
@@ -184,13 +187,13 @@ object Stream {
       that .reset()
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = outer.hasNext || that.hasNext
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = outer.hasNext || that.hasNext
 
-    def next()(implicit tx: S#Tx): B =
+    def next()(implicit ctx: Context[S], tx: S#Tx): B =
       if (outer.hasNext) outer.next() else that.next()
   }
 
-  private final class Take[S <: Base[S], A](outer: Stream[S, A], n: Int, tx0: S#Tx)(implicit ctx: Context[S])
+  private final class Take[S <: Base[S], A](outer: Stream[S, A], n: Int, tx0: S#Tx)
     extends Stream[S, A] {
 
     private[this] val id      = tx0.newId()
@@ -198,9 +201,9 @@ object Stream {
 
     def reset()(implicit tx: S#Tx): Unit = outer.reset()
 
-    def hasNext(implicit tx: S#Tx): Boolean = _count() < n && outer.hasNext
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _count() < n && outer.hasNext
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       _count() = _count() + 1
       outer.next()
@@ -212,8 +215,8 @@ abstract class Stream[S <: Base[S], +A] { outer =>
 
   def reset()(implicit tx: S#Tx): Unit
 
-  def hasNext(implicit tx: S#Tx): Boolean
-  def next ()(implicit tx: S#Tx): A
+  def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean
+  def next ()(implicit ctx: Context[S], tx: S#Tx): A
 
   def map[B](f: A => B)(implicit ctx: Context[S], tx: S#Tx): Stream[S, B] = new Stream.Map(outer, f)
 
@@ -236,10 +239,10 @@ abstract class Stream[S <: Base[S], +A] { outer =>
     this
   }
 
-  def isEmpty (implicit tx: S#Tx): Boolean = !hasNext
-  def nonEmpty(implicit tx: S#Tx): Boolean = hasNext
+  def isEmpty (implicit ctx: Context[S], tx: S#Tx): Boolean = !hasNext
+  def nonEmpty(implicit ctx: Context[S], tx: S#Tx): Boolean = hasNext
 
-  def toList(implicit tx: S#Tx): List[A] = {
+  def toList(implicit ctx: Context[S], tx: S#Tx): List[A] = {
     val b = List.newBuilder[A]
     while (hasNext) {
       b += next()
@@ -247,7 +250,7 @@ abstract class Stream[S <: Base[S], +A] { outer =>
     b.result()
   }
 
-  def toVector(implicit tx: S#Tx): Vector[A] = {
+  def toVector(implicit ctx: Context[S], tx: S#Tx): Vector[A] = {
     val b = Vector.newBuilder[A]
     while (hasNext) {
       b += next()
@@ -255,7 +258,7 @@ abstract class Stream[S <: Base[S], +A] { outer =>
     b.result()
   }
 
-  def size(implicit tx: S#Tx): Int = {
+  def size(implicit ctx: Context[S], tx: S#Tx): Int = {
     var res = 0
     while (hasNext) {
       next()
@@ -264,6 +267,6 @@ abstract class Stream[S <: Base[S], +A] { outer =>
     res
   }
 
-  def foreach(fun: A => Unit)(implicit tx: S#Tx): Unit =
+  def foreach(fun: A => Unit)(implicit ctx: Context[S], tx: S#Tx): Unit =
     while (hasNext) fun(next())
 }

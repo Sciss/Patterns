@@ -51,9 +51,9 @@ final case class Poll[A](in: Pat[A], gate: Pat[Boolean], label: Pat[String] = "p
       labelStream .reset()
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = inStream.hasNext
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = inStream.hasNext
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       val res = inStream.next()
       if (gateStream.hasNext && labelStream.hasNext) {
         val gateValue   = gateStream  .next()

@@ -34,10 +34,10 @@ case class Indices[A](in: Pat[A]) extends Pattern[Int] {
       count() = 0
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean =
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
       inStream.hasNext
 
-    def next()(implicit tx: S#Tx): Int = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): Int = {
       val res = count()
       inStream.next()
       count() = res + 1

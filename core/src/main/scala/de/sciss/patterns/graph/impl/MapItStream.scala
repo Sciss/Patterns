@@ -75,12 +75,12 @@ final class MapItStream[S <: Base[S], A](outer: Pat[Pat[A]], tx0: S#Tx)(implicit
     }
   }
 
-  def hasNext(implicit tx: S#Tx): Boolean = {
+  def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
     validate()
     _hasNext()
   }
 
-  def next()(implicit tx: S#Tx): A = {
+  def next()(implicit ctx: Context[S], tx: S#Tx): A = {
     if (!hasNext) Stream.exhausted()
     val in      = inStream()
     val res     = in.next()

@@ -61,12 +61,12 @@ final case class Shuffle[A](in: Pat[A]) extends Pattern[A] { pat =>
         _hasNext()  = vec.nonEmpty
       }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val vec = shuffled()
       val c   = count()

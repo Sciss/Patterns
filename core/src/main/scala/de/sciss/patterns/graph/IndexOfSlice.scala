@@ -55,12 +55,12 @@ final case class IndexOfSlice[A1, A2](in: Pat[A1], sub: Pat[A2], from: Pat[Int])
         }
       }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: S#Tx): Int = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): Int = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       _hasNext()      = false   // there is only one run through

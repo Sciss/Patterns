@@ -320,10 +320,10 @@ final case class BinaryOp[A1, A2, A3, A](op: BinaryOp.Op[A3, A], a: Pat[A1], b: 
       bStream.reset()
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean =
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
       aStream.hasNext && bStream.hasNext
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       val aVal = w.widen1(aStream.next())
       val bVal = w.widen2(bStream.next())
       op.next(aVal, bVal)

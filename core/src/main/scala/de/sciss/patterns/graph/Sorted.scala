@@ -45,12 +45,12 @@ final case class Sorted[A](in: Pat[A])(implicit ord: ScalarOrd[A]) extends Patte
       inStream.reset()
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       sortedIt().hasNext
     }
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       validate()
       sortedIt().next()
     }

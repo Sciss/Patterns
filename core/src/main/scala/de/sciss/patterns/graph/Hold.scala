@@ -72,12 +72,12 @@ final case class Hold[A](in: Pat[A], hold: Pat[Boolean] = true) extends Pattern[
       }
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = state()
       advance()

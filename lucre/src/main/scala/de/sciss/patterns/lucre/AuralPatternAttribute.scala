@@ -158,6 +158,7 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
   private def nextElemFromStream(time: Long)(implicit tx: S#Tx): Option[Elem] = {
     implicit val itx: I#Tx = iSys(tx)
     val stream = streamRef()(tx.peer)
+    implicit val ctx: Context[I] = patContext()(tx.peer)
 
     @tailrec
     def loop(count: Int): Option[Elem] = if (count == 10 || !stream.hasNext) {

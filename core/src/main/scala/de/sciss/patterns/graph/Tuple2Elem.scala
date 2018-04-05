@@ -33,9 +33,10 @@ final case class Tuple2_1[A1, A2](in: Pat[(A1, A2)])
 
     private[this] val tupStream = in.expand(ctx, tx0)
 
-    def reset()(implicit tx: S#Tx): Unit    = tupStream.reset()
-    def hasNext(implicit tx: S#Tx): Boolean = tupStream.hasNext
-    def next ()(implicit tx: S#Tx): A1      = tupStream.next()._1
+    def reset()(implicit tx: S#Tx): Unit = tupStream.reset()
+
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = tupStream.hasNext
+    def next ()(implicit ctx: Context[S], tx: S#Tx): A1      = tupStream.next()._1
   }
 }
 
@@ -55,9 +56,10 @@ final case class Tuple2_2[A1, A2](in: Pat[(A1, A2)])
 
     private[this] val tupStream = in.expand(ctx, tx0)
 
-    def reset()(implicit tx: S#Tx): Unit    = tupStream.reset()
-    def hasNext(implicit tx: S#Tx): Boolean = tupStream.hasNext
-    def next ()(implicit tx: S#Tx): A2      = tupStream.next()._2
+    def reset()(implicit tx: S#Tx): Unit = tupStream.reset()
+
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = tupStream.hasNext
+    def next ()(implicit ctx: Context[S], tx: S#Tx): A2      = tupStream.next()._2
   }
 }
 

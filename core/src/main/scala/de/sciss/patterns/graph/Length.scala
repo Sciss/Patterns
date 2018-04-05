@@ -35,9 +35,9 @@ case class Length[A](in: Pat[A]) extends Pattern[Int] {
       _hasNext() = true
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = _hasNext()
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _hasNext()
 
-    def next()(implicit tx: S#Tx): Int = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): Int = {
       if (!hasNext) Stream.exhausted()
       var res = 0
       while (inStream.hasNext) {

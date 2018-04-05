@@ -17,7 +17,7 @@ package impl
 
 import de.sciss.lucre.stm.Base
 
-final class IndexItStream[S <: Base[S]](iteration: S#Var[Int], tx0: S#Tx)(implicit ctx: Context[S])
+final class IndexItStream[S <: Base[S]](iteration: S#Var[Int], tx0: S#Tx)
   extends Stream[S, Int] {
 
   private[this] val id        = tx0.newId()
@@ -26,9 +26,9 @@ final class IndexItStream[S <: Base[S]](iteration: S#Var[Int], tx0: S#Tx)(implic
   def reset()(implicit tx: S#Tx): Unit =
     _hasNext() = true
 
-  def hasNext(implicit tx: S#Tx): Boolean = _hasNext()
+  def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _hasNext()
 
-  def next()(implicit tx: S#Tx): Int = {
+  def next()(implicit ctx: Context[S], tx: S#Tx): Int = {
     if (!hasNext) Stream.exhausted()
     _hasNext() = false
     iteration()

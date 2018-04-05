@@ -117,12 +117,12 @@ final case class MapWithIndex[A1, A] private[patterns](outer: Pat[Pat[A1]], itIn
       }
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: S#Tx): Pat[A] = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
       if (!hasNext) Stream.exhausted()
       val res = mapStream()
       advance()

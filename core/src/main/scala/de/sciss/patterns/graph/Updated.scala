@@ -53,12 +53,12 @@ final case class Updated[A1, A >: A1](in: Pat[A1], idx: Pat[Int], elem: A) exten
       }
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val c     = takeRem()
       val inVal = inStream.next()

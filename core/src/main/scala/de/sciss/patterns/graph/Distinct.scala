@@ -62,12 +62,12 @@ final case class Distinct[A](in: Pat[A]) extends Pattern[A] {
         advance()
       }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       val res = _next()

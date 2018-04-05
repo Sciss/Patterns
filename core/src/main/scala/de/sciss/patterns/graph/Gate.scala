@@ -69,12 +69,12 @@ final case class Gate[A](in: Pat[A], gate: Pat[Boolean]) extends Pattern[A] {
       }
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = _nextElem()
       advance()

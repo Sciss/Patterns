@@ -58,12 +58,12 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
       nStream .reset()
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: S#Tx): Pat[A] = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
       if (!hasNext) Stream.exhausted()
 
       /* Calculate this result. */

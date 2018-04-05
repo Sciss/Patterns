@@ -40,8 +40,8 @@ final case class Zip2[A1, A2](a: Pat[A1], b: Pat[A2])
       bStream.reset()
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = aStream.hasNext && bStream.hasNext
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = aStream.hasNext && bStream.hasNext
 
-    def next()(implicit tx: S#Tx): (A1, A2) = (aStream.next(), bStream.next())
+    def next()(implicit ctx: Context[S], tx: S#Tx): (A1, A2) = (aStream.next(), bStream.next())
   }
 }

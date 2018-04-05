@@ -23,7 +23,7 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit val num: Num[A])
   override private[patterns] def aux: List[Aux] = num :: Nil
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    impl.WhiteImpl.newStream(this)
+    impl.WhiteImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val loT = t(lo)

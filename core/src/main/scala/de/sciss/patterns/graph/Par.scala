@@ -81,12 +81,12 @@ final case class Par(in: Pat[Pat[Event]])
         _hasNext() = false
       }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit tx: S#Tx): Event = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): Event = {
       if (!hasNext) Stream.exhausted()
       val res = elem()
       advance()

@@ -21,7 +21,7 @@ import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.DataInput
 
 object WhiteImpl {
-  def newStream[S <: Base[S], A](pat: White[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[S <: Base[S], A](pat: White[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id        = tx.newId()
 
@@ -36,7 +36,7 @@ object WhiteImpl {
       valid = valid)(r, num)
   }
 
-  def readStream[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def read[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.readId(in, access)
     val num       = Aux.readT[Num[A]](in)
 
@@ -60,7 +60,8 @@ object WhiteImpl {
   )
     extends Stream[S, A] {
 
-    private def mkState()(implicit tx: S#Tx): A = num.rrand(loStream.next(), hiStream.next())
+    private def mkState()(implicit ctx: Context[S], tx: S#Tx): A =
+      num.rrand(loStream.next(), hiStream.next())
 
     def reset()(implicit tx: S#Tx): Unit = if (valid()) {
       valid() = false
@@ -69,12 +70,12 @@ object WhiteImpl {
       // XXX TODO: r.reset()
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    private def validate()(implicit tx: S#Tx): Unit =
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
       if (!valid()) {
         valid() = true
         _hasNext() = loStream.hasNext && hiStream.hasNext
@@ -83,7 +84,7 @@ object WhiteImpl {
         }
       }
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = state()
       _hasNext() = loStream.hasNext && hiStream.hasNext

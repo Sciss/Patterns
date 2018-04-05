@@ -67,7 +67,7 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
         }
       }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
@@ -96,7 +96,7 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
       }
     }
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = innerStream.next()
       val ihn = innerStream.hasNext

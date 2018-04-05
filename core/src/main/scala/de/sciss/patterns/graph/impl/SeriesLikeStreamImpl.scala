@@ -32,7 +32,7 @@ abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A](start: Pat[A1], ste
   private[this] val _hasNext    = tx0.newBooleanVar(id, false)
   private[this] val _valid      = tx0.newBooleanVar(id, false)
 
-  final def hasNext(implicit tx: S#Tx): Boolean = {
+  final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
     validate()
     _hasNext()
   }
@@ -54,7 +54,7 @@ abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A](start: Pat[A1], ste
       }
     }
 
-  final def next()(implicit tx: S#Tx): A = {
+  final def next()(implicit ctx: Context[S], tx: S#Tx): A = {
     if (!hasNext) Stream.exhausted()
     val res = state()
 //    val c   = count() + 1

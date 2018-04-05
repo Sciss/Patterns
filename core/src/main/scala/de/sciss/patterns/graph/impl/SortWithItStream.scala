@@ -21,7 +21,7 @@ import de.sciss.serial.ImmutableSerializer
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
-final class SortWithItStream[S <: Base[S], A](tx0: S#Tx)(implicit ctx: Context[S])
+final class SortWithItStream[S <: Base[S], A](tx0: S#Tx)
   extends Stream[S, (A, A)] {
 
   private[this] val id          = tx0.newId()
@@ -67,12 +67,12 @@ final class SortWithItStream[S <: Base[S], A](tx0: S#Tx)(implicit ctx: Context[S
   def reset()(implicit tx: S#Tx): Unit =
     _valid() = false
 
-  def hasNext(implicit tx: S#Tx): Boolean = {
+  def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
     validate()
     _hasZ() && _hasNext()
   }
 
-  def next()(implicit tx: S#Tx): (A, A) = {
+  def next()(implicit ctx: Context[S], tx: S#Tx): (A, A) = {
     if (!hasNext) Stream.exhausted()
     val (x, y)  = pairInRef()
     val sz      = math.min(x.size, y.size)

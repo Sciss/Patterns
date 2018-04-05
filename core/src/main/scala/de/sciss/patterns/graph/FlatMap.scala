@@ -66,7 +66,7 @@ final case class FlatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1
 //        // case _ =>
 //      }
 
-    def hasNext(implicit tx: S#Tx): Boolean =
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
       itStream.hasNext && innerStream.hasNext
 
     private def advance()(implicit tx: S#Tx): Unit = {
@@ -78,7 +78,7 @@ final case class FlatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1
       innerStream.reset()
     }
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = innerStream.next()
       logStream(s"FlatMap.iterator.next() = $res; innerStream.hasNext = ${innerStream.hasNext}; itStream.hasNext = ${itStream.hasNext}")

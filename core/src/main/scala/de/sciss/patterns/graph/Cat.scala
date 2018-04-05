@@ -30,13 +30,13 @@ final case class Cat[A1, A2, A](a: Pat[A1], b: Pat[A2])
       bi.reset()
     }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       val res = ai.hasNext || bi.hasNext
 //      logStream(s"Cat.iterator.hasNext = $res")
       res
     }
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       val ahn = ai.hasNext
       val res = if (ahn) {
         val aVal = ai.next()

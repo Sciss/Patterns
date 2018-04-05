@@ -41,7 +41,7 @@ final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
 
     def checkNext()(implicit tx: S#Tx): Boolean = mapE.forall(_._2.hasNext)
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
@@ -65,7 +65,7 @@ final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
       Event(m)
     }
 
-    def next()(implicit tx: S#Tx): Event = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): Event = {
       if (!hasNext) Stream.exhausted()
       val res = mkState()
       _hasNext() = checkNext()

@@ -37,14 +37,14 @@ abstract class ScaleLikeStream[S <: Base[S], A1, A2, A](in: Pat[A1], inLo: Pat[A
     outHiStream .reset()
   }
 
-  final def hasNext(implicit tx: S#Tx): Boolean =
+  final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
     inStream   .hasNext &&
       inLoStream .hasNext &&
       inHiStream .hasNext &&
       outLoStream.hasNext &&
       outHiStream.hasNext
 
-  final def next()(implicit tx: S#Tx): A = {
+  final def next()(implicit ctx: Context[S], tx: S#Tx): A = {
     if (!hasNext) Stream.exhausted()
     val inVal     = inStream    .next()
     val inLoVal   = inLoStream  .next()

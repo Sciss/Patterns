@@ -315,10 +315,10 @@ final case class UnaryOp[A1, A](op: UnaryOp.Op[A1, A], a: Pat[A1])
     def reset()(implicit tx: S#Tx): Unit =
       aStream.reset()
 
-    def hasNext(implicit tx: S#Tx): Boolean =
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
       aStream.hasNext
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       val aVal = aStream.next()
       op.next(aVal)
     }

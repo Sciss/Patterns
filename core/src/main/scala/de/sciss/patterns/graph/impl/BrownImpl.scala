@@ -21,7 +21,7 @@ import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.DataInput
 
 object BrownImpl {
-  def newStream[S <: Base[S], A1, A2, A](pat: Brown[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[S <: Base[S], A1, A2, A](pat: Brown[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id          = tx.newId()
 
@@ -38,7 +38,7 @@ object BrownImpl {
       valid = valid)(r, widen, num)
   }
 
-  def readStream[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def read[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id          = tx.readId(in, access)
     val widen       = Aux.readT[Widen2[Any, Any, A]](in)
     val num         = Aux.readT[Num[A]](in)
@@ -77,7 +77,7 @@ object BrownImpl {
     private def calcNext(cur: A, step: A)(implicit r: Random[S#Tx], tx: S#Tx): A =
       num.+(cur, num.rand2(step))
 
-    private def validate()(implicit tx: S#Tx): Unit =
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
       if (!valid()) {
         valid() = true
         _hasNext() = loStream.hasNext && hiStream.hasNext
@@ -86,7 +86,7 @@ object BrownImpl {
         }
       }
 
-    def hasNext(implicit tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
@@ -99,7 +99,7 @@ object BrownImpl {
       // XXX TODO: r.reset()
     }
 
-    def next()(implicit tx: S#Tx): A = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
       val res = state()
       _hasNext() = loStream.hasNext && hiStream.hasNext && stepStream.hasNext
