@@ -45,6 +45,9 @@ object Stream {
 
   implicit def serializer[S <: Base[S], A]: Serializer[S#Tx, S#Acc, Stream[S, A]] = anySer.asInstanceOf[Ser[S, A]]
 
+  def read[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] =
+    serializer[S, A].read(in, access)
+
   private val anySer = new Ser[Plain, Any]
 
   private final class Ser[S <: Base[S], A] extends Serializer[S#Tx, S#Acc, Stream[S, A]] {

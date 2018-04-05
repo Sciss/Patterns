@@ -19,10 +19,10 @@ import de.sciss.patterns.Types.{Aux, Num, Widen2}
 import de.sciss.patterns.impl.PatElem
 
 final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
-                                 (implicit w: Widen2[A1, A2, A], num: Num[A])
+                                 (implicit val widen: Widen2[A1, A2, A], val num: Num[A])
   extends Pattern[A] { pat =>
 
-  override private[patterns] def aux: List[Aux] = w :: num :: Nil
+  override private[patterns] def aux: List[Aux] = widen :: num :: Nil
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl(tx)
 
@@ -38,8 +38,8 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
 
     private[this] val id          = tx0.newId()
 
-    private[this] val loStream    = lo  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
-    private[this] val hiStream    = hi  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
+    private[this] val loStream    = lo  .expand(ctx, tx0).map(widen.widen1)(ctx, tx0)
+    private[this] val hiStream    = hi  .expand(ctx, tx0).map(widen.widen1)(ctx, tx0)
     private[this] val stepStream  = step.expand(ctx, tx0)
 
     private[this] implicit val r: Random[S#Tx] = ctx.mkRandom(pat.ref)(tx0)
@@ -82,7 +82,7 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
         val loVal   = loStream.next()
         val hiVal   = hiStream.next()
         val stepVal = stepStream.next()
-        val x       = calcNext(res, w.widen2(stepVal))
+        val x       = calcNext(res, widen.widen2(stepVal))
         state()     = num.fold(x, loVal, hiVal)
       }
       res
