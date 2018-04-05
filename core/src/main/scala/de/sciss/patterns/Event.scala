@@ -13,10 +13,39 @@
 
 package de.sciss.patterns
 
+import de.sciss.patterns.impl.PatElem
+import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+
 object Event {
-//  final case class Out(map: Map[String, Any]) {
-//    def + (kv: (String, Any)): Out = copy(map = map + kv)
-//  }
+  final val empty = Event(Map.empty)
+
+  implicit object serializer extends ImmutableSerializer[Event] {
+
+    def read(in: DataInput): Event = {
+      val b = Map.newBuilder[String, Any]
+      var sz = in.readInt()
+      b.sizeHint(sz)
+      val ref = if (sz <= 1) null else new PatElem.RefMapIn
+      while (sz > 1) {
+        val k = in.readUTF()
+        val v = PatElem.read(in, ref)
+        b += (k -> v)
+        sz -= 1
+      }
+      val coll = b.result()
+      Event(coll)
+    }
+
+    def write(e: Event, out: DataOutput): Unit = {
+      val coll = e.map
+      out.writeInt(coll.size)
+      var ref = new PatElem.RefMapOut
+      coll.foreach { case (k, v) =>
+        out.writeUTF(k)
+        ref = PatElem.write(v, out, ref)
+      }
+    }
+  }
 
   private def getOrElseDouble(out: Event, key: String, default: => Double): Double = {
     val opt = out.map.get(key)

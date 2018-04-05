@@ -31,7 +31,7 @@ final case class Distinct[A](in: Pat[A]) extends Pattern[A] {
     private[this] val id        = tx0.newId()
     private[this] val inStream  = in.expand(ctx, tx0)
 
-    private[this] val seen      = ??? : S#Var[Set[A]] // ctx.newVar[Set[A]  ](null)(tx0)
+    private[this] val seen      = tx0.newVar[Set[A]](id, Set.empty)(PatElem.setSerializer)
     private[this] val _hasNext  = tx0.newBooleanVar(id, false)
     private[this] val _next     = PatElem.makeVar[S, A](id)(tx0)
     private[this] val _valid    = tx0.newBooleanVar(id, false)

@@ -14,7 +14,10 @@
 package de.sciss.patterns.graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.impl.PatElem
 import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
+
+import scala.collection.immutable.{IndexedSeq => Vec}
 
 final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends Pattern[Pat[A]] { pat =>
 
@@ -37,7 +40,7 @@ final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends 
     private[this] val _valid      = tx0.newBooleanVar(id, false)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
     private[this] val _hasStep    = tx0.newBooleanVar(id, true)
-    private[this] val _buf        = ??? : S#Var[Vector[A]] // ctx.newVar[Vector[A]](null)(tx0)
+    private[this] val _buf        = tx0.newVar[Vec[A]](id, Vector.empty)(PatElem.vecSerializer)
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

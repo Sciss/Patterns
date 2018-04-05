@@ -15,7 +15,10 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.impl.PatElem
+import de.sciss.serial.Serializer
 
+import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.collection.mutable
 
 final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]] {
@@ -42,10 +45,10 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
     // generating all nums such that:
     // (1) nums(0) + .. + nums(length-1) = n
     // (2) 0 <= nums(i) <= cnts(i), where 0 <= i <= cnts.length-1
-    private[this] val elements  = ??? : S#Var[IndexedSeq[A]] // ctx.newVar[IndexedSeq[A]](null)(tx0)
-    private[this] val counts    = ??? : S#Var[Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
-    private[this] val numbers   = ??? : S#Var[Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
-    private[this] val offsets   = ??? : S#Var[Vector[Int]] // ctx.newVar[Vector[Int]](null)(tx0)
+    private[this] val elements  = tx0.newVar[Vec[A]]  (id, Vector.empty)(PatElem.vecSerializer)
+    private[this] val counts    = tx0.newVar[Vec[Int]](id, Vector.empty)(Serializer.immutable) // Serial issue #1
+    private[this] val numbers   = tx0.newVar[Vec[Int]](id, Vector.empty)(Serializer.immutable) // Serial issue #1
+    private[this] val offsets   = tx0.newVar[Vec[Int]](id, Vector.empty)(Serializer.immutable) // Serial issue #1
     private[this] val _hasNext  = tx0.newBooleanVar(id, false)
     private[this] val _valid    = tx0.newBooleanVar(id, false)
 

@@ -35,7 +35,7 @@ final case class Par(in: Pat[Pat[Event]])
     private[this] val inStream    = in.expand(ctx, tx0)
     private[this] val pq          = ??? : S#Var[ISortedMap[TimeRef, Stream[S, Event]]] // ctx.newVar[ISortedMap[TimeRef, Stream[S, Event]]](null)(tx0)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
-    private[this] val elem        = ??? : S#Var[Event] // ctx.newVar[Event   ](null)(tx0)
+    private[this] val elem        = tx0.newVar[Event](id, Event.empty)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {

@@ -16,6 +16,10 @@ package graph
 package impl
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.impl.PatElem
+import de.sciss.serial.ImmutableSerializer
+
+import scala.collection.immutable.{IndexedSeq => Vec}
 
 final class SortWithItStream[S <: Base[S], A](tx0: S#Tx)(implicit ctx: Context[S])
   extends Stream[S, (A, A)] {
@@ -24,7 +28,10 @@ final class SortWithItStream[S <: Base[S], A](tx0: S#Tx)(implicit ctx: Context[S
   private[this] val _valid      = tx0.newBooleanVar(id, false)
   private[this] val _hasZ       = tx0.newBooleanVar(id, false)
   private[this] val _hasNext    = tx0.newBooleanVar(id, false)
-  private[this] val pairInRef   = ??? : S#Var[(Vector[A], Vector[A])] // ctx.newVar[(Vector[A], Vector[A])](null)(tx0)
+  private[this] val pairInRef   = tx0.newVar[(Vec[A], Vec[A])](id, (Vector.empty, Vector.empty))({
+    implicit val vec: ImmutableSerializer[Vec[A]] = PatElem.vecSerializer[A]
+    ImmutableSerializer.tuple2[Vec[A], Vec[A]]
+  })
   private[this] val count       = tx0.newIntVar(id, 0)
 
   def advance(x: Vector[A], y: Vector[A])(implicit tx: S#Tx): Unit = {

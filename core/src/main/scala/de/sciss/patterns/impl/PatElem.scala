@@ -22,12 +22,14 @@ import de.sciss.patterns.graph.Constant
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
 import scala.annotation.switch
+import scala.collection.immutable.{IndexedSeq => Vec}
+import scala.collection.mutable
 import scala.util.control.NonFatal
 
 object PatElem {
-  private type RefMapOut = util.IdentityHashMap[Product, Integer]
+  type RefMapOut = util.IdentityHashMap[Product, Integer]
 
-  private final class RefMapIn {
+  final class RefMapIn {
     var map   = Map.empty[Int, Product]
     var count = 0
   }
@@ -35,10 +37,10 @@ object PatElem {
   def makeVar[S <: Base[S], A](id: S#Id)(implicit tx: S#Tx): S#Var[A] =
     tx.newVar[A](id, null.asInstanceOf[A])(serializer)
 
-  def read[A](in: DataInput): A = read(in, null)
+  def read[A](in: DataInput): A = read(in, null).asInstanceOf[A]
 
-  private def read[A](in: DataInput, ref0: RefMapIn): A = {
-    val res: Any = (in.readByte(): @switch) match {
+  def read(in: DataInput, ref0: RefMapIn): Any =
+    (in.readByte(): @switch) match {
       case 'C' =>
         val value = read(in, ref0)
         Constant(value)
@@ -62,8 +64,6 @@ object PatElem {
       case 'D' => in.readDouble()
       case 'L' => in.readLong()
     }
-    res.asInstanceOf[A]
-  }
 
   // expects that 'X' byte has already been read
   private def readIdentifiedSeq(in: DataInput, ref: RefMapIn): Seq[Any] = {
@@ -145,14 +145,14 @@ object PatElem {
 
   def write[A](v: A, out: DataOutput): Unit = write(v, out, null)
 
-  private def write[A](v: A, out: DataOutput, ref0: RefMapOut): Unit = v match {
+  def write(v: Any, out: DataOutput, ref0: RefMapOut): RefMapOut = v match {
     case c: Constant[_] =>
       out.writeByte('C')
       write(c.value, out, ref0)
     case o: Option[_] =>
       out.writeByte('O')
       out.writeBoolean(o.isDefined)
-      if (o.isDefined) {
+      if (o.isEmpty) ref0 else {
         val ref = if (ref0 == null) new RefMapOut else ref0
         write(o.get, out, ref)
       }
@@ -165,29 +165,35 @@ object PatElem {
     case i: Int =>
       out.writeByte('I')
       out.writeInt(i)
+      ref0
     case s: String =>
       out.writeByte('S')
       out.writeUTF(s)
+      ref0
     case b: Boolean =>
       out.writeByte('B')
       out.writeBoolean(b)
+      ref0
     case f: Float =>
       out.writeByte('F')
       out.writeFloat(f)
+      ref0
     case d: Double =>
       out.writeByte('D')
       out.writeDouble(d)
+      ref0
     case l: Long =>
       out.writeByte('L')
       out.writeLong(l)
+      ref0
   }
 
-  private def writeProduct(p: Product, out: DataOutput, ref: RefMapOut): Unit = {
-    val id0Ref = ref.get(p)
+  private def writeProduct(p: Product, out: DataOutput, ref0: RefMapOut): RefMapOut = {
+    val id0Ref = ref0.get(p)
     if (id0Ref != null) {
       out.writeByte('<')
       out.writeInt(id0Ref)
-      return
+      return ref0
     }
     out.writeByte('P')
     val aux     = p match {
@@ -200,23 +206,73 @@ object PatElem {
     out.writeUTF(name)
     out.writeShort(p.productArity)
     out.writeByte(aux.size)
-    p.productIterator.foreach(write(_, out, ref))
+
+    var ref = ref0
+    val it = p.productIterator
+    while (it.hasNext) {
+      ref = write(it.next(), out, ref)
+    }
     aux.foreach(Aux.write(out, _))
 
     val id      = ref.size() // count
     ref.put(p, id)
+    ref
   }
 
-  private def writeSeq(xs: Seq[Any], out: DataOutput, ref: RefMapOut): Unit = {
+  private def writeSeq(xs: Seq[Any], out: DataOutput, ref0: RefMapOut): RefMapOut = {
     out.writeByte('X')
     out.writeInt(xs.size)
-    xs.foreach(write(_, out, ref))
+    var ref = ref0
+    xs.foreach(x => ref = write(x, out, ref))
+    ref
   }
 
-  implicit def serializer[A]: ImmutableSerializer[A] = Ser.asInstanceOf[ImmutableSerializer[A]]
+  implicit def serializer   [A]: ImmutableSerializer[A]       = Ser   .asInstanceOf[ImmutableSerializer[A]]
+  implicit def vecSerializer[A]: ImmutableSerializer[Vec[A]]  = VecSer.asInstanceOf[ImmutableSerializer[Vec[A]]]
+  implicit def setSerializer[A]: ImmutableSerializer[Set[A]]  = SetSer.asInstanceOf[ImmutableSerializer[Set[A]]]
 
   private object Ser extends ImmutableSerializer[Any] {
     def write(v: Any, out: DataOutput): Unit  = PatElem.write(v, out)
     def read          (in: DataInput ): Any   = PatElem.read(in)
+  }
+
+  private abstract class CollectionSer[That <: Traversable[Any]] extends ImmutableSerializer[That] {
+    def newBuilder: mutable.Builder[Any, That]
+    def empty: That
+
+    def read(in: DataInput): That = {
+      var sz  = in.readInt()
+      if (sz == 0) empty else {
+        val b   = newBuilder
+        b.sizeHint(sz)
+        val ref: RefMapIn = if (sz == 1) null else new RefMapIn
+        while (sz > 0) {
+          b += PatElem.read(in, ref)
+          sz -= 1
+        }
+        b.result()
+      }
+    }
+
+    def write(coll: That, out: DataOutput): Unit = {
+      val sz = coll.size
+      out.writeInt(sz)
+      if (sz > 0) {
+        var ref: RefMapOut = null
+        coll.foreach{ x =>
+          ref = PatElem.write(x, out, ref)
+        }
+      }
+    }
+  }
+
+  private object VecSer extends CollectionSer[Vec[Any]] {
+    def newBuilder: mutable.Builder[Any, Vec[Any]] = Vector.newBuilder
+    def empty: Vec[Any] = Vector.empty
+  }
+
+  private object SetSer extends CollectionSer[Set[Any]] {
+    def newBuilder: mutable.Builder[Any, Set[Any]] = Set.newBuilder
+    def empty: Set[Any] = Set.empty
   }
 }

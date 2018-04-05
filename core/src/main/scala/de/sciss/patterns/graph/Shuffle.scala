@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.{Base, Random}
+import de.sciss.patterns.impl.PatElem
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
@@ -32,7 +33,7 @@ final case class Shuffle[A](in: Pat[A]) extends Pattern[A] { pat =>
     private[this] val _valid    = tx0.newBooleanVar(id, false)
     private[this] val _hasNext  = tx0.newBooleanVar(id, false)
     private[this] val count     = tx0.newIntVar(id, 0)
-    private[this] val shuffled  = ??? : S#Var[Vec[A]] // ctx.newVar[Vec[A]](null)(tx0)
+    private[this] val shuffled  = tx0.newVar[Vec[A]](id, Vector.empty)(PatElem.vecSerializer)
 
     private[this] implicit val r: Random[S#Tx] = ctx.mkRandom(pat.ref)(tx0)
 
