@@ -18,13 +18,14 @@ package impl
 import de.sciss.lucre.stm.{Base, TxnRandom}
 import de.sciss.patterns.Types.{Aux, Num}
 import de.sciss.patterns.impl.PatElem
-import de.sciss.serial.DataInput
+import de.sciss.serial.{DataInput, DataOutput}
 
 object WhiteImpl {
+  final val typeId = 0x57686974 // "Whit"
+
   def expand[S <: Base[S], A](pat: White[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id        = tx.newId()
-
     val loStream  = lo.expand[S]
     val hiStream  = hi.expand[S]
     val state     = PatElem.makeVar[S, A](id)
@@ -38,14 +39,13 @@ object WhiteImpl {
 
   def read[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.readId(in, access)
-    val num       = Aux.readT[Num[A]](in)
-
     val loStream  = Stream.read[S, A](in, access)
     val hiStream  = Stream.read[S, A](in, access)
     val state     = PatElem.makeVar[S, A](id)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
     val r         = TxnRandom.read(in, access)
+    val num       = Aux.readT[Num[A]](in)
 
     new StreamImpl[S, A](id = id, loStream = loStream, hiStream = hiStream, state = state, _hasNext = _hasNext,
       valid = valid)(r, num)
@@ -59,6 +59,29 @@ object WhiteImpl {
     implicit r: TxnRandom[S], num: Num[A]
   )
     extends Stream[S, A] {
+
+    protected def typeId: Int = WhiteImpl.typeId
+
+    def dispose()(implicit tx: S#Tx): Unit = {
+      id      .dispose()
+      loStream.dispose()
+      hiStream.dispose()
+      state   .dispose()
+      _hasNext.dispose()
+      valid   .dispose()
+      r       .dispose()
+    }
+
+    protected def writeData(out: DataOutput): Unit = {
+      id      .write(out)
+      loStream.write(out)
+      hiStream.write(out)
+      state   .write(out)
+      _hasNext.write(out)
+      valid   .write(out)
+      r       .write(out)
+      num     .write(out)
+    }
 
     private def mkState()(implicit ctx: Context[S], tx: S#Tx): A =
       num.rrand(loStream.next(), hiStream.next())

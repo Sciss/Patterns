@@ -32,6 +32,8 @@ abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A](start: Pat[A1], ste
   private[this] val _hasNext    = tx0.newBooleanVar(id, false)
   private[this] val _valid      = tx0.newBooleanVar(id, false)
 
+  def dispose()(implicit tx: S#Tx): Unit = ???
+
   final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
     validate()
     _hasNext()

@@ -17,6 +17,7 @@ package graph
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num, Widen2}
 import de.sciss.patterns.graph.impl.SeriesLikeStreamImpl
+import de.sciss.serial.DataOutput
 
 final case class GeomSeq[A1, A2, A](start: Pat[A1], step: Pat[A2] /* , length: Pat.Int = Int.MaxValue */)
                                    (implicit protected val widen: Widen2[A1, A2, A], num: Num[A])
@@ -34,6 +35,10 @@ final case class GeomSeq[A1, A2, A](start: Pat[A1], step: Pat[A2] /* , length: P
 
   private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S])
     extends SeriesLikeStreamImpl[S, A1, A2, A](start, step /* , length */, tx0) {
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
 
     protected def op(a: A, b: A): A = num.*(a, b)
   }

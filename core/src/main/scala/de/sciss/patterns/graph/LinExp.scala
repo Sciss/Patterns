@@ -17,6 +17,7 @@ import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, NumDouble, Widen2}
 import de.sciss.patterns.graph.impl.ScaleLikeStream
 import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
+import de.sciss.serial.DataOutput
 
 final case class LinExp[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
                                    outLo: Pat[A2], outHi: Pat[A2])
@@ -39,6 +40,10 @@ final case class LinExp[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
 
   private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S])
     extends ScaleLikeStream(in = in, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi, tx0 = tx0) {
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
 
     // math.pow(outHigh / outLow, (in - inLow) / (inHigh - inLow)) * outLow
     protected def calc(inVal: A, inLoVal: A, inHiVal: A, outLoVal: A, outHiVal: A): A =

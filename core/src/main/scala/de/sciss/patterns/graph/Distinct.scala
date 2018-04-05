@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.impl.PatElem
+import de.sciss.serial.DataOutput
 
 import scala.annotation.tailrec
 
@@ -35,6 +36,12 @@ final case class Distinct[A](in: Pat[A]) extends Pattern[A] {
     private[this] val _hasNext  = tx0.newBooleanVar(id, false)
     private[this] val _next     = PatElem.makeVar[S, A](id)(tx0)
     private[this] val _valid    = tx0.newBooleanVar(id, false)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

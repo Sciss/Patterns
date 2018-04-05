@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns
+import de.sciss.serial.DataOutput
 
 final case class Zip2[A1, A2](a: Pat[A1], b: Pat[A2])
   extends Pattern[(A1, A2)] {
@@ -34,6 +35,12 @@ final case class Zip2[A1, A2](a: Pat[A1], b: Pat[A2])
 
     private[this] val aStream = a.expand(ctx, tx0)
     private[this] val bStream = b.expand(ctx, tx0)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = {
       aStream.reset()

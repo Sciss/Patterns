@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.impl.TimeRef
+import de.sciss.serial.DataOutput
 
 import scala.collection.immutable.{SortedMap => ISortedMap}
 
@@ -37,6 +38,12 @@ final case class Par(in: Pat[Pat[Event]])
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
     private[this] val elem        = tx0.newVar[Event](id, Event.empty)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

@@ -16,13 +16,14 @@ package graph
 package impl
 
 import de.sciss.lucre.stm.Base
-import de.sciss.serial.DataInput
+import de.sciss.serial.{DataInput, DataOutput}
 
 object ApplyImpl {
+  final val typeId = 0x4170706C // "Appl"
+
   def expand[S <: Base[S], A](pat: Apply[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id          = tx.newId()
-
     val inStream    = in  .expand[S]
     val idxStream   = idx .expand[S]
     val state       = tx.newVar[Stream[S, A]](id, null)
@@ -35,7 +36,6 @@ object ApplyImpl {
 
   def read[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id          = tx.readId(in, access)
-
     val inStream    = Stream.read[S, Pat[A]](in, access)
     val idxStream   = Stream.read[S, Int   ](in, access)
     val state       = tx.newVar[Stream[S, A]](id, null)
@@ -55,6 +55,26 @@ object ApplyImpl {
     valid     : S#Var[Boolean]
   )
     extends Stream[S, A] {
+
+    protected def typeId: Int = ApplyImpl.typeId
+
+    protected def writeData(out: DataOutput): Unit = {
+      id       .write(out)
+      inStream .write(out)
+      idxStream.write(out)
+      state    .write(out)
+      _hasNext .write(out)
+      valid    .write(out)
+    }
+
+    def dispose()(implicit tx: S#Tx): Unit = {
+      id       .dispose()
+      inStream .dispose()
+      idxStream.dispose()
+      state    .dispose()
+      _hasNext .dispose()
+      valid    .dispose()
+    }
 
     def reset()(implicit tx: S#Tx): Unit = if (valid()) {
       valid() = false

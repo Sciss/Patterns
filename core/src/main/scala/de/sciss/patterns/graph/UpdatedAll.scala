@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 final case class UpdatedAll[A1, A >: A1](in: Pat[A1], idx: Pat[Int], elem: Pat[A]) extends Pattern[A] {
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl[S](tx)
@@ -37,6 +38,12 @@ final case class UpdatedAll[A1, A >: A1](in: Pat[A1], idx: Pat[Int], elem: Pat[A
     private[this] val elemStream  = elem.expand(ctx, tx0)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
     private[this] val state       = tx0.newVar[Stream[S, A]](id, null)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

@@ -16,6 +16,7 @@ package graph
 package impl
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 abstract class TruncateStream[S <: Base[S], A](in: Pat[A], length: Pat[Int], tx0: S#Tx)(implicit ctx: Context[S])
   extends Stream[S, A] {
@@ -29,6 +30,10 @@ abstract class TruncateStream[S <: Base[S], A](in: Pat[A], length: Pat[Int], tx0
   private[this] val _valid    = tx0.newBooleanVar(id, false)
 
   protected def truncate(it: Stream[S, A], n: Int)(implicit tx: S#Tx): Stream[S, A]
+
+  protected def writeData(out: DataOutput): Unit = ???
+
+  def dispose()(implicit tx: S#Tx): Unit = ???
 
   def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
     _valid() = false

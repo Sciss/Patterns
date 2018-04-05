@@ -16,6 +16,7 @@ package graph
 package impl
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 final class MapItStream[S <: Base[S], A](outer: Pat[Pat[A]], tx0: S#Tx)(implicit ctx: Context[S])
   extends Stream[S, A] {
@@ -32,6 +33,12 @@ final class MapItStream[S <: Base[S], A](outer: Pat[Pat[A]], tx0: S#Tx)(implicit
     val os  = if (os0.length <= 24) os0 else s"${os0.substring(0, 23)}..."
     s"MapItStream($os)"
   }
+
+  protected def typeId: Int = ???
+
+  protected def writeData(out: DataOutput): Unit = ???
+
+  def dispose()(implicit tx: S#Tx): Unit = ???
 
   override def toString: String = simpleString
 

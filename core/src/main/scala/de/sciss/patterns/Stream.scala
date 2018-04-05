@@ -13,8 +13,8 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.{Base, Plain}
-import de.sciss.serial.{DataInput, DataOutput, Serializer}
+import de.sciss.lucre.stm.{Base, Disposable, Plain}
+import de.sciss.serial.{DataInput, DataOutput, Serializer, Writable}
 
 import scala.annotation.tailrec
 
@@ -27,6 +27,12 @@ object Stream {
   def empty[S <: Base[S], A]: Stream[S, A] = new Stream[S, A] {
     override def toString = "Stream.empty"
 
+    protected def typeId: Int = 0x456D7074
+
+    protected def writeData(out: DataOutput): Unit = ()
+
+    def dispose()(implicit tx: S#Tx): Unit = ()
+
     def reset()(implicit tx: S#Tx): Unit = ()
 
     def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = false
@@ -35,6 +41,12 @@ object Stream {
 
   def continually[S <: Base[S], A](elem: => A): Stream[S, A] = new Stream[S, A] {
     override def toString = s"Stream.continually@${hashCode().toHexString}"
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = ()
 
@@ -64,6 +76,12 @@ object Stream {
     private[this] val id        = tx0.newId()
     private[this] val _hasNext  = tx0.newBooleanVar(id, true)
 
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
+
     private def simpleString = s"Stream.single($elem)"
 
     override def toString = s"$simpleString; hasNext = ${_hasNext}"
@@ -90,6 +108,12 @@ object Stream {
     private[this] val id    = tx0.newId()
     private[this] val count = tx0.newIntVar(id, 0)
     private[this] val xs    = elems.toIndexedSeq
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     private[this] lazy val simpleString =
       elems.mkString("Stream(", ", ", ")")
@@ -120,6 +144,12 @@ object Stream {
     private[this] val _hasNext  = tx0.newBooleanVar(id, false)
     private[this] val sub       = tx0.newVar[Stream[S, B]](id, null)
     //    private[this] val _hasSub   = ctx.newVar(false)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false
@@ -166,11 +196,24 @@ object Stream {
   private final class Map[S <: Base[S], A, B](outer: Stream[S, A], f: A => B) extends Stream[S, B] {
     def reset()(implicit tx: S#Tx): Unit = outer.reset()
 
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
+
     def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = outer.hasNext
     def next ()(implicit ctx: Context[S], tx: S#Tx): B       = f(outer.next())
   }
 
   private final class Zip[S <: Base[S], A, B](outer: Stream[S, A], that: Stream[S, B]) extends Stream[S, (A, B)] {
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
+
     def reset()(implicit tx: S#Tx): Unit = {
       outer.reset()
       that .reset()
@@ -182,6 +225,13 @@ object Stream {
   }
 
   private final class ++ [S <: Base[S], A, B >: A](outer: Stream[S, A], that: Stream[S, B]) extends Stream[S, B] {
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
+
     def reset()(implicit tx: S#Tx): Unit = {
       outer.reset()
       that .reset()
@@ -199,6 +249,12 @@ object Stream {
     private[this] val id      = tx0.newId()
     private[this] val _count  = tx0.newIntVar(id, 0)
 
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
+
     def reset()(implicit tx: S#Tx): Unit = outer.reset()
 
     def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _count() < n && outer.hasNext
@@ -210,27 +266,41 @@ object Stream {
     }
   }
 }
-abstract class Stream[S <: Base[S], +A] { outer =>
+abstract class Stream[S <: Base[S], +A] extends Writable with Disposable[S#Tx] { outer =>
 //  Stream.COUNT += 1
+
+  // ---- abstract ----
 
   def reset()(implicit tx: S#Tx): Unit
 
   def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean
   def next ()(implicit ctx: Context[S], tx: S#Tx): A
 
-  def map[B](f: A => B)(implicit ctx: Context[S], tx: S#Tx): Stream[S, B] = new Stream.Map(outer, f)
+  protected def typeId: Int
 
-  def flatMap[B](f: A => Stream[S, B])(implicit ctx: Context[S], tx: S#Tx): Stream[S, B] =
+  protected def writeData(out: DataOutput): Unit
+
+  // ---- impl ----
+
+  final def write(out: DataOutput): Unit = {
+    out.writeInt(typeId)
+    writeData(out)
+  }
+
+  final def map[B](f: A => B)(implicit ctx: Context[S], tx: S#Tx): Stream[S, B] =
+    new Stream.Map(outer, f)
+
+  final def flatMap[B](f: A => Stream[S, B])(implicit ctx: Context[S], tx: S#Tx): Stream[S, B] =
     new Stream.FlatMap(outer, f, tx)
 
-  def zip[B](that: Stream[S, B])(implicit ctx: Context[S], tx: S#Tx): Stream[S, (A, B)] =
+  final def zip[B](that: Stream[S, B])(implicit ctx: Context[S], tx: S#Tx): Stream[S, (A, B)] =
     new Stream.Zip(outer, that)
 
-  def ++ [B >: A](that: Stream[S, B]): Stream[S, B] = new Stream.++(outer, that)
+  final def ++ [B >: A](that: Stream[S, B]): Stream[S, B] = new Stream.++(outer, that)
 
-  def take(n: Int)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new Stream.Take(outer, n, tx)
+  final def take(n: Int)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new Stream.Take(outer, n, tx)
 
-  def drop(n: Int)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  final def drop(n: Int)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     var j = 0
     while (j < n && hasNext) {
       next()
@@ -239,10 +309,10 @@ abstract class Stream[S <: Base[S], +A] { outer =>
     this
   }
 
-  def isEmpty (implicit ctx: Context[S], tx: S#Tx): Boolean = !hasNext
-  def nonEmpty(implicit ctx: Context[S], tx: S#Tx): Boolean = hasNext
+  final def isEmpty (implicit ctx: Context[S], tx: S#Tx): Boolean = !hasNext
+  final def nonEmpty(implicit ctx: Context[S], tx: S#Tx): Boolean = hasNext
 
-  def toList(implicit ctx: Context[S], tx: S#Tx): List[A] = {
+  final def toList(implicit ctx: Context[S], tx: S#Tx): List[A] = {
     val b = List.newBuilder[A]
     while (hasNext) {
       b += next()
@@ -250,7 +320,7 @@ abstract class Stream[S <: Base[S], +A] { outer =>
     b.result()
   }
 
-  def toVector(implicit ctx: Context[S], tx: S#Tx): Vector[A] = {
+  final def toVector(implicit ctx: Context[S], tx: S#Tx): Vector[A] = {
     val b = Vector.newBuilder[A]
     while (hasNext) {
       b += next()
@@ -258,7 +328,7 @@ abstract class Stream[S <: Base[S], +A] { outer =>
     b.result()
   }
 
-  def size(implicit ctx: Context[S], tx: S#Tx): Int = {
+  final def size(implicit ctx: Context[S], tx: S#Tx): Int = {
     var res = 0
     while (hasNext) {
       next()
@@ -267,6 +337,6 @@ abstract class Stream[S <: Base[S], +A] { outer =>
     res
   }
 
-  def foreach(fun: A => Unit)(implicit ctx: Context[S], tx: S#Tx): Unit =
+  final def foreach(fun: A => Unit)(implicit ctx: Context[S], tx: S#Tx): Unit =
     while (hasNext) fun(next())
 }

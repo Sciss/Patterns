@@ -15,15 +15,14 @@ package de.sciss.patterns
 
 import de.sciss.lucre.stm.Random
 import de.sciss.numbers.{DoubleFunctions => rd, IntFunctions => ri, IntFunctions2 => ri2}
-import de.sciss.patterns.Types.Aux
 import de.sciss.patterns.impl.{ScalarEqImpl, ScalarToNumImpl, SeqLikeEq, SeqLikeNum, SeqLikeNumDouble, SeqLikeNumFrac, SeqLikeToNum}
-import de.sciss.serial.{DataInput, DataOutput}
+import de.sciss.serial.{DataInput, DataOutput, Writable}
 
 import scala.annotation.switch
 
 object Types {
   object Aux {
-    private val COOKIE = 0x4175   // "Au"
+    private[Aux] final val COOKIE = 0x4175   // "Au"
 
     def read(in: DataInput): Aux = {
       val cookie  = in.readShort()
@@ -49,13 +48,15 @@ object Types {
 
     def readT[A <: Aux](in: DataInput): A = read(in).asInstanceOf[A]
 
-    def write(out: DataOutput, aux: Aux): Unit = {
-      out.writeShort(COOKIE)
-      out.writeShort(aux.id)
-    }
+    def write(out: DataOutput, aux: Aux): Unit = aux.write(out)
   }
-  sealed trait Aux {
+  sealed trait Aux extends Writable {
     def id: Int
+
+    def write(out: DataOutput): Unit = {
+      out.writeShort(Aux.COOKIE)
+      out.writeShort(id)
+    }
   }
 
   object Widen {

@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 case class Indices[A](in: Pat[A]) extends Pattern[Int] {
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = new StreamImpl(tx)
@@ -28,6 +29,12 @@ case class Indices[A](in: Pat[A]) extends Pattern[Int] {
     private[this] val id        = tx0.newId()
     private[this] val inStream  = in.expand(ctx, tx0)
     private[this] val count     = tx0.newIntVar(id, 0)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = {
       inStream.reset()

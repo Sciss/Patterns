@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 object Bind {
   type Map = scala.collection.immutable.Map[String, Pat[_]]
@@ -35,9 +36,15 @@ final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
     private[this] val _valid    = tx0.newBooleanVar(id, false)
     private[this] val _hasNext  = tx0.newBooleanVar(id, false)
 
-    val mapE: Map[String, Stream[S, _]] = entries.map {
+    private[this] val mapE: Map[String, Stream[S, _]] = entries.map {
       case (key, value) => key -> value.expand(ctx, tx0)
     } .toMap  // (breakOut)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def checkNext()(implicit tx: S#Tx): Boolean = mapE.forall(_._2.hasNext)
 

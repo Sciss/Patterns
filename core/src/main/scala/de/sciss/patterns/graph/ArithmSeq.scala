@@ -17,6 +17,7 @@ package graph
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num, Widen2}
 import de.sciss.patterns.graph.impl.SeriesLikeStreamImpl
+import de.sciss.serial.DataOutput
 
 /** A pattern that generates an arithmetic series. Corresponds to `Pseries` in SuperCollider. */
 final case class ArithmSeq[A1, A2, A](start: Pat[A1], step: Pat[A2])
@@ -35,6 +36,10 @@ final case class ArithmSeq[A1, A2, A](start: Pat[A1], step: Pat[A2])
 
   private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S])
     extends SeriesLikeStreamImpl[S, A1, A2, A](start, step /* , length */, tx0) {
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
 
     protected def op(a: A, b: A): A = num.+(a, b)
   }

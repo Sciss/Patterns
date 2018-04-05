@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 final case class Tap[A, A1](in: Pat[A], side: Pat[A1]) extends Pattern[A] {
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl[S](tx)
@@ -28,6 +29,12 @@ final case class Tap[A, A1](in: Pat[A], side: Pat[A1]) extends Pattern[A] {
   private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
     private[this] val inStream    = in  .expand(ctx, tx0)
     private[this] val sideStream  = side.expand(ctx, tx0)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = {
       inStream  .reset()

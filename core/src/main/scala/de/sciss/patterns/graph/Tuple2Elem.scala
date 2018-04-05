@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns
+import de.sciss.serial.DataOutput
 
 final case class Tuple2_1[A1, A2](in: Pat[(A1, A2)])
   extends Pattern[A1] {
@@ -32,6 +33,12 @@ final case class Tuple2_1[A1, A2](in: Pat[(A1, A2)])
     extends Stream[S, A1] {
 
     private[this] val tupStream = in.expand(ctx, tx0)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = tupStream.reset()
 
@@ -55,6 +62,12 @@ final case class Tuple2_2[A1, A2](in: Pat[(A1, A2)])
     extends Stream[S, A2] {
 
     private[this] val tupStream = in.expand(ctx, tx0)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = tupStream.reset()
 

@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.{Base, Random}
 import de.sciss.patterns.impl.PatElem
+import de.sciss.serial.DataOutput
 
 final case class Choose[A](in: Pat[A]) extends Pattern[A] { pat =>
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl[S](tx)
@@ -33,6 +34,12 @@ final case class Choose[A](in: Pat[A]) extends Pattern[A] { pat =>
     private[this] val choice    = PatElem.makeVar[S, A](id)(tx0)
 
     private[this] implicit val r: Random[S#Tx] = ctx.mkRandom(pat.ref)(tx0)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

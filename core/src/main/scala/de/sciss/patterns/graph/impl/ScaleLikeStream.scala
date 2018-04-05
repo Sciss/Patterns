@@ -27,6 +27,8 @@ abstract class ScaleLikeStream[S <: Base[S], A1, A2, A](in: Pat[A1], inLo: Pat[A
   private[this] val outLoStream = outLo .expand(ctx, tx0).map(w.widen2)(ctx, tx0)
   private[this] val outHiStream = outHi .expand(ctx, tx0).map(w.widen2)(ctx, tx0)
 
+  def dispose()(implicit tx: S#Tx): Unit = ???
+
   protected def calc(inVal: A, inLoVal: A, inHiVal: A, outLoVal: A, outHiVal: A): A
 
   final def reset()(implicit tx: S#Tx): Unit = {

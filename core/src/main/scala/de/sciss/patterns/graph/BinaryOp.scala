@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num, NumDouble, NumFrac, NumInt, Ord, Widen2}
+import de.sciss.serial.DataOutput
 
 import scala.language.higherKinds
 
@@ -314,6 +315,12 @@ final case class BinaryOp[A1, A2, A3, A](op: BinaryOp.Op[A3, A], a: Pat[A1], b: 
     private[this] val bStream = b.expand(ctx, tx0)
 
     private[this] implicit val state: op.State[S#Tx]  = op.prepare(ref)(ctx, tx0)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = {
       aStream.reset()

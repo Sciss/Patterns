@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, ScalarOrd}
+import de.sciss.serial.DataOutput
 
 final case class Sorted[A](in: Pat[A])(implicit ord: ScalarOrd[A]) extends Pattern[A] {
   override private[patterns] def aux: List[Aux] = ord :: Nil
@@ -32,6 +33,12 @@ final case class Sorted[A](in: Pat[A])(implicit ord: ScalarOrd[A]) extends Patte
     private[this] val inStream  = in.expand(ctx, tx0)
     private[this] val _valid    = tx0.newBooleanVar(id, false)
     private[this] val sortedIt  = tx0.newVar[Stream[S, A]](id, null)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {

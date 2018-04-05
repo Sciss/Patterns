@@ -18,9 +18,11 @@ package impl
 import de.sciss.lucre.stm.{Base, Random, TxnRandom}
 import de.sciss.patterns.Types.{Aux, Num, Widen2}
 import de.sciss.patterns.impl.PatElem
-import de.sciss.serial.DataInput
+import de.sciss.serial.{DataInput, DataOutput}
 
 object BrownImpl {
+  final val typeId = 0x42726F77 // "Brow"
+
   def expand[S <: Base[S], A1, A2, A](pat: Brown[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id          = tx.newId()
@@ -40,9 +42,6 @@ object BrownImpl {
 
   def read[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id          = tx.readId(in, access)
-    val widen       = Aux.readT[Widen2[Any, Any, A]](in)
-    val num         = Aux.readT[Num[A]](in)
-
     val loStream    = Stream.read[S, Any](in, access)
     val hiStream    = Stream.read[S, Any](in, access)
     val stepStream  = Stream.read[S, A](in, access)
@@ -50,6 +49,8 @@ object BrownImpl {
     val _hasNext    = tx.newBooleanVar(id, false)
     val valid       = tx.newBooleanVar(id, false)
     val r           = TxnRandom.read[S](in, access)
+    val widen       = Aux.readT[Widen2[Any, Any, A]](in)
+    val num         = Aux.readT[Num[A]](in)
 
     new StreamImpl[S, Any, Any, A](id = id, loStream = loStream, hiStream = hiStream, stepStream = stepStream,
       state = state, _hasNext = _hasNext,
@@ -72,6 +73,32 @@ object BrownImpl {
     extends Stream[S, A] {
 
     import widen._
+
+    protected def typeId: Int = BrownImpl.typeId
+
+    protected def writeData(out: DataOutput): Unit = {
+      id        .write(out)
+      loStream  .write(out)
+      hiStream  .write(out)
+      stepStream.write(out)
+      state     .write(out)
+      _hasNext  .write(out)
+      valid     .write(out)
+      r         .write(out)
+      widen     .write(out)
+      num       .write(out)
+    }
+
+    def dispose()(implicit tx: S#Tx): Unit = {
+      id        .dispose()
+      loStream  .dispose()
+      hiStream  .dispose()
+      stepStream.dispose()
+      state     .dispose()
+      _hasNext  .dispose()
+      valid     .dispose()
+      r         .dispose()
+    }
 
     @inline
     private def calcNext(cur: A, step: A)(implicit r: Random[S#Tx], tx: S#Tx): A =

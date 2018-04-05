@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 import scala.collection.mutable
 
@@ -36,6 +37,12 @@ final case class IndexOfSlice[A1, A2](in: Pat[A1], sub: Pat[A2], from: Pat[Int])
     private[this] val fromValue   = tx0.newIntVar    (id, 0    )
     private[this] val _valid      = tx0.newBooleanVar(id, false)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

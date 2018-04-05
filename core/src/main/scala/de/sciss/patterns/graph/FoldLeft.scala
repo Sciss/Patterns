@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCarry: It[A],
                                 inner: Pat[A])
@@ -40,6 +41,12 @@ final case class FoldLeft[B, A](outer: Pat[Pat[B]], z: Pat[A], itIn: It[B], itCa
     private[this] val outerStream   = outer .expand(ctx, tx0)
     private[this] val _valid        = tx0.newBooleanVar(id, false)
     private[this] val _result       = tx0.newVar[Stream[S, A]](id, null)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     private def validate()(implicit tx: S#Tx): Unit =
       if (!_valid()) {

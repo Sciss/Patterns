@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 /** A glue element to make `map` and `flatMap` work. */
 final case class It[A](token: Int) extends Pattern[A] { pat =>
@@ -39,6 +40,12 @@ final case class It[A](token: Int) extends Pattern[A] { pat =>
 
   private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
     private[this] val refStream = ctx.mkOuterStream(token)(tx0)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = refStream.reset()
 

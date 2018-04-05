@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.impl.MapItStream
+import de.sciss.serial.DataOutput
 
 final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A] /* , innerLevel: Int */)
   extends Pattern[Pat[A]] {
@@ -41,6 +42,12 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
     private[this] val mapStream   = tx0.newVar[Pat[A]](id, null)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     private def mkItStream(implicit tx: S#Tx): Stream[S, A1] = {
       val res = new MapItStream(outer, tx)

@@ -3,6 +3,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Widen2}
+import de.sciss.serial.DataOutput
 
 final case class Cat[A1, A2, A](a: Pat[A1], b: Pat[A2])
                                (implicit w: Widen2[A1, A2, A])
@@ -24,6 +25,12 @@ final case class Cat[A1, A2, A](a: Pat[A1], b: Pat[A2])
   private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] { stream =>
     private[this] val ai = a.expand(ctx, tx0) // .map(widen.lift1)
     private[this] val bi = b.expand(ctx, tx0) // .map(widen.lift2)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = {
       ai.reset()

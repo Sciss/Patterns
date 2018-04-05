@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] { pat =>
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = new StreamImpl(tx)
@@ -32,6 +33,12 @@ final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] 
     private[this] val innerStream = tx0.newVar[Pat[A]](id, null)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

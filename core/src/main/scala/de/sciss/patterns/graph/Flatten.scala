@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 import scala.annotation.tailrec
 
@@ -33,6 +34,12 @@ final case class Flatten[A](in: Pat[Pat[A]]) extends Pattern[A] {
     private[this] val innerStream = tx0.newVar[Stream[S, A]](id, null)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

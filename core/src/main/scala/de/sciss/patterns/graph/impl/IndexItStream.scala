@@ -16,12 +16,19 @@ package graph
 package impl
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 final class IndexItStream[S <: Base[S]](iteration: S#Var[Int], tx0: S#Tx)
   extends Stream[S, Int] {
 
   private[this] val id        = tx0.newId()
   private[this] val _hasNext  = tx0.newBooleanVar(id, true)
+
+  protected def typeId: Int = ???
+
+  protected def writeData(out: DataOutput): Unit = ???
+
+  def dispose()(implicit tx: S#Tx): Unit = ???
 
   def reset()(implicit tx: S#Tx): Unit =
     _hasNext() = true

@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.{Base, Random}
 import de.sciss.patterns.Types.{Aux, Num, NumBool, NumDouble, NumFrac, NumInt, ToNum, Widen}
+import de.sciss.serial.DataOutput
 
 import scala.language.higherKinds
 
@@ -311,6 +312,12 @@ final case class UnaryOp[A1, A](op: UnaryOp.Op[A1, A], a: Pat[A1])
     private[this] val aStream = a.expand(ctx, tx0)
 
     private[this] implicit val state: op.State[S#Tx] = op.prepare(pat.ref)(ctx, tx0)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit =
       aStream.reset()

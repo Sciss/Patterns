@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.impl.SortWithItStream
+import de.sciss.serial.DataOutput
 
 import scala.util.control.Breaks
 
@@ -43,6 +44,12 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
     private[this] val _valid      = tx0.newBooleanVar(id, false)
     private[this] val sortedIt    = tx0.newVar[Stream[S, Pat[A]]](id, null)
     private[this] val _hasSorted  = tx0.newBooleanVar(id, false)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     private def mkItStream(implicit tx: S#Tx) = {
       val res = new SortWithItStream[S, A](tx)

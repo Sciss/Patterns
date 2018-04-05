@@ -17,7 +17,7 @@ package impl
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.impl.PatElem
-import de.sciss.serial.ImmutableSerializer
+import de.sciss.serial.{DataOutput, ImmutableSerializer}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
@@ -33,6 +33,12 @@ final class SortWithItStream[S <: Base[S], A](tx0: S#Tx)
     ImmutableSerializer.tuple2[Vec[A], Vec[A]]
   })
   private[this] val count       = tx0.newIntVar(id, 0)
+
+  protected def typeId: Int = ???
+
+  protected def writeData(out: DataOutput): Unit = ???
+
+  def dispose()(implicit tx: S#Tx): Unit = ???
 
   def advance(x: Vector[A], y: Vector[A])(implicit tx: S#Tx): Unit = {
     pairInRef() = (x, y)

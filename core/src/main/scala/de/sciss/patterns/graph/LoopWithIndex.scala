@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.impl.IndexItStream
+import de.sciss.serial.DataOutput
 
 import scala.annotation.tailrec
 
@@ -38,6 +39,12 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
     private[this] val nValue      = tx0.newIntVar(id, 0)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     private def mkItStream(implicit tx: S#Tx) = {
       val res = new IndexItStream[S](iteration, tx)

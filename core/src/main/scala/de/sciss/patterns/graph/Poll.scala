@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.serial.DataOutput
 
 /** A pattern that prints snapshots of its input to the console.
   * The pattern passes its input through to the output.
@@ -44,6 +45,12 @@ final case class Poll[A](in: Pat[A], gate: Pat[Boolean], label: Pat[String] = "p
     private[this] val inStream    = in    .expand(ctx, tx0)
     private[this] val gateStream  = gate  .expand(ctx, tx0)
     private[this] val labelStream = label .expand(ctx, tx0)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = {
       inStream    .reset()

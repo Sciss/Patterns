@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.{Base, Random}
 import de.sciss.patterns.impl.PatElem
+import de.sciss.serial.DataOutput
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
@@ -36,6 +37,12 @@ final case class Shuffle[A](in: Pat[A]) extends Pattern[A] { pat =>
     private[this] val shuffled  = tx0.newVar[Vec[A]](id, Vector.empty)(PatElem.vecSerializer)
 
     private[this] implicit val r: Random[S#Tx] = ctx.mkRandom(pat.ref)(tx0)
+
+    protected def typeId: Int = ???
+
+    protected def writeData(out: DataOutput): Unit = ???
+
+    def dispose()(implicit tx: S#Tx): Unit = ???
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

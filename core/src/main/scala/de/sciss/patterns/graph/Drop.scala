@@ -18,6 +18,8 @@ final case class Drop[A](in: Pat[A], length: Pat[Int]) extends Pattern[A] {
   private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S])
     extends TruncateStream[S, A](in, length, tx0) {
 
+    protected def typeId: Int = ???
+
     protected def truncate(it: Stream[S, A], n: Int)(implicit tx: S#Tx): Stream[S, A] =
       it.drop(n)
   }
