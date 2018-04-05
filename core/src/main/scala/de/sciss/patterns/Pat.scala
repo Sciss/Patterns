@@ -16,6 +16,8 @@ package de.sciss.patterns
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.Aux
 import de.sciss.patterns.graph.{Constant, LoopWithIndex, PatSeq}
+import de.sciss.patterns.impl.PatElem
+import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
 object Pat {
 //  def Int    (elems: scala.Int*    ): Pat[Int]      = apply[Int    ](elems: _*)
@@ -41,6 +43,24 @@ object Pat {
   def fold[A](in: Pat[A], n: Pat[Int])(fun: Pat[A] => Pat[A]): Pat[A] = {
     // XXX TODO --- introduce an optimised version of this
     Constant(Pat(0)).take(n).foldLeft(in)((y, _) => fun(y))
+  }
+
+  implicit def serializer[A]: ImmutableSerializer[Pat[A]] = anySer.asInstanceOf[ImmutableSerializer[Pat[A]]]
+
+  private object anySer extends ImmutableSerializer[Pat[_]] {
+    private final val SER_VERSION = 0x5347
+
+    def write(v: Pat[_], out: DataOutput): Unit = {
+      out.writeShort(SER_VERSION)
+      PatElem.write(v, out)
+    }
+
+    def read(in: DataInput): Pat[_] = {
+      val cookie  = in.readShort()
+      require(cookie == SER_VERSION, s"Unexpected cookie $cookie")
+      val res2  = PatElem.read[Pat[_]](in)
+      res2
+    }
   }
 
   //  var COUNT = 0

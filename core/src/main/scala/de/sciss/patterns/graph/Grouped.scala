@@ -29,7 +29,7 @@ final case class Grouped[A](in: Pat[A], size: Pat[Int]) extends Pattern[Pat[A]] 
     private[this] val id          = tx0.newId()
     private[this] val inStream    = pat.in  .expand(ctx, tx0)
     private[this] val sizeStream  = pat.size.expand(ctx, tx0)
-    private[this] val innerStream = ??? : S#Var[Pat[A]] // ctx.newVar[Pat[A]](null)(tx0) // Stream[S, A]](null)
+    private[this] val innerStream = tx0.newVar[Pat[A]](id, null)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
 

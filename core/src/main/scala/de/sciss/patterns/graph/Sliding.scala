@@ -33,7 +33,7 @@ final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends 
     private[this] val sizeStream  = pat.size.expand(ctx, tx0)
     private[this] val stepStream  = pat.step.expand(ctx, tx0)
 
-    private[this] val innerStream = ??? : S#Var[Pat[A]] // ctx.newVar[Pat[A]](null)(tx0)
+    private[this] val innerStream = tx0.newVar[Pat[A]](id, null)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
     private[this] val _hasStep    = tx0.newBooleanVar(id, true)

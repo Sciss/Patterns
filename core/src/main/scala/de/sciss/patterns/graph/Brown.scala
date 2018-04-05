@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num, Widen2}
+import de.sciss.patterns.impl.PatElem
 
 final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
                                  (implicit w: Widen2[A1, A2, A], num: Num[A])
@@ -43,7 +44,7 @@ final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
 
     private[this] implicit val r: Random[S#Tx] = ctx.mkRandom(pat.ref)(tx0)
 
-    private[this] val state       = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val state       = PatElem.makeVar[S, A](id)(tx0)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
 

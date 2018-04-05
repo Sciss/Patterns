@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.impl.PatElem
 
 import scala.annotation.tailrec
 
@@ -32,7 +33,7 @@ final case class Distinct[A](in: Pat[A]) extends Pattern[A] {
 
     private[this] val seen      = ??? : S#Var[Set[A]] // ctx.newVar[Set[A]  ](null)(tx0)
     private[this] val _hasNext  = tx0.newBooleanVar(id, false)
-    private[this] val _next     = ??? : S#Var[A] // ctx.newVar[A       ](null.asInstanceOf[A])(tx0)
+    private[this] val _next     = PatElem.makeVar[S, A](id)(tx0)
     private[this] val _valid    = tx0.newBooleanVar(id, false)
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {

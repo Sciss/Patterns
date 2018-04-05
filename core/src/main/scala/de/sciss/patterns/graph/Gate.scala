@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.impl.PatElem
 
 import scala.annotation.tailrec
 
@@ -34,7 +35,7 @@ final case class Gate[A](in: Pat[A], gate: Pat[Boolean]) extends Pattern[A] {
     private[this] val gateStream  = gate.expand(ctx, tx0)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
-    private[this] val _nextElem   = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val _nextElem   = PatElem.makeVar[S, A](id)(tx0)
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

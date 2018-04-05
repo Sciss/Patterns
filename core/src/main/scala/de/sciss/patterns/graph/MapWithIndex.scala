@@ -40,7 +40,7 @@ final case class MapWithIndex[A1, A] private[patterns](outer: Pat[Pat[A1]], itIn
 
     private[this] val id          = tx0.newId()
     private[this] val iteration   = tx0.newIntVar(id, 0)
-    private[this] val mapStream   = ??? : S#Var[Pat[A]] // ctx.newVar[Pat[A]](null)(tx0)
+    private[this] val mapStream   = tx0.newVar[Pat[A]](id, null)
     private[this] val _valid      = tx0.newBooleanVar(id, false)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
 

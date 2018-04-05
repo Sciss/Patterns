@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.impl.PatElem
 
 /** A pattern that holds (and repeats) input values whenever `hold` is true.
   * With the default of constant `true`, the pattern will repeat the first
@@ -36,7 +37,7 @@ final case class Hold[A](in: Pat[A], hold: Pat[Boolean] = true) extends Pattern[
     private[this] val _valid      = tx0.newBooleanVar(id, false)
     private[this] val _hasNext    = tx0.newBooleanVar(id, false)
     private[this] val _hasIn      = tx0.newBooleanVar(id, false)
-    private[this] val state       = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val state       = PatElem.makeVar[S, A](id)(tx0)
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num}
+import de.sciss.patterns.impl.PatElem
 
 final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Pattern[A] {
   override private[patterns] def aux: List[Aux] = num :: Nil
@@ -32,8 +33,8 @@ final case class Differentiate[A](in: Pat[A])(implicit num: Num[A]) extends Patt
     private[this] val inStream  = in.expand(ctx, tx0)
     private[this] val _valid    = tx0.newBooleanVar(id, false)
     private[this] val _hasNext  = tx0.newBooleanVar(id, false)
-    private[this] val x1        = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
-    private[this] val state     = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val x1        = PatElem.makeVar[S, A](id)(tx0)
+    private[this] val state     = PatElem.makeVar[S, A](id)(tx0)
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
       _valid() = false

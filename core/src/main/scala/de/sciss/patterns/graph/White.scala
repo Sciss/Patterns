@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num}
+import de.sciss.patterns.impl.PatElem
 
 final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
   extends Pattern[A] { pat =>
@@ -34,7 +35,7 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit num: Num[A])
     private[this] val id        = tx0.newId()
     private[this] val loStream  = lo.expand(ctx, tx0)
     private[this] val hiStream  = hi.expand(ctx, tx0)
-    private[this] val state     = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+    private[this] val state     = PatElem.makeVar[S, A](id)(tx0)
     private[this] val _hasNext  = tx0.newBooleanVar(id, false)
     private[this] val _valid    = tx0.newBooleanVar(id, false)
 

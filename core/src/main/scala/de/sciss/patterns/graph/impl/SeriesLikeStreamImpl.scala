@@ -17,6 +17,7 @@ package impl
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.Widen2
+import de.sciss.patterns.impl.PatElem
 
 abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A](start: Pat[A1], step: Pat[A2], tx0: S#Tx)
                                                   (implicit ctx: Context[S], w: Widen2[A1, A2, A])
@@ -27,7 +28,7 @@ abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A](start: Pat[A1], ste
   private[this] val id          = tx0.newId()
   private[this] val startStream = start .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
   private[this] val stepStream  = step  .expand(ctx, tx0).map(w.widen2)(ctx, tx0)
-  private[this] val state       = ??? : S#Var[A] // ctx.newVar[A](null.asInstanceOf[A])(tx0)
+  private[this] val state       = PatElem.makeVar[S, A](id)(tx0)
   private[this] val _hasNext    = tx0.newBooleanVar(id, false)
   private[this] val _valid      = tx0.newBooleanVar(id, false)
 
