@@ -14,6 +14,8 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.stm.{Base, Disposable, Plain}
+import de.sciss.patterns.graph.impl
+import de.sciss.patterns.graph.impl.ConstantImpl
 import de.sciss.serial.{DataInput, DataOutput, Serializer, Writable}
 
 import scala.annotation.{switch, tailrec}
@@ -22,7 +24,7 @@ object Stream {
   def exhausted(): Nothing = throw new NoSuchElementException("next on empty iterator")
 
   def fill[S <: Base[S], A](n: Int)(elem: => A)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    continually(elem).take(n) // XXX TODO -- more efficient
+    constant(elem).take(n) // XXX TODO -- more efficient
 
   def empty[S <: Base[S], A]: Stream[S, A] = new Stream[S, A] {
     override def toString = "Stream.empty"
@@ -39,20 +41,7 @@ object Stream {
     def next ()(implicit ctx: Context[S], tx: S#Tx): A       = Stream.exhausted()
   }
 
-  def continually[S <: Base[S], A](elem: => A): Stream[S, A] = new Stream[S, A] {
-    override def toString = s"Stream.continually@${hashCode().toHexString}"
-
-    protected def typeId: Int = ???
-
-    protected def writeData(out: DataOutput): Unit = ???
-
-    def dispose()(implicit tx: S#Tx): Unit = ???
-
-    def reset()(implicit tx: S#Tx): Unit = ()
-
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = true
-    def next ()(implicit ctx: Context[S], tx: S#Tx): A       = elem
-  }
+  def constant[S <: Base[S], A](elem: A): Stream[S, A] = ConstantImpl[S, A](elem)
 
   def single[S <: Base[S], A](elem: A)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     new Single[S, A](elem, tx)
@@ -72,7 +61,9 @@ object Stream {
         case ApplyImpl    .typeId => ApplyImpl
         case ArithmSeqImpl.typeId => ArithmSeqImpl
         case BrownImpl    .typeId => BrownImpl
+        case ConstantImpl .typeId => ConstantImpl
         case GeomSeqImpl  .typeId => GeomSeqImpl
+        case UnaryOpImpl  .typeId => UnaryOpImpl
         case WhiteImpl    .typeId => WhiteImpl
       }
       f.readIdentified(in, access)

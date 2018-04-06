@@ -29,26 +29,32 @@ object Types {
       if (cookie != COOKIE) sys.error(s"Unexpected cookie - found ${cookie.toHexString}, expected ${COOKIE.toHexString}")
       val id      = in.readShort()
       (id: @switch) match {
-        case IntTop                 .id => IntTop
-        case IntSeqTop              .id => IntSeqTop
-        case DoubleTop              .id => DoubleTop
-        case DoubleSeqTop           .id => DoubleSeqTop
-        case BooleanTop             .id => BooleanTop
-        case BooleanSeqTop          .id => BooleanSeqTop
-        case StringTop              .id => StringTop
-        case Widen.idIdentity           => Widen.identity[Any]
-        case Widen .intSeqSeq       .id => Widen .intSeqSeq
-        case Widen2.seqIntSeq       .id => Widen2.seqIntSeq
-        case Widen .doubleSeqSeq    .id => Widen .doubleSeqSeq
-        case Widen2.seqDoubleSeq    .id => Widen2.seqDoubleSeq
-        case Widen .intDoubleDouble .id => Widen .intDoubleDouble
-        case Widen2.doubleIntDouble .id => Widen2.doubleIntDouble
+        case IntTop                   .id => IntTop
+        case IntSeqTop                .id => IntSeqTop
+        case DoubleTop                .id => DoubleTop
+        case DoubleSeqTop             .id => DoubleSeqTop
+        case BooleanTop               .id => BooleanTop
+        case BooleanSeqTop            .id => BooleanSeqTop
+        case StringTop                .id => StringTop
+        case Widen.idIdentity             => Widen.identity[Any]
+        case Widen .intSeqSeq         .id => Widen .intSeqSeq
+        case Widen2.seqIntSeq         .id => Widen2.seqIntSeq
+        case Widen .doubleSeqSeq      .id => Widen .doubleSeqSeq
+        case Widen2.seqDoubleSeq      .id => Widen2.seqDoubleSeq
+        case Widen .intDoubleDouble   .id => Widen .intDoubleDouble
+        case Widen2.doubleIntDouble   .id => Widen2.doubleIntDouble
+        case WidenToDouble.DoubleImpl .id => WidenToDouble.DoubleImpl
       }
     }
 
     def readT[A <: Aux](in: DataInput): A = read(in).asInstanceOf[A]
 
     def write(out: DataOutput, aux: Aux): Unit = aux.write(out)
+
+//    def write(out: DataOutput, aux: Aux): Unit = {
+//      out.writeShort(Aux.COOKIE)
+//      out.writeShort(aux.id)
+//    }
   }
   sealed trait Aux extends Writable {
     def id: Int
@@ -261,9 +267,11 @@ object Types {
 //  }
 
   object WidenToDouble {
-    implicit def widenIntToDouble: WidenToDouble[Int, Double] = WidenToDoubleImpl
+    implicit def double: WidenToDouble[Int, Double] = DoubleImpl
 
-    private object WidenToDoubleImpl extends DoubleTop with WidenToDouble[Int, Double] {
+    private[Types] object DoubleImpl extends DoubleTop with WidenToDouble[Int, Double] {
+      final val id = 0x120
+
       def widen1(a: Int): Double = a.toDouble
     }
   }
@@ -454,14 +462,14 @@ object Types {
     final val id = 3
   }
 
-  object DoubleTop extends DoubleTop
+  object DoubleTop extends DoubleTop {
+    final val id = 2
+  }
 
   sealed abstract class DoubleTop
     extends NumDouble       [Double]
     with    ScalarEqImpl    [Double]
     with    ScalarToNumImpl [Double] {
-
-    final val id = 2
 
     def zero   : In = 0.0
     def one    : In = 1.0

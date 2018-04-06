@@ -3,6 +3,7 @@ package lucre
 
 import de.sciss.lucre.stm.Durable
 import de.sciss.lucre.stm.store.BerkeleyDB
+import de.sciss.serial.{DataInput, DataOutput}
 import org.scalatest.{Matchers, Outcome, fixture}
 
 class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
@@ -27,9 +28,18 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
       Brown(70, 120, 3).midicps
     }
 
-    sys.step { implicit tx =>
-      val c = Context[S]
-      c.expand(g)
+    val values = sys.step { implicit tx =>
+      implicit val c: Context[S] = Context[S]
+      val stream0: Stream[S, Double] = c.expand(g)
+
+      val out = DataOutput()
+      stream0.write(out)
+      val arr = out.toByteArray
+      val in = DataInput(arr)
+      val stream1 = Stream.read[S, Double](in, ())
+      stream1.take(10).toList
     }
+
+    println(values)
   }
 }

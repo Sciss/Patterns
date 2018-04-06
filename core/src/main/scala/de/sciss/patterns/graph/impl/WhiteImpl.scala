@@ -80,6 +80,7 @@ object WhiteImpl extends StreamFactory {
       _hasNext.write(out)
       valid   .write(out)
       r       .write(out)
+//      Aux.write(out, num)
       num     .write(out)
     }
 

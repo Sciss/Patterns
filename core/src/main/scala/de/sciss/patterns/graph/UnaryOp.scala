@@ -14,41 +14,62 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.{Base, Random}
-import de.sciss.patterns.Types.{Aux, Num, NumBool, NumDouble, NumFrac, NumInt, ToNum, Widen}
-import de.sciss.serial.DataOutput
+import de.sciss.lucre.stm.{Base, TxnRandom}
+import de.sciss.patterns.Types.{Aux, Num, NumBool, NumDouble, NumFrac, NumInt, ToNum, Widen, WidenToDouble}
+import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.language.higherKinds
 
 object UnaryOp {
   sealed abstract class Op[A1, A2] extends ProductWithAux {
-    type State[Tx]
+    type State[S <: Base[S]]
+    
+//    protected def opId: Int
+    
+    def readState   [S <: Base[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): State[S]
+    def writeState  [S <: Base[S]](s: State[S], out: DataOutput): Unit
+    def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit
 
-    def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S#Tx]
+    def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S]
 
-    def next[S <: Base[S]](a: A1)(implicit state: State[S#Tx], tx: S#Tx): A2
+    def next[S <: Base[S]](a: A1)(implicit state: State[S], tx: S#Tx): A2
 
     override final def productPrefix = s"UnaryOp$$$name"
 
     def name: String
 
     override def toString: String = name
+
+//    def write(out: DataOutput): Unit = ...
   }
 
   abstract class PureOp[A1, A2] extends Op[A1, A2] {
-    final type State[_] = Unit
+    final type State[S <: Base[S]] = Unit
 
-    final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S#Tx] = ()
+    final def readState   [S <: Base[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): State[S] = ()
+    final def writeState  [S <: Base[S]](s: State[S], out: DataOutput): Unit = ()
+    final def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit = ()
 
-    def next[S <: Base[S]](a: A1)(implicit state: State[S#Tx], tx: S#Tx): A2 = apply(a)
+    final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S] = ()
+
+    def next[S <: Base[S]](a: A1)(implicit state: State[S], tx: S#Tx): A2 = apply(a)
 
     def apply(a: A1): A2
   }
 
   abstract class RandomOp[A1, A2] extends Op[A1, A2] {
-    final type State[Tx] = Random[Tx]
+    final type State[S <: Base[S]] = TxnRandom[S]
 
-    final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S#Tx] = ctx.mkRandom(ref)
+    final def readState[S <: Base[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): State[S] =
+      TxnRandom.read(in, access)
+    
+    final def writeState[S <: Base[S]](s: State[S], out: DataOutput): Unit =
+      s.write(out)
+
+    final def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit =
+      s.dispose()
+
+    final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S] = ctx.mkRandom(ref)
   }
 
   // ---- analogous to UGens ----
@@ -125,16 +146,16 @@ object UnaryOp {
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
-  final case class Sqrt[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.sqrt(w.widen1(a))
+  final case class Sqrt[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.sqrt(wd.widen1(a))
     def name                  : String    = "Sqrt"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Exp[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.exp(w.widen1(a))
+  final case class Exp[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.exp(wd.widen1(a))
     def name                  : String    = "Exp"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
   final case class Reciprocal[A, B]()(implicit w: Widen[A, B], num: NumFrac[B]) extends PureOp[A, B] {
@@ -143,134 +164,134 @@ object UnaryOp {
     private[patterns] def aux : List[Aux] = w :: num :: Nil
   }
 
-  final case class Midicps[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.midicps(w.widen1(a))
+  final case class Midicps[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.midicps(wd.widen1(a))
     def name                  : String    = "Midicps"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Cpsmidi[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.cpsmidi(w.widen1(a))
+  final case class Cpsmidi[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.cpsmidi(wd.widen1(a))
     def name                  : String    = "Cpsmidi"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Midiratio[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.midiratio(w.widen1(a))
+  final case class Midiratio[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.midiratio(wd.widen1(a))
     def name                  : String    = "Midiratio"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Ratiomidi[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.ratiomidi(w.widen1(a))
+  final case class Ratiomidi[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.ratiomidi(wd.widen1(a))
     def name                  : String    = "Ratiomidi"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Dbamp[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.dbamp(w.widen1(a))
+  final case class Dbamp[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.dbamp(wd.widen1(a))
     def name                  : String    = "Dbamp"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Ampdb[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.ampdb(w.widen1(a))
+  final case class Ampdb[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.ampdb(wd.widen1(a))
     def name                  : String    = "Ampdb"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Octcps[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.octcps(w.widen1(a))
+  final case class Octcps[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.octcps(wd.widen1(a))
     def name                  : String    = "Octcps"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Cpsoct[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.cpsoct(w.widen1(a))
+  final case class Cpsoct[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.cpsoct(wd.widen1(a))
     def name                  : String    = "Cpsoct"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Log[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.log(w.widen1(a))
+  final case class Log[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.log(wd.widen1(a))
     def name                  : String    = "Log"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Log2[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A): B         = d.log2(w.widen1(a))
+  final case class Log2[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A): B         = wd.log2(wd.widen1(a))
     def name = "Log2"
-    private[patterns] def aux: List[Aux] = w :: d :: Nil
+    private[patterns] def aux: List[Aux] = wd :: Nil
   }
 
-  final case class Log10[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A): B         = d.log10(w.widen1(a))
+  final case class Log10[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A): B         = wd.log10(wd.widen1(a))
     def name = "Log10"
-    private[patterns] def aux: List[Aux] = w :: d :: Nil
+    private[patterns] def aux: List[Aux] = wd :: Nil
   }
 
-  final case class Sin[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A): B         = d.sin(w.widen1(a))
+  final case class Sin[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A): B         = wd.sin(wd.widen1(a))
     def name = "Sin"
-    private[patterns] def aux: List[Aux] = w :: d :: Nil
+    private[patterns] def aux: List[Aux] = wd :: Nil
   }
 
-  final case class Cos[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A): B         = d.cos(w.widen1(a))
+  final case class Cos[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A): B         = wd.cos(wd.widen1(a))
     def name = "Cos"
-    private[patterns] def aux: List[Aux] = w :: d :: Nil
+    private[patterns] def aux: List[Aux] = wd :: Nil
   }
 
-  final case class Tan[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A): B         = d.tan(w.widen1(a))
+  final case class Tan[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A): B         = wd.tan(wd.widen1(a))
     def name = "Tan"
-    private[patterns] def aux: List[Aux] = w :: d :: Nil
+    private[patterns] def aux: List[Aux] = wd :: Nil
   }
 
-  final case class Asin[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A): B         = d.asin(w.widen1(a))
+  final case class Asin[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A): B         = wd.asin(wd.widen1(a))
     def name = "Asin"
-    private[patterns] def aux: List[Aux] = w :: d :: Nil
+    private[patterns] def aux: List[Aux] = wd :: Nil
   }
 
-  final case class Acos[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A): B         = d.acos(w.widen1(a))
+  final case class Acos[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A): B         = wd.acos(wd.widen1(a))
     def name = "Acos"
-    private[patterns] def aux: List[Aux] = w :: d :: Nil
+    private[patterns] def aux: List[Aux] = wd :: Nil
   }
 
-  final case class Atan[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A): B         = d.atan(w.widen1(a))
+  final case class Atan[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A): B         = wd.atan(wd.widen1(a))
     def name = "Atan"
-    private[patterns] def aux: List[Aux] = w :: d :: Nil
+    private[patterns] def aux: List[Aux] = wd :: Nil
   }
 
-  final case class Sinh[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.sinh(w.widen1(a))
+  final case class Sinh[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.sinh(wd.widen1(a))
     def name                  : String    = "Sinh"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Cosh[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.cosh(w.widen1(a))
+  final case class Cosh[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.cosh(wd.widen1(a))
     def name                  : String    = "Cosh"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
-  final case class Tanh[A, B]()(implicit w: Widen[A, B], d: NumDouble[B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = d.tanh(w.widen1(a))
+  final case class Tanh[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
+    def apply(a: A)           : B         = wd.tanh(wd.widen1(a))
     def name                  : String    = "Tanh"
-    private[patterns] def aux : List[Aux] = w :: d :: Nil
+    private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
   final case class Rand[A]()(implicit num: Num[A]) extends RandomOp[A, A] {
-    def next[S <: Base[S]](a: A)(implicit state: Random[S#Tx], tx: S#Tx): A = num.rand(a)
+    def next[S <: Base[S]](a: A)(implicit state: TxnRandom[S], tx: S#Tx): A = num.rand(a)
     def name                  : String    = "Rand"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
   final case class Rand2[A]()(implicit num: Num[A]) extends RandomOp[A, A] {
-    def next[S <: Base[S]](a: A)(implicit state: Random[S#Tx], tx: S#Tx): A = num.rand2(a)
+    def next[S <: Base[S]](a: A)(implicit state: TxnRandom[S], tx: S#Tx): A = num.rand2(a)
     def name                  : String    = "Rand2"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
@@ -284,7 +305,7 @@ object UnaryOp {
   // Softclip
 
   final case class Coin[A, B]()(implicit num: NumDouble[A] { type Boolean = B }) extends RandomOp[A, B] {
-    def next[S <: Base[S]](a: A)(implicit state: Random[S#Tx], tx: S#Tx): B = num.coin(a)
+    def next[S <: Base[S]](a: A)(implicit state: TxnRandom[S], tx: S#Tx): B = num.coin(a)
     def name                  : String    = "Coin"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
@@ -301,33 +322,11 @@ object UnaryOp {
 final case class UnaryOp[A1, A](op: UnaryOp.Op[A1, A], a: Pat[A1])
   extends Pattern[A] { pat =>
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl[S](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+    impl.UnaryOpImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val aT = t(a)
     if (aT.eq(a)) this else copy(a = aT)
-  }
-
-  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
-    private[this] val aStream = a.expand(ctx, tx0)
-
-    private[this] implicit val state: op.State[S#Tx] = op.prepare(pat.ref)(ctx, tx0)
-
-    protected def typeId: Int = ???
-
-    protected def writeData(out: DataOutput): Unit = ???
-
-    def dispose()(implicit tx: S#Tx): Unit = ???
-
-    def reset()(implicit tx: S#Tx): Unit =
-      aStream.reset()
-
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
-      aStream.hasNext
-
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      val aVal = aStream.next()
-      op.next(aVal)
-    }
   }
 }
