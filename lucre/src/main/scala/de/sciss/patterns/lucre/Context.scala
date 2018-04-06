@@ -22,7 +22,8 @@ import de.sciss.patterns.graph.It
 object Context {
   // def InMemory(): InMemory = TxnExecutor.defaultAtomic(new InMemoryImpl(_))
 
-  def apply[S <: stm.Sys[S]](implicit cursor: stm.Cursor[S], tx: S#Tx): Context[S] = new SysImpl[S](tx)
+  def apply[S <: stm.Sys[S]](implicit system: S, cursor: stm.Cursor[S], tx: S#Tx): Context[S] =
+    new SysImpl[S, system.I](system, tx)
 
 //  private final class InMemoryImpl(tx0: InTxn) extends ContextLike[InTxn](tx0) with InMemory {
 //    private[this] val seedRnd = TxnRandom.plain()
@@ -50,20 +51,27 @@ object Context {
 //    }
 //  }
 
-  private final class SysImpl[S <: stm.Sys[S]](tx0: S#Tx)(implicit val cursor: stm.Cursor[S])
-    extends ContextLike[S](tx0) with Context[S] {
+  private final class SysImpl[S <: stm.Sys[S], I1 <: stm.Sys[I1]](system: S { type I = I1 }, tx0: S#Tx)(implicit val cursor: stm.Cursor[S])
+    extends ContextLike[S, I1](system, tx0) with Context[S] {
 
-    private[this] val seedRnd = Random[S](id)(tx0)
-    private[this] val tokenId = tx0.newIntVar(id, 1000000000) // 0x40000000
+    private[this] val seedRnd = Random[I1](id)(i(tx0))
+    private[this] val tokenId = i(tx0).newIntVar(id, 1000000000) // 0x40000000
 
-    protected def nextSeed()(implicit tx: S#Tx): Long = seedRnd.nextLong()
+    protected def nextSeed()(implicit tx: S#Tx): Long = {
+      implicit val itx: I1#Tx = i(tx)
+      seedRnd.nextLong()
+    }
 
     protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S] =
       TxnRandom[S](seed)(tx0)
 
-    def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = seedRnd.setSeed(n)
+    def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = {
+      implicit val itx: I1#Tx = i(tx)
+      seedRnd.setSeed(n)
+    }
 
     def allocToken[A]()(implicit tx: S#Tx): It[A] = {
+      implicit val itx: I1#Tx = i(tx)
       val res = tokenId()
       tokenId() = res + 1
       It(res)

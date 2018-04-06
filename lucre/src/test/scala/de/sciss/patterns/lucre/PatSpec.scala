@@ -1,6 +1,5 @@
 package de.sciss.patterns.lucre
 
-import de.sciss.lucre.stm
 import de.sciss.lucre.stm.InMemory
 import de.sciss.patterns.{Pat, Stream}
 import org.scalatest.{FlatSpec, Matchers}
@@ -9,7 +8,7 @@ import scala.concurrent.stm.InTxn
 
 trait PatSpec extends FlatSpec with Matchers {
   type S = InMemory
-  implicit val cursor: stm.Cursor[S] = InMemory()
+  implicit val cursor: S = InMemory()
   implicit val ctx: Context[S] = cursor.step { implicit tx => Context[S] }
 
   type Tx = InTxn

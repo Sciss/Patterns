@@ -48,13 +48,14 @@ object AuralPatternAttribute extends Factory {
   def apply[S <: Sys[S]](key: String, pat: Pattern[S], observer: Observer[S])
                         (implicit tx: S#Tx, context: AuralContext[S]): AuralAttribute[S] = {
     val system  = tx.system
-    val res     = prepare[S, system.I](key, pat, observer, system)
+    val res     = prepare[S, system.I](key, pat, observer)(tx, system, context)
     res.init(pat)
   }
 
   private def prepare[S <: Sys[S], I1 <: stm.Sys[I1]](key: String, value: Pattern[S],
-                                                      observer: Observer[S], system: S { type I = I1 })
-                                                     (implicit tx: S#Tx, context: AuralContext[S]): AuralPatternAttribute[S, I1] = {
+                                                      observer: Observer[S])
+                                                     (implicit tx: S#Tx, system: S { type I = I1 },
+                                                      context: AuralContext[S]): AuralPatternAttribute[S, I1] = {
     implicit val iSys: S#Tx => I1#Tx = system.inMemoryTx _
     implicit val itx: I1#Tx = iSys(tx)
     implicit val dummyKeySer: Serializer[I1#Tx, I1#Acc, AuralPatternAttribute.View[S]] =
@@ -101,12 +102,13 @@ object AuralPatternAttribute extends Factory {
     }
   }
 }
-final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
+final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: String,
                                                                 val obj: stm.Source[S#Tx, Pattern[S]],
                                                                 observer: Observer[S],
-                                                                viewTree: SkipList.Map[I, Long, AuralPatternAttribute.View[S]])
+                                                                viewTree: SkipList.Map[I1, Long, AuralPatternAttribute.View[S]])
                                                                (implicit protected val context: AuralContext[S],
-                                                                protected val iSys: S#Tx => I#Tx)
+                                                                system: S { type I = I1 },
+                                                                protected val iSys: S#Tx => I1#Tx)
   extends AuralScheduledBase[S, AuralAttribute.Target[S], AuralPatternAttribute.View[S]]
     with AuralAttribute[S] {
   attr =>
@@ -127,7 +129,7 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
 
   private[this] var patObserver: Disposable[S#Tx] = _
 
-  private[this] val patContext      = Ref.make[patterns.lucre.Context[I]]
+  private[this] val patContext      = Ref.make[patterns.lucre.Context[S]]
 
   private def getSingleFloat(in: Any): Option[Float] = in match {
     case i: Int     => Some(i.toFloat)
@@ -151,14 +153,14 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     }
   }
 
-  private type St = patterns.Stream[I, Any]
+  private type St = patterns.Stream[S, Any]
 
   private[this] val streamRef = Ref[St](patterns.Stream.empty)
 
   private def nextElemFromStream(time: Long)(implicit tx: S#Tx): Option[Elem] = {
-    implicit val itx: I#Tx = iSys(tx)
+    implicit val itx: I1#Tx = iSys(tx)
     val stream = streamRef()(tx.peer)
-    implicit val ctx: Context[I] = patContext()(tx.peer)
+    implicit val ctx: Context[S] = patContext()(tx.peer)
 
     @tailrec
     def loop(count: Int): Option[Elem] = if (count == 10 || !stream.hasNext) {
@@ -197,7 +199,7 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
 
   private def setPattern(g: Pat[_])(implicit tx: S#Tx): Boolean = {
     // println("setGraph")
-    implicit val itx: I#Tx = iSys(tx)
+    implicit val itx: I1#Tx = iSys(tx)
     val _pr = playingRef()(tx.peer)
     _pr.foreach(elemRemoved(_, elemPlays = true))
 //    viewTree.iterator(iSys(tx)).toList.foreach { case (_, entry) =>
@@ -208,9 +210,10 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
 //    assert(viewTree.isEmpty(iSys(tx)))
     viewTree.clear()
 
-    implicit val _ctx: Context[I] = patterns.lucre.Context[I](???, itx) // InMemory()
+    import context.scheduler.cursor
+    implicit val _ctx: Context[S] = patterns.lucre.Context[S] // (system, system, itx) // InMemory()
     patContext.update(_ctx)(tx.peer)
-    val stream: patterns.Stream[I, Any] = ??? // g.expand[I]
+    val stream: patterns.Stream[S, Any] = ??? // g.expand[I]
     streamRef.update(stream)(tx.peer)
 
     val headElem  = nextElemFromStream(0L)
@@ -341,7 +344,7 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
   }
 
   protected def processPlay(timeRef: TimeRef, target: Target)(implicit tx: S#Tx): Unit = {
-    implicit val itx: I#Tx = iSys(tx)
+    implicit val itx: I1#Tx = iSys(tx)
     viewTree.floor(timeRef.offset).foreach { case (_, entry) =>
       playEntry(entry, timeRef = timeRef, target = target)
     }
@@ -395,7 +398,7 @@ final class AuralPatternAttribute[S <: Sys[S], I <: stm.Sys[I]](val key: String,
     }
 
   private def removeView(h: ElemHandle)(implicit tx: S#Tx): Unit = {
-    implicit val itx: I#Tx = iSys(tx)
+    implicit val itx: I1#Tx = iSys(tx)
     val start = h.start
     viewTree.remove(start)
     // println(s"removeView($h)")

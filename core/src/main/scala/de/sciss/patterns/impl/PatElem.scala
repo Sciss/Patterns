@@ -66,6 +66,7 @@ object PatElem {
       case 'F' => in.readFloat()
       case 'D' => in.readDouble()
       case 'L' => in.readLong()
+      case '\u0000' => null
     }
 
   // expects that 'X' byte has already been read
@@ -188,6 +189,9 @@ object PatElem {
     case l: Long =>
       out.writeByte('L')
       out.writeLong(l)
+      ref0
+    case null =>
+      out.writeByte('\u0000')
       ref0
   }
 

@@ -2,7 +2,7 @@ package de.sciss.patterns
 
 import de.sciss.kollflitz
 import de.sciss.lucre.stm.Plain
-import de.sciss.patterns.Types.{DoubleTop, IntTop, Num, ScalarEq}
+import de.sciss.patterns.Types.{Num, ScalarEq}
 import de.sciss.patterns.graph._
 
 object RonTuplePure {

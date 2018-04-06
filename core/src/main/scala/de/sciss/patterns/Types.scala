@@ -75,15 +75,18 @@ object Types {
     }
   }
 
-  object Widen extends WidenLowPriority {
-    implicit def identity[A]: Widen2[A, A, A] = anyWiden.asInstanceOf[Identity[A]]
-
+  trait WidenMidPriority extends WidenLowPriority {
     implicit object intDoubleDouble extends Widen2[Int, Double, Double] {
       def widen1(a: Int    ): Double = a.toDouble
       def widen2(a: Double ): Double = a
 
       final val id = 0x104
     }
+
+  }
+
+  object Widen extends WidenMidPriority {
+    implicit def identity[A]: Widen2[A, A, A] = anyWiden.asInstanceOf[Identity[A]]
 
     private[Types] final val idIdentity = 0xFF
 
@@ -129,6 +132,15 @@ object Types {
     def widen2(a: A2): A
   }
 
+  trait EqLowPriority {
+    implicit def intSeqTop   : IntSeqTop    .type = IntSeqTop
+    implicit def doubleSeqTop: DoubleSeqTop .type = DoubleSeqTop
+  }
+
+  object Eq extends EqLowPriority {
+    implicit def intTop   : IntTop    .type = IntTop
+    implicit def doubleTop: DoubleTop .type = DoubleTop
+  }
   trait Eq[A] extends Aux {
     type Boolean
 
@@ -145,6 +157,15 @@ object Types {
 
   type ScalarOrd[A] = Ord[A] with Scalar[A]
 
+//  trait NumLowPriority {
+//    implicit def intTSeqop   : NumInt   [Seq[Int   ]] = IntSeqTop
+//    implicit def doubleSeqTop: NumDouble[Seq[Double]] = DoubleSeqTop
+//  }
+//
+//  object Num extends NumLowPriority {
+//    implicit def intTop   : NumInt   [Int   ] = IntTop
+//    implicit def doubleTop: NumDouble[Double] = DoubleTop
+//  }
   trait Num[A] extends Ord[A] {
     // binary
     def +         (a: A, b: A): A
@@ -231,6 +252,23 @@ object Types {
 
   type ScalarNumInt[A] = NumInt[A] with Scalar[A]
 
+//  trait NumDoubleLowPriority {
+//    implicit def doubleSeqTop: NumDouble[Seq[Double]] = DoubleSeqTop
+//  }
+//
+//  object NumDouble {
+//    implicit def doubleTop: NumDouble[Double] = DoubleTop
+//  }
+
+  object WidenToDouble {
+    implicit def widenIntToDouble: WidenToDouble[Int, Double] = WidenToDoubleImpl
+
+    private object WidenToDoubleImpl extends DoubleTop with WidenToDouble[Int, Double] {
+      def widen1(a: Int): Double = a.toDouble
+    }
+  }
+  trait WidenToDouble[A1, A] extends Widen[A1, A] with NumDouble[A]
+
   trait NumDouble[A] extends NumFrac[A] {
     def sqrt      (a: A): A
     def exp       (a: A): A
@@ -265,6 +303,14 @@ object Types {
 
   type ScalarNumDouble[A] = NumDouble[A] with Scalar[A]
 
+  trait ToNumLowPriority {
+    implicit def intSeqTop    : IntSeqTop   .type = IntSeqTop
+    implicit def doubleSeqTop : DoubleSeqTop.type = DoubleSeqTop
+  }
+  object ToNum extends ToNumLowPriority {
+    implicit def intTop       : IntTop      .type = IntTop
+    implicit def doubleTop    : DoubleTop   .type = DoubleTop
+  }
   trait ToNum[A] extends Aux {
     type Int
     type Double
@@ -288,7 +334,7 @@ object Types {
 
   type ScalarEq[A] = Eq[A] with Scalar[A]
 
-  implicit final object IntSeqTop
+  final object IntSeqTop
     extends NumInt      [Seq[Int]]
     with    SeqLikeNum  [Int]
     with    SeqLikeToNum[Int] {
@@ -311,7 +357,7 @@ object Types {
     final val id = 1
   }
 
-  implicit final object IntTop
+  final object IntTop
     extends NumInt          [Int]
     with    ScalarEqImpl    [Int]
     with    ScalarToNumImpl [Int] {
@@ -392,17 +438,25 @@ object Types {
     def fold (a: Int, lo: Int, hi: Int): Int = ri.fold(a, lo, hi)
   }
 
-  implicit final object DoubleSeqTop
+  trait WidenSelfToDouble[A] extends WidenToDouble[A, A] {
+    def widen1(a: A): A = a
+  }
+
+  final object DoubleSeqTop
     extends SeqLikeNumFrac  [Double]
       with  SeqLikeToNum    [Double]
-      with  SeqLikeNumDouble[Double] {
+      with  SeqLikeNumDouble[Double]
+      with  WidenSelfToDouble[Seq[Double]]
+      {
 
     protected final val peer: DoubleTop.type = DoubleTop
 
     final val id = 3
   }
 
-  implicit final object DoubleTop
+  object DoubleTop extends DoubleTop
+
+  sealed abstract class DoubleTop
     extends NumDouble       [Double]
     with    ScalarEqImpl    [Double]
     with    ScalarToNumImpl [Double] {

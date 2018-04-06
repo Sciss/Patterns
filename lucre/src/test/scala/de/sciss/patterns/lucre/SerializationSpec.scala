@@ -2,7 +2,6 @@ package de.sciss.patterns.lucre
 
 import de.sciss.lucre.stm.Durable
 import de.sciss.lucre.stm.store.BerkeleyDB
-import de.sciss.patterns.Types.IntTop
 import de.sciss.patterns.{Graph, Pat, RonTuplePure, graph}
 import de.sciss.serial.{DataInput, DataOutput}
 import de.sciss.synth.proc.SoundProcesses

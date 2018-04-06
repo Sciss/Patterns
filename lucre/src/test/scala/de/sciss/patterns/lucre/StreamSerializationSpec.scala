@@ -3,7 +3,6 @@ package lucre
 
 import de.sciss.lucre.stm.Durable
 import de.sciss.lucre.stm.store.BerkeleyDB
-import de.sciss.patterns.Types.{Widen, Widen2}
 import org.scalatest.{Matchers, Outcome, fixture}
 
 class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
@@ -22,15 +21,15 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
     }
   }
 
-  "Stream serialization" should "work" in { sys =>
+  "Stream serialization" should "work" in { implicit sys =>
     val g = Graph {
       import graph._
-//      implicitly[Widen[Int, Double]]
-      implicitly[Widen2[Int, Double, Double]]
-      Brown(70, 120, 3).sqrt // midicps
+      Brown(70, 120, 3).midicps
     }
 
-    val c = Context[S]
-    c.expand(g)
+    sys.step { implicit tx =>
+      val c = Context[S]
+      c.expand(g)
+    }
   }
 }

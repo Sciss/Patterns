@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Eq, Num, NumBool, NumDouble, NumFrac, NumInt, Ord, ScalarOrd, ToNum, Widen, Widen2}
+import de.sciss.patterns.Types.{Eq, Num, NumBool, NumDouble, NumFrac, NumInt, Ord, ScalarOrd, ToNum, Widen, WidenToDouble, Widen2}
 import de.sciss.patterns.graph.{BinaryOp => BinOp, UnaryOp => UnOp, _}
 
 final class PatOps[A](private val x: Pat[A]) extends AnyVal {
@@ -58,32 +58,32 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def squared   (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Squared [A](), x)
   def cubed     (implicit num: Num[A]     ): Pat[A]         = UnOp(UnOp.Cubed   [A](), x)
 
-  def sqrt   [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Sqrt[A, B](), x)
-  def exp    [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Exp [A, B](), x)
+  def sqrt   [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Sqrt[A, B](), x)
+  def exp    [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Exp [A, B](), x)
 
   def reciprocal[B](implicit w: Widen[A, B], num: NumFrac[B]): Pat[B] = UnOp(UnOp.Reciprocal[A, B](), x)
 
-  def midicps  [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Midicps   [A, B](), x)
-  def cpsmidi  [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Cpsmidi   [A, B](), x)
-  def midiratio[B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Midiratio [A, B](), x)
-  def ratiomidi[B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Ratiomidi [A, B](), x)
-  def dbamp    [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Dbamp     [A, B](), x)
-  def ampdb    [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Ampdb     [A, B](), x)
+  def midicps  [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Midicps   [A, B](), x)
+  def cpsmidi  [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Cpsmidi   [A, B](), x)
+  def midiratio[B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Midiratio [A, B](), x)
+  def ratiomidi[B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Ratiomidi [A, B](), x)
+  def dbamp    [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Dbamp     [A, B](), x)
+  def ampdb    [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Ampdb     [A, B](), x)
 
-  def octcps   [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Octcps    [A, B](), x)
-  def cpsoct   [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Cpsoct    [A, B](), x)
-  def log      [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Log       [A, B](), x)
-  def log2     [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Log2      [A, B](), x)
-  def log10    [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Log10     [A, B](), x)
-  def sin      [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Sin       [A, B](), x)
-  def cos      [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Cos       [A, B](), x)
-  def tan      [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Tan       [A, B](), x)
-  def asin     [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Asin      [A, B](), x)
-  def acos     [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Acos      [A, B](), x)
-  def atan     [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Atan      [A, B](), x)
-  def sinh     [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Sinh      [A, B](), x)
-  def cosh     [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Cosh      [A, B](), x)
-  def tanh     [B](implicit w: Widen[A, B], d: NumDouble[B]): Pat[B] = UnOp(UnOp.Tanh      [A, B](), x)
+  def octcps   [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Octcps    [A, B](), x)
+  def cpsoct   [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Cpsoct    [A, B](), x)
+  def log      [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Log       [A, B](), x)
+  def log2     [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Log2      [A, B](), x)
+  def log10    [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Log10     [A, B](), x)
+  def sin      [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Sin       [A, B](), x)
+  def cos      [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Cos       [A, B](), x)
+  def tan      [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Tan       [A, B](), x)
+  def asin     [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Asin      [A, B](), x)
+  def acos     [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Acos      [A, B](), x)
+  def atan     [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Atan      [A, B](), x)
+  def sinh     [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Sinh      [A, B](), x)
+  def cosh     [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Cosh      [A, B](), x)
+  def tanh     [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Tanh      [A, B](), x)
 
   def rand      (implicit num: Num[A]       ): Pat[A]           = UnOp(UnOp.Rand  [A](), x)
   def rand2     (implicit num: Num[A]       ): Pat[A]           = UnOp(UnOp.Rand2 [A](), x)

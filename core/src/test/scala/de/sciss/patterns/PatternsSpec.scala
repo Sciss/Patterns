@@ -1,6 +1,5 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.IntTop
 import de.sciss.patterns.graph._
 
 class PatternsSpec extends PatSpec {
