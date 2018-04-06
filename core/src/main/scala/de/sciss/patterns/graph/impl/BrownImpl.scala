@@ -20,7 +20,7 @@ import de.sciss.patterns.Types.{Aux, Num, Widen2}
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
 
-object BrownImpl {
+object BrownImpl extends StreamFactory {
   final val typeId = 0x42726F77 // "Brow"
 
   def expand[S <: Base[S], A1, A2, A](pat: Brown[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
@@ -40,7 +40,7 @@ object BrownImpl {
       valid = valid)(r, widen, num)
   }
 
-  def read[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id          = tx.readId(in, access)
     val loStream    = Stream.read[S, Any](in, access)
     val hiStream    = Stream.read[S, Any](in, access)

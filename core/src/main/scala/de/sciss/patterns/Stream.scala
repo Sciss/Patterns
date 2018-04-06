@@ -16,7 +16,7 @@ package de.sciss.patterns
 import de.sciss.lucre.stm.{Base, Disposable, Plain}
 import de.sciss.serial.{DataInput, DataOutput, Serializer, Writable}
 
-import scala.annotation.tailrec
+import scala.annotation.{switch, tailrec}
 
 object Stream {
   def exhausted(): Nothing = throw new NoSuchElementException("next on empty iterator")
@@ -65,9 +65,20 @@ object Stream {
   private val anySer = new Ser[Plain, Any]
 
   private final class Ser[S <: Base[S], A] extends Serializer[S#Tx, S#Acc, Stream[S, A]] {
-    def read(in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = ???
+    def read(in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+      val typeId = in.readInt()
+      import graph.impl._
+      val f: StreamFactory = (typeId: @switch) match {
+        case ApplyImpl    .typeId => ApplyImpl
+        case ArithmSeqImpl.typeId => ArithmSeqImpl
+        case BrownImpl    .typeId => BrownImpl
+        case GeomSeqImpl  .typeId => GeomSeqImpl
+        case WhiteImpl    .typeId => WhiteImpl
+      }
+      f.readIdentified(in, access)
+    }
 
-    def write(v: Stream[S, A], out: DataOutput): Unit = ???
+    def write(v: Stream[S, A], out: DataOutput): Unit = v.write(out)
   }
 
   private final class Single[S <: Base[S], A](elem: A, tx0: S#Tx)

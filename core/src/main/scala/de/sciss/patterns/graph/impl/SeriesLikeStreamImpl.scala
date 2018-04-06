@@ -16,42 +16,63 @@ package graph
 package impl
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.Types.Widen2
-import de.sciss.patterns.impl.PatElem
+import de.sciss.patterns.Types.{Num, Widen2}
+import de.sciss.serial.DataOutput
 
-abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A](start: Pat[A1], step: Pat[A2], tx0: S#Tx)
-                                                  (implicit ctx: Context[S], w: Widen2[A1, A2, A])
-  extends Stream[S, A] {
+abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A] {
+
+  protected val id          : S#Id
+  protected val startStream : Stream[S, A1]
+  protected val stepStream  : Stream[S, A2]
+  protected val state       : S#Var[A]
+  protected val _hasNext    : S#Var[Boolean]
+  protected val valid       : S#Var[Boolean]
+
+  implicit protected val widen: Widen2[A1, A2, A]
+  implicit protected val num  : Num[A]
 
   protected def op(a: A, b: A): A
 
-  private[this] val id          = tx0.newId()
-  private[this] val startStream = start .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
-  private[this] val stepStream  = step  .expand(ctx, tx0).map(w.widen2)(ctx, tx0)
-  private[this] val state       = PatElem.makeVar[S, A](id)(tx0)
-  private[this] val _hasNext    = tx0.newBooleanVar(id, false)
-  private[this] val _valid      = tx0.newBooleanVar(id, false)
+  import widen._
 
-  def dispose()(implicit tx: S#Tx): Unit = ???
+  final protected def writeData(out: DataOutput): Unit = {
+    id          .write(out)
+    startStream .write(out)
+    stepStream  .write(out)
+    state       .write(out)
+    _hasNext    .write(out)
+    valid       .write(out)
+    num         .write(out)
+    widen       .write(out)
+  }
+
+  final def dispose()(implicit tx: S#Tx): Unit = {
+    id         .dispose()
+    startStream.dispose()
+    stepStream .dispose()
+    state      .dispose()
+    _hasNext   .dispose()
+    valid      .dispose()
+  }
 
   final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
     validate()
     _hasNext()
   }
 
-  final def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
-    _valid() = false
+  final def reset()(implicit tx: S#Tx): Unit = if (valid()) {
+    valid() = false
     startStream .reset()
     stepStream  .reset()
   }
 
-  private def validate()(implicit tx: S#Tx): Unit =
-    if (!_valid()) {
-      _valid()    = true
+  private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
+    if (!valid()) {
+      valid()    = true
 //      count()     = 0
       _hasNext()  = startStream.hasNext // && lengthStream.hasNext
       if (_hasNext()) {
-        state()     = startStream .next()
+        state()   = widen1(startStream.next())
 //        lengthVal() = lengthStream.next()
       }
     }
@@ -63,7 +84,7 @@ abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A](start: Pat[A1], ste
 //    count() = c
     _hasNext() = stepStream.hasNext // && c < lengthVal()
     if (_hasNext()) {
-      state() = op(res, stepStream.next())
+      state() = op(res, widen2(stepStream.next()))
     }
     res
   }

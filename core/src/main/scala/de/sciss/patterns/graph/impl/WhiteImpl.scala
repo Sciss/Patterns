@@ -20,7 +20,7 @@ import de.sciss.patterns.Types.{Aux, Num}
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
 
-object WhiteImpl {
+object WhiteImpl extends StreamFactory {
   final val typeId = 0x57686974 // "Whit"
 
   def expand[S <: Base[S], A](pat: White[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
@@ -37,7 +37,7 @@ object WhiteImpl {
       valid = valid)(r, num)
   }
 
-  def read[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.readId(in, access)
     val loStream  = Stream.read[S, A](in, access)
     val hiStream  = Stream.read[S, A](in, access)
