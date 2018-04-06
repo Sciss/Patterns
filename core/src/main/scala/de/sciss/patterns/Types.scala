@@ -36,12 +36,12 @@ object Types {
         case BooleanTop             .id => BooleanTop
         case BooleanSeqTop          .id => BooleanSeqTop
         case StringTop              .id => StringTop
-        case Widen2.idIdentity          => Widen2.identity[Any]
-        case Widen2.intSeqSeq       .id => Widen2.intSeqSeq
+        case Widen.idIdentity           => Widen.identity[Any]
+        case Widen .intSeqSeq       .id => Widen .intSeqSeq
         case Widen2.seqIntSeq       .id => Widen2.seqIntSeq
-        case Widen2.doubleSeqSeq    .id => Widen2.doubleSeqSeq
+        case Widen .doubleSeqSeq    .id => Widen .doubleSeqSeq
         case Widen2.seqDoubleSeq    .id => Widen2.seqDoubleSeq
-        case Widen2.intDoubleDouble .id => Widen2.intDoubleDouble
+        case Widen .intDoubleDouble .id => Widen .intDoubleDouble
         case Widen2.doubleIntDouble .id => Widen2.doubleIntDouble
       }
     }
@@ -59,29 +59,12 @@ object Types {
     }
   }
 
-  object Widen {
-    implicit def identity[A]: Widen[A, A] = Widen2.identity[A]
-  }
-
-  trait Widen[A1, A] extends Aux {
-    def widen1(a: A1): A
-  }
-
-  object Widen2 {
-    implicit def identity[A]: Widen2[A, A, A] = anyWiden.asInstanceOf[Identity[A]]
-
+  trait WidenLowPriority {
     implicit object intSeqSeq extends Widen2[Int, Seq[Int], Seq[Int]] {
       def widen1(a: Int     ): Seq[Int] = a :: Nil
       def widen2(a: Seq[Int]): Seq[Int] = a
 
       final val id = 0x100
-    }
-
-    implicit object seqIntSeq extends Widen2[Seq[Int], Int, Seq[Int]] {
-      def widen1(a: Seq[Int]): Seq[Int] = a
-      def widen2(a: Int     ): Seq[Int] = a :: Nil
-
-      final val id = 0x101
     }
 
     implicit object doubleSeqSeq extends Widen2[Double, Seq[Double], Seq[Double]] {
@@ -90,26 +73,16 @@ object Types {
 
       final val id = 0x102
     }
+  }
 
-    implicit object seqDoubleSeq extends Widen2[Seq[Double], Double, Seq[Double]] {
-      def widen1(a: Seq[Double]): Seq[Double] = a
-      def widen2(a: Double     ): Seq[Double] = a :: Nil
-
-      final val id = 0x103
-    }
+  object Widen extends WidenLowPriority {
+    implicit def identity[A]: Widen2[A, A, A] = anyWiden.asInstanceOf[Identity[A]]
 
     implicit object intDoubleDouble extends Widen2[Int, Double, Double] {
       def widen1(a: Int    ): Double = a.toDouble
       def widen2(a: Double ): Double = a
 
       final val id = 0x104
-    }
-
-    implicit object doubleIntDouble extends Widen2[Double, Int, Double] {
-      def widen1(a: Double ): Double = a
-      def widen2(a: Int    ): Double = a.toDouble
-
-      final val id = 0x105
     }
 
     private[Types] final val idIdentity = 0xFF
@@ -121,6 +94,33 @@ object Types {
       def widen2(a: A): A = a
 
       def id: Int = idIdentity
+    }
+  }
+
+  trait Widen[A1, A] extends Aux {
+    def widen1(a: A1): A
+  }
+
+  object Widen2 {
+    implicit object seqIntSeq extends Widen2[Seq[Int], Int, Seq[Int]] {
+      def widen1(a: Seq[Int]): Seq[Int] = a
+      def widen2(a: Int     ): Seq[Int] = a :: Nil
+
+      final val id = 0x101
+    }
+
+    implicit object seqDoubleSeq extends Widen2[Seq[Double], Double, Seq[Double]] {
+      def widen1(a: Seq[Double]): Seq[Double] = a
+      def widen2(a: Double     ): Seq[Double] = a :: Nil
+
+      final val id = 0x103
+    }
+
+    implicit object doubleIntDouble extends Widen2[Double, Int, Double] {
+      def widen1(a: Double ): Double = a
+      def widen2(a: Int    ): Double = a.toDouble
+
+      final val id = 0x105
     }
   }
 

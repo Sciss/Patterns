@@ -31,6 +31,8 @@ trait Context[S <: Base[S]] {
   def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit
 
   def allocToken[A]()(implicit tx: S#Tx): It[A]
+
+  def expand[A](pat: Pat[A])(implicit tx: S#Tx): Stream[S, A]
 }
 
 object Context {
@@ -68,9 +70,15 @@ private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Co
   private[this] val tokenMap  = tx0.newVar[Map[Int, S#Tx => Stream[S, _]]] (id, Map.empty)
   private[this] val seedMap   = tx0.newVar[Map[AnyRef, Long]]              (id, Map.empty)
 
+  // ---- abstract ----
+
+  def expand[A](pat: Pat[A])(implicit tx: S#Tx): Stream[S, A] = pat.expand(this, tx)
+
   protected def nextSeed()(implicit tx: S#Tx): Long
 
   protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S]
+
+  // ---- abstract ----
 
   def addStream[A](ref: AnyRef, stream: Stream[S, A])(implicit tx: S#Tx): Stream[S, A] = {
     val map0 = streamMap()
