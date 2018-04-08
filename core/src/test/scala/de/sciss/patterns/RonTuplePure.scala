@@ -40,7 +40,7 @@ object RonTuplePure {
 //    showStreamLog = true
 //    it.take(4000).foreach(_ => ())
 //    val xs = Nil
-    val xs = it.take(numEvt).toList
+    val xs = it.toIterator.take(numEvt).toList
     val t3 = System.currentTimeMillis()
     println(s"Size = ${xs.size}")
     println(s"Graph {} took ${t1-t0}ms")

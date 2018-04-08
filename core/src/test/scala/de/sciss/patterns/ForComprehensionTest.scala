@@ -29,7 +29,7 @@ object ForComprehensionTest extends App {
   val res1 = {
     implicit val ctx: Context[Plain] = Context()
     ctx.setRandomSeed(0L)
-    b1.expand.take(30).toList
+    b1.expand.toIterator.take(30).toList
   }
   res1.foreach(println)
 
@@ -37,7 +37,7 @@ object ForComprehensionTest extends App {
   val res2 = {
     implicit val ctx: Context[Plain] = Context()
     ctx.setRandomSeed(0L)
-    b2.expand.take(30).toList
+    b2.expand.toIterator.take(30).toList
   }
   res2.foreach(println)
 }

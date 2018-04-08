@@ -37,7 +37,7 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
       val arr = out.toByteArray
       val in = DataInput(arr)
       val stream1 = Stream.read[S, Double](in, ())
-      stream1.take(10).toList
+      stream1.toIterator.take(10).toList
     }
 
     println(values)

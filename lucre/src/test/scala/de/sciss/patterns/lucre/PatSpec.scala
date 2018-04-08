@@ -17,8 +17,8 @@ trait PatSpec extends FlatSpec with Matchers {
 
   def eval[A](p: Pat[A], n: Int = Int.MaxValue): Seq[A] =
     cursor.step { implicit tx =>
-      val it0: Stream[S, A] = p.expand[S]
-      val it : Stream[S, A] = if (n == Int.MaxValue) it0 else it0.take(n)
+      val it0 = p.expand[S].toIterator
+      val it  = if (n == Int.MaxValue) it0 else it0.take(n)
       it.toList
     }
 

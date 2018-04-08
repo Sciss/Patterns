@@ -16,55 +16,39 @@ package graph
 package impl
 
 import de.sciss.lucre.stm.Base
-import de.sciss.serial.DataOutput
 
-abstract class TruncateStream[S <: Base[S], A](in: Pat[A], length: Pat[Int], tx0: S#Tx)(implicit ctx: Context[S])
+abstract class TruncateStream[S <: Base[S], A]
   extends Stream[S, A] {
 
-  private[this] val id        = tx0.newId()
-  private[this] val lenStream = length.expand(ctx, tx0)
-  private[this] val inStream  = in    .expand(ctx, tx0)
+  // ---- abstract ----
 
-  private[this] val peer      = tx0.newVar[Stream[S, A]](id, null)
-  private[this] val _hasNext  = tx0.newBooleanVar(id, false)
-  private[this] val _valid    = tx0.newBooleanVar(id, false)
+  protected def id        : S#Id
+  protected def inStream  : Stream[S, A]
+  protected def lenStream : Stream[S, Int]
+  protected def _hasNext  : S#Var[Boolean]
+  protected def valid     : S#Var[Boolean]
 
-  protected def truncate(it: Stream[S, A], n: Int)(implicit tx: S#Tx): Stream[S, A]
+  protected def validateWithLen(n: Int)(implicit ctx: Context[S], tx: S#Tx): Boolean
 
-  protected def writeData(out: DataOutput): Unit = ???
+  // ---- impl ----
 
-  def dispose()(implicit tx: S#Tx): Unit = ???
-
-  def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
-    _valid() = false
+  final def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
     lenStream .reset()
     inStream  .reset()
-//      if (_hasPeer()) peer().reset()
   }
 
-  private def validate()(implicit tx: S#Tx): Unit = if (!_valid()) {
-    _valid() = true
+  private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
     val lhn = lenStream.hasNext
     if (lhn) {
-      val lenVal = lenStream.next()
-      peer()      = truncate(inStream, lenVal)
-//      _hasPeer()  = true
-      _hasNext()  = peer().hasNext
+      val lenVal = math.max(0, lenStream.next())
+      _hasNext() = validateWithLen(lenVal)
     } else {
-//      _hasPeer()  = false
       _hasNext()  = false
     }
   }
 
-  def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+  final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
     validate()
     _hasNext()
-  }
-
-  def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-    if (!hasNext) Stream.exhausted()
-    val res = peer().next()
-    _hasNext() = peer().hasNext
-    res
   }
 }

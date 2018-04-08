@@ -56,7 +56,9 @@ final case class Par(in: Pat[Pat[Event]])
         pq()      = ISortedMap.empty
 
         var refCnt = 0
-        inStream.foreach { pat =>
+        val _in = inStream
+        while (_in.hasNext) {
+          val pat = _in.next()
           val it = pat.expand[S]
           if (it.hasNext) {
             pq() = pq() + (new TimeRef(refCnt) -> it)

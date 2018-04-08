@@ -19,11 +19,8 @@ import de.sciss.lucre.stm.Base
 final case class Stutter[A](in: Pat[A], n: Pat[Int])
   extends Pattern[A] {
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
-    val inIt = in.expand
-    val nIt  = n .expand
-    (inIt zip nIt).flatMap { case (xi, ni) => Stream.fill(ni)(xi) }
-  }
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+    impl.StutterImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT = t(in) .transform(t)

@@ -155,11 +155,12 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
 
   private type St = patterns.Stream[S, Any]
 
-  private[this] val streamRef = Ref[St](patterns.Stream.empty)
+  private[this] val streamRef = Ref.make[St]
 
   private def nextElemFromStream(time: Long)(implicit tx: S#Tx): Option[Elem] = {
     implicit val itx: I1#Tx = iSys(tx)
     val stream = streamRef()(tx.peer)
+    if (stream == null) return None
     implicit val ctx: Context[S] = patContext()(tx.peer)
 
     @tailrec
