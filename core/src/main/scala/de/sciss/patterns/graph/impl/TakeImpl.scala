@@ -86,7 +86,7 @@ object TakeImpl extends StreamFactory {
       val res = inStream.next()
       val n1 = remain() - 1
       remain() = n1
-      if (n1 == 0) _hasNext() = false
+      if (n1 == 0 || !inStream.hasNext) _hasNext() = false
       res
     }
   }
