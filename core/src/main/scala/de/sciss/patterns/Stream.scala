@@ -70,8 +70,13 @@ object Stream {
         case SumImpl          .typeId => SumImpl
         case TakeImpl         .typeId => TakeImpl
         case TapImpl          .typeId => TapImpl
+        case Tuple2_1Impl     .typeId => Tuple2_1Impl
+        case Tuple2_2Impl     .typeId => Tuple2_2Impl
         case UnaryOpImpl      .typeId => UnaryOpImpl
+        case UpdatedImpl      .typeId => UpdatedImpl
+        case UpdatedAllImpl   .typeId => UpdatedAllImpl
         case WhiteImpl        .typeId => WhiteImpl
+        case Zip2Impl         .typeId => Zip2Impl
       }
       f.readIdentified(in, access)
     }
