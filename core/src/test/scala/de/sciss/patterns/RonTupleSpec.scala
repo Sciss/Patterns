@@ -127,7 +127,7 @@ class RonTupleSpec extends PatSpec {
       val bInPat: Pat[Int]       = Pat[Int](bInSeq: _*)
       directProduct_Pat(aInPat, bInPat)
     }
-    val res = outPat.expand.map { in =>
+    val res = outPat.expand.toIterator.map { in =>
       val i = in.expand.toList
       i
     }.toList

@@ -282,7 +282,6 @@ object RonTuplePure {
       cantus0 <- Brown(-6, 6, 3).grouped(len)
     } yield {
       val numPause    = (len * rests).toInt
-//      val cantus      = Pat.fold(cantus0, numPause)(_.updated(len.rand, -100))
       val cantus      = cantus0.updatedAll(len.hold().take(numPause).rand, -100)
       val cantusEvt   = catPat(cantus)
       val pitchSets0  = cantus.distinct.sorted.combinations(3)

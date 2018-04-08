@@ -18,11 +18,11 @@ trait PatSpec extends FlatSpec with Matchers {
 
   def evalH[A](p: Pat[Pat[A]], n: Int = Int.MaxValue): Seq[Seq[A]] = {
     val it0: Stream[S, Pat[A]] = p.expand[S]
-    val it1 = it0.map { in =>
+    val it1 = it0.toIterator.map { in =>
       val inS = in.expand
       inS.toList
     }
-    val it : Stream[S, Seq[A]] = if (n == Int.MaxValue) it1 else it1.take(n)
+    val it : Iterator[Seq[A]] = if (n == Int.MaxValue) it1 else it1.take(n)
     it.toList
   }
 

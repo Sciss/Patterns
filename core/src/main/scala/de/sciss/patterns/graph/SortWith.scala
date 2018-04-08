@@ -81,7 +81,7 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
       }
 
     private def perform()(implicit tx: S#Tx): Unit = {
-      val vec: Vector[Vector[A]] = outerStream.map(_.expand.toVector).toVector
+      val vec: Vector[Vector[A]] = outerStream.toIterator.map(_.expand.toVector).toVector
       val itStreams = ctx.getStreams(ref)
       Breaks.breakable {
         val sorted = vec.sortWith { (x, y) =>

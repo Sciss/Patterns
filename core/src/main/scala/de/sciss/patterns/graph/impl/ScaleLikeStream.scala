@@ -16,20 +16,42 @@ package graph
 package impl
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.Types.Widen2
+import de.sciss.patterns.Types.{Aux, Widen2}
+import de.sciss.serial.DataOutput
 
-abstract class ScaleLikeStream[S <: Base[S], A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
-                                              outLo: Pat[A2], outHi: Pat[A2], tx0: S#Tx)
-                                             (implicit ctx: Context[S], w: Widen2[A1, A2, A]) extends Stream[S, A] {
-  private[this] val inStream    = in    .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
-  private[this] val inLoStream  = inLo  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
-  private[this] val inHiStream  = inHi  .expand(ctx, tx0).map(w.widen1)(ctx, tx0)
-  private[this] val outLoStream = outLo .expand(ctx, tx0).map(w.widen2)(ctx, tx0)
-  private[this] val outHiStream = outHi .expand(ctx, tx0).map(w.widen2)(ctx, tx0)
+abstract class ScaleLikeStream[S <: Base[S], A1, A2, A] extends Stream[S, A] {
+  // ---- abstract ----
 
-  def dispose()(implicit tx: S#Tx): Unit = ???
+  protected val widen: Widen2[A1, A2, A]
+  protected val num  : Aux
+
+  protected def inStream   : Stream[S, A1]
+  protected def inLoStream : Stream[S, A1]
+  protected def inHiStream : Stream[S, A1]
+  protected def outLoStream: Stream[S, A2]
+  protected def outHiStream: Stream[S, A2]
 
   protected def calc(inVal: A, inLoVal: A, inHiVal: A, outLoVal: A, outHiVal: A): A
+
+  // ---- impl ----
+
+  protected def writeData(out: DataOutput): Unit = {
+    inStream   .write(out)
+    inLoStream .write(out)
+    inHiStream .write(out)
+    outLoStream.write(out)
+    outHiStream.write(out)
+    widen      .write(out)
+    num        .write(out)
+  }
+
+  final def dispose()(implicit tx: S#Tx): Unit = {
+    inStream   .dispose()
+    inLoStream .dispose()
+    inHiStream .dispose()
+    outLoStream.dispose()
+    outHiStream.dispose()
+  }
 
   final def reset()(implicit tx: S#Tx): Unit = {
     inStream    .reset()
@@ -41,18 +63,20 @@ abstract class ScaleLikeStream[S <: Base[S], A1, A2, A](in: Pat[A1], inLo: Pat[A
 
   final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
     inStream   .hasNext &&
-      inLoStream .hasNext &&
-      inHiStream .hasNext &&
-      outLoStream.hasNext &&
-      outHiStream.hasNext
+    inLoStream .hasNext &&
+    inHiStream .hasNext &&
+    outLoStream.hasNext &&
+    outHiStream.hasNext
 
   final def next()(implicit ctx: Context[S], tx: S#Tx): A = {
     if (!hasNext) Stream.exhausted()
-    val inVal     = inStream    .next()
-    val inLoVal   = inLoStream  .next()
-    val inHiVal   = inHiStream  .next()
-    val outLoVal  = outLoStream .next()
-    val outHiVal  = outHiStream .next()
+
+    import widen._
+    val inVal     = widen1(inStream    .next())
+    val inLoVal   = widen1(inLoStream  .next())
+    val inHiVal   = widen1(inHiStream  .next())
+    val outLoVal  = widen2(outLoStream .next())
+    val outHiVal  = widen2(outHiStream .next())
 
     calc(inVal, inLoVal, inHiVal, outLoVal, outHiVal)
   }

@@ -14,11 +14,11 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.stm.{Base, Disposable, Plain}
-import de.sciss.patterns.graph.impl
-import de.sciss.patterns.graph.impl.ConstantImpl
+import de.sciss.patterns.graph.impl.{ConstantImpl, PatSeqImpl}
 import de.sciss.serial.{DataInput, DataOutput, Serializer, Writable}
 
 import scala.annotation.{switch, tailrec}
+import scala.collection.AbstractIterator
 
 object Stream {
   def exhausted(): Nothing = throw new NoSuchElementException("next on empty iterator")
@@ -43,8 +43,8 @@ object Stream {
 
   def constant[S <: Base[S], A](elem: A): Stream[S, A] = ConstantImpl[S, A](elem)
 
-  def single[S <: Base[S], A](elem: A)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    new Single[S, A](elem, tx)
+//  def single[S <: Base[S], A](elem: A)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+//    new Single[S, A](elem, tx)
 
   implicit def serializer[S <: Base[S], A]: Serializer[S#Tx, S#Acc, Stream[S, A]] = anySer.asInstanceOf[Ser[S, A]]
 
@@ -60,9 +60,15 @@ object Stream {
       val f: StreamFactory = (typeId: @switch) match {
         case ApplyImpl    .typeId => ApplyImpl
         case ArithmSeqImpl.typeId => ArithmSeqImpl
+        case BinaryOpImpl .typeId => BinaryOpImpl
         case BrownImpl    .typeId => BrownImpl
         case ConstantImpl .typeId => ConstantImpl
+        case ExpExpImpl   .typeId => ExpExpImpl
+        case ExpLinImpl   .typeId => ExpLinImpl
         case GeomSeqImpl  .typeId => GeomSeqImpl
+        case LinExpImpl   .typeId => LinExpImpl
+        case LinLinImpl   .typeId => LinLinImpl
+        case PatSeqImpl   .typeId => PatSeqImpl
         case UnaryOpImpl  .typeId => UnaryOpImpl
         case WhiteImpl    .typeId => WhiteImpl
       }
@@ -72,70 +78,37 @@ object Stream {
     def write(v: Stream[S, A], out: DataOutput): Unit = v.write(out)
   }
 
-  private final class Single[S <: Base[S], A](elem: A, tx0: S#Tx)
-    extends Stream[S, A] {
-
-    private[this] val id        = tx0.newId()
-    private[this] val _hasNext  = tx0.newBooleanVar(id, true)
-
-    protected def typeId: Int = ???
-
-    protected def writeData(out: DataOutput): Unit = ???
-
-    def dispose()(implicit tx: S#Tx): Unit = ???
-
-    private def simpleString = s"Stream.single($elem)"
-
-    override def toString = s"$simpleString; hasNext = ${_hasNext}"
-
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _hasNext()
-
-    def reset()(implicit tx: S#Tx): Unit =
-      _hasNext() = true
-
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!_hasNext()) Stream.exhausted()
-      _hasNext() = false
-      logStream(s"$simpleString.next()")
-      elem
-    }
-  }
+//  private final class Single[S <: Base[S], A](elem: A, tx0: S#Tx)
+//    extends Stream[S, A] {
+//
+//    private[this] val id        = tx0.newId()
+//    private[this] val _hasNext  = tx0.newBooleanVar(id, true)
+//
+//    protected def typeId: Int = ...
+//
+//    protected def writeData(out: DataOutput): Unit = ...
+//
+//    def dispose()(implicit tx: S#Tx): Unit = ...
+//
+//    private def simpleString = s"Stream.single($elem)"
+//
+//    override def toString = s"$simpleString; hasNext = ${_hasNext}"
+//
+//    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _hasNext()
+//
+//    def reset()(implicit tx: S#Tx): Unit =
+//      _hasNext() = true
+//
+//    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+//      if (!_hasNext()) Stream.exhausted()
+//      _hasNext() = false
+//      logStream(s"$simpleString.next()")
+//      elem
+//    }
+//  }
 
   def apply[S <: Base[S], A](elems: A*)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    new Seq(elems, tx)
-
-  private final class Seq[S <: Base[S], A](elems: scala.Seq[A], tx0: S#Tx)
-    extends Stream[S, A] {
-
-    private[this] val id    = tx0.newId()
-    private[this] val count = tx0.newIntVar(id, 0)
-    private[this] val xs    = elems.toIndexedSeq
-
-    protected def typeId: Int = ???
-
-    protected def writeData(out: DataOutput): Unit = ???
-
-    def dispose()(implicit tx: S#Tx): Unit = ???
-
-    private[this] lazy val simpleString =
-      elems.mkString("Stream(", ", ", ")")
-
-    override def toString = s"$simpleString; count = $count"
-
-    def reset()(implicit tx: S#Tx): Unit =
-      count() = 0
-
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = count() < xs.size
-
-    def next ()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!hasNext) Stream.exhausted()
-      val i = count()
-      count() = i + 1
-      val res = elems(i)
-      // logStream(s"$simpleString.next(); count = $i; res = $res")
-      res
-    }
-  }
+    PatSeqImpl(elems)
 
   private final class FlatMap[S <: Base[S], A, B](outer: Stream[S, A], f: A => Stream[S, B], tx0: S#Tx)
                                        (implicit ctx: Context[S])
@@ -195,18 +168,18 @@ object Stream {
     }
   }
 
-  private final class Map[S <: Base[S], A, B](outer: Stream[S, A], f: A => B) extends Stream[S, B] {
-    def reset()(implicit tx: S#Tx): Unit = outer.reset()
-
-    protected def typeId: Int = ???
-
-    protected def writeData(out: DataOutput): Unit = ???
-
-    def dispose()(implicit tx: S#Tx): Unit = ???
-
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = outer.hasNext
-    def next ()(implicit ctx: Context[S], tx: S#Tx): B       = f(outer.next())
-  }
+//  private final class Map[S <: Base[S], A, B](outer: Stream[S, A], f: A => B) extends Stream[S, B] {
+//    def reset()(implicit tx: S#Tx): Unit = outer.reset()
+//
+//    protected def typeId: Int = ...
+//
+//    protected def writeData(out: DataOutput): Unit = ...
+//
+//    def dispose()(implicit tx: S#Tx): Unit = ...
+//
+//    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = outer.hasNext
+//    def next ()(implicit ctx: Context[S], tx: S#Tx): B       = f(outer.next())
+//  }
 
   private final class Zip[S <: Base[S], A, B](outer: Stream[S, A], that: Stream[S, B]) extends Stream[S, (A, B)] {
 
@@ -289,8 +262,8 @@ abstract class Stream[S <: Base[S], +A] extends Writable with Disposable[S#Tx] {
     writeData(out)
   }
 
-  final def map[B](f: A => B)(implicit ctx: Context[S], tx: S#Tx): Stream[S, B] =
-    new Stream.Map(outer, f)
+//  final def map[B](f: A => B)(implicit ctx: Context[S], tx: S#Tx): Stream[S, B] =
+//    new Stream.Map(outer, f)
 
   final def flatMap[B](f: A => Stream[S, B])(implicit ctx: Context[S], tx: S#Tx): Stream[S, B] =
     new Stream.FlatMap(outer, f, tx)
@@ -314,6 +287,14 @@ abstract class Stream[S <: Base[S], +A] extends Writable with Disposable[S#Tx] {
   final def isEmpty (implicit ctx: Context[S], tx: S#Tx): Boolean = !hasNext
   final def nonEmpty(implicit ctx: Context[S], tx: S#Tx): Boolean = hasNext
 
+  /** Note: consumes the stream. */
+  final def toIterator(implicit ctx: Context[S], tx: S#Tx): Iterator[A] = new AbstractIterator[A] {
+    def hasNext: Boolean = outer.hasNext
+
+    def next(): A = outer.next()
+  }
+
+  /** Note: consumes the stream. */
   final def toList(implicit ctx: Context[S], tx: S#Tx): List[A] = {
     val b = List.newBuilder[A]
     while (hasNext) {
@@ -322,6 +303,7 @@ abstract class Stream[S <: Base[S], +A] extends Writable with Disposable[S#Tx] {
     b.result()
   }
 
+  /** Note: consumes the stream. */
   final def toVector(implicit ctx: Context[S], tx: S#Tx): Vector[A] = {
     val b = Vector.newBuilder[A]
     while (hasNext) {
@@ -330,6 +312,7 @@ abstract class Stream[S <: Base[S], +A] extends Writable with Disposable[S#Tx] {
     b.result()
   }
 
+  /** Note: consumes the stream. */
   final def size(implicit ctx: Context[S], tx: S#Tx): Int = {
     var res = 0
     while (hasNext) {
@@ -339,6 +322,7 @@ abstract class Stream[S <: Base[S], +A] extends Writable with Disposable[S#Tx] {
     res
   }
 
+  /** Note: consumes the stream. */
   final def foreach(fun: A => Unit)(implicit ctx: Context[S], tx: S#Tx): Unit =
     while (hasNext) fun(next())
 }

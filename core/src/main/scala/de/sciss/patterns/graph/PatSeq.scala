@@ -1,3 +1,16 @@
+/*
+ *  PatSeq.scala
+ *  (Patterns)
+ *
+ *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
+ *
+ *	This software is published under the GNU Lesser General Public License v2.1+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
 package de.sciss.patterns
 package graph
 
@@ -13,10 +26,8 @@ final case class PatSeq[A](elems: A*) extends Pattern[A] {
 
   override def toString: String = simpleString
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
-    logStream(simpleString)
-    Stream(elems: _*)
-  }
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+    impl.PatSeqImpl(elems)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val elemsT: Seq[_] = elems.map {
@@ -26,24 +37,4 @@ final case class PatSeq[A](elems: A*) extends Pattern[A] {
     val elemsC = elemsT.asInstanceOf[Seq[A]]
     PatSeq(elemsC: _*)
   }
-
-//
-//  private final class StreamImpl[S <: Base[S]](implicit ctx: Context[S]) extends Stream[S, T#COut] {
-//    private[this] val count = ctx.newVar(0)
-//    private[this] val xs    = elems.toIndexedSeq
-//
-//    override def toString = s"$simpleString; count = $count"
-//
-//    def reset()(implicit tx: S#Tx): Unit    = count() = 0
-//    def hasNext(implicit tx: S#Tx): Boolean = count() < xs.size
-//
-//    def next ()(implicit tx: S#Tx): T#COut = {
-//      if (!hasNext) Stream.exhausted()
-//      val i = count()
-//      count() = i + 1
-//      val res = elems(i)
-//      logStream(s"$simpleString.next(); count = $i; res = $res")
-//      res
-//    }
-//  }
 }

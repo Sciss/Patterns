@@ -126,7 +126,7 @@ final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]
       val m = mutable.Map.empty[A, Int]
 
       // e => (e, weight(e))
-      val tup: List[(A, Int)] = inStream.map(e => (e, m.getOrElseUpdate(e, m.size))).toList.sortBy(_._2)
+      val tup: List[(A, Int)] = inStream.toIterator.map(e => (e, m.getOrElseUpdate(e, m.size))).toList.sortBy(_._2)
       val (es, is) = tup.unzip
       var cs = Vector.fill(m.size)(0) //  new Array[Int](m.size)
       is.foreach { i =>
