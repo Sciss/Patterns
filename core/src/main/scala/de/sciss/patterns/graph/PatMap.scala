@@ -50,7 +50,7 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
     def dispose()(implicit tx: S#Tx): Unit = ???
 
     private def mkItStream(implicit tx: S#Tx): Stream[S, A1] = {
-      val res = new MapItStream(outer, tx)
+      val res = new MapItStream[S, A1](outer, tx)
       ctx.addStream(ref, res)
       res
     }

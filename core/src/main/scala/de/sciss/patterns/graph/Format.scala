@@ -15,39 +15,14 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
-import de.sciss.serial.DataOutput
 
 final case class Format(s: Pat[String], args: Pat[_]*) extends Pattern[String] {
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, String] = new StreamImpl[S](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, String] =
+    impl.FormatImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[String] = {
     val sT    = t(s)
     val argsT = args.map(t(_))
     Format(sT, argsT: _*)
-  }
-
-  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, String] {
-    private[this] val sStream     = s.expand(ctx, tx0)
-    private[this] val argStreams  = args.map(_.expand(ctx, tx0))
-
-    protected def typeId: Int = ???
-
-    protected def writeData(out: DataOutput): Unit = ???
-
-    def dispose()(implicit tx: S#Tx): Unit = ???
-
-    def reset()(implicit tx: S#Tx): Unit = {
-      sStream.reset()
-      argStreams.foreach(_.reset())
-    }
-
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
-      sStream.hasNext && argStreams.forall(_.hasNext)
-
-    def next()(implicit ctx: Context[S], tx: S#Tx): String = {
-      val sVal    = sStream.next()
-      val argVals = argStreams.map(_.next())
-      sVal.format(argVals: _*)
-    }
   }
 }

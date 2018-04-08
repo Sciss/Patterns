@@ -76,14 +76,12 @@ object ApplyImpl extends StreamFactory {
       valid    .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid()) {
-      valid() = false
+    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
       inStream  .reset()
       idxStream .reset()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid()) {
-      valid() = true
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
       val xhn = idxStream.hasNext
       if (xhn) {
         val idxVal = idxStream.next()

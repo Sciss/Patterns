@@ -87,8 +87,7 @@ object WhiteImpl extends StreamFactory {
     private def mkState()(implicit ctx: Context[S], tx: S#Tx): A =
       num.rrand(loStream.next(), hiStream.next())
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid()) {
-      valid() = false
+    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
       loStream.reset()
       hiStream.reset()
       // XXX TODO: r.reset()
@@ -99,14 +98,12 @@ object WhiteImpl extends StreamFactory {
       _hasNext()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
-      if (!valid()) {
-        valid() = true
-        _hasNext() = loStream.hasNext && hiStream.hasNext
-        if (_hasNext()) {
-          state() = num.rrand(loStream.next(), hiStream.next())
-        }
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+      _hasNext() = loStream.hasNext && hiStream.hasNext
+      if (_hasNext()) {
+        state() = num.rrand(loStream.next(), hiStream.next())
       }
+    }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()

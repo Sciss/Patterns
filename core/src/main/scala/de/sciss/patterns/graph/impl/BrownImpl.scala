@@ -104,22 +104,19 @@ object BrownImpl extends StreamFactory {
     private def calcNext(cur: A, step: A)(implicit r: Random[S#Tx], tx: S#Tx): A =
       num.+(cur, num.rand2(step))
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
-      if (!valid()) {
-        valid() = true
-        _hasNext() = loStream.hasNext && hiStream.hasNext
-        if (_hasNext()) {
-          state() = num.rrand(widen1(loStream.next()), widen1(hiStream.next()))
-        }
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+      _hasNext() = loStream.hasNext && hiStream.hasNext
+      if (_hasNext()) {
+        state() = num.rrand(widen1(loStream.next()), widen1(hiStream.next()))
       }
+    }
 
     def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid()) {
-      valid() = false
+    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
       loStream  .reset()
       hiStream  .reset()
       stepStream.reset()

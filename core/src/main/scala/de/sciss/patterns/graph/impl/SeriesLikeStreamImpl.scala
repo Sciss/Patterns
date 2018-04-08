@@ -62,22 +62,19 @@ abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A
     _hasNext()
   }
 
-  final def reset()(implicit tx: S#Tx): Unit = if (valid()) {
-    valid() = false
+  final def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
     startStream .reset()
     stepStream  .reset()
   }
 
-  private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
-    if (!valid()) {
-      valid()    = true
+  private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
 //      count()     = 0
-      _hasNext()  = startStream.hasNext // && lengthStream.hasNext
-      if (_hasNext()) {
-        state()   = widen1(startStream.next())
+    _hasNext()  = startStream.hasNext // && lengthStream.hasNext
+    if (_hasNext()) {
+      state()   = widen1(startStream.next())
 //        lengthVal() = lengthStream.next()
-      }
     }
+  }
 
   final def next()(implicit ctx: Context[S], tx: S#Tx): A = {
     if (!hasNext) Stream.exhausted()

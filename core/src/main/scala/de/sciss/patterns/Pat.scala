@@ -45,6 +45,8 @@ object Pat {
     Constant(Pat(0)).take(n).foldLeft(in)((y, _) => fun(y))
   }
 
+  def read[A](in: DataInput): Pat[A] = serializer[A].read(in)
+
   implicit def serializer[A]: ImmutableSerializer[Pat[A]] = anySer.asInstanceOf[ImmutableSerializer[Pat[A]]]
 
   private object anySer extends ImmutableSerializer[Pat[_]] {

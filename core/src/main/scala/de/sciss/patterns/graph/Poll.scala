@@ -15,7 +15,6 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
-import de.sciss.serial.DataOutput
 
 /** A pattern that prints snapshots of its input to the console.
   * The pattern passes its input through to the output.
@@ -32,44 +31,13 @@ import de.sciss.serial.DataOutput
 final case class Poll[A](in: Pat[A], gate: Pat[Boolean], label: Pat[String] = "poll")
   extends Pattern[A] {
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = new StreamImpl[S](tx)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+    impl.PollImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT     = t(in)
     val gateT   = t(gate)
     val labelT  = t(label)
     if (inT.eq(in) && gateT.eq(gate) && labelT.eq(label)) this else copy(in = inT, gate = gateT, label = labelT)
-  }
-
-  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, A] {
-    private[this] val inStream    = in    .expand(ctx, tx0)
-    private[this] val gateStream  = gate  .expand(ctx, tx0)
-    private[this] val labelStream = label .expand(ctx, tx0)
-
-    protected def typeId: Int = ???
-
-    protected def writeData(out: DataOutput): Unit = ???
-
-    def dispose()(implicit tx: S#Tx): Unit = ???
-
-    def reset()(implicit tx: S#Tx): Unit = {
-      inStream    .reset()
-      gateStream  .reset()
-      labelStream .reset()
-    }
-
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = inStream.hasNext
-
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      val res = inStream.next()
-      if (gateStream.hasNext && labelStream.hasNext) {
-        val gateValue   = gateStream  .next()
-        val labelValue  = labelStream .next()
-        if (gateValue) {
-          println(s"$labelValue: $res")
-        }
-      }
-      res
-    }
   }
 }

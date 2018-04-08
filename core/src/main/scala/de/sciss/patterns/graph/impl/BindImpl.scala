@@ -75,14 +75,11 @@ object BindImpl extends StreamFactory {
       _hasNext()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
-      if (!valid()) {
-        _hasNext() = checkNext()
-        valid() = true
-      }
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+      _hasNext() = checkNext()
+    }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid()) {
-      valid() = false
+    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
       mapE.foreach(_._2.reset())
     }
 
