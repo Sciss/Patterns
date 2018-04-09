@@ -18,6 +18,7 @@ import de.sciss.lucre.stm.{Random, Sys, TxnRandom}
 import de.sciss.patterns
 import de.sciss.patterns.{ContextLike, RefMap, RefSet}
 import de.sciss.patterns.graph.It
+import de.sciss.patterns.lucre.impl.{SysInMemoryMap, SysInMemorySet}
 
 object Context {
   // def InMemory(): InMemory = TxnExecutor.defaultAtomic(new InMemoryImpl(_))
@@ -77,9 +78,8 @@ object Context {
       It(res)
     }
 
-    def mkInMemorySet[A]: RefSet[S, A] = ???
-
-    def mkInMemoryMap[A, B]: RefMap[S, A, B] = ???
+    def mkInMemorySet[A]    : RefSet[S, A]    = new SysInMemorySet[S, A]
+    def mkInMemoryMap[A, B] : RefMap[S, A, B] = new SysInMemoryMap[S, A, B]
   }
 }
 trait Context[S <: Sys[S]] extends patterns.Context[S] {
