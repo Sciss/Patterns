@@ -50,12 +50,14 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
     def dispose()(implicit tx: S#Tx): Unit = ???
 
     private def mkItStream(implicit tx: S#Tx): Stream[S, A1] = {
-      val res = new MapItStream[S, A1](outer, tx)
-      ctx.addStream(ref, res)
-      res
+//      val res = new MapItStream[S, A1](outer, tx)
+//      ctx.addStream(ref, res)
+//      res
+      ???
     }
 
-    ctx.provideOuterStream[A1](it.token, mkItStream(_))(tx0)
+    ???
+//    ctx.provideOuterStream[A1](it.token, mkItStream(_))(tx0)
 
     private[this] val innerStream: Stream[S, A] = inner.expand(ctx, tx0)
 
@@ -72,20 +74,19 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
       }
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
-//      logStream("PatMap.iterator.reset()")
       _valid() = false
-      ctx.getStreams(ref).foreach {
-        case m: MapItStream[S, _] => m.resetOuter()
-        // case _ =>
-      }
+      ???
+//      ctx.getStreams(ref).foreach {
+//        case m: MapItStream[S, _] => m.resetOuter()
+//      }
       innerStream.reset()
     }
 
     private def advance()(implicit tx: S#Tx): Unit = {
-      ctx.getStreams(ref).foreach {
-        case m: MapItStream[S, _] => m.advance()
-        // case _ =>
-      }
+      ???
+//      ctx.getStreams(ref).foreach {
+//        case m: MapItStream[S, _] => m.advance()
+//      }
       innerStream.reset()
       buildNext()
     }
@@ -94,7 +95,6 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
       val hn = itStream.hasNext // && innerStream.hasNext
       _hasNext() = hn
       if (hn) {
-        // itStream.next()
         val b = Vector.newBuilder[A]
         var i = 0
         // there is _no_ reasonable way to provide the
@@ -105,9 +105,9 @@ final case class PatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1]
           b += innerStream.next()
           i += 1
         }
-        val inner   = Pat(b.result: _*) // Stream[S, A](b.result: _*)
+        val inner   = Pat(b.result: _*)
         mapStream() = inner
-        _hasNext()  = true // inner.hasNext
+        _hasNext()  = true
       }
     }
 

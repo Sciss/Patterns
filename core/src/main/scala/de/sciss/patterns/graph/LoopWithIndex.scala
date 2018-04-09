@@ -47,12 +47,14 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
     def dispose()(implicit tx: S#Tx): Unit = ???
 
     private def mkItStream(implicit tx: S#Tx) = {
-      val res = new IndexItStream[S](iteration, tx)
-      ctx.addStream(ref, res)
-      res
+      ???
+//      val res = new IndexItStream[S](iteration, tx)
+//      ctx.addStream(ref, res)
+//      res
     }
 
-    ctx.provideOuterStream(it.token, mkItStream(_))(tx0)
+    ???
+//    ctx.provideOuterStream(it.token, mkItStream(_))(tx0)
 
     private[this] val nStream     = n    .expand(ctx, tx0)
     private[this] val innerStream = inner.expand(ctx, tx0)
@@ -86,13 +88,9 @@ final case class LoopWithIndex[A] private[patterns](n: Pat[Int], it: It[Int], in
       val nhn     = i < n
       _hasNext()  = nhn
       if (nhn) {
-//        if (n == 200000 || n == 2000000) {
-//          println("here")
-//        }
-//        val itStream = () => Stream.single(i)
-//        ctx.provideOuterStream(it.token, itStream)
-        val itStreams = ctx.getStreams(ref)
-        itStreams.foreach(_.reset())
+        ???
+//        val itStreams = ctx.getStreams(ref)
+//        itStreams.foreach(_.reset())
         innerStream.reset()
         val ihn = innerStream.hasNext
         _hasNext() = ihn

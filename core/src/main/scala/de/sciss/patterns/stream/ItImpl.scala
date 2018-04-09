@@ -23,7 +23,7 @@ object ItImpl extends StreamFactory {
 
   def expand[S <: Base[S], A](pat: It[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
-    val refStream = ctx.mkOuterStream(token)
+    val refStream = ctx.mkItStream(token)
 
     new StreamImpl[S, A](refStream = refStream)
   }

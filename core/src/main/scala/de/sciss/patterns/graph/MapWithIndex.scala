@@ -52,19 +52,22 @@ final case class MapWithIndex[A1, A] private[patterns](outer: Pat[Pat[A1]], itIn
     def dispose()(implicit tx: S#Tx): Unit = ???
 
     private def mkItInStream(implicit tx: S#Tx): Stream[S, A1] = {
-      val res = new MapItStream[S, A1](outer, tx)
-      ctx.addStream(refIn, res)
-      res
+//      val res = new MapItStream[S, A1](outer, tx)
+//      ctx.addStream(refIn, res)
+//      res
+      ???
     }
 
     private def mkItIdxStream(implicit tx: S#Tx): Stream[S, Int] = {
-      val res = new IndexItStream[S](iteration, tx)
-      ctx.addStream(refIdx, res)
-      res
+//      val res = new IndexItStream[S](iteration, tx)
+//      ctx.addStream(refIdx, res)
+//      res
+      ???
     }
 
-    ctx.provideOuterStream[A1 ](itIn .token, mkItInStream (_))(tx0)
-    ctx.provideOuterStream[Int](itIdx.token, mkItIdxStream(_))(tx0)
+    ???
+//    ctx.provideOuterStream[A1 ](itIn .token, mkItInStream (_))(tx0)
+//    ctx.provideOuterStream[Int](itIdx.token, mkItIdxStream(_))(tx0)
 
     private[this] val innerStream: Stream[S, A] = inner.expand(ctx, tx0)
 
@@ -82,20 +85,19 @@ final case class MapWithIndex[A1, A] private[patterns](outer: Pat[Pat[A1]], itIn
       }
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
-      //      logStream("MapWithIndex.iterator.reset()")
       _valid() = false
-      ctx.getStreams(refIn).foreach {
-        case m: MapItStream[S, _] => m.resetOuter()
-        // case _ =>
-      }
+      ???
+//      ctx.getStreams(refIn).foreach {
+//        case m: MapItStream[S, _] => m.resetOuter()
+//      }
       innerStream.reset()
     }
 
     private def advance()(implicit tx: S#Tx): Unit = {
-      ctx.getStreams(refIn).foreach {
-        case m: MapItStream[S, _] => m.advance()
-        // case _ =>
-      }
+      ???
+//      ctx.getStreams(refIn).foreach {
+//        case m: MapItStream[S, _] => m.advance()
+//      }
       iteration() = iteration() + 1
       innerStream.reset()
       buildNext()
@@ -105,9 +107,9 @@ final case class MapWithIndex[A1, A] private[patterns](outer: Pat[Pat[A1]], itIn
       val hn = itInStream.hasNext // && innerStream.hasNext
       _hasNext() = hn
       if (hn) {
-        val itIdxStreams = ctx.getStreams(ref)
-        itIdxStreams.foreach(_.reset())
-        // itStream.next()
+        ???
+//        val itIdxStreams = ctx.getStreams(ref)
+//        itIdxStreams.foreach(_.reset())
         val b = Vector.newBuilder[A]
         var i = 0
         // there is _no_ reasonable way to provide the

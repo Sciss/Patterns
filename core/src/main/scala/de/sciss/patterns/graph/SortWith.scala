@@ -52,23 +52,25 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
     def dispose()(implicit tx: S#Tx): Unit = ???
 
     private def mkItStream(implicit tx: S#Tx) = {
-      val res = new SortWithItStream[S, A](tx)
-      ctx.addStream(ref, res)
-      res
+//      val res = new SortWithItStream[S, A](tx)
+//      ctx.addStream(ref, res)
+//      res
+      ???
     }
 
-    ctx.provideOuterStream[(A, A)](it.token, mkItStream(_))(tx0)
+    ???
+//    ctx.provideOuterStream[(A, A)](it.token, mkItStream(_))(tx0)
 
     private[this] val outerStream: Stream[S, Pat[A]]  = outer.expand(ctx, tx0)
     private[this] val ltStream   : Stream[S, Boolean] = lt   .expand(ctx, tx0)
 
     def reset()(implicit tx: S#Tx): Unit = if (_valid()) {
-//      logStream("SortWith.iterator.reset()")
       _valid() = false
-      val itStreams = ctx.getStreams(ref)
-      itStreams.foreach {
-        case m: SortWithItStream[S, A] => m.reset()
-      }
+      ???
+//      val itStreams = ctx.getStreams(ref)
+//      itStreams.foreach {
+//        case m: SortWithItStream[S, A] => m.reset()
+//      }
       outerStream .reset()
       ltStream    .reset()
     }
@@ -82,12 +84,14 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
 
     private def perform()(implicit tx: S#Tx): Unit = {
       val vec: Vector[Vector[A]] = outerStream.toIterator.map(_.expand.toVector).toVector
-      val itStreams = ctx.getStreams(ref)
+      ???
+//      val itStreams = ctx.getStreams(ref)
       Breaks.breakable {
         val sorted = vec.sortWith { (x, y) =>
-          itStreams.foreach {
-            case m: SortWithItStream[S, A] => m.advance(x, y)
-          }
+          ???
+//          itStreams.foreach {
+//            case m: SortWithItStream[S, A] => m.advance(x, y)
+//          }
           ltStream.reset()
           if (ltStream.hasNext) {
             ltStream.next()
@@ -96,7 +100,7 @@ final case class SortWith[A](outer: Pat[Pat[A]], it: It[(A, A)], lt: Pat[Boolean
           }
         }
         _hasSorted() = true
-        sortedIt() = Stream(sorted.map(xs => Pat(xs: _*) /* Stream(xs: _*) */): _*)
+        sortedIt() = Stream(sorted.map(xs => Pat(xs: _*)): _*)
       }
     }
 
