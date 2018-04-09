@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Gate
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -25,7 +24,7 @@ import scala.annotation.tailrec
 object GateImpl extends StreamFactory {
   final val typeId = 0x47617465 // "Gate"
 
-  def expand[S <: Base[S], A](pat: Gate[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A](pat: Gate[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id          = tx.newId()
     val inStream    = in  .expand[S]
@@ -38,10 +37,10 @@ object GateImpl extends StreamFactory {
       _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id          = tx.readId(in, access)
-    val inStream    = patterns.Stream.read[S, A      ](in, access)
-    val gateStream  = patterns.Stream.read[S, Boolean](in, access)
+    val inStream    = Stream.read[S, A      ](in, access)
+    val gateStream  = Stream.read[S, Boolean](in, access)
     val _next       = PatElem.readVar[S, A](id, in)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
@@ -52,8 +51,8 @@ object GateImpl extends StreamFactory {
 
   private final class StreamImpl[S <: Base[S], A](
                                                    private[this] val id        : S#Id,
-                                                   private[this] val inStream  : patterns.Stream[S, A],
-                                                   private[this] val gateStream: patterns.Stream[S, Boolean],
+                                                   private[this] val inStream  : Stream[S, A],
+                                                   private[this] val gateStream: Stream[S, Boolean],
                                                    private[this] val _next     : S#Var[A],
                                                    private[this] val _hasNext  : S#Var[Boolean],
                                                    private[this] val valid     : S#Var[Boolean]
@@ -115,7 +114,7 @@ object GateImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = _next()
       advance()
       res

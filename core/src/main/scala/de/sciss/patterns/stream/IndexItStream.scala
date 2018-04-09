@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.serial.DataOutput
 
 final class IndexItStream[S <: Base[S]](iteration: S#Var[Int], tx0: S#Tx)
@@ -36,7 +35,7 @@ final class IndexItStream[S <: Base[S]](iteration: S#Var[Int], tx0: S#Tx)
   def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _hasNext()
 
   def next()(implicit ctx: Context[S], tx: S#Tx): Int = {
-    if (!hasNext) patterns.Stream.exhausted()
+    if (!hasNext) Stream.exhausted()
     _hasNext() = false
     iteration()
   }

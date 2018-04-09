@@ -15,19 +15,18 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Apply
 import de.sciss.serial.{DataInput, DataOutput}
 
 object ApplyImpl extends StreamFactory {
   final val typeId = 0x4170706C // "Appl"
 
-  def expand[S <: Base[S], A](pat: Apply[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A](pat: Apply[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id          = tx.newId()
     val inStream    = in  .expand[S]
     val idxStream   = idx .expand[S]
-    val state       = tx.newVar[patterns.Stream[S, A]](id, null)
+    val state       = tx.newVar[Stream[S, A]](id, null)
     val _hasNext    = tx.newBooleanVar(id, false)
     val valid       = tx.newBooleanVar(id, false)
 
@@ -35,11 +34,11 @@ object ApplyImpl extends StreamFactory {
       valid = valid, _hasNext = _hasNext, state = state)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id          = tx.readId(in, access)
-    val inStream    = patterns.Stream.read[S, Pat[A]](in, access)
-    val idxStream   = patterns.Stream.read[S, Int   ](in, access)
-    val state       = tx.newVar[patterns.Stream[S, A]](id, null)
+    val inStream    = Stream.read[S, Pat[A]](in, access)
+    val idxStream   = Stream.read[S, Int   ](in, access)
+    val state       = tx.newVar[Stream[S, A]](id, null)
     val _hasNext    = tx.newBooleanVar(id, false)
     val valid       = tx.newBooleanVar(id, false)
 
@@ -49,9 +48,9 @@ object ApplyImpl extends StreamFactory {
 
   private final class StreamImpl[S <: Base[S], A](
                                                    id        : S#Id,
-                                                   inStream  : patterns.Stream[S, Pat[A]],
-                                                   idxStream : patterns.Stream[S, Int],
-                                                   state     : S#Var[patterns.Stream[S, A]],
+                                                   inStream  : Stream[S, Pat[A]],
+                                                   idxStream : Stream[S, Int],
+                                                   state     : S#Var[Stream[S, A]],
                                                    _hasNext  : S#Var[Boolean],
                                                    valid     : S#Var[Boolean]
   )
@@ -114,7 +113,7 @@ object ApplyImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val _state  = state()
       val res     = _state.next()
       if (!_state.hasNext) _hasNext() = false

@@ -15,14 +15,13 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Length
 import de.sciss.serial.{DataInput, DataOutput}
 
 object LengthImpl extends StreamFactory {
   final val typeId = 0x4C656E67 // "Leng"
 
-  def expand[S <: Base[S], A](pat: Length[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, Int] = {
+  def expand[S <: Base[S], A](pat: Length[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = {
     import pat._
     val id        = tx.newId()
     val inStream  = in.expand[S]
@@ -31,18 +30,18 @@ object LengthImpl extends StreamFactory {
     new StreamImpl[S, A](id = id, inStream = inStream, _hasNext = _hasNext)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.readId(in, access)
-    val inStream  = patterns.Stream.read[S, A](in, access)
+    val inStream  = Stream.read[S, A](in, access)
     val _hasNext  = tx.readBooleanVar(id, in)
 
     new StreamImpl[S, A](id = id, inStream = inStream, _hasNext = _hasNext)
-      .asInstanceOf[patterns.Stream[S, A]] // XXX TODO --- ugly
+      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
   private final class StreamImpl[S <: Base[S], A](
                                                    id      : S#Id,
-                                                   inStream: patterns.Stream[S, A],
+                                                   inStream: Stream[S, A],
                                                    _hasNext: S#Var[Boolean]
   )
     extends Stream[S, Int] {
@@ -69,7 +68,7 @@ object LengthImpl extends StreamFactory {
     def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _hasNext()
 
     def next()(implicit ctx: Context[S], tx: S#Tx): Int = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       var res = 0
       while (inStream.hasNext) {
         inStream.next()

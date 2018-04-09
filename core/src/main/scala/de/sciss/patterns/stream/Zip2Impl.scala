@@ -15,14 +15,13 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Zip2
 import de.sciss.serial.{DataInput, DataOutput}
 
 object Zip2Impl extends StreamFactory {
   final val typeId = 0x5A697032 // "Zip2"
 
-  def expand[S <: Base[S], A1, A2](pat: Zip2[A1, A2])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, (A1, A2)] = {
+  def expand[S <: Base[S], A1, A2](pat: Zip2[A1, A2])(implicit ctx: Context[S], tx: S#Tx): Stream[S, (A1, A2)] = {
     import pat._
     val aStream     = a.expand(ctx, tx)
     val bStream     = b.expand(ctx, tx)
@@ -30,18 +29,18 @@ object Zip2Impl extends StreamFactory {
     new StreamImpl[S, A1, A2](aStream = aStream, bStream = bStream)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
-    val aStream     = patterns.Stream.read[S, Any](in, access)
-    val bStream     = patterns.Stream.read[S, Any](in, access)
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+    val aStream     = Stream.read[S, Any](in, access)
+    val bStream     = Stream.read[S, Any](in, access)
 
     new StreamImpl[S, Any, Any](aStream = aStream, bStream = bStream)
-      .asInstanceOf[patterns.Stream[S, A]] // XXX TODO --- ugly
+      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
 
   private final class StreamImpl[S <: Base[S], A1, A2](
-                                                        val aStream: patterns.Stream[S, A1],
-                                                        val bStream: patterns.Stream[S, A2]
+                                                        val aStream: Stream[S, A1],
+                                                        val bStream: Stream[S, A2]
   )
     extends Stream[S, (A1, A2)] {
 

@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Distinct
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -25,7 +24,7 @@ import scala.annotation.tailrec
 object DistinctImpl extends StreamFactory {
   final val typeId = 0x44697374 // "Dist"
 
-  def expand[S <: Base[S], A](pat: Distinct[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A](pat: Distinct[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id        = tx.newId()
     val inStream  = in.expand[S]
@@ -38,9 +37,9 @@ object DistinctImpl extends StreamFactory {
       valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.readId(in, access)
-    val inStream  = patterns.Stream.read[S, A](in, access)
+    val inStream  = Stream.read[S, A](in, access)
     val seen      = tx.readVar[Set[A]](id, in)(PatElem.setSerializer)
     val _next     = PatElem.readVar[S, A](id, in)
     val _hasNext  = tx.readBooleanVar(id, in)
@@ -52,7 +51,7 @@ object DistinctImpl extends StreamFactory {
 
   private final class StreamImpl[S <: Base[S], A](
                                                    id      : S#Id,
-                                                   inStream: patterns.Stream[S, A],
+                                                   inStream: Stream[S, A],
                                                    seen    : S#Var[Set[A]],
                                                    _next   : S#Var[A],
                                                    _hasNext: S#Var[Boolean],
@@ -109,7 +108,7 @@ object DistinctImpl extends StreamFactory {
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       validate()
-      if (!_hasNext()) patterns.Stream.exhausted()
+      if (!_hasNext()) Stream.exhausted()
       val res = _next()
       advance()
       res

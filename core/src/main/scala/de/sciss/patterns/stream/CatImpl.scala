@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.Types.{Aux, Widen2}
 import de.sciss.patterns.graph.Cat
 import de.sciss.serial.{DataInput, DataOutput}
@@ -23,7 +22,7 @@ import de.sciss.serial.{DataInput, DataOutput}
 object CatImpl extends StreamFactory {
   final val typeId = 0x43617420 // "Cat "
 
-  def expand[S <: Base[S], A1, A2, A](pat: Cat[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A1, A2, A](pat: Cat[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val aStream     = a.expand[S]
     val bStream     = b.expand[S]
@@ -31,17 +30,17 @@ object CatImpl extends StreamFactory {
     new StreamImpl[S, A1, A2, A](aStream = aStream, bStream = bStream, widen = widen)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
-    val aStream     = patterns.Stream.read[S, Any](in, access)
-    val bStream     = patterns.Stream.read[S, Any](in, access)
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+    val aStream     = Stream.read[S, Any](in, access)
+    val bStream     = Stream.read[S, Any](in, access)
     val widen       = Aux.readT[Widen2[Any, Any, A]](in)
 
     new StreamImpl[S, Any, Any, A](aStream = aStream, bStream = bStream, widen = widen)
   }
 
   private final class StreamImpl[S <: Base[S], A1, A2, A](
-                                                           aStream   : patterns.Stream[S, A1],
-                                                           bStream   : patterns.Stream[S, A2],
+                                                           aStream   : Stream[S, A1],
+                                                           bStream   : Stream[S, A2],
                                                            widen     : Widen2[A1, A2, A]
   )
     extends Stream[S, A] {

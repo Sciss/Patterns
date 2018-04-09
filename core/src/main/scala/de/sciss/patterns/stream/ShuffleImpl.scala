@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.{Base, TxnRandom}
-import de.sciss.patterns
 import de.sciss.patterns.graph.Shuffle
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -25,7 +24,7 @@ import scala.collection.immutable.{IndexedSeq => Vec}
 object ShuffleImpl extends StreamFactory {
   final val typeId = 0x53687566 // "Shuf"
 
-  def expand[S <: Base[S], A](pat: Shuffle[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A](pat: Shuffle[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id        = tx.newId()
     val inStream  = in.expand(ctx, tx)
@@ -39,9 +38,9 @@ object ShuffleImpl extends StreamFactory {
       _hasNext = _hasNext, valid = valid)(r)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.readId(in, access)
-    val inStream  = patterns.Stream.read[S, A](in, access)
+    val inStream  = Stream.read[S, A](in, access)
     val count     = tx.readIntVar(id, in)
     val shuffled  = tx.readVar[Vec[A]](id, in)(PatElem.vecSerializer)
     val _hasNext  = tx.readBooleanVar(id, in)
@@ -54,7 +53,7 @@ object ShuffleImpl extends StreamFactory {
 
   private final class StreamImpl[S <: Base[S], A](
                                                    id      : S#Id,
-                                                   inStream: patterns.Stream[S, A],
+                                                   inStream: Stream[S, A],
                                                    count   : S#Var[Int],
                                                    shuffled: S#Var[Vec[A]],
                                                    _hasNext: S#Var[Boolean],
@@ -111,7 +110,7 @@ object ShuffleImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val vec = shuffled()
       val c   = count()
       val res = vec(c)

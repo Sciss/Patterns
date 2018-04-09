@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Drop
 import de.sciss.patterns.stream.impl.TruncateLikeStreamImpl
 import de.sciss.serial.{DataInput, DataOutput}
@@ -23,7 +22,7 @@ import de.sciss.serial.{DataInput, DataOutput}
 object DropImpl extends StreamFactory {
   final val typeId = 0x44726F70 // "Drop
 
-  def expand[S <: Base[S], A](pat: Drop[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A](pat: Drop[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id        = tx.newId()
     val inStream  = in    .expand[S]
@@ -34,10 +33,10 @@ object DropImpl extends StreamFactory {
     new StreamImpl[S, A](id = id, inStream = inStream, lenStream = lenStream, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.readId(in, access)
-    val inStream  = patterns.Stream.read[S, A  ](in, access)
-    val lenStream = patterns.Stream.read[S, Int](in, access)
+    val inStream  = Stream.read[S, A  ](in, access)
+    val lenStream = Stream.read[S, Int](in, access)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
 
@@ -46,8 +45,8 @@ object DropImpl extends StreamFactory {
 
   private final class StreamImpl[S <: Base[S], A](
                                                    protected val id        : S#Id,
-                                                   protected val inStream  : patterns.Stream[S, A],
-                                                   protected val lenStream : patterns.Stream[S, Int],
+                                                   protected val inStream  : Stream[S, A],
+                                                   protected val lenStream : Stream[S, Int],
                                                    protected val _hasNext  : S#Var[Boolean],
                                                    protected val valid     : S#Var[Boolean]
   )
@@ -81,7 +80,7 @@ object DropImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = inStream.next()
       if (!inStream.hasNext) _hasNext() = false
       res

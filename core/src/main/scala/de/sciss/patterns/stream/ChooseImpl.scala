@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.{Base, TxnRandom}
-import de.sciss.patterns
 import de.sciss.patterns.graph.Choose
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -23,7 +22,7 @@ import de.sciss.serial.{DataInput, DataOutput}
 object ChooseImpl extends StreamFactory {
   final val typeId = 0x43686F6F // "Choo"
 
-  def expand[S <: Base[S], A](pat: Choose[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A](pat: Choose[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id        = tx.newId()
     val inStream  = in.expand[S]
@@ -35,9 +34,9 @@ object ChooseImpl extends StreamFactory {
     new StreamImpl[S, A](id = id, inStream = inStream, choice = choice, _hasNext = _hasNext, valid = valid)(r)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.readId(in, access)
-    val inStream  = patterns.Stream.read[S, A](in, access)
+    val inStream  = Stream.read[S, A](in, access)
     val choice    = PatElem.readVar[S, A](id, in)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
@@ -48,7 +47,7 @@ object ChooseImpl extends StreamFactory {
 
   private final class StreamImpl[S <: Base[S], A](
                                                    id      : S#Id,
-                                                   inStream: patterns.Stream[S, A],
+                                                   inStream: Stream[S, A],
                                                    choice  : S#Var[A],
                                                    _hasNext: S#Var[Boolean],
                                                    valid   : S#Var[Boolean]
@@ -96,7 +95,7 @@ object ChooseImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = choice()
       _hasNext() = false
       res

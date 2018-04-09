@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.Types.{Aux, NumDouble, Widen2}
 import de.sciss.patterns.graph.LinExp
 import de.sciss.patterns.stream.impl.ScaleLikeStreamImpl
@@ -24,7 +23,7 @@ import de.sciss.serial.DataInput
 object LinExpImpl extends StreamFactory {
   final val typeId = 0x4C696E45 // "LinE"
 
-  def expand[S <: Base[S], A1, A2, A](pat: LinExp[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A1, A2, A](pat: LinExp[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val inStream    = in    .expand[S]
     val inLoStream  = inLo  .expand[S]
@@ -36,12 +35,12 @@ object LinExpImpl extends StreamFactory {
       outLoStream = outLoStream, outHiStream = outHiStream)(widen, num)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
-    val inStream    = patterns.Stream.read[S, Any](in, access)
-    val inLoStream  = patterns.Stream.read[S, Any](in, access)
-    val inHiStream  = patterns.Stream.read[S, Any](in, access)
-    val outLoStream = patterns.Stream.read[S, Any](in, access)
-    val outHiStream = patterns.Stream.read[S, Any](in, access)
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+    val inStream    = Stream.read[S, Any](in, access)
+    val inLoStream  = Stream.read[S, Any](in, access)
+    val inHiStream  = Stream.read[S, Any](in, access)
+    val outLoStream = Stream.read[S, Any](in, access)
+    val outHiStream = Stream.read[S, Any](in, access)
 
     val widen       = Aux.readT[Widen2[Any, Any, A]](in)
     val num         = Aux.readT[NumDouble[A]]       (in)
@@ -51,11 +50,11 @@ object LinExpImpl extends StreamFactory {
   }
 
   private final class StreamImpl[S <: Base[S], A1, A2, A](
-                                                           protected val inStream   : patterns.Stream[S, A1],
-                                                           protected val inLoStream : patterns.Stream[S, A1],
-                                                           protected val inHiStream : patterns.Stream[S, A1],
-                                                           protected val outLoStream: patterns.Stream[S, A2],
-                                                           protected val outHiStream: patterns.Stream[S, A2]
+                                                           protected val inStream   : Stream[S, A1],
+                                                           protected val inLoStream : Stream[S, A1],
+                                                           protected val inHiStream : Stream[S, A1],
+                                                           protected val outLoStream: Stream[S, A2],
+                                                           protected val outHiStream: Stream[S, A2]
                                                          )(
                                                            implicit protected val widen: Widen2[A1, A2, A],
                                                            protected val num: NumDouble[A]

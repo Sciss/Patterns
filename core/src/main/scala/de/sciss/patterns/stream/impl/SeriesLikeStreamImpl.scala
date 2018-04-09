@@ -16,15 +16,14 @@ package stream
 package impl
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.Types.{Num, Widen2}
 import de.sciss.serial.DataOutput
 
 abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A] {
 
   protected val id          : S#Id
-  protected val startStream : patterns.Stream[S, A1]
-  protected val stepStream  : patterns.Stream[S, A2]
+  protected val startStream : Stream[S, A1]
+  protected val stepStream  : Stream[S, A2]
   protected val state       : S#Var[A]
   protected val _hasNext    : S#Var[Boolean]
   protected val valid       : S#Var[Boolean]
@@ -78,7 +77,7 @@ abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A
   }
 
   final def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-    if (!hasNext) patterns.Stream.exhausted()
+    if (!hasNext) Stream.exhausted()
     val res = state()
 //    val c   = count() + 1
 //    count() = c

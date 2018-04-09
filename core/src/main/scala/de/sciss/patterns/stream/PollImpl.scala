@@ -15,14 +15,13 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Poll
 import de.sciss.serial.{DataInput, DataOutput}
 
 object PollImpl extends StreamFactory {
   final val typeId = 0x506F6C6C // "Poll"
 
-  def expand[S <: Base[S], A](pat: Poll[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A](pat: Poll[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val inStream    = in    .expand[S]
     val gateStream  = gate  .expand[S]
@@ -31,18 +30,18 @@ object PollImpl extends StreamFactory {
     new StreamImpl[S, A](inStream = inStream, gateStream = gateStream, labelStream = labelStream)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
-    val inStream    = patterns.Stream.read[S, A      ](in, access)
-    val gateStream  = patterns.Stream.read[S, Boolean](in, access)
-    val labelStream = patterns.Stream.read[S, String ](in, access)
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+    val inStream    = Stream.read[S, A      ](in, access)
+    val gateStream  = Stream.read[S, Boolean](in, access)
+    val labelStream = Stream.read[S, String ](in, access)
 
     new StreamImpl[S, A](inStream = inStream, gateStream = gateStream, labelStream = labelStream)
   }
 
   private final class StreamImpl[S <: Base[S], A](
-                                                   inStream    : patterns.Stream[S, A],
-                                                   gateStream  : patterns.Stream[S, Boolean],
-                                                   labelStream : patterns.Stream[S, String]
+                                                   inStream    : Stream[S, A],
+                                                   gateStream  : Stream[S, Boolean],
+                                                   labelStream : Stream[S, String]
   )
     extends Stream[S, A] {
 

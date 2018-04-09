@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.Types.{Aux, Num, Widen2}
 import de.sciss.patterns.graph.ArithmSeq
 import de.sciss.patterns.impl.PatElem
@@ -25,7 +24,7 @@ import de.sciss.serial.DataInput
 object ArithmSeqImpl extends StreamFactory {
   final val typeId = 0x41726974 // "Arit"
 
-  def expand[S <: Base[S], A1, A2, A](pat: ArithmSeq[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A1, A2, A](pat: ArithmSeq[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
 
     val id          = tx.newId()
@@ -39,10 +38,10 @@ object ArithmSeqImpl extends StreamFactory {
       _hasNext = _hasNext, valid = valid)(num, widen)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id          = tx.readId(in, access)
-    val startStream = patterns.Stream.read[S, Any](in, access)
-    val stepStream  = patterns.Stream.read[S, Any](in, access)
+    val startStream = Stream.read[S, Any](in, access)
+    val stepStream  = Stream.read[S, Any](in, access)
     val state       = PatElem.readVar[S, A](id, in)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
@@ -55,8 +54,8 @@ object ArithmSeqImpl extends StreamFactory {
 
   private final class StreamImpl[S <: Base[S], A1, A2, A](
                                                            protected val id          : S#Id,
-                                                           protected val startStream : patterns.Stream[S, A1],
-                                                           protected val stepStream  : patterns.Stream[S, A2],
+                                                           protected val startStream : Stream[S, A1],
+                                                           protected val stepStream  : Stream[S, A2],
                                                            protected val state       : S#Var[A],
                                                            protected val _hasNext    : S#Var[Boolean],
                                                            protected val valid       : S#Var[Boolean]

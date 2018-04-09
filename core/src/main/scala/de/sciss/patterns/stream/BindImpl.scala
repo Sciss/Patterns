@@ -15,17 +15,16 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Bind
 import de.sciss.serial.{DataInput, DataOutput, Serializer}
 
 object BindImpl extends StreamFactory {
   final val typeId = 0x42696E64 // "Bind"
 
-  def expand[S <: Base[S]](pat: Bind)(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, Event]  = {
+  def expand[S <: Base[S]](pat: Bind)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Event]  = {
     import pat._
     val id        = tx.newId()
-    val mapE: Map[String, patterns.Stream[S, Any]] = entries.iterator.map {
+    val mapE: Map[String, Stream[S, Any]] = entries.iterator.map {
         case (key, value) => key -> value.expand[S]
       } .toMap
 
@@ -35,19 +34,19 @@ object BindImpl extends StreamFactory {
     new StreamImpl[S](id = id, mapE = mapE, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.readId(in, access)
-    val mapE: Map[String, patterns.Stream[S, Any]] = Serializer.map[S#Tx, S#Acc, String, patterns.Stream[S, Any]].read(in, access)
+    val mapE: Map[String, Stream[S, Any]] = Serializer.map[S#Tx, S#Acc, String, Stream[S, Any]].read(in, access)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
 
     new StreamImpl[S](id = id, mapE = mapE, _hasNext = _hasNext, valid = valid)
-      .asInstanceOf[patterns.Stream[S, A]] // XXX TODO --- ugly
+      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
   private final class StreamImpl[S <: Base[S]](
                                                 id      : S#Id,
-                                                mapE    : Map[String, patterns.Stream[S, Any]],
+                                                mapE    : Map[String, Stream[S, Any]],
                                                 _hasNext: S#Var[Boolean],
                                                 valid   : S#Var[Boolean]
   )
@@ -57,7 +56,7 @@ object BindImpl extends StreamFactory {
 
     protected def writeData(out: DataOutput): Unit = {
       id      .write(out)
-      Serializer.map[S#Tx, S#Acc, String, patterns.Stream[S, Any]].write(mapE, out)
+      Serializer.map[S#Tx, S#Acc, String, Stream[S, Any]].write(mapE, out)
       _hasNext.write(out)
       valid   .write(out)
     }
@@ -93,7 +92,7 @@ object BindImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): Event = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = mkState()
       _hasNext() = checkNext()
       res

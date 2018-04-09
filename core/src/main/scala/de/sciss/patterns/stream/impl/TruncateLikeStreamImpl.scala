@@ -16,7 +16,6 @@ package stream
 package impl
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 
 abstract class TruncateLikeStreamImpl[S <: Base[S], A]
   extends Stream[S, A] {
@@ -24,8 +23,8 @@ abstract class TruncateLikeStreamImpl[S <: Base[S], A]
   // ---- abstract ----
 
   protected def id        : S#Id
-  protected def inStream  : patterns.Stream[S, A]
-  protected def lenStream : patterns.Stream[S, Int]
+  protected def inStream  : Stream[S, A]
+  protected def lenStream : Stream[S, Int]
   protected def _hasNext  : S#Var[Boolean]
   protected def valid     : S#Var[Boolean]
 

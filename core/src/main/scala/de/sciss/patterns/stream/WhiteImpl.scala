@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.{Base, TxnRandom}
-import de.sciss.patterns
 import de.sciss.patterns.Types.{Aux, Num}
 import de.sciss.patterns.graph.White
 import de.sciss.patterns.impl.PatElem
@@ -24,7 +23,7 @@ import de.sciss.serial.{DataInput, DataOutput}
 object WhiteImpl extends StreamFactory {
   final val typeId = 0x57686974 // "Whit"
 
-  def expand[S <: Base[S], A](pat: White[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A](pat: White[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id        = tx.newId()
     val loStream  = lo.expand[S]
@@ -38,10 +37,10 @@ object WhiteImpl extends StreamFactory {
       valid = valid)(r, num)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.readId(in, access)
-    val loStream  = patterns.Stream.read[S, A](in, access)
-    val hiStream  = patterns.Stream.read[S, A](in, access)
+    val loStream  = Stream.read[S, A](in, access)
+    val hiStream  = Stream.read[S, A](in, access)
     val state     = PatElem.makeVar[S, A](id)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
@@ -53,7 +52,7 @@ object WhiteImpl extends StreamFactory {
   }
 
   private final class StreamImpl[S <: Base[S], A](
-                                                   id: S#Id, loStream: patterns.Stream[S, A], hiStream: patterns.Stream[S, A],
+                                                   id: S#Id, loStream: Stream[S, A], hiStream: Stream[S, A],
                                                    state: S#Var[A], _hasNext: S#Var[Boolean],
                                                    valid: S#Var[Boolean]
   )(
@@ -107,7 +106,7 @@ object WhiteImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = state()
       _hasNext() = loStream.hasNext && hiStream.hasNext
       if (_hasNext()) {

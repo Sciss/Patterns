@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Flatten
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -24,12 +23,12 @@ import scala.annotation.tailrec
 object FlattenImpl extends StreamFactory {
   final val typeId = 0x466C6174 // "Flat"
 
-  def expand[S <: Base[S], A](pat: Flatten[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A](pat: Flatten[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id          = tx.newId()
     val inStream    = in.expand[S]
     val hasInner    = tx.newBooleanVar(id, false)
-    val innerStream = tx.newVar[patterns.Stream[S, A]](id, null)
+    val innerStream = tx.newVar[Stream[S, A]](id, null)
     val _hasNext    = tx.newBooleanVar(id, false)
     val valid       = tx.newBooleanVar(id, false)
 
@@ -37,11 +36,11 @@ object FlattenImpl extends StreamFactory {
       _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id          = tx.readId(in, access)
-    val inStream    = patterns.Stream.read[S, Pat[A]](in, access)
+    val inStream    = Stream.read[S, Pat[A]](in, access)
     val hasInner    = tx.readBooleanVar(id, in)
-    val innerStream = tx.readVar[patterns.Stream[S, A]](id, in)
+    val innerStream = tx.readVar[Stream[S, A]](id, in)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
 
@@ -51,9 +50,9 @@ object FlattenImpl extends StreamFactory {
 
   private final class StreamImpl[S <: Base[S], A](
                                                    id          : S#Id,
-                                                   inStream    : patterns.Stream[S, Pat[A]],
+                                                   inStream    : Stream[S, Pat[A]],
                                                    hasInner    : S#Var[Boolean],
-                                                   innerStream : S#Var[patterns.Stream[S, A]],
+                                                   innerStream : S#Var[Stream[S, A]],
                                                    _hasNext    : S#Var[Boolean],
                                                    valid       : S#Var[Boolean]
   )
@@ -112,7 +111,7 @@ object FlattenImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = innerStream().next()
       advance()
       res

@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.Types.{Aux, ScalarOrd}
 import de.sciss.patterns.graph.Sorted
 import de.sciss.serial.{DataInput, DataOutput}
@@ -23,20 +22,20 @@ import de.sciss.serial.{DataInput, DataOutput}
 object SortedImpl extends StreamFactory {
   final val typeId = 0x536F7274 // "Sort"
 
-  def expand[S <: Base[S], A](pat: Sorted[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A](pat: Sorted[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id            = tx.newId()
     val inStream      = in.expand(ctx, tx)
-    val sortedStream  = tx.newVar[patterns.Stream[S, A]](id, null)
+    val sortedStream  = tx.newVar[Stream[S, A]](id, null)
     val valid         = tx.newBooleanVar(id, false)
 
     new StreamImpl[S, A](id = id, inStream = inStream, sortedStream = sortedStream, valid = valid)(ord)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id            = tx.readId(in, access)
-    val inStream      = patterns.Stream.read[S, A](in, access)
-    val sortedStream  = tx.readVar[patterns.Stream[S, A]](id, in)
+    val inStream      = Stream.read[S, A](in, access)
+    val sortedStream  = tx.readVar[Stream[S, A]](id, in)
     val valid         = tx.readBooleanVar(id, in)
     val ord           = Aux.readT[ScalarOrd[A]](in)
 
@@ -45,8 +44,8 @@ object SortedImpl extends StreamFactory {
 
   private final class StreamImpl[S <: Base[S], A](
                                                    id          : S#Id,
-                                                   inStream    : patterns.Stream[S, A],
-                                                   sortedStream: S#Var[patterns.Stream[S, A]],
+                                                   inStream    : Stream[S, A],
+                                                   sortedStream: S#Var[Stream[S, A]],
                                                    valid       : S#Var[Boolean]
   )(
     implicit ord: ScalarOrd[A]

@@ -15,25 +15,24 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Tuple2_2
 import de.sciss.serial.{DataInput, DataOutput}
 
 object Tuple2_2Impl extends StreamFactory {
   final val typeId = 0x54325F32 // "T2_2"
 
-  def expand[S <: Base[S], A1, A](pat: Tuple2_2[A1, A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A1, A](pat: Tuple2_2[A1, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val tupStream = in.expand[S]
     new StreamImpl[S, A1, A](tupStream = tupStream)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
-    val tupStream = patterns.Stream.read[S, (Any, A)](in, access)
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+    val tupStream = Stream.read[S, (Any, A)](in, access)
     new StreamImpl[S, Any, A](tupStream = tupStream)
   }
 
-  private final class StreamImpl[S <: Base[S], A1, A](tupStream: patterns.Stream[S, (A1, A)])
+  private final class StreamImpl[S <: Base[S], A1, A](tupStream: Stream[S, (A1, A)])
     extends Stream[S, A] {
 
     protected def typeId: Int = Tuple2_2Impl.typeId

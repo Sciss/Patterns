@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.serial.DataOutput
 
 final class MapItStream[S <: Base[S], A](outer: Pat[Pat[A]], tx0: S#Tx)(implicit ctx: Context[S])
@@ -23,7 +22,7 @@ final class MapItStream[S <: Base[S], A](outer: Pat[Pat[A]], tx0: S#Tx)(implicit
 
   private[this] val id          = tx0.newId()
   private[this] val outerStream = outer.expand(ctx, tx0)
-  private[this] val inStream    = tx0.newVar[patterns.Stream[S, A]](id, null)
+  private[this] val inStream    = tx0.newVar[Stream[S, A]](id, null)
   private[this] val _valid      = tx0.newBooleanVar(id, false)
   private[this] val _hasIn      = tx0.newBooleanVar(id, false)
   private[this] val _hasNext    = tx0.newBooleanVar(id, false)
@@ -88,7 +87,7 @@ final class MapItStream[S <: Base[S], A](outer: Pat[Pat[A]], tx0: S#Tx)(implicit
   }
 
   def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-    if (!hasNext) patterns.Stream.exhausted()
+    if (!hasNext) Stream.exhausted()
     val in      = inStream()
     val res     = in.next()
     _hasNext()  = in.hasNext

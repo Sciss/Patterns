@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Combinations
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput, Serializer}
@@ -26,7 +25,7 @@ import scala.collection.mutable
 object CombinationsImpl extends StreamFactory {
   final val typeId = 0x436F6D62 // "Comb"
 
-  def expand[S <: Base[S], A](pat: Combinations[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, Pat[A]] = {
+  def expand[S <: Base[S], A](pat: Combinations[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = {
     import pat._
     val id        = tx.newId()
     val inStream  = in.expand[S]
@@ -42,10 +41,10 @@ object CombinationsImpl extends StreamFactory {
       numbers = numbers, offsets = offsets, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.readId(in, access)
-    val inStream  = patterns.Stream.read[S, A  ](in, access)
-    val nStream   = patterns.Stream.read[S, Int](in, access)
+    val inStream  = Stream.read[S, A  ](in, access)
+    val nStream   = Stream.read[S, Int](in, access)
     val elements  = tx.readVar[Vec[A]]  (id, in)(PatElem.vecSerializer)
     val counts    = tx.readVar[Vec[Int]](id, in)(Serializer.immutable)
     val numbers   = tx.readVar[Vec[Int]](id, in)(Serializer.immutable)
@@ -55,7 +54,7 @@ object CombinationsImpl extends StreamFactory {
 
     new StreamImpl[S, A](id = id, inStream = inStream, nStream = nStream, elements = elements, counts = counts,
       numbers = numbers, offsets = offsets, _hasNext = _hasNext, valid = valid)
-      .asInstanceOf[patterns.Stream[S, A]] // XXX TODO --- ugly
+      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
   // Adapted from scala.collection.SeqLike#CombinationsItr
@@ -66,8 +65,8 @@ object CombinationsImpl extends StreamFactory {
   // (2) 0 <= nums(i) <= cnts(i), where 0 <= i <= cnts.length-1
   private final class StreamImpl[S <: Base[S], A](
                                                    id      : S#Id,
-                                                   inStream: patterns.Stream[S, A],
-                                                   nStream : patterns.Stream[S, Int],
+                                                   inStream: Stream[S, A],
+                                                   nStream : Stream[S, Int],
                                                    elements: S#Var[Vec[A]],
                                                    counts  : S#Var[Vec[Int]],
                                                    numbers : S#Var[Vec[Int]],
@@ -114,7 +113,7 @@ object CombinationsImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
 
       /* Calculate this result. */
       val buf = List.newBuilder[A]

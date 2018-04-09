@@ -175,10 +175,10 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def shuffle: Pat[A] = Shuffle(x)
   def choose : Pat[A] = Choose (x)
 
-  /** Short-cut for `grouped(1)`. For example,
+  /** Wraps each element in a singleton pattern. For example,
     * `Pat(1, 2, 3)` becomes `Pat(Pat(1), Pat(2), Pat(3))`.
     */
-  def bubble: Pat[Pat[A]] = grouped(1)
+  def bubble: Pat[Pat[A]] = Bubble(x)
 
   def grouped(size: Pat[Int]): Pat[Pat[A]] = Grouped(x, size)
 

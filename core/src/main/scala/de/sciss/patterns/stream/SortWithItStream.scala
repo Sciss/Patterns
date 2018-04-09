@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataOutput, ImmutableSerializer}
 
@@ -79,7 +78,7 @@ final class SortWithItStream[S <: Base[S], A](tx0: S#Tx)
   }
 
   def next()(implicit ctx: Context[S], tx: S#Tx): (A, A) = {
-    if (!hasNext) patterns.Stream.exhausted()
+    if (!hasNext) Stream.exhausted()
     val (x, y)  = pairInRef()
     val sz      = math.min(x.size, y.size)
     val c0      = count()

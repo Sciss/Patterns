@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.{Base, Random, TxnRandom}
-import de.sciss.patterns
 import de.sciss.patterns.Types.{Aux, Num, Widen2}
 import de.sciss.patterns.graph.Brown
 import de.sciss.patterns.impl.PatElem
@@ -24,7 +23,7 @@ import de.sciss.serial.{DataInput, DataOutput}
 object BrownImpl extends StreamFactory {
   final val typeId = 0x42726F77 // "Brow"
 
-  def expand[S <: Base[S], A1, A2, A](pat: Brown[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def expand[S <: Base[S], A1, A2, A](pat: Brown[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id          = tx.newId()
 
@@ -41,11 +40,11 @@ object BrownImpl extends StreamFactory {
       valid = valid)(r, widen, num)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id          = tx.readId(in, access)
-    val loStream    = patterns.Stream.read[S, Any](in, access)
-    val hiStream    = patterns.Stream.read[S, Any](in, access)
-    val stepStream  = patterns.Stream.read[S, A](in, access)
+    val loStream    = Stream.read[S, Any](in, access)
+    val hiStream    = Stream.read[S, Any](in, access)
+    val stepStream  = Stream.read[S, A](in, access)
     val state       = PatElem.readVar[S, A](id, in)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
@@ -60,9 +59,9 @@ object BrownImpl extends StreamFactory {
 
   private final class StreamImpl[S <: Base[S], A1, A2, A](
                                                            id        : S#Id,
-                                                           loStream  : patterns.Stream[S, A1],
-                                                           hiStream  : patterns.Stream[S, A1],
-                                                           stepStream: patterns.Stream[S, A2],
+                                                           loStream  : Stream[S, A1],
+                                                           hiStream  : Stream[S, A1],
+                                                           stepStream: Stream[S, A2],
                                                            state     : S#Var[A],
                                                            _hasNext  : S#Var[Boolean],
                                                            valid     : S#Var[Boolean]
@@ -125,7 +124,7 @@ object BrownImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = state()
       _hasNext() = loStream.hasNext && hiStream.hasNext && stepStream.hasNext
       if (_hasNext()) {

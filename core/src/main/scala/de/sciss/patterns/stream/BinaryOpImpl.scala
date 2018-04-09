@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.Types.{Aux, Widen2}
 import de.sciss.patterns.graph.BinaryOp
 import de.sciss.patterns.impl.PatElem
@@ -27,7 +26,7 @@ object BinaryOpImpl extends StreamFactory {
   final val typeId = 0x42696E61 // "Bina"
 
   def expand[S <: Base[S], A1, A2, A3, A](pat: BinaryOp[A1, A2, A3, A])
-                                         (implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+                                         (implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val aStream     = a.expand[S]
     val bStream     = b.expand[S]
@@ -36,11 +35,11 @@ object BinaryOpImpl extends StreamFactory {
     new StreamImpl[S, A1, A2, A3, A, op.State](op = op, state = state, aStream = aStream, bStream = bStream)(widen)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val op          = PatElem.read[BinaryOp.Op[Any, A]](in)
     val state       = op.readState(in, access)
-    val aStream     = patterns.Stream.read[S, Pat[Any]](in, access)
-    val bStream     = patterns.Stream.read[S, Pat[Any]](in, access)
+    val aStream     = Stream.read[S, Pat[Any]](in, access)
+    val bStream     = Stream.read[S, Pat[Any]](in, access)
     val widen       = Aux.readT[Widen2[Any, Any, Any]](in)
 
     new StreamImpl[S, Any, Any, Any, A, op.State](op = op, state = state, aStream = aStream, bStream = bStream)(widen)
@@ -49,8 +48,8 @@ object BinaryOpImpl extends StreamFactory {
   private final class StreamImpl[S <: Base[S], A1, A2, A3, A, St[~ <: Base[~]]](
                                                                                  op: BinaryOp.Op[A3, A] { type State[~ <: Base[~]] = St[~] },
                                                                                  state: St[S],
-                                                                                 aStream: patterns.Stream[S, A1],
-                                                                                 bStream: patterns.Stream[S, A2]
+                                                                                 aStream: Stream[S, A1],
+                                                                                 bStream: Stream[S, A2]
   ) (
     implicit widen: Widen2[A1, A2, A3]
   )

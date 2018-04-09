@@ -15,17 +15,16 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
 
 object ConstantImpl extends StreamFactory {
   final val typeId = 0x436F6E73 // "Cons"
 
-  def apply[S <: Base[S], A](elem: A): patterns.Stream[S, A] =
+  def apply[S <: Base[S], A](elem: A): Stream[S, A] =
     new StreamImpl[S, A](elem)
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val elem = PatElem.read[A](in)
     new StreamImpl[S, A](elem)
   }

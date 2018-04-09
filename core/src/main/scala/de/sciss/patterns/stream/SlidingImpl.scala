@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Sliding
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -25,7 +24,7 @@ import scala.collection.immutable.{IndexedSeq => Vec}
 object SlidingImpl extends StreamFactory {
   final val typeId = 0x536C6964 // "Slid"
 
-  def expand[S <: Base[S], A](pat: Sliding[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, Pat[A]] = {
+  def expand[S <: Base[S], A](pat: Sliding[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = {
     import pat._
     val id          = tx.newId()
     val inStream    = in  .expand[S]
@@ -41,11 +40,11 @@ object SlidingImpl extends StreamFactory {
       innerStream = innerStream, hasStep = hasStep, buf = buf, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id          = tx.readId(in, access)
-    val inStream    = patterns.Stream.read[S, A  ](in, access)
-    val sizeStream  = patterns.Stream.read[S, Int](in, access)
-    val stepStream  = patterns.Stream.read[S, Int](in, access)
+    val inStream    = Stream.read[S, A  ](in, access)
+    val sizeStream  = Stream.read[S, Int](in, access)
+    val stepStream  = Stream.read[S, Int](in, access)
     val innerStream = tx.readVar[Pat[A]](id, in)
     val hasStep     = tx.readBooleanVar(id, in)
     val buf         = tx.readVar[Vec[A]](id, in)(PatElem.vecSerializer)
@@ -54,14 +53,14 @@ object SlidingImpl extends StreamFactory {
 
     new StreamImpl[S, A](id = id, inStream = inStream, sizeStream = sizeStream, stepStream = stepStream,
       innerStream = innerStream, hasStep = hasStep, buf = buf, _hasNext = _hasNext, valid = valid)
-      .asInstanceOf[patterns.Stream[S, A]] // XXX TODO --- ugly
+      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
   private final class StreamImpl[S <: Base[S], A](
                                                    val id          : S#Id,
-                                                   val inStream    : patterns.Stream[S, A],
-                                                   val sizeStream  : patterns.Stream[S, Int],
-                                                   val stepStream  : patterns.Stream[S, Int],
+                                                   val inStream    : Stream[S, A],
+                                                   val sizeStream  : Stream[S, Int],
+                                                   val stepStream  : Stream[S, Int],
                                                    val innerStream : S#Var[Pat[A]],
                                                    val hasStep     : S#Var[Boolean],
                                                    val buf         : S#Var[Vec[A]],
@@ -152,7 +151,7 @@ object SlidingImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = innerStream()
       advance()
       res

@@ -15,7 +15,6 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -24,7 +23,7 @@ import scala.collection.immutable.{IndexedSeq => Vec}
 object PatSeqImpl extends StreamFactory {
   final val typeId = 0x53657120 // "Seq "
 
-  def apply[S <: Base[S], A](elem: Seq[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+  def apply[S <: Base[S], A](elem: Seq[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     val id    = tx.newId()
     val xs    = elem.toIndexedSeq
     val count = tx.newIntVar(id, 0)
@@ -32,7 +31,7 @@ object PatSeqImpl extends StreamFactory {
     new StreamImpl[S, A](id = id, xs = xs, count = count)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id    = tx.readId(in, access)
     val xs    = PatElem.vecSerializer[A].read(in)
     val count = tx.readIntVar(id, in)
@@ -71,7 +70,7 @@ object PatSeqImpl extends StreamFactory {
     def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = count() < xs.size
 
     def next ()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val i = count()
       count() = i + 1
       val res = xs(i)

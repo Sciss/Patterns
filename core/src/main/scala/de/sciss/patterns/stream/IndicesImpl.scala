@@ -15,14 +15,13 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Indices
 import de.sciss.serial.{DataInput, DataOutput}
 
 object IndicesImpl extends StreamFactory {
   final val typeId = 0x496E6469 // "Indi"
 
-  def expand[S <: Base[S], A](pat: Indices[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, Int] = {
+  def expand[S <: Base[S], A](pat: Indices[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = {
     import pat._
     val id        = tx.newId()
     val inStream  = in.expand[S]
@@ -31,18 +30,18 @@ object IndicesImpl extends StreamFactory {
     new StreamImpl[S, A](id = id, inStream = inStream, count = count)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id        = tx.newId()
-    val inStream  = patterns.Stream.read[S, A](in, access)
+    val inStream  = Stream.read[S, A](in, access)
     val count     = tx.newIntVar(id, 0)
 
     new StreamImpl[S, A](id = id, inStream = inStream, count = count)
-      .asInstanceOf[patterns.Stream[S, A]] // XXX TODO --- ugly
+      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
   private final class StreamImpl[S <: Base[S], A](
                                                    id      : S#Id,
-                                                   inStream: patterns.Stream[S, A],
+                                                   inStream: Stream[S, A],
                                                    count   : S#Var[Int]
   )
     extends Stream[S, Int] {

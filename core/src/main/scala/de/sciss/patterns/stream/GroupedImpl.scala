@@ -15,14 +15,13 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns
 import de.sciss.patterns.graph.Grouped
 import de.sciss.serial.{DataInput, DataOutput}
 
 object GroupedImpl extends StreamFactory {
   final val typeId = 0x47726F75 // "Grou"
 
-  def expand[S <: Base[S], A](pat: Grouped[A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, Pat[A]] = {
+  def expand[S <: Base[S], A](pat: Grouped[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = {
     import pat._
     val id          = tx.newId()
     val inStream    = in  .expand[S]
@@ -35,23 +34,23 @@ object GroupedImpl extends StreamFactory {
       _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
     val id          = tx.newId()
-    val inStream    = patterns.Stream.read[S, A  ](in, access)
-    val sizeStream  = patterns.Stream.read[S, Int](in, access)
+    val inStream    = Stream.read[S, A  ](in, access)
+    val sizeStream  = Stream.read[S, Int](in, access)
     val innerStream = tx.readVar[Pat[A]](id, in)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
 
     new StreamImpl[S, A](id = id, inStream = inStream, sizeStream = sizeStream, innerStream = innerStream,
       _hasNext = _hasNext, valid = valid)
-      .asInstanceOf[patterns.Stream[S, A]] // XXX TODO --- ugly
+      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
   private final class StreamImpl[S <: Base[S], A](
                                                    id          : S#Id,
-                                                   inStream    : patterns.Stream[S, A],
-                                                   sizeStream  : patterns.Stream[S, Int],
+                                                   inStream    : Stream[S, A],
+                                                   sizeStream  : Stream[S, Int],
                                                    innerStream : S#Var[Pat[A]],
                                                    _hasNext    : S#Var[Boolean],
                                                    valid       : S#Var[Boolean]
@@ -114,7 +113,7 @@ object GroupedImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
-      if (!hasNext) patterns.Stream.exhausted()
+      if (!hasNext) Stream.exhausted()
       val res = innerStream()
       advance()
       res
