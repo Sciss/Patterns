@@ -36,16 +36,17 @@ object HoldImpl extends StreamFactory {
       _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id          = tx.readId(in, access)
-    val inStream    = Stream.read[S, A      ](in, access)
+    val inStream    = Stream.read[S, Any      ](in, access)
     val holdStream  = Stream.read[S, Boolean](in, access)
     val hasIn       = tx.readBooleanVar(id, in)
-    val state       = PatElem.readVar[S, A](id, in)
+    val state       = PatElem.readVar[S, Any](id, in)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, holdStream = holdStream, hasIn = hasIn, state = state,
+    new StreamImpl[S, Any](id = id, inStream = inStream, holdStream = holdStream, hasIn = hasIn, state = state,
       _hasNext = _hasNext, valid = valid)
   }
 

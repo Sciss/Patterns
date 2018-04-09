@@ -20,5 +20,5 @@ import de.sciss.serial.DataInput
 trait StreamFactory {
   def typeId: Int
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A]
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Any]
 }

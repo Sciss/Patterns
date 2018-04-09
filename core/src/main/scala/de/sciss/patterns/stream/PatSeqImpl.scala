@@ -31,12 +31,13 @@ object PatSeqImpl extends StreamFactory {
     new StreamImpl[S, A](id = id, xs = xs, count = count)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id    = tx.readId(in, access)
-    val xs    = PatElem.vecSerializer[A].read(in)
+    val xs    = PatElem.vecSerializer[Any].read(in)
     val count = tx.readIntVar(id, in)
 
-    new StreamImpl[S, A](id = id, xs = xs, count = count)
+    new StreamImpl[S, Any](id = id, xs = xs, count = count)
   }
 
   private final class StreamImpl[S <: Base[S], A](

@@ -37,7 +37,8 @@ object IndexOfSliceImpl extends StreamFactory {
       fromValue = fromValue, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id          = tx.readId(in, access)
     val inStream    = Stream.read[S, Any](in, access)
     val subStream   = Stream.read[S, Any](in, access)
@@ -48,7 +49,6 @@ object IndexOfSliceImpl extends StreamFactory {
 
     new StreamImpl[S, Any, Any](id = id, inStream = inStream, subStream = subStream, fromStream = fromStream,
       fromValue = fromValue, _hasNext = _hasNext, valid = valid)
-      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
   private final class StreamImpl[S <: Base[S], A1, A2](

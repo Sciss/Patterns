@@ -24,9 +24,10 @@ object ConstantImpl extends StreamFactory {
   def apply[S <: Base[S], A](elem: A): Stream[S, A] =
     new StreamImpl[S, A](elem)
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
-    val elem = PatElem.read[A](in)
-    new StreamImpl[S, A](elem)
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+    val elem = PatElem.read[Any](in)
+    new StreamImpl[S, Any](elem)
   }
 
   private final class StreamImpl[S <: Base[S], A](elem: A) extends Stream[S, A] {

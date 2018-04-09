@@ -30,12 +30,13 @@ object PollImpl extends StreamFactory {
     new StreamImpl[S, A](inStream = inStream, gateStream = gateStream, labelStream = labelStream)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
-    val inStream    = Stream.read[S, A      ](in, access)
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+    val inStream    = Stream.read[S, Any    ](in, access)
     val gateStream  = Stream.read[S, Boolean](in, access)
     val labelStream = Stream.read[S, String ](in, access)
 
-    new StreamImpl[S, A](inStream = inStream, gateStream = gateStream, labelStream = labelStream)
+    new StreamImpl[S, Any](inStream = inStream, gateStream = gateStream, labelStream = labelStream)
   }
 
   private final class StreamImpl[S <: Base[S], A](

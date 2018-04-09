@@ -34,15 +34,16 @@ object ChooseImpl extends StreamFactory {
     new StreamImpl[S, A](id = id, inStream = inStream, choice = choice, _hasNext = _hasNext, valid = valid)(r)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id        = tx.readId(in, access)
-    val inStream  = Stream.read[S, A](in, access)
-    val choice    = PatElem.readVar[S, A](id, in)
+    val inStream  = Stream.read[S, Any](in, access)
+    val choice    = PatElem.readVar[S, Any](id, in)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
     val r         = TxnRandom.read[S](in, access)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, choice = choice, _hasNext = _hasNext, valid = valid)(r)
+    new StreamImpl[S, Any](id = id, inStream = inStream, choice = choice, _hasNext = _hasNext, valid = valid)(r)
   }
 
   private final class StreamImpl[S <: Base[S], A](

@@ -38,16 +38,17 @@ object ShuffleImpl extends StreamFactory {
       _hasNext = _hasNext, valid = valid)(r)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id        = tx.readId(in, access)
-    val inStream  = Stream.read[S, A](in, access)
+    val inStream  = Stream.read[S, Any](in, access)
     val count     = tx.readIntVar(id, in)
-    val shuffled  = tx.readVar[Vec[A]](id, in)(PatElem.vecSerializer)
+    val shuffled  = tx.readVar[Vec[Any]](id, in)(PatElem.vecSerializer)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
     val r         = TxnRandom.read[S](in, access)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, count = count, shuffled = shuffled,
+    new StreamImpl[S, Any](id = id, inStream = inStream, count = count, shuffled = shuffled,
       _hasNext = _hasNext, valid = valid)(r)
   }
 

@@ -34,15 +34,16 @@ object ApplyImpl extends StreamFactory {
       valid = valid, _hasNext = _hasNext, state = state)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id          = tx.readId(in, access)
-    val inStream    = Stream.read[S, Pat[A]](in, access)
+    val inStream    = Stream.read[S, Pat[Any]](in, access)
     val idxStream   = Stream.read[S, Int   ](in, access)
-    val state       = tx.newVar[Stream[S, A]](id, null)
+    val state       = tx.newVar[Stream[S, Any]](id, null)
     val _hasNext    = tx.newBooleanVar(id, false)
     val valid       = tx.newBooleanVar(id, false)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, idxStream = idxStream,
+    new StreamImpl[S, Any](id = id, inStream = inStream, idxStream = idxStream,
       valid = valid, _hasNext = _hasNext, state = state)
   }
 

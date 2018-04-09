@@ -35,14 +35,15 @@ object BinaryOpImpl extends StreamFactory {
     new StreamImpl[S, A1, A2, A3, A, op.State](op = op, state = state, aStream = aStream, bStream = bStream)(widen)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
-    val op          = PatElem.read[BinaryOp.Op[Any, A]](in)
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+    val op          = PatElem.read[BinaryOp.Op[Any, Any]](in)
     val state       = op.readState(in, access)
     val aStream     = Stream.read[S, Pat[Any]](in, access)
     val bStream     = Stream.read[S, Pat[Any]](in, access)
     val widen       = Aux.readT[Widen2[Any, Any, Any]](in)
 
-    new StreamImpl[S, Any, Any, Any, A, op.State](op = op, state = state, aStream = aStream, bStream = bStream)(widen)
+    new StreamImpl[S, Any, Any, Any, Any, op.State](op = op, state = state, aStream = aStream, bStream = bStream)(widen)
   }
 
   private final class StreamImpl[S <: Base[S], A1, A2, A3, A, St[~ <: Base[~]]](

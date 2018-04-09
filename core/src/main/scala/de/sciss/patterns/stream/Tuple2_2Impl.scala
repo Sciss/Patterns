@@ -27,9 +27,10 @@ object Tuple2_2Impl extends StreamFactory {
     new StreamImpl[S, A1, A](tupStream = tupStream)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
-    val tupStream = Stream.read[S, (Any, A)](in, access)
-    new StreamImpl[S, Any, A](tupStream = tupStream)
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+    val tupStream = Stream.read[S, (Any, Any)](in, access)
+    new StreamImpl[S, Any, Any](tupStream = tupStream)
   }
 
   private final class StreamImpl[S <: Base[S], A1, A](tupStream: Stream[S, (A1, A)])

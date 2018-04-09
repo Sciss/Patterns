@@ -28,10 +28,10 @@ object ItImpl extends StreamFactory {
     new StreamImpl[S, A](refStream = refStream)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
-    val refStream  = Stream.read[S, A](in, access)
-
-    new StreamImpl[S, A](refStream = refStream)
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+    val refStream  = Stream.read[S, Any](in, access)
+    new StreamImpl[S, Any](refStream = refStream)
   }
 
 

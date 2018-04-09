@@ -31,12 +31,12 @@ object FormatImpl extends StreamFactory {
     new StreamImpl[S](sStream = sStream, argStreams = argStreams)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val sStream     = Stream.read[S, String](in, access)
     val argStreams  = Serializer.indexedSeq[S#Tx, S#Acc, Stream[S, Any]].read(in, access)
 
     new StreamImpl[S](sStream = sStream, argStreams = argStreams)
-      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
   private final class StreamImpl[S <: Base[S]](
@@ -49,7 +49,7 @@ object FormatImpl extends StreamFactory {
 
     protected def writeData(out: DataOutput): Unit = {
       sStream.write(out)
-      Serializer.indexedSeq[S#Tx, S#Acc, Stream[S, Any]].write(argStreams, out)
+      ??? // Serializer.indexedSeq[S#Tx, S#Acc, Stream[S, Any]].write(argStreams, out)
     }
 
     def dispose()(implicit tx: S#Tx): Unit = {

@@ -36,15 +36,16 @@ object FlattenImpl extends StreamFactory {
       _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id          = tx.readId(in, access)
-    val inStream    = Stream.read[S, Pat[A]](in, access)
+    val inStream    = Stream.read[S, Pat[Any]](in, access)
     val hasInner    = tx.readBooleanVar(id, in)
-    val innerStream = tx.readVar[Stream[S, A]](id, in)
+    val innerStream = tx.readVar[Stream[S, Any]](id, in)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, hasInner = hasInner, innerStream = innerStream,
+    new StreamImpl[S, Any](id = id, inStream = inStream, hasInner = hasInner, innerStream = innerStream,
       _hasNext = _hasNext, valid = valid)
   }
 

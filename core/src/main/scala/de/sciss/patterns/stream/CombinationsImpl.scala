@@ -41,20 +41,20 @@ object CombinationsImpl extends StreamFactory {
       numbers = numbers, offsets = offsets, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id        = tx.readId(in, access)
-    val inStream  = Stream.read[S, A  ](in, access)
+    val inStream  = Stream.read[S, Any  ](in, access)
     val nStream   = Stream.read[S, Int](in, access)
-    val elements  = tx.readVar[Vec[A]]  (id, in)(PatElem.vecSerializer)
+    val elements  = tx.readVar[Vec[Any]]  (id, in)(PatElem.vecSerializer)
     val counts    = tx.readVar[Vec[Int]](id, in)(Serializer.immutable)
     val numbers   = tx.readVar[Vec[Int]](id, in)(Serializer.immutable)
     val offsets   = tx.readVar[Vec[Int]](id, in)(Serializer.immutable)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, nStream = nStream, elements = elements, counts = counts,
+    new StreamImpl[S, Any](id = id, inStream = inStream, nStream = nStream, elements = elements, counts = counts,
       numbers = numbers, offsets = offsets, _hasNext = _hasNext, valid = valid)
-      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
   // Adapted from scala.collection.SeqLike#CombinationsItr

@@ -34,14 +34,14 @@ object BindImpl extends StreamFactory {
     new StreamImpl[S](id = id, mapE = mapE, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id        = tx.readId(in, access)
     val mapE: Map[String, Stream[S, Any]] = Serializer.map[S#Tx, S#Acc, String, Stream[S, Any]].read(in, access)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
 
     new StreamImpl[S](id = id, mapE = mapE, _hasNext = _hasNext, valid = valid)
-      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
   private final class StreamImpl[S <: Base[S]](
@@ -56,7 +56,7 @@ object BindImpl extends StreamFactory {
 
     protected def writeData(out: DataOutput): Unit = {
       id      .write(out)
-      Serializer.map[S#Tx, S#Acc, String, Stream[S, Any]].write(mapE, out)
+      ??? // Serializer.map[S#Tx, S#Acc, String, Stream[S, Any]].write(mapE, out)
       _hasNext.write(out)
       valid   .write(out)
     }

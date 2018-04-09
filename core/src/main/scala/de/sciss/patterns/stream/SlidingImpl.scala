@@ -40,20 +40,20 @@ object SlidingImpl extends StreamFactory {
       innerStream = innerStream, hasStep = hasStep, buf = buf, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id          = tx.readId(in, access)
-    val inStream    = Stream.read[S, A  ](in, access)
+    val inStream    = Stream.read[S, Any  ](in, access)
     val sizeStream  = Stream.read[S, Int](in, access)
     val stepStream  = Stream.read[S, Int](in, access)
-    val innerStream = tx.readVar[Pat[A]](id, in)
+    val innerStream = tx.readVar[Pat[Any]](id, in)
     val hasStep     = tx.readBooleanVar(id, in)
-    val buf         = tx.readVar[Vec[A]](id, in)(PatElem.vecSerializer)
+    val buf         = tx.readVar[Vec[Any]](id, in)(PatElem.vecSerializer)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, sizeStream = sizeStream, stepStream = stepStream,
+    new StreamImpl[S, Any](id = id, inStream = inStream, sizeStream = sizeStream, stepStream = stepStream,
       innerStream = innerStream, hasStep = hasStep, buf = buf, _hasNext = _hasNext, valid = valid)
-      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
   private final class StreamImpl[S <: Base[S], A](

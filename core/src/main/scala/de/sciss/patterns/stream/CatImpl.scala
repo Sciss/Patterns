@@ -30,12 +30,13 @@ object CatImpl extends StreamFactory {
     new StreamImpl[S, A1, A2, A](aStream = aStream, bStream = bStream, widen = widen)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val aStream     = Stream.read[S, Any](in, access)
     val bStream     = Stream.read[S, Any](in, access)
-    val widen       = Aux.readT[Widen2[Any, Any, A]](in)
+    val widen       = Aux.readT[Widen2[Any, Any, Any]](in)
 
-    new StreamImpl[S, Any, Any, A](aStream = aStream, bStream = bStream, widen = widen)
+    new StreamImpl[S, Any, Any, Any](aStream = aStream, bStream = bStream, widen = widen)
   }
 
   private final class StreamImpl[S <: Base[S], A1, A2, A](

@@ -28,11 +28,10 @@ object BubbleImpl extends StreamFactory {
     new StreamImpl[S, A](inStream = inStream)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
-    val inStream = Stream.read[S, A](in, access)
-
-    new StreamImpl[S, A](inStream = inStream)
-      .asInstanceOf[Stream[S, A]]   // XXX TODO --- ugly
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+    val inStream = Stream.read[S, Any](in, access)
+    new StreamImpl[S, Any](inStream = inStream)
   }
 
   private final class StreamImpl[S <: Base[S], A](inStream: Stream[S, A])

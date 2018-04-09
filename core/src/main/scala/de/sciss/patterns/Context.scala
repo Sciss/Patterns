@@ -15,6 +15,8 @@ package de.sciss.patterns
 
 import de.sciss.lucre.stm.{Base, DummySerializerFactory, Plain, Random, TxnRandom}
 import de.sciss.patterns.graph.It
+import de.sciss.patterns.impl.StreamSerializer
+import de.sciss.serial.Serializer
 
 trait Context[S <: Base[S]] {
   def addStream[A](ref: AnyRef, stream: Stream[S, A])(implicit tx: S#Tx): Stream[S, A]
@@ -33,6 +35,8 @@ trait Context[S <: Base[S]] {
   def allocToken[A]()(implicit tx: S#Tx): It[A]
 
   def expand[A](pat: Pat[A])(implicit tx: S#Tx): Stream[S, A]
+
+  implicit def streamSerializer[A]: Serializer[S#Tx, S#Acc, Stream[S, A]]
 }
 
 object Context {
@@ -65,6 +69,8 @@ private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](syste
 
   protected final val id: I1#Id = i(tx0).newId()
 
+  private[this] val streamSer = new StreamSerializer[S, Any]()(this)
+
   private[this] val serFact = DummySerializerFactory[I1]
   import serFact.dummySerializer
 
@@ -80,7 +86,10 @@ private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](syste
 
   protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S]
 
-  // ---- abstract ----
+  // ---- impl ----
+
+  final def streamSerializer[A]: Serializer[S#Tx, S#Acc, Stream[S, A]] =
+    streamSer.asInstanceOf[StreamSerializer[S, A]]
 
   def addStream[A](ref: AnyRef, stream: Stream[S, A])(implicit tx: S#Tx): Stream[S, A] = {
     implicit val itx: I1#Tx = i(tx)

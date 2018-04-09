@@ -37,17 +37,18 @@ object WhiteImpl extends StreamFactory {
       valid = valid)(r, num)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id        = tx.readId(in, access)
-    val loStream  = Stream.read[S, A](in, access)
-    val hiStream  = Stream.read[S, A](in, access)
-    val state     = PatElem.makeVar[S, A](id)
+    val loStream  = Stream.read[S, Any](in, access)
+    val hiStream  = Stream.read[S, Any](in, access)
+    val state     = PatElem.makeVar[S, Any](id)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
     val r         = TxnRandom.read(in, access)
-    val num       = Aux.readT[Num[A]](in)
+    val num       = Aux.readT[Num[Any]](in)
 
-    new StreamImpl[S, A](id = id, loStream = loStream, hiStream = hiStream, state = state, _hasNext = _hasNext,
+    new StreamImpl[S, Any](id = id, loStream = loStream, hiStream = hiStream, state = state, _hasNext = _hasNext,
       valid = valid)(r, num)
   }
 

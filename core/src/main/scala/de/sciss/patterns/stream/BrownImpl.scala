@@ -40,19 +40,20 @@ object BrownImpl extends StreamFactory {
       valid = valid)(r, widen, num)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id          = tx.readId(in, access)
     val loStream    = Stream.read[S, Any](in, access)
     val hiStream    = Stream.read[S, Any](in, access)
-    val stepStream  = Stream.read[S, A](in, access)
-    val state       = PatElem.readVar[S, A](id, in)
+    val stepStream  = Stream.read[S, Any](in, access)
+    val state       = PatElem.readVar[S, Any](id, in)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
     val r           = TxnRandom.read[S](in, access)
-    val widen       = Aux.readT[Widen2[Any, Any, A]](in)
-    val num         = Aux.readT[Num[A]](in)
+    val widen       = Aux.readT[Widen2[Any, Any, Any]](in)
+    val num         = Aux.readT[Num[Any]](in)
 
-    new StreamImpl[S, Any, Any, A](id = id, loStream = loStream, hiStream = hiStream, stepStream = stepStream,
+    new StreamImpl[S, Any, Any, Any](id = id, loStream = loStream, hiStream = hiStream, stepStream = stepStream,
       state = state, _hasNext = _hasNext,
       valid = valid)(r, widen, num)
   }

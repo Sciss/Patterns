@@ -35,17 +35,18 @@ object ExpLinImpl extends StreamFactory {
       outLoStream = outLoStream, outHiStream = outHiStream)(widen, num)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val inStream    = Stream.read[S, Any](in, access)
     val inLoStream  = Stream.read[S, Any](in, access)
     val inHiStream  = Stream.read[S, Any](in, access)
     val outLoStream = Stream.read[S, Any](in, access)
     val outHiStream = Stream.read[S, Any](in, access)
 
-    val widen       = Aux.readT[Widen2[Any, Any, A]](in)
-    val num         = Aux.readT[NumDouble[A]]       (in)
+    val widen       = Aux.readT[Widen2[Any, Any, Any]](in)
+    val num         = Aux.readT[NumDouble[Any]]       (in)
 
-    new StreamImpl[S, Any, Any, A](inStream = inStream, inLoStream = inLoStream, inHiStream = inHiStream,
+    new StreamImpl[S, Any, Any, Any](inStream = inStream, inLoStream = inLoStream, inHiStream = inHiStream,
       outLoStream = outLoStream, outHiStream = outHiStream)(widen, num)
   }
 

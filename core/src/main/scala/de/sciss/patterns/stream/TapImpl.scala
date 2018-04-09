@@ -28,10 +28,11 @@ object TapImpl extends StreamFactory {
     new StreamImpl[S, A, A1](inStream = inStream, sideStream = sideStream)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
-    val inStream    = Stream.read[S, A  ](in, access)
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+    val inStream    = Stream.read[S, Any  ](in, access)
     val sideStream  = Stream.read[S, Any](in, access)
-    new StreamImpl[S, A, Any](inStream = inStream, sideStream = sideStream)
+    new StreamImpl[S, Any, Any](inStream = inStream, sideStream = sideStream)
   }
 
   private final class StreamImpl[S <: Base[S], A, A1](

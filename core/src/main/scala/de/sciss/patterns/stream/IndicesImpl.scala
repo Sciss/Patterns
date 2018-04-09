@@ -30,13 +30,13 @@ object IndicesImpl extends StreamFactory {
     new StreamImpl[S, A](id = id, inStream = inStream, count = count)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id        = tx.newId()
-    val inStream  = Stream.read[S, A](in, access)
+    val inStream  = Stream.read[S, Any](in, access)
     val count     = tx.newIntVar(id, 0)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, count = count)
-      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
+    new StreamImpl[S, Any](id = id, inStream = inStream, count = count)
   }
 
   private final class StreamImpl[S <: Base[S], A](

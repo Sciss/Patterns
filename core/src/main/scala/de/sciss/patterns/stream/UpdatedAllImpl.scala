@@ -34,15 +34,16 @@ object UpdatedAllImpl extends StreamFactory {
       state = state, valid = valid)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id          = tx.readId(in, access)
-    val inStream    = Stream.read[S, A  ](in, access)
+    val inStream    = Stream.read[S, Any](in, access)
     val idxStream   = Stream.read[S, Int](in, access)
-    val elemStream  = Stream.read[S, A  ](in, access)
-    val state       = tx.readVar[Stream[S, A]](id, in)
+    val elemStream  = Stream.read[S, Any](in, access)
+    val state       = tx.readVar[Stream[S, Any]](id, in)
     val valid       = tx.readBooleanVar(id, in)
 
-    new StreamImpl[S, A, A](id = id, inStream = inStream, idxStream = idxStream, elemStream = elemStream,
+    new StreamImpl[S, Any, Any](id = id, inStream = inStream, idxStream = idxStream, elemStream = elemStream,
       state = state, valid = valid)
   }
 

@@ -29,12 +29,12 @@ object Zip2Impl extends StreamFactory {
     new StreamImpl[S, A1, A2](aStream = aStream, bStream = bStream)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val aStream     = Stream.read[S, Any](in, access)
     val bStream     = Stream.read[S, Any](in, access)
 
     new StreamImpl[S, Any, Any](aStream = aStream, bStream = bStream)
-      .asInstanceOf[Stream[S, A]] // XXX TODO --- ugly
   }
 
 

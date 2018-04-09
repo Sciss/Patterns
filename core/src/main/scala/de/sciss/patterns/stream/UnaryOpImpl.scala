@@ -32,12 +32,13 @@ object UnaryOpImpl extends StreamFactory {
     new StreamImpl[S, A1, A, op.State](op = op, state = state, aStream = aStream)
   }
 
-  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
-    val op          = PatElem.read[UnaryOp.Op[Any, A]](in)
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+    val op          = PatElem.read[UnaryOp.Op[Any, Any]](in)
     val state       = op.readState(in, access)
     val aStream     = Stream.read[S, Pat[Any]](in, access)
 
-    new StreamImpl[S, Any, A, op.State](op = op, state = state, aStream = aStream)
+    new StreamImpl[S, Any, Any, op.State](op = op, state = state, aStream = aStream)
   }
 
   private final class StreamImpl[S <: Base[S], A1, A, St[~ <: Base[~]]](
