@@ -64,9 +64,8 @@ final class MapItStream[S <: Base[S], A](outer: Pat[Pat[A]], tx0: S#Tx)(implicit
       advance()
     }
 
-  def resetOuter()(implicit tx: S#Tx): Unit = if (_valid()) {
+  def resetOuter()(implicit tx: S#Tx): Unit = if (_valid.swap(false)) {
 //    logStream(s"$simpleString.resetOuter()")
-    _valid() = false
     outerStream.reset()
   }
 

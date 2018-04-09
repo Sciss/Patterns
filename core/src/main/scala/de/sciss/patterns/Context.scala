@@ -16,6 +16,7 @@ package de.sciss.patterns
 import de.sciss.lucre.stm.{Base, DummySerializerFactory, Plain, Random, TxnRandom}
 import de.sciss.patterns.graph.It
 import de.sciss.patterns.impl.StreamSerializer
+import de.sciss.patterns.stream.ItStreamSource
 import de.sciss.serial.Serializer
 
 trait Context[S <: Base[S]] {
@@ -26,6 +27,8 @@ trait Context[S <: Base[S]] {
   def mkOuterStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A]
 
   def provideOuterStream[A](token: Int, outer: S#Tx => Stream[S, A])(implicit tx: S#Tx): Unit
+
+  def withOuterStream[A, B](token: Int, source: ItStreamSource[S, A])(thunk: => B)(implicit tx: S#Tx): B
 
   /** Creates a new pseudo-random number generator. */
   def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: S#Tx): TxnRandom[S]
