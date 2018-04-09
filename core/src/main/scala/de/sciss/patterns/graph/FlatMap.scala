@@ -17,7 +17,7 @@ package graph
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.stream.FlatMapImpl
 
-final case class FlatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A], innerLevel: Int)
+final case class FlatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A] /* , innerLevel: Int */)
   extends Pattern[A] {
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =

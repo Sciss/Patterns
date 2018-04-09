@@ -284,11 +284,11 @@ final class PatNestedOps[A](private val x: Pat[Pat[A]]) extends AnyVal {
   def flatMap[B](f: Pat[A] => Pat[B]): Pat[B] = {
     val b     = Graph.builder
     val it    = b.allocToken[A]()
-    val level = b.level + 1
+//    val level = b.level + 1
     val inner = Graph {
       f(it)
     }
-    FlatMap(outer = x, it = it, inner = inner, innerLevel = level)
+    FlatMap(outer = x, it = it, inner = inner /*, innerLevel = level */)
   }
 
   def flatten: Pat[A] = Flatten(x)
