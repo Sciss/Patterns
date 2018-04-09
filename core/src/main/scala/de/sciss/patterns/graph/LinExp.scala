@@ -15,6 +15,7 @@ package de.sciss.patterns.graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, NumDouble, Widen2}
+import de.sciss.patterns.stream.LinExpImpl
 import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
 
 final case class LinExp[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
@@ -25,7 +26,7 @@ final case class LinExp[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
   override private[patterns] def aux: List[Aux] = widen :: num :: Nil
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    impl.LinExpImpl.expand(this)
+    LinExpImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT     = t(in)

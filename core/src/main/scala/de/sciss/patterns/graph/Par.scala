@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.graph.impl.TimeRef
+import de.sciss.patterns.impl.TimeRef
 import de.sciss.serial.DataOutput
 
 import scala.collection.immutable.{SortedMap => ISortedMap}

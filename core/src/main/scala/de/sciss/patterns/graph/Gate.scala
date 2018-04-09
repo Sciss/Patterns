@@ -15,10 +15,11 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.stream.GateImpl
 
 final case class Gate[A](in: Pat[A], gate: Pat[Boolean]) extends Pattern[A] {
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    impl.GateImpl.expand(this)
+    GateImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT   = t(in)

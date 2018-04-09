@@ -14,7 +14,7 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.stm.{Base, Disposable, Plain}
-import de.sciss.patterns.graph.impl.PatSeqImpl
+import de.sciss.patterns.stream.{ApplyImpl, ArithmSeqImpl, BinaryOpImpl, BindImpl, BrownImpl, CatImpl, ChooseImpl, CombinationsImpl, ConstantImpl, DifferentiateImpl, DistinctImpl, DropImpl, ExpExpImpl, ExpLinImpl, FlattenImpl, FormatImpl, GateImpl, GeomSeqImpl, GroupedImpl, HoldImpl, IndexOfSliceImpl, IndicesImpl, ItImpl, LengthImpl, LinExpImpl, LinLinImpl, PatSeqImpl, PollImpl, ShuffleImpl, SlidingImpl, SortedImpl, StreamFactory, StutterImpl, SumImpl, TakeImpl, TapImpl, Tuple2_1Impl, Tuple2_2Impl, UnaryOpImpl, UpdatedAllImpl, UpdatedImpl, WhiteImpl, Zip2Impl}
 import de.sciss.serial.{DataInput, DataOutput, Serializer, Writable}
 
 import scala.annotation.switch
@@ -33,7 +33,6 @@ object Stream {
   private final class Ser[S <: Base[S], A] extends Serializer[S#Tx, S#Acc, Stream[S, A]] {
     def read(in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
       val typeId = in.readInt()
-      import graph.impl._
       val f: StreamFactory = (typeId: @switch) match {
         case ApplyImpl        .typeId => ApplyImpl
         case ArithmSeqImpl    .typeId => ArithmSeqImpl

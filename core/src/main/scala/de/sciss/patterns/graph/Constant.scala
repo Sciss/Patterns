@@ -16,10 +16,11 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.Aux
+import de.sciss.patterns.stream.ConstantImpl
 
 final case class Constant[A](value: A) extends Pat[A] {
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    impl.ConstantImpl(value)
+    ConstantImpl(value)
 
   override def toString: String = value.toString
 

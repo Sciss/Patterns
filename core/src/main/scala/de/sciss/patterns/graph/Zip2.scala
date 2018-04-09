@@ -16,12 +16,13 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns
+import de.sciss.patterns.stream.Zip2Impl
 
 final case class Zip2[A1, A2](a: Pat[A1], b: Pat[A2])
   extends Pattern[(A1, A2)] {
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, (A1, A2)] =
-    impl.Zip2Impl.expand(this)
+    Zip2Impl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[(A1, A2)] = {
     val aT = t(a)

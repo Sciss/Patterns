@@ -3,7 +3,6 @@ package de.sciss.patterns
 import de.sciss.lucre.stm.Plain
 
 class MCESpec extends PatSpec {
-  import Types._
   import graph._
 
   "MCE" should work in {

@@ -15,10 +15,11 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.stream.IndicesImpl
 
 case class Indices[A](in: Pat[A]) extends Pattern[Int] {
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] =
-    impl.IndicesImpl.expand(this)
+    IndicesImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Int] = {
     val inT = t(in)

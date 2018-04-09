@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num, NumDouble, NumFrac, NumInt, Ord, Widen2}
+import de.sciss.patterns.stream.BinaryOpImpl
 import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.language.higherKinds
@@ -311,7 +312,7 @@ final case class BinaryOp[A1, A2, A3, A](op: BinaryOp.Op[A3, A], a: Pat[A1], b: 
   override private[patterns] def aux: List[Aux] = widen :: Nil
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    impl.BinaryOpImpl.expand(this)
+    BinaryOpImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val aT = t(a)

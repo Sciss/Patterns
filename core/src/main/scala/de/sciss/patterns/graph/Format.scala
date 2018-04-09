@@ -15,10 +15,11 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.stream.FormatImpl
 
 final case class Format(s: Pat[String], args: Pat[_]*) extends Pattern[String] {
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, String] =
-    impl.FormatImpl.expand(this)
+    FormatImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[String] = {
     val sT    = t(s)

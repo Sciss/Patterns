@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.stream.BindImpl
 
 object Bind {
   type Map = scala.collection.immutable.Map[String, Pat[_]]
@@ -24,7 +25,7 @@ object Bind {
 }
 final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Event] =
-    impl.BindImpl.expand(this)
+    BindImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Event] = {
     val entriesT = entries.map { case (key, value) => key -> t(value) }

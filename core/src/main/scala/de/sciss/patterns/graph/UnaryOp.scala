@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.{Base, TxnRandom}
 import de.sciss.patterns.Types.{Aux, Num, NumBool, NumDouble, NumFrac, NumInt, ToNum, Widen, WidenToDouble}
+import de.sciss.patterns.stream.UnaryOpImpl
 import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.language.higherKinds
@@ -323,7 +324,7 @@ final case class UnaryOp[A1, A](op: UnaryOp.Op[A1, A], a: Pat[A1])
   extends Pattern[A] { pat =>
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    impl.UnaryOpImpl.expand(this)
+    UnaryOpImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val aT = t(a)

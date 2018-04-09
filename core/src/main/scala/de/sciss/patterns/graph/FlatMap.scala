@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.graph.impl.MapItStream
+import de.sciss.patterns.stream.MapItStream
 import de.sciss.serial.DataOutput
 
 final case class FlatMap[A1, A] private[patterns](outer: Pat[Pat[A1]], it: It[A1], inner: Pat[A], innerLevel: Int)

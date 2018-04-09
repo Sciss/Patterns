@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.graph.impl.IndexItStream
+import de.sciss.patterns.stream.IndexItStream
 import de.sciss.serial.DataOutput
 
 import scala.annotation.tailrec

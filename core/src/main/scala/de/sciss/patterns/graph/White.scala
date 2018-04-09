@@ -16,6 +16,7 @@ package graph
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num}
+import de.sciss.patterns.stream.WhiteImpl
 
 final case class White[A](lo: Pat[A], hi: Pat[A])(implicit val num: Num[A])
   extends Pattern[A] { pat =>
@@ -23,7 +24,7 @@ final case class White[A](lo: Pat[A], hi: Pat[A])(implicit val num: Num[A])
   override private[patterns] def aux: List[Aux] = num :: Nil
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    impl.WhiteImpl.expand(this)
+    WhiteImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val loT = t(lo)

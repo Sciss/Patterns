@@ -1,0 +1,52 @@
+/*
+ *  Tuple2_2Impl.scala
+ *  (Patterns)
+ *
+ *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
+ *
+ *	This software is published under the GNU Lesser General Public License v2.1+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
+package de.sciss.patterns
+package stream
+
+import de.sciss.lucre.stm.Base
+import de.sciss.patterns
+import de.sciss.patterns.graph.Tuple2_2
+import de.sciss.serial.{DataInput, DataOutput}
+
+object Tuple2_2Impl extends StreamFactory {
+  final val typeId = 0x54325F32 // "T2_2"
+
+  def expand[S <: Base[S], A1, A](pat: Tuple2_2[A1, A])(implicit ctx: Context[S], tx: S#Tx): patterns.Stream[S, A] = {
+    import pat._
+    val tupStream = in.expand[S]
+    new StreamImpl[S, A1, A](tupStream = tupStream)
+  }
+
+  def readIdentified[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit tx: S#Tx): patterns.Stream[S, A] = {
+    val tupStream = patterns.Stream.read[S, (Any, A)](in, access)
+    new StreamImpl[S, Any, A](tupStream = tupStream)
+  }
+
+  private final class StreamImpl[S <: Base[S], A1, A](tupStream: patterns.Stream[S, (A1, A)])
+    extends Stream[S, A] {
+
+    protected def typeId: Int = Tuple2_2Impl.typeId
+
+    protected def writeData(out: DataOutput): Unit =
+      tupStream.write(out)
+
+    def dispose()(implicit tx: S#Tx): Unit =
+      tupStream.dispose()
+
+    def reset()(implicit tx: S#Tx): Unit = tupStream.reset()
+
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean  = tupStream.hasNext
+    def next ()(implicit ctx: Context[S], tx: S#Tx): A        = tupStream.next()._2
+  }
+}

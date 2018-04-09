@@ -15,7 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.graph.impl.SortWithItStream
+import de.sciss.patterns.stream.SortWithItStream
 import de.sciss.serial.DataOutput
 
 import scala.util.control.Breaks

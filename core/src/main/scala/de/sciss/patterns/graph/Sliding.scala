@@ -14,12 +14,13 @@
 package de.sciss.patterns.graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.stream.SlidingImpl
 import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
 
 final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends Pattern[Pat[A]] { pat =>
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] =
-    impl.SlidingImpl.expand(this)
+    SlidingImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Pat[A]] = {
     val inT   = t(in)

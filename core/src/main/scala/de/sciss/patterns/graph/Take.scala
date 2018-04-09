@@ -15,11 +15,12 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.stream.TakeImpl
 
 final case class Take[A](in: Pat[A], length: Pat[Int]) extends Pattern[A] {
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    impl.TakeImpl.expand(this)
+    TakeImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT     = t(in)     .transform(t)

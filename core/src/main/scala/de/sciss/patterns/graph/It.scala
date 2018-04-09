@@ -15,11 +15,12 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.stream.ItImpl
 
 /** A glue element to make `map` and `flatMap` work. */
 final case class It[A](token: Int) extends Pattern[A] { pat =>
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    impl.ItImpl.expand(this)
+    ItImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = this
 

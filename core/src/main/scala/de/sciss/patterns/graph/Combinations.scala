@@ -15,11 +15,12 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.stream.CombinationsImpl
 
 final case class Combinations[A](in: Pat[A], n: Pat[Int]) extends Pattern[Pat[A]] {
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] =
-    impl.CombinationsImpl.expand(this)
+    CombinationsImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Pat[A]] = {
     val inT = t(in)

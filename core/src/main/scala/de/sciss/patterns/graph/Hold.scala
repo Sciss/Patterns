@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.stream.HoldImpl
 
 /** A pattern that holds (and repeats) input values whenever `hold` is true.
   * With the default of constant `true`, the pattern will repeat the first
@@ -22,7 +23,7 @@ import de.sciss.lucre.stm.Base
   */
 final case class Hold[A](in: Pat[A], hold: Pat[Boolean] = true) extends Pattern[A] {
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    impl.HoldImpl.expand(this)
+    HoldImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT   = t(in)

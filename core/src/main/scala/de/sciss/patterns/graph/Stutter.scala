@@ -15,12 +15,13 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.stream.StutterImpl
 
 final case class Stutter[A](in: Pat[A], n: Pat[Int])
   extends Pattern[A] {
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
-    impl.StutterImpl.expand(this)
+    StutterImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val inT = t(in) .transform(t)
