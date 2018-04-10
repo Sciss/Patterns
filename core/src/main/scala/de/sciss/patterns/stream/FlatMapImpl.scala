@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.stm.{Base, RefSet}
 import de.sciss.patterns.graph.FlatMap
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -23,13 +23,13 @@ object FlatMapImpl extends StreamFactory {
 
   def expand[S <: Base[S], A1, A](pat: FlatMap[A1, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
-    val mapItStreams = ctx.mkInMemorySet[Stream[S, A1]]
+    val mapItStreams = tx.newInMemorySet[Stream[S, A1]]
     new StreamNew[S, A1, A](ctx, tx, outer = outer, tokenId = it.token, inner = inner, mapItStreams = mapItStreams)
   }
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val mapItStreams  = ctx.mkInMemorySet[Stream[S, Any]]
+    val mapItStreams  = tx.newInMemorySet[Stream[S, Any]]
     val outer         = Pat.serializer[Pat[Any]].read(in)
     val tokenId       = in.readInt()
     val innerStream   = Stream.read[S, Any](in, access)

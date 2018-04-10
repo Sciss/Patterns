@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.stm.{Base, RefSet}
 import de.sciss.patterns.graph.LoopWithIndex
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -25,7 +25,7 @@ object LoopWithIndexImpl extends StreamFactory {
 
   def expand[S <: Base[S], A](pat: LoopWithIndex[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
-    val itStreams   = ctx.mkInMemorySet[Stream[S, Int]]
+    val itStreams   = tx.newInMemorySet[Stream[S, Int]]
     val id          = tx.newId()
     val nStream     = n.expand[S]
     val nValue      = tx.newIntVar(id, 0)
@@ -39,7 +39,7 @@ object LoopWithIndexImpl extends StreamFactory {
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val itStreams   = ctx.mkInMemorySet[Stream[S, Int]]
+    val itStreams   = tx.newInMemorySet[Stream[S, Int]]
     val id          = tx.readId(in, access)
     val nStream     = Stream.read[S, Int](in, access)
     val tokenId     = in.readInt()

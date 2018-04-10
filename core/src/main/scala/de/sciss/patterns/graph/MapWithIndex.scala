@@ -15,7 +15,6 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.stream.{IndexItStream, MapItStream}
 import de.sciss.serial.DataOutput
 
 final case class MapWithIndex[A1, A] private[patterns](outer: Pat[Pat[A1]], itIn: It[A1], itIdx: It[Int], inner: Pat[A])

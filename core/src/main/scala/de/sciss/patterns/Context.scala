@@ -15,7 +15,7 @@ package de.sciss.patterns
 
 import de.sciss.lucre.stm.{Base, Plain, Random, TxnRandom}
 import de.sciss.patterns.graph.It
-import de.sciss.patterns.impl.{PlainInMemoryMap, PlainInMemorySet, StreamSerializer}
+import de.sciss.patterns.impl.StreamSerializer
 import de.sciss.patterns.stream.ItStreamSource
 import de.sciss.serial.Serializer
 
@@ -38,9 +38,6 @@ trait Context[S <: Base[S]] {
   def allocToken[A]()(implicit tx: S#Tx): It[A]
 
   def expand[A](pat: Pat[A])(implicit tx: S#Tx): Stream[S, A]
-
-  def mkInMemorySet[A]    : RefSet[S, A]
-  def mkInMemoryMap[A, B] : RefMap[S, A, B]
 
   implicit def streamSerializer[A]: Serializer[S#Tx, S#Acc, Stream[S, A]]
 }
@@ -67,10 +64,6 @@ object Context {
       tokenId += 1
       It(res)
     }
-
-    def mkInMemorySet[A]: RefSet[S, A] = new PlainInMemorySet[A]
-
-    def mkInMemoryMap[A, B]: RefMap[S, A, B] = new PlainInMemoryMap[A, B]
   }
 }
 
@@ -82,8 +75,8 @@ private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](syste
   private[this] val streamSer = new StreamSerializer[S, Any]()(this)
 
 //  private[this] val streamMap = i(tx0).newVar[Map[AnyRef, List[Stream[S, _]]]](id, Map.empty)
-  private[this] val tokenMap  = mkInMemoryMap[Int, List[ItStreamSource[S, _]]]
-  private[this] val seedMap   = mkInMemoryMap[AnyRef, Long]
+  private[this] val tokenMap  = tx0.newInMemoryMap[Int, List[ItStreamSource[S, _]]]
+  private[this] val seedMap   = tx0.newInMemoryMap[AnyRef, Long]
 
   // ---- abstract ----
 

@@ -31,9 +31,9 @@ object CombinationsImpl extends StreamFactory {
     val inStream  = in.expand[S]
     val nStream   = n .expand[S]
     val elements  = tx.newVar[Vec[A]]  (id, Vector.empty)(PatElem.vecSerializer)
-    val counts    = tx.newVar[Vec[Int]](id, Vector.empty)(Serializer.immutable) // Serial issue #1
-    val numbers   = tx.newVar[Vec[Int]](id, Vector.empty)(Serializer.immutable) // Serial issue #1
-    val offsets   = tx.newVar[Vec[Int]](id, Vector.empty)(Serializer.immutable) // Serial issue #1
+    val counts    = tx.newVar[Vec[Int]](id, Vector.empty)
+    val numbers   = tx.newVar[Vec[Int]](id, Vector.empty)
+    val offsets   = tx.newVar[Vec[Int]](id, Vector.empty)
     val _hasNext  = tx.newBooleanVar(id, false)
     val valid     = tx.newBooleanVar(id, false)
 
@@ -47,9 +47,9 @@ object CombinationsImpl extends StreamFactory {
     val inStream  = Stream.read[S, Any  ](in, access)
     val nStream   = Stream.read[S, Int](in, access)
     val elements  = tx.readVar[Vec[Any]]  (id, in)(PatElem.vecSerializer)
-    val counts    = tx.readVar[Vec[Int]](id, in)(Serializer.immutable)
-    val numbers   = tx.readVar[Vec[Int]](id, in)(Serializer.immutable)
-    val offsets   = tx.readVar[Vec[Int]](id, in)(Serializer.immutable)
+    val counts    = tx.readVar[Vec[Int]](id, in)
+    val numbers   = tx.readVar[Vec[Int]](id, in)
+    val offsets   = tx.readVar[Vec[Int]](id, in)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
 

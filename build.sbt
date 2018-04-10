@@ -7,16 +7,16 @@ val deps = new {
   val core = new {
     val numbers             = "0.1.5"
     val optional            = "1.0.0"
-    val serial              = "1.0.3"
+    val serial              = "1.1.0-SNAPSHOT"
     val lucre               = "3.6.0-SNAPSHOT"
   }
   val lucre = new {
     val soundProcesses      = "3.18.0-SNAPSHOT"
   }
   val test = new {
-    val scalaCollider       = "1.24.0"
+    val scalaCollider       = "1.25.0-SNAPSHOT"
     val kollFlitz           = "0.2.2"
-    val scalaColliderSwing  = "1.36.0"
+    val scalaColliderSwing  = "1.37.0-SNAPSHOT"
     val scalaTest           = "3.0.5"
     val ugens               = "1.18.0"
   }
