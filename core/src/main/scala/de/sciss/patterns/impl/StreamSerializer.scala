@@ -47,6 +47,7 @@ final class StreamSerializer[S <: Base[S], A]()(implicit ctx: Context[S])
       case ShuffleImpl      .typeId => ShuffleImpl
       case SlidingImpl      .typeId => SlidingImpl
       case SortedImpl       .typeId => SortedImpl
+      case SortWithImpl     .typeId => SortWithImpl
       case StutterImpl      .typeId => StutterImpl
       case SumImpl          .typeId => SumImpl
       case TakeImpl         .typeId => TakeImpl

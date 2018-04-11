@@ -131,15 +131,12 @@ object PatMapImpl extends StreamFactory {
     final def pingFromIt(stream: Stream[S, A1])(implicit tx: S#Tx): Unit =
       mapItStreams.add(stream)
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
-      if (!valid()) {
-        logStream("PatMap.iterator.validate()")
-        valid() = true
-        buildNext() // advance()
-      }
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+      logStream("PatMap.iterator.validate()")
+      buildNext() // advance()
+    }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid()) {
-      valid() = false
+    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
       mapItStreams /* ctx.getStreams(ref) */.foreach {
         case m: MapItStream[S, _] => m.resetOuter()
       }
