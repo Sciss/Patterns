@@ -17,7 +17,7 @@ package stream
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.Combinations
 import de.sciss.patterns.impl.PatElem
-import de.sciss.serial.{DataInput, DataOutput, Serializer}
+import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.collection.mutable
