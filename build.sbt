@@ -1,22 +1,22 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.1.1-SNAPSHOT"
-lazy val mimaVersion        = "0.1.0"
+lazy val projectVersion     = "0.2.0-SNAPSHOT"
+lazy val mimaVersion        = "0.2.0"
 
 val deps = new {
   val core = new {
     val numbers             = "0.1.5"
     val optional            = "1.0.0"
-    val serial              = "1.1.0-SNAPSHOT"
+    val serial              = "1.1.0"
     val lucre               = "3.6.0-SNAPSHOT"
   }
   val lucre = new {
     val soundProcesses      = "3.18.0-SNAPSHOT"
   }
   val test = new {
-    val scalaCollider       = "1.25.0-SNAPSHOT"
+    val scalaCollider       = "1.25.0"
     val kollFlitz           = "0.2.2"
-    val scalaColliderSwing  = "1.37.0-SNAPSHOT"
+    val scalaColliderSwing  = "1.37.0"
     val scalaTest           = "3.0.5"
     val ugens               = "1.18.0"
   }
