@@ -1,0 +1,144 @@
+/*
+ *  ParImpl.scala
+ *  (Patterns)
+ *
+ *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
+ *
+ *	This software is published under the GNU Lesser General Public License v2.1+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
+package de.sciss.patterns
+package stream
+
+import de.sciss.lucre.stm.{Base, Plain}
+import de.sciss.patterns.graph.Par
+import de.sciss.patterns.impl.TimeRef
+import de.sciss.serial.{DataInput, DataOutput, Serializer}
+
+import scala.collection.immutable.{SortedMap => ISortedMap}
+
+object ParImpl extends StreamFactory {
+  final val typeId = 0x50617220 // "Par "
+
+  private implicit def pqSer[S <: Base[S]]: Serializer[S#Tx, S#Acc, ISortedMap[TimeRef, Stream[S, Event]]] =
+    anyPQSer.asInstanceOf[Serializer[S#Tx, S#Acc, ISortedMap[TimeRef, Stream[S, Event]]]]
+
+  private object anyPQSer extends Serializer[Plain#Tx, Plain#Acc, ISortedMap[TimeRef, Stream[Plain, Event]]] {
+    def write(m: ISortedMap[TimeRef, Stream[Plain, Event]], out: DataOutput): Unit = ???
+
+    def read(in: DataInput, access: Unit)(implicit tx: Plain): ISortedMap[TimeRef, Stream[Plain, Event]] = ???
+  }
+
+  def expand[S <: Base[S]](pat: Par)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Event] = {
+    import pat._
+    val id          = tx.newId()
+    val inStream    = in.expand[S]
+    val pq          = tx.newVar[ISortedMap[TimeRef, Stream[S, Event]]](id, ISortedMap.empty)
+    val elem        = tx.newVar[Event](id, Event.empty)
+    val _hasNext    = tx.newBooleanVar(id, false)
+    val valid       = tx.newBooleanVar(id, false)
+
+    new StreamImpl[S](id = id, inStream = inStream, pq = pq, elem = elem, _hasNext = _hasNext, valid = valid)
+  }
+
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+    val id          = tx.readId(in, access)
+    val inStream    = Stream.read[S, Pat[Event]](in, access)
+    val pq          = tx.readVar[ISortedMap[TimeRef, Stream[S, Event]]](id, in)
+    val elem        = tx.readVar[Event](id, in)
+    val _hasNext    = tx.readBooleanVar(id, in)
+    val valid       = tx.readBooleanVar(id, in)
+
+    new StreamImpl[S](id = id, inStream = inStream, pq = pq, elem = elem, _hasNext = _hasNext, valid = valid)
+  }
+
+  private final class StreamImpl[S <: Base[S]](
+                                               id       : S#Id,
+                                               inStream : Stream[S, Pat[Event]],
+                                               pq       : S#Var[ISortedMap[TimeRef, Stream[S, Event]]], // XXX TODO, use SkipList.Map
+                                               elem     : S#Var[Event],
+                                               _hasNext : S#Var[Boolean],
+                                               valid    : S#Var[Boolean]
+                                              ) extends Stream[S, Event] {
+    protected def typeId: Int = ParImpl.typeId
+
+    protected def writeData(out: DataOutput): Unit = {
+      id       .write(out)
+      inStream .write(out)
+      pq       .write(out)
+      elem     .write(out)
+      _hasNext .write(out)
+      valid    .write(out)
+    }
+
+    def dispose()(implicit tx: S#Tx): Unit = {
+      id       .dispose()
+      inStream .dispose()
+      pq       .dispose()
+      elem     .dispose()
+      _hasNext .dispose()
+      valid    .dispose()
+    }
+
+    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+      inStream.reset()
+    }
+
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+      pq()      = ISortedMap.empty
+
+      var refCnt = 0
+      val _in = inStream
+      while (_in.hasNext) {
+        val pat = _in.next()
+        val it = pat.expand[S]
+        if (it.hasNext) {
+          pq() = pq() + (new TimeRef(refCnt) -> it)
+          refCnt += 1
+        }
+      }
+
+      advance()
+    }
+
+    private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit =
+      if (pq().nonEmpty) {
+        val (ref, it) = pq().head
+        pq()      = pq().tail
+        val _elem = it.next()
+
+        elem()    = _elem
+        val d     = math.max(0.0, Event.delta(_elem))
+        val now   = ref.time
+        if (it.hasNext) {
+          val refNew = ref.advance(d)
+          pq() = pq() + (refNew -> it)
+        }
+        if (pq().nonEmpty) {
+          val nextTime = pq().firstKey.time
+          elem() = elem() + (Event.keyDelta -> (nextTime - now))
+        }
+        _hasNext() = true
+
+      } else {
+        _hasNext() = false
+      }
+
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+      validate()
+      _hasNext()
+    }
+
+    def next()(implicit ctx: Context[S], tx: S#Tx): Event = {
+      if (!hasNext) Stream.exhausted()
+      val res = elem()
+      advance()
+      res
+    }
+  }
+}

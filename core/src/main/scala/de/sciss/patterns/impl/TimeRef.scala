@@ -14,6 +14,8 @@
 package de.sciss.patterns
 package impl
 
+import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+
 object TimeRef {
   implicit object ord extends Ordering[TimeRef] {
     def compare(x: TimeRef, y: TimeRef): Int =
@@ -21,7 +23,20 @@ object TimeRef {
         if (x.id < y.id  ) -1 else if (x.id   > y.id  ) 1 else 0
       }
   }
+
+  implicit object ser extends ImmutableSerializer[TimeRef] {
+    def write(ref: TimeRef, out: DataOutput): Unit = {
+      out.writeInt    (ref.id   )
+      out.writeDouble (ref.time )
+    }
+
+    def read(in: DataInput): TimeRef = {
+      val id    = in.readInt()
+      val time  = in.readDouble()
+      TimeRef(id = id, time = time)
+    }
+  }
 }
-final case class TimeRef(id: Int) {
-  var time: Double = 0.0
+final case class TimeRef(id: Int, time: Double = 0.0) {
+  def advance(delta: Double): TimeRef = copy(id = id, time = time + delta)
 }
