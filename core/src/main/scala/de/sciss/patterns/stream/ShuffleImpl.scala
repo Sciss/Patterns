@@ -73,6 +73,7 @@ object ShuffleImpl extends StreamFactory {
       shuffled.write(out)
       _hasNext.write(out)
       valid   .write(out)
+      r       .write(out)
     }
 
     def dispose()(implicit tx: S#Tx): Unit = {

@@ -183,7 +183,7 @@ object LoopWithIndexImpl extends StreamFactory {
         val ihn = innerStream.hasNext
         _hasNext() = ihn
         if (!ihn) {
-          buildNext(adv = adv)
+          buildNext(adv = true)
         }
       }
     }

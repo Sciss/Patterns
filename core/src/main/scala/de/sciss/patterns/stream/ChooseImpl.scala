@@ -65,6 +65,7 @@ object ChooseImpl extends StreamFactory {
       choice  .write(out)
       _hasNext.write(out)
       valid   .write(out)
+      r       .write(out)
     }
 
     def dispose()(implicit tx: S#Tx): Unit = {
@@ -73,6 +74,7 @@ object ChooseImpl extends StreamFactory {
       choice  .dispose()
       _hasNext.dispose()
       valid   .dispose()
+      r       .dispose()
     }
 
     def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {

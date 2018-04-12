@@ -15,11 +15,9 @@ package de.sciss.patterns
 
 import de.sciss.patterns.graph.It
 
-import scala.collection.immutable.{IndexedSeq => Vec}
-
 object Graph {
   trait Builder {
-    def addPattern(p: Pattern[_]): Unit
+//    def addPattern(p: Pattern[_]): Unit
 
     def allocToken[A](): It[A]
 
@@ -27,7 +25,7 @@ object Graph {
 
 //    def level: Int
 
-    def visit[P](ref: AnyRef, init: => P): P
+//    def visit[P](ref: AnyRef, init: => P): P
   }
 
   /** This is analogous to `SynthGraph.Builder` in ScalaCollider. */
@@ -43,11 +41,11 @@ object Graph {
     final val isOutside = true
 //    final val level     = 0
 
-    def addPattern(p: Pattern[_]): Unit = ()
+//    def addPattern(p: Pattern[_]): Unit = ()
 
     def allocToken[A](): It[A] = outOfContext
 
-    def visit[P](ref: AnyRef, init: => P): P = outOfContext
+//    def visit[P](ref: AnyRef, init: => P): P = outOfContext
   }
 
   def apply[A](thunk: => Pat[A]): Pat[A] /* Graph[A] */ = {
@@ -63,18 +61,20 @@ object Graph {
   }
 
   private[this] final class BuilderImpl[A](val parent: Builder) extends Builder {
-    private[this] val lazies    = Vec.newBuilder[Pattern[_]]
-    private[this] var sourceMap = Map.empty[AnyRef, Any]
+//    private[this] val lazies    = Vec.newBuilder[Pattern[_]]
+//    private[this] var sourceMap = Map.empty[AnyRef, Any]
     private[this] var tokenId   = 0
 
     def isOutside : Boolean = false
 //    val level     : Int     = parent.level + 1
 
+    // $COVERAGE-OFF$
     override def toString = s"patterns.Graph.Builder@${hashCode.toHexString}"
+    // $COVERAGE-ON$
 
 //    def build(out: Pat[A]): Graph[A] = Graph(lazies.result(), out)
 
-    def addPattern(p: Pattern[_]): Unit = lazies += p
+//    def addPattern(p: Pattern[_]): Unit = lazies += p
 
     def allocToken[U](): It[U] =
       if (parent.isOutside) {
@@ -85,16 +85,16 @@ object Graph {
         parent.allocToken()
       }
 
-    def visit[P](ref: AnyRef, init: => P): P = {
-      // log(s"visit  ${ref.hashCode.toHexString}")
-      sourceMap.getOrElse(ref, {
-        // log(s"expand ${ref.hashCode.toHexString}...")
-        val exp    = init
-        // log(s"...${ref.hashCode.toHexString} -> ${exp.hashCode.toHexString} ${printSmart(exp)}")
-        sourceMap += ref -> exp
-        exp
-      }).asInstanceOf[P] // not so pretty...
-    }
+//    def visit[P](ref: AnyRef, init: => P): P = {
+//      // log(s"visit  ${ref.hashCode.toHexString}")
+//      sourceMap.getOrElse(ref, {
+//        // log(s"expand ${ref.hashCode.toHexString}...")
+//        val exp    = init
+//        // log(s"...${ref.hashCode.toHexString} -> ${exp.hashCode.toHexString} ${printSmart(exp)}")
+//        sourceMap += ref -> exp
+//        exp
+//      }).asInstanceOf[P] // not so pretty...
+//    }
   }
 }
 

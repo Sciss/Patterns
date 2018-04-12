@@ -8,7 +8,7 @@ object BindTest extends App {
 
   val b     = Graph {
     val pitch = Brown(30, 140, 4).take(10)
-    val dur = Pat.loop(4)(Seq(1.0, 1.2, 1.4))
+    val dur = Pat.loop(4)(Pat(1.0, 1.2, 1.4))
     Bind("pitch" -> pitch, "dur" -> dur)
   }
 

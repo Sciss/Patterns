@@ -18,6 +18,7 @@ import de.sciss.lucre.stm.Base
 import de.sciss.patterns.stream.PatSeqImpl
 
 final case class PatSeq[A](elems: A*) extends Pattern[A] {
+  // $COVERAGE-OFF$
   private def simpleString: String = {
     val xs = elems.iterator.take(5).toList
     val es = if (xs.lengthCompare(5) == 0) xs.init.mkString("", ", ", ", ...")
@@ -26,6 +27,7 @@ final case class PatSeq[A](elems: A*) extends Pattern[A] {
   }
 
   override def toString: String = simpleString
+  // $COVERAGE-ON$
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     PatSeqImpl(elems)

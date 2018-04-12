@@ -79,7 +79,9 @@ object CatImpl extends StreamFactory {
         val bVal = bStream.next()
         widen.widen2(bVal)
       }
+      // $COVERAGE-OFF$
       logStream(s"Cat.iterator.next(); ai.hasNext = $ahn; res = $res") // ${stream.hashCode().toHexString}
+      // $COVERAGE-ON$
       res
     }
   }

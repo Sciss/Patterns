@@ -82,7 +82,6 @@ private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](syste
 
   private[this] val streamSer = new StreamSerializer[S, Any]()(this)
 
-//  private[this] val streamMap = i(tx0).newVar[Map[AnyRef, List[Stream[S, _]]]](id, Map.empty)
   private[this] val tokenMap  = tx0.newInMemoryMap[Int, List[ItStreamSource[S, _]]]
   private[this] val seedMap   = tx0.newInMemoryMap[AnyRef, Long]
 
@@ -130,17 +129,20 @@ private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](syste
   }
 
   def mkItStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A] = {
-    //    implicit val itx: I1#Tx = i(tx)
     val sources             = tokenMap.get(token).get
     val source              = sources.head
     val res0: Stream[S, _]  = source.mkItStream()(this, tx)
     val res                 = res0.asInstanceOf[Stream[S, A]]
+    // $COVERAGE-OFF$
     logStream(s"Context.mkItStream($token) = $res")
+    // $COVERAGE-ON$
     res
   }
 
   def registerItStream[A](it: ItStream[S, A])(implicit tx: S#Tx): Unit = {
+    // $COVERAGE-OFF$
     logStream(s"Context.registerItStream($it)")
+    // $COVERAGE-ON$
     val token               = it.token
     val sources             = tokenMap.get(token).get
     val source: ItStreamSource[S, _] = sources.head
@@ -148,7 +150,6 @@ private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](syste
   }
 
   def mkRandom(ref: AnyRef)(implicit tx: S#Tx): TxnRandom[S] = {
-//    implicit val itx: I1#Tx = i(tx)
     val seed = seedMap.get(ref).getOrElse {
       val res = nextSeed()
       seedMap.put(ref, res)

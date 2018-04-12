@@ -42,7 +42,7 @@ object WhiteImpl extends StreamFactory {
     val id        = tx.readId(in, access)
     val loStream  = Stream.read[S, Any](in, access)
     val hiStream  = Stream.read[S, Any](in, access)
-    val state     = PatElem.makeVar[S, Any](id)
+    val state     = PatElem.readVar[S, Any](id, in)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
     val r         = TxnRandom.read(in, access)

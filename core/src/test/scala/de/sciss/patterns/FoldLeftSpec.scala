@@ -13,7 +13,7 @@ class FoldLeftSpec extends PatSpec {
     val in2 = Seq(Seq(0, 6, 7), Seq(2), Seq(1, 3, 5))
 
     val pat2 = Graph {
-      val inPat = in2.map(x => Pat(x: _*)): Pat[Pat[Int]]
+      val inPat = Pat(in2.map(x => Pat(x: _*)): _*) // Pat[Pat[Int]]
       val hd    = inPat.take()
       val tl    = inPat.tail
       val foo = tl.foldLeft(hd) { (yi, xi) => yi ++ Pat(xi) }

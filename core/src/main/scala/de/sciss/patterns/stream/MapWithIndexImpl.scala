@@ -161,7 +161,9 @@ object MapWithIndexImpl extends StreamFactory {
     }
 
     private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+      // $COVERAGE-OFF$
       logStream("MapWithIndex.iterator.validate()")
+      // $COVERAGE-ON$
       buildNext()
     }
 

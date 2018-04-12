@@ -123,7 +123,7 @@ class RonTupleSpec extends PatSpec {
     assert(plain === Seq(Seq(1, 2, 3, 7), Seq(1, 2, 3, 8), Seq(4, 5, 6, 7), Seq(4, 5, 6, 8)))
 
     val outPat = Graph {
-      val aInPat: Pat[Pat[Int]]  = aInSeq.map(xs => Pat[Int](xs: _*))
+      val aInPat: Pat[Pat[Int]]  = Pat(aInSeq.map(xs => Pat[Int](xs: _*)): _*)
       val bInPat: Pat[Int]       = Pat[Int](bInSeq: _*)
       directProduct_Pat(aInPat, bInPat)
     }
@@ -181,7 +181,7 @@ class RonTupleSpec extends PatSpec {
 
     val patOut = Graph {
       val inPat0 = in.map(xs => Pat(xs: _*))
-      val inPat: Pat[Pat[Int]] = inPat0
+      val inPat: Pat[Pat[Int]] = Pat(inPat0: _*)
       allTuples_Pat(inPat)
     }
 
@@ -216,7 +216,7 @@ class RonTupleSpec extends PatSpec {
     val plainOut  = computeDurs_Seq(seqIn, cantus)
     assert(plainOut === expOut)
 
-    val patOut = Graph { computeDurs_Pat[Double](seqIn, cantus) }
+    val patOut = Graph { computeDurs_Pat[Double](seqIn.to[Pat], cantus.to[Pat]) }
     eval(patOut) shouldBe expOut
   }
 

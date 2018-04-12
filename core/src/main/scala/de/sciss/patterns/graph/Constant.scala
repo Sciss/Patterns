@@ -22,7 +22,9 @@ final case class Constant[A](value: A) extends Pat[A] {
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     ConstantImpl(value)
 
+  // $COVERAGE-OFF$
   override def toString: String = value.toString
+  // $COVERAGE-ON$
 
   private[patterns] def aux: List[Aux] = Nil
 

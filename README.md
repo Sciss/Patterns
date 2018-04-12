@@ -40,3 +40,10 @@ Useful links:
 - there should be a unit test verifying correct production of values
 - there should be a unit test verifying correct reaction to `reset`
 - there should be a unit test verifying correct serialization
+
+## to-do / things to explore
+
+- stream caching in order to avoid excessive forks at the expansion. We would cache one or two
+  elements, so that stuff such as `a + a` would only require a single a expansion of `a` (and
+  of the inputs of `a` accordingly). This would hopefully speed things up a bit.
+  

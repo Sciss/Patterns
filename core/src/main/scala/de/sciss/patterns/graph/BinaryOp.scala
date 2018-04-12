@@ -37,7 +37,9 @@ object BinaryOp {
 
     def name: String
 
+    // $COVERAGE-OFF$
     override def toString: String = name
+    // $COVERAGE-ON$
   }
 
   abstract class PureOp[A1, A2] extends Op[A1, A2] {

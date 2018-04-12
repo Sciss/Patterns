@@ -18,7 +18,7 @@ import de.sciss.lucre.stm.Base
 import de.sciss.patterns.Types.{Aux, Num, Widen2}
 import de.sciss.patterns.stream.GeomSeqImpl
 
-final case class GeomSeq[A1, A2, A](start: Pat[A1], step: Pat[A2] /* , length: Pat.Int = Int.MaxValue */)
+final case class GeomSeq[A1, A2, A](start: Pat[A1], factor: Pat[A2] /* , length: Pat.Int = Int.MaxValue */)
                                    (implicit val widen: Widen2[A1, A2, A], val num: Num[A])
   extends Pattern[A] {
 
@@ -29,7 +29,7 @@ final case class GeomSeq[A1, A2, A](start: Pat[A1], step: Pat[A2] /* , length: P
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
     val startT = t(start)
-    val stepT  = t(step )
-    if (startT.eq(start) && stepT.eq(step)) this else copy(start = startT, step = stepT)
+    val stepT  = t(factor )
+    if (startT.eq(start) && stepT.eq(factor)) this else copy(start = startT, factor = stepT)
   }
 }

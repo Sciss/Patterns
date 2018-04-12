@@ -72,7 +72,7 @@ class PatternsSpec extends PatSpec {
     }
 
     val s1 = List(5, 6, 2, 10, 8, 0)
-    val p1: Pat[Int] = s1
+    val p1: Pat[Int] = Pat(s1: _*)
     val p2 = p1.differentiate
 
     val plain = s1.differentiate

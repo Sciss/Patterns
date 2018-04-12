@@ -101,8 +101,10 @@ object FlatMapImpl extends StreamFactory {
     final def registerItStream(stream: ItStream[S, A1])(implicit tx: S#Tx): Unit =
       mapItStreams.add(stream)
 
-    final def reset()(implicit tx: S#Tx): Unit = {  // XXX TODO --- do we need ctx.use here?
+    final def reset()(implicit tx: S#Tx): Unit = {
+      // $COVERAGE-OFF$
       logStream("FlatMap.iterator.reset()")
+      // $COVERAGE-ON$
       mapItStreams /* ctx.getStreams(ref) */.foreach {
         case m: AdvanceItStream[S, _] => m.resetOuter()
       }
@@ -118,7 +120,9 @@ object FlatMapImpl extends StreamFactory {
       itStream.hasNext && innerStream.hasNext
 
     private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
+      // $COVERAGE-OFF$
       logStream("FlatMap.iterator.advance()")
+      // $COVERAGE-ON$
       mapItStreams /* ctx.getStreams(ref) */.foreach {
         case m: AdvanceItStream[S, _] => m.advance()
       }
@@ -129,7 +133,9 @@ object FlatMapImpl extends StreamFactory {
       ctx.withItSource(this) {
         if (!hasNextI) Stream.exhausted()
         val res = innerStream.next()
+        // $COVERAGE-OFF$
         logStream(s"FlatMap.iterator.next() = $res; innerStream.hasNext = ${innerStream.hasNext}; itStream.hasNext = ${itStream.hasNext}")
+        // $COVERAGE-ON$
         if (!innerStream.hasNext && itStream.hasNext) advance()
         res
       }

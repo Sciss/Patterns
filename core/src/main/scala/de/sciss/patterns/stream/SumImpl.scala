@@ -38,7 +38,7 @@ object SumImpl extends StreamFactory {
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id        = tx.readId(in, access)
     val inStream  = Stream.read[S, Any](in, access)
-    val state     = PatElem.makeVar[S, Any](id)
+    val state     = PatElem.readVar[S, Any](id, in)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
     val num       = Aux.readT[Num[Any]](in)

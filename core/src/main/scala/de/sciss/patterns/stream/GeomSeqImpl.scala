@@ -29,7 +29,7 @@ object GeomSeqImpl extends StreamFactory {
 
     val id          = tx.newId()
     val startStream = start .expand[S]
-    val stepStream  = step  .expand[S]
+    val stepStream  = factor  .expand[S]
     val state       = PatElem.makeVar[S, A](id)
     val _hasNext    = tx.newBooleanVar(id, false)
     val valid       = tx.newBooleanVar(id, false)

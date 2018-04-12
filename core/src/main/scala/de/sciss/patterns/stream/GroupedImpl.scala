@@ -36,7 +36,7 @@ object GroupedImpl extends StreamFactory {
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id          = tx.newId()
+    val id          = tx.readId(in, access)
     val inStream    = Stream.read[S, Any](in, access)
     val sizeStream  = Stream.read[S, Int](in, access)
     val innerStream = tx.readVar[Pat[Any]](id, in)

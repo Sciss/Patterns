@@ -137,7 +137,9 @@ object PatMapImpl extends StreamFactory {
       mapItStreams.add(stream)
 
     private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+      // $COVERAGE-OFF$
       logStream("PatMap.iterator.validate()")
+      // $COVERAGE-ON$
       buildNext() // advance()
     }
 

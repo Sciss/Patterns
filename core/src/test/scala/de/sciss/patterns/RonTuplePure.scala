@@ -177,11 +177,11 @@ object RonTuplePure {
     //      Seq(Pseq(Seq.fill(stutter)('r)),
     //        Pseq(pattern.grouped(stutter).stutter(stutter).flatten, inf))
     //    }
-    val ptrnOut = Pat.loop()(pattern) // Pseq(pattern, inf)
+    val ptrnOut = Pat.loop()(Pat(pattern:_ *)) // Pseq(pattern, inf)
 
     //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
     log("makePart - durs", durs)
-    (ptrnOut, durs.map(_ * 0.02))
+    (ptrnOut, Pat(durs.map(_ * 0.02): _*))
   }
 
   // ---------------------------------------------------------------------------------
@@ -272,8 +272,8 @@ object RonTuplePure {
       Bind(map)
     }
 
-    val lPat = Pat.loop()((8 to 12).mirror)
-    val rPat = Pat.loop()((5 to  8).mirror) / 25.0
+    val lPat = Pat((8 to 12).mirror: _*).loop()
+    val rPat = Pat((5 to  8).mirror: _*).loop() / 25.0
 
     val xs = for {
       len     <- lPat.bubble

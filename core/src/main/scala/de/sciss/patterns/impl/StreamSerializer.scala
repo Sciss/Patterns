@@ -31,6 +31,7 @@ final class StreamSerializer[S <: Base[S], A]()(implicit ctx: Context[S])
         case ExpLinImpl       .typeId => ExpLinImpl
         case FlatMapImpl      .typeId => FlatMapImpl
         case FlattenImpl      .typeId => FlattenImpl
+        case FoldLeftImpl     .typeId => FoldLeftImpl
         case FormatImpl       .typeId => FormatImpl
         case GateImpl         .typeId => GateImpl
         case GeomSeqImpl      .typeId => GeomSeqImpl
@@ -47,6 +48,7 @@ final class StreamSerializer[S <: Base[S], A]()(implicit ctx: Context[S])
         case MapItStream      .typeId => MapItStream
         case MapWithIndexImpl .typeId => MapWithIndexImpl
         case ParImpl          .typeId => ParImpl
+        case PatMapImpl       .typeId => PatMapImpl
         case PatSeqImpl       .typeId => PatSeqImpl
         case PollImpl         .typeId => PollImpl
         case ShuffleImpl      .typeId => ShuffleImpl

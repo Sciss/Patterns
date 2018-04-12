@@ -205,7 +205,7 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def shuffle: Pat[A] = Shuffle(x)
 
   /** Chooses a random single element from the input pattern. */
-  def choose : Pat[A] = Choose (x)
+  def choose: Pat[A] = Choose(x)
 
   /** Wraps each element in a singleton pattern. For example,
     * `Pat(1, 2, 3)` becomes `Pat(Pat(1), Pat(2), Pat(3))`.
@@ -217,6 +217,13 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 //  def bubbleFilter(f: Pat[A] => Pat[Boolean]): Pat[A] =
 //    bubble.filter(f).flatten
 
+  /** Finds first index where this pattern
+    * contains a given other pattern as a slice.
+    *
+    *  @param  that    the sequence to test
+    *  @return  the first index such that the elements of this pattern starting at this index
+    *           match the elements of pattern `that`, or `-1` of no such subsequence exists.
+    */
   def indexOfSlice[B](that: Pat[B]): Pat[Int] = indexOfSlice(that, 0)
 
   /** Finds first index after or at a start index where this pattern
@@ -364,4 +371,8 @@ final class PatTuple2Ops[A, B](private val tup: Pat[(A, B)]) extends AnyVal {
   def unzip: (Pat[A], Pat[B]) = {
     (Tuple2_1(tup), Tuple2_2(tup))
   }
+}
+
+final class SeqToPatOps[A](private val seq: Seq[A]) extends AnyVal {
+  def toPat: Pat[A] = Pat(seq: _*)
 }

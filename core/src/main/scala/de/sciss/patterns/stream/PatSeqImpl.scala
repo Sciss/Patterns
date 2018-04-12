@@ -63,7 +63,9 @@ object PatSeqImpl extends StreamFactory {
     private[this] lazy val simpleString =
       xs.mkString("Stream(", ", ", ")")
 
+    // $COVERAGE-OFF$
     override def toString = s"$simpleString; count = $count"
+    // $COVERAGE-ON$
 
     def reset()(implicit tx: S#Tx): Unit =
       count() = 0

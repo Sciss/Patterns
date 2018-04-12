@@ -267,7 +267,8 @@ object Types {
 //  }
 
   object WidenToDouble {
-    implicit def double: WidenToDouble[Int, Double] = DoubleImpl
+//    implicit def double     : WidenToDouble[Double, Double] = DoubleTop
+    implicit def intToDouble: WidenToDouble[Int   , Double] = DoubleImpl
 
     private[Types] object DoubleImpl extends DoubleTop with WidenToDouble[Int, Double] {
       final val id = 0x120
@@ -326,8 +327,8 @@ object Types {
     def toInt   (a: A): Int
     def toDouble(a: A): Double
 
-    def int   : NumInt   [Int]
-    def double: NumDouble[Double]
+//    def int   : NumInt   [Int]
+//    def double: NumDouble[Double]
   }
 
   type ScalarToNum[A] = ToNum[A] with Scalar[A]
@@ -462,8 +463,10 @@ object Types {
     final val id = 3
   }
 
-  object DoubleTop extends DoubleTop {
+  object DoubleTop extends DoubleTop with WidenToDouble[Double, Double] {
     final val id = 2
+
+    def widen1(a: Double): Double = a
   }
 
   sealed abstract class DoubleTop

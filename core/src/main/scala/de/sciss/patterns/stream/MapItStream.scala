@@ -61,9 +61,6 @@ object MapItStream extends StreamFactory {
                                            )
     extends AdvanceItStream[S, A] {
 
-    private[this] lazy val simpleString =
-      s"MapItStream@${hashCode().toHexString}"
-
     protected def typeId: Int = MapItStream.typeId
 
     protected def writeData(out: DataOutput): Unit = {
@@ -85,17 +82,25 @@ object MapItStream extends StreamFactory {
       valid       .dispose()
     }
 
+    // $COVERAGE-OFF$
+    private[this] lazy val simpleString = s"MapItStream@${hashCode().toHexString}"
+
     override def toString: String = simpleString
+    // $COVERAGE-ON$
 
     def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
       valid()   = 0x03 // hasIn and _hasNext will be valid
       val ohn   = outerStream.hasNext
+      // $COVERAGE-OFF$
       logStream(s"$simpleString.advance(): outerStream.hasNext = $ohn")
+      // $COVERAGE-ON$
       if (ohn) {
         val inPat     = outerStream.next()
         val inValue   = inPat.expand
         val ihn       = inValue.hasNext
+        // $COVERAGE-OFF$
         logStream(s"$simpleString.advance(): inValue.hasNext = $ihn")
+        // $COVERAGE-ON$
         inStream()    = inValue
         hasIn()       = true
         _hasNext()    = ihn
@@ -131,7 +136,9 @@ object MapItStream extends StreamFactory {
       val v0 = valid()
       if ((v0 & 0x03) == 0x03) {
         val hi = hasIn()
+        // $COVERAGE-OFF$
         logStream(s"$simpleString.reset(); hasIn = $hi")
+        // $COVERAGE-ON$
         if (hi) {
           val inValue = inStream()
           inValue.reset()
@@ -150,7 +157,9 @@ object MapItStream extends StreamFactory {
       val in      = inStream()
       val res     = in.next()
       _hasNext()  = in.hasNext
+      // $COVERAGE-OFF$
       logStream(s"$simpleString.next() = $res; hasNext = ${in.hasNext}")
+      // $COVERAGE-ON$
       res
     }
   }

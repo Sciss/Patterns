@@ -31,7 +31,9 @@ object ConstantImpl extends StreamFactory {
   }
 
   private final class StreamImpl[S <: Base[S], A](elem: A) extends Stream[S, A] {
+    // $COVERAGE-OFF$
     override def toString = s"Stream.constant($elem)@${hashCode().toHexString}"
+    // $COVERAGE-ON$
 
     protected def typeId: Int = ConstantImpl.typeId
 

@@ -39,9 +39,9 @@ object UnaryOp {
 
     def name: String
 
+    // $COVERAGE-OFF$
     override def toString: String = name
-
-//    def write(out: DataOutput): Unit = ...
+    // $COVERAGE-ON$
   }
 
   abstract class PureOp[A1, A2] extends Op[A1, A2] {

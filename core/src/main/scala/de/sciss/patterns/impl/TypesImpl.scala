@@ -142,13 +142,13 @@ trait SeqLikeToNum[A] extends SeqLike[A] with ToNum[Seq[A]] {
   final def toInt   (a: In): Int     = unOp(a)(peer.toInt   )
   final def toDouble(a: In): Double  = unOp(a)(peer.toDouble)
 
-  final def int    : NumInt   [Int    ] = IntSeqTop
-  final def double : NumDouble[Double ] = DoubleSeqTop
+//  final def int    : NumInt   [Int    ] = IntSeqTop
+//  final def double : NumDouble[Double ] = DoubleSeqTop
 }
 
 trait ScalarToNumImpl[A] extends ToNum[A] with Scalar[A] {
-  final def int   : NumInt   [Int]    = IntTop
-  final def double: NumDouble[Double] = DoubleTop
+//  final def int   : NumInt   [Int]    = IntTop
+//  final def double: NumDouble[Double] = DoubleTop
 }
 
 trait ScalarEqImpl[A] extends Eq[A] with Scalar[A] {
