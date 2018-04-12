@@ -119,7 +119,7 @@ object SortWithImpl extends StreamFactory {
     }
 
     final def mkItStream()(implicit ctx: Context[S], tx: S#Tx): Stream[S, (A, A)] = {
-      val res = new SortWithItStream[S, A](tx)
+      val res = SortWithItStream.expand[S, A]
       mapItStreams.add(res)
       res
     }
