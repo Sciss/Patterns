@@ -81,9 +81,9 @@ object BinaryOp {
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
-  final case class % [A]()(implicit num: Num[A]) extends PureOp[A, A] {
+  final case class ModJ[A]()(implicit num: Num[A]) extends PureOp[A, A] {
     def apply(a: A, b: A)     : A         = num.%(a, b)
-    def name                  : String    = "%"
+    def name                  : String    = "ModJ"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 

@@ -99,7 +99,7 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   def -         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.Minus    [A2](), x, that)
   def *         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.Times    [A2](), x, that)
   def /         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumFrac   [A2]): Pat[A2] = BinOp(BinOp.Div      [A2](), x, that)
-  def %         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.%        [A2](), x, that)
+  def %         [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.ModJ        [A2](), x, that)
   def mod       [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num       [A2]): Pat[A2] = BinOp(BinOp.Mod      [A2](), x, that)
 
   def sig_== (that: Pat[A])(implicit eq: Eq[A]): Pat[eq.Boolean] = BinOp(BinOp.Eq [A, eq.Boolean]()(eq), x, that)
