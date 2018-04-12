@@ -11,8 +11,6 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
   type S = Durable
   type FixtureParam = Durable
 
-  // SoundProcesses.init()
-
   final def withFixture(test: OneArgTest): Outcome = {
     val system = Durable(BerkeleyDB.tmp())
     try {
@@ -49,7 +47,6 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
     val stH = sys.step { implicit tx =>
       c.setRandomSeed(seed)
       val st: Stream[S, A] = c.expand(p)
-//      tx.newHandle(st)
       val id = tx.newId()
       tx.newVar(id, st)
     }
@@ -58,7 +55,6 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
       sys.step { implicit tx =>
         val st = stH()
         List.fill(n) {
-//          println("NEXT")
           st.next()
         }
       }
@@ -72,7 +68,7 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
   // N.B. ignored tests are those for which serialization currently fails,
   // and thus these cases need fixing.
 
-  ignore should "work for Apply" in { implicit sys =>
+  it should "work for Apply" in { implicit sys =>
     verifyLoop { i =>
       Apply(Pat(3, 4, 5).bubble, i % 3)
     }

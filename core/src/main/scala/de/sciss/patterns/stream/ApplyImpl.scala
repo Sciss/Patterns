@@ -39,9 +39,9 @@ object ApplyImpl extends StreamFactory {
     val id          = tx.readId(in, access)
     val inStream    = Stream.read[S, Pat[Any]](in, access)
     val idxStream   = Stream.read[S, Int   ](in, access)
-    val state       = tx.newVar[Stream[S, Any]](id, null)
-    val _hasNext    = tx.newBooleanVar(id, false)
-    val valid       = tx.newBooleanVar(id, false)
+    val state       = tx.readVar[Stream[S, Any]](id, in)
+    val _hasNext    = tx.readBooleanVar(id, in)
+    val valid       = tx.readBooleanVar(id, in)
 
     new StreamImpl[S, Any](id = id, inStream = inStream, idxStream = idxStream,
       valid = valid, _hasNext = _hasNext, state = state)
