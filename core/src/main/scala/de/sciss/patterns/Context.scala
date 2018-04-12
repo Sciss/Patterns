@@ -20,15 +20,11 @@ import de.sciss.patterns.stream.ItStreamSource
 import de.sciss.serial.Serializer
 
 trait Context[S <: Base[S]] {
-//  def addStream[A](ref: AnyRef, stream: Stream[S, A])(implicit tx: S#Tx): Stream[S, A]
-//
-//  def getStreams(ref: AnyRef)(implicit tx: S#Tx): List[Stream[S, _]]
-
   def mkItStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A]
 
-//  def provideOuterStream[A](token: Int, outer: S#Tx => Stream[S, A])(implicit tx: S#Tx): Unit
+  def withItSource[A, B](source: ItStreamSource[S, A])(thunk: => B)(implicit tx: S#Tx): B
 
-  def withItSource[A, B](token: Int, source: ItStreamSource[S, A])(thunk: => B)(implicit tx: S#Tx): B
+  def withItSources[B](sources: ItStreamSource[S, _]*)(thunk: => B)(implicit tx: S#Tx): B
 
   /** Creates a new pseudo-random number generator. */
   def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: S#Tx): TxnRandom[S]
@@ -48,18 +44,25 @@ object Context {
   private final class PlainImpl extends ContextLike[Plain, Plain](Plain.instance, Plain.instance) {
     type S = Plain
 
-    private[this] lazy val seedRnd  = Random[Plain](id)
-    private[this] var tokenId       = 1000000000 // 0x40000000
+    // A random number generator used for producing _seed_ values when creating a new RNG.
+    private[this] lazy val seedRnd = Random[Plain](id)
+
+    // Note: tokens are allocated first by the graph builder, these start at zero.
+    // The context token-id allocation happens when rewriting `It` terms, as happens
+    // in the expansion of `FoldLeft`. To avoid collision, we simply offset here.
+    // We use a decimal readable value for easier debugging.
+    private[this] var tokenId = 1000000000 // approx. 0x40000000
 
     protected def nextSeed()(implicit tx: S#Tx): Long = seedRnd.nextLong()
 
     def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = seedRnd.setSeed(n)
 
-    def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S] = {
+    def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S] =
       TxnRandom[S](seed)
-    }
 
     def allocToken[A]()(implicit tx: S#Tx): It[A] = {
+      // stream expansion is single threaded, so we can
+      // simply mutate the counter here.
       val res = tokenId
       tokenId += 1
       It(res)
@@ -110,14 +113,33 @@ private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](syste
 //    tokenMap() = tokenMap() + (token -> outer)
 //  }
 
-  def withItSource[A, B](token: Int, source: ItStreamSource[S, A])(thunk: => B)(implicit tx: S#Tx): B = {
+  def withItSource[A, B](source: ItStreamSource[S, A])(thunk: => B)(implicit tx: S#Tx): B = {
+    val token   = source.tokenId
     val list0   = tokenMap.get(token).getOrElse(Nil)
     val list1   = source :: list0
     tokenMap.put(token, list1)
     try {
       thunk
-    } finally { // XXX TODO --- is this ok when a txn throws a control-exception?
+    } finally {
       if (list0.isEmpty) tokenMap.remove(token) else tokenMap.put(token, list0)
+    }
+  }
+
+  def withItSources[B](sources: ItStreamSource[S, _]*)(thunk: => B)(implicit tx: S#Tx): B = {
+    sources.foreach { source =>
+      val token = source.tokenId
+      val list0 = tokenMap.get(token).getOrElse(Nil)
+      val list1 = source :: list0
+      tokenMap.put(token, list1)
+    }
+    try {
+      thunk
+    } finally {
+      sources.foreach { source =>
+        val token = source.tokenId
+        val _ :: list0 = tokenMap.get(token).get
+        if (list0.isEmpty) tokenMap.remove(token) else tokenMap.put(token, list0)
+      }
     }
   }
 

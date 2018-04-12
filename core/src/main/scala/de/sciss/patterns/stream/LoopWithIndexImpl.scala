@@ -67,7 +67,7 @@ object LoopWithIndexImpl extends StreamFactory {
     extends StreamImpl[S, A](id = id, nStream = nStream, tokenId = tokenId,
       nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid, itStreams = itStreams) {
 
-    protected val innerStream: Stream[S, A] = ctx0.withItSource(tokenId, this)(inner.expand[S](ctx0, tx0))(tx0)
+    protected val innerStream: Stream[S, A] = ctx0.withItSource(this)(inner.expand[S](ctx0, tx0))(tx0)
   }
 
   private final class StreamRead[S <: Base[S], A](id         : S#Id,
@@ -83,14 +83,14 @@ object LoopWithIndexImpl extends StreamFactory {
     extends StreamImpl[S, A](id = id, nStream = nStream, tokenId = tokenId,
       nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid, itStreams = itStreams)
 
-  private abstract class StreamImpl[S <: Base[S], A](tokenId    : Int,
-                                                     id         : S#Id,
-                                                     nStream    : Stream[S, Int],
-                                                     nValue     : S#Var[Int],
-                                                     iteration  : S#Var[Int],
-                                                     _hasNext   : S#Var[Boolean],
-                                                     valid      : S#Var[Boolean],
-                                                     itStreams  : RefSet[S, Stream[S, Int]]
+  private abstract class StreamImpl[S <: Base[S], A](final val tokenId: Int,
+                                                     id               : S#Id,
+                                                     nStream          : Stream[S, Int],
+                                                     nValue           : S#Var[Int],
+                                                     iteration        : S#Var[Int],
+                                                     _hasNext         : S#Var[Boolean],
+                                                     valid            : S#Var[Boolean],
+                                                     itStreams        : RefSet[S, Stream[S, Int]]
                                                     )
     extends Stream[S, A] with ItStreamSource[S, Int] {
 

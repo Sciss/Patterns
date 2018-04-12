@@ -42,6 +42,7 @@ final class StreamSerializer[S <: Base[S], A]()(implicit ctx: Context[S])
       case LinExpImpl       .typeId => LinExpImpl
       case LinLinImpl       .typeId => LinLinImpl
       case LoopWithIndexImpl.typeId => LoopWithIndexImpl
+      case MapWithIndexImpl .typeId => MapWithIndexImpl
       case PatSeqImpl       .typeId => PatSeqImpl
       case PollImpl         .typeId => PollImpl
       case ShuffleImpl      .typeId => ShuffleImpl

@@ -64,7 +64,7 @@ object SortWithImpl extends StreamFactory {
     extends StreamImpl[S, A](id, outerStream = outerStream, tokenId = tokenId, sortedStream = sortedStream,
       hasSorted = hasSorted, valid = valid, mapItStreams = mapItStreams) {
 
-    protected val ltStream : Stream[S, Boolean] = ctx0.withItSource(tokenId, this)(lt.expand[S](ctx0, tx0))(tx0)
+    protected val ltStream: Stream[S, Boolean] = ctx0.withItSource(this)(lt.expand[S](ctx0, tx0))(tx0)
   }
 
   private final class StreamRead[S <: Base[S], A](id          : S#Id,
@@ -80,13 +80,13 @@ object SortWithImpl extends StreamFactory {
       hasSorted = hasSorted, valid = valid, mapItStreams = mapItStreams)
 
   private abstract class StreamImpl[S <: Base[S], A](
-                                                      id          : S#Id,
-                                                      outerStream : Stream[S, Pat[A]],
-                                                      tokenId     : Int,
-                                                      sortedStream: S#Var[Stream[S, Pat[A]]],
-                                                      hasSorted   : S#Var[Boolean],
-                                                      valid       : S#Var[Boolean],
-                                                      mapItStreams: RefSet[S, Stream[S, (A, A)]]
+                                                     id               : S#Id,
+                                                     outerStream      : Stream[S, Pat[A]],
+                                                     final val tokenId: Int,
+                                                     sortedStream     : S#Var[Stream[S, Pat[A]]],
+                                                     hasSorted        : S#Var[Boolean],
+                                                     valid            : S#Var[Boolean],
+                                                     mapItStreams     : RefSet[S, Stream[S, (A, A)]]
                                                     )
     extends Stream[S, Pat[A]] with ItStreamSource[S, (A, A)] {
 
@@ -162,7 +162,7 @@ object SortWithImpl extends StreamFactory {
     }
 
     def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
-      ctx.withItSource(tokenId, this) {
+      ctx.withItSource(this) {
         hasNextI
       }
 
@@ -172,7 +172,7 @@ object SortWithImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): Pat[A] =
-      ctx.withItSource(tokenId, this) {
+      ctx.withItSource(this) {
         if (!hasNextI) Stream.exhausted()
         sortedStream().next()
       }

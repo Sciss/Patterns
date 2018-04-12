@@ -40,14 +40,14 @@ object FlatMapImpl extends StreamFactory {
   }
 
   private final class StreamNew [S <: Base[S], A1, A](ctx0: Context[S], tx0: S#Tx,
-                                                      outer: Pat[Pat[A1]],
-                                                      tokenId: Int,
-                                                      inner: Pat[A],
+                                                      outer       : Pat[Pat[A1]],
+                                                      tokenId     : Int,
+                                                      inner       : Pat[A],
                                                       mapItStreams: RefSet[S, Stream[S, A1]]
   )
     extends StreamImpl[S, A1, A](outer, tokenId, mapItStreams) {
 
-    protected val innerStream : Stream[S, A]  = ctx0.withItSource(tokenId, this)(inner.expand[S](ctx0, tx0))(tx0)
+    protected val innerStream : Stream[S, A]  = ctx0.withItSource(this)(inner.expand[S](ctx0, tx0))(tx0)
     protected val itStream    : Stream[S, A1] = mkItStream()(ctx0, tx0)
   }
 
@@ -60,9 +60,9 @@ object FlatMapImpl extends StreamFactory {
     extends StreamImpl[S, A1, A](outer, tokenId, mapItStreams)
 
   private abstract class StreamImpl[S <: Base[S], A1, A](
-                                                          outer: Pat[Pat[A1]],
-                                                          tokenId: Int,
-                                                          mapItStreams: RefSet[S, Stream[S, A1]]
+                                                         outer            : Pat[Pat[A1]],
+                                                         final val tokenId: Int,
+                                                         mapItStreams     : RefSet[S, Stream[S, A1]]
                                                         )
     extends Stream[S, A] with ItStreamSource[S, A1] {
 
@@ -108,7 +108,7 @@ object FlatMapImpl extends StreamFactory {
     }
 
     final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
-      ctx.withItSource(tokenId, this) {
+      ctx.withItSource(this) {
         hasNextI
       }
 
@@ -124,7 +124,7 @@ object FlatMapImpl extends StreamFactory {
     }
 
     final def next()(implicit ctx: Context[S], tx: S#Tx): A =
-      ctx.withItSource(tokenId, this) {
+      ctx.withItSource(this) {
         if (!hasNextI) Stream.exhausted()
         val res = innerStream.next()
         logStream(s"FlatMap.iterator.next() = $res; innerStream.hasNext = ${innerStream.hasNext}; itStream.hasNext = ${itStream.hasNext}")

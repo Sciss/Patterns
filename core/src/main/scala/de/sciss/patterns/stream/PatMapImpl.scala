@@ -62,7 +62,7 @@ object PatMapImpl extends StreamFactory {
     extends StreamImpl[S, A1, A](id, outer = outer, tokenId = tokenId, mapStream = mapStream,
       _hasNext = _hasNext, valid = valid, mapItStreams = mapItStreams) {
 
-    protected val innerStream : Stream[S, A]  = ctx0.withItSource(tokenId, this)(inner.expand[S](ctx0, tx0))(tx0)
+    protected val innerStream : Stream[S, A]  = ctx0.withItSource(this)(inner.expand[S](ctx0, tx0))(tx0)
     protected val itStream    : Stream[S, A1] = mkItStream()(ctx0, tx0)
   }
 
@@ -80,13 +80,13 @@ object PatMapImpl extends StreamFactory {
       _hasNext = _hasNext, valid = valid, mapItStreams = mapItStreams)
 
   private abstract class StreamImpl[S <: Base[S], A1, A](
-                                                          id          : S#Id,
-                                                          outer       : Pat[Pat[A1]],
-                                                          tokenId     : Int,
-                                                          mapStream   : S#Var[Pat[A]],
-                                                          _hasNext    : S#Var[Boolean],
-                                                          valid       : S#Var[Boolean],
-                                                          mapItStreams: RefSet[S, Stream[S, A1]]
+                                                         id               : S#Id,
+                                                         outer            : Pat[Pat[A1]],
+                                                         final val tokenId: Int,
+                                                         mapStream        : S#Var[Pat[A]],
+                                                         _hasNext         : S#Var[Boolean],
+                                                         valid            : S#Var[Boolean],
+                                                         mapItStreams     : RefSet[S, Stream[S, A1]]
                                                         )
     extends Stream[S, Pat[A]] with ItStreamSource[S, A1] {
 
@@ -172,7 +172,7 @@ object PatMapImpl extends StreamFactory {
     }
 
     def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
-      ctx.withItSource(tokenId, this) {
+      ctx.withItSource(this) {
         hasNextI
       }
 
@@ -182,7 +182,7 @@ object PatMapImpl extends StreamFactory {
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): Pat[A] =
-      ctx.withItSource(tokenId, this) {
+      ctx.withItSource(this) {
         if (!hasNext) Stream.exhausted()
         val res = mapStream()
         advance()
