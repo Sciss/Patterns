@@ -150,7 +150,12 @@ object LoopWithIndexImpl extends StreamFactory {
       }
     }
 
-    final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
+      ctx.withItSource(this) {
+        hasNextI
+      }
+
+    private def hasNextI(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
@@ -183,15 +188,16 @@ object LoopWithIndexImpl extends StreamFactory {
       }
     }
 
-    final def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-      if (!hasNext) Stream.exhausted()
-      val res = innerStream.next()
-      val ihn = innerStream.hasNext
-      _hasNext() = ihn
-      if (!ihn) {
-        advance()
+    final def next()(implicit ctx: Context[S], tx: S#Tx): A =
+      ctx.withItSource(this) {
+        if (!hasNextI) Stream.exhausted()
+        val res = innerStream.next()
+        val ihn = innerStream.hasNext
+        _hasNext() = ihn
+        if (!ihn) {
+          advance()
+        }
+        res
       }
-      res
-    }
   }
 }

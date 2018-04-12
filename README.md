@@ -1,11 +1,17 @@
 # Patterns
 
 [![Build Status](https://travis-ci.org/Sciss/Patterns.svg?branch=master)](https://travis-ci.org/Sciss/Patterns)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.sciss/patterns_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.sciss/patterns_2.11)
 
 ## statement
 
-Patterns is an ongoing experiment to see how SuperCollider's patterns system could be translated to Scala (and ultimately, [SoundProcesses](https://github.com/Sciss/SoundProcesses)).
-It is (C)opyright 2017&ndash;2018 by Hanns Holger Rutz. All rights reserved. This project is released under the [GNU Lesser General Public License](https://raw.github.com/Sciss/Patterns/master/LICENSE) v2.1+ and comes with absolutely no warranties. To contact the author, send an email to `contact at sciss.de`
+Patterns is a library that brings SuperCollider style patterns to Scala, and ultimately
+to [SoundProcesses](https://github.com/Sciss/SoundProcesses)). Patterns are descriptions of streams,
+streams are stateful iterators, here implemented with an optional transactional layer.
+
+This project is (C)opyright 2017&ndash;2018 by Hanns Holger Rutz. All rights reserved. This project is released under 
+the [GNU Lesser General Public License](https://raw.github.com/Sciss/Patterns/master/LICENSE) v2.1+ and comes 
+with absolutely no warranties. To contact the author, send an email to `contact at sciss.de`
 
 ## requirements / installation
 
@@ -26,3 +32,11 @@ Please see the file [CONTRIBUTING.md](CONTRIBUTING.md)
 Useful links:
 
 - [Patterns in SuperCollider](http://doc.sccode.org/Tutorials/A-Practical-Guide/PG_01_Introduction.html)
+
+## notes for implementing new patterns
+
+- there should a `Pat` Element in `graph`
+- there should be a corresponding `Stream` Element in `stream`
+- there should be a unit test verifying correct production of values
+- there should be a unit test verifying correct reaction to `reset`
+- there should be a unit test verifying correct serialization

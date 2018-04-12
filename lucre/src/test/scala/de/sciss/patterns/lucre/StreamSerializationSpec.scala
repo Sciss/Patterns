@@ -23,9 +23,19 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
   }
 
   def verify[A](thunk: => Pat[A])(implicit sys: S): Unit = {
-    val seed = 666L
-
     val p = Graph(thunk)
+    verifyGraph(p)
+  }
+
+  def verifyLoop[A](fun: Pat[Int] => Pat[A])(implicit sys: S): Unit = {
+    val p = Graph {
+      Pat.loopWithIndex(12)(fun)
+    }
+    verifyGraph(p)
+  }
+
+  def verifyGraph[A](p: Pat[A])(implicit sys: S): Unit = {
+    val seed = 666L
 
     val values = {
       implicit val c: patterns.Context[Plain] = patterns.Context()
@@ -58,41 +68,82 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
 
   import graph._
 
-  // XXX TODO
-//  "Apply serialization" should "work" in { implicit sys =>
-//    verify {
-//      Pat.loopWithIndex(11)(i => Apply(Pat(Pat(3), Pat(4), Pat(5)), i % 3))
-//    }
-//  }
+  // N.B. ignored tests are those for which serialization currently fails,
+  // and thus these cases need fixing.
 
-  // Ok
-//  "ArithmSeq serialization" should "work" in { implicit sys =>
-//    verify {
-//      Pat.loop(2)(ArithmSeq(20, ArithmSeq(0, 1).take(6)))
-//    }
-//  }
+  ignore should "work for Apply" in { implicit sys =>
+    verify {
+      Pat.loopWithIndex(11)(i => Apply(Pat(Pat(3), Pat(4), Pat(5)), i % 3))
+    }
+  }
 
-  "LoopWithIndex serialization" should "work" in { implicit sys =>
+  "Serialization" should "work for ArithmSeq" in { implicit sys =>
+    verify {
+      Pat.loop(2)(ArithmSeq(20, ArithmSeq(0, 1).take(6)))
+    }
+  }
+
+  it should "work for BinaryOp" in { implicit sys =>
+    verifyLoop { i =>
+      val k = ((i.toDouble / 1.5) % 4.0) mod 3.0
+      val m = (k min i) max 0.56
+      m
+    }
+  }
+
+  it should "work for Bind" in { implicit sys =>
+    verifyLoop { i =>
+      Bind("foo" -> i)
+    }
+  }
+
+  it should "work for Brown and UnaryOp" in { implicit sys =>
+    verifyLoop { i =>
+      Brown(70, 120, i.hold().take(2)).midicps
+    }
+  }
+
+  it should "work for Bubble" in { implicit sys =>
+    verifyLoop { i =>
+      i.squared.bubble
+    }
+  }
+
+  it should "work for Cat and Hold" in { implicit sys =>
+    verifyLoop { i =>
+      val a = i.hold().take(3)
+      a ++ a
+    }
+  }
+
+  ignore should "work for Choose" in { implicit sys =>
+    verifyLoop { i =>
+      Pat(i, Pat(5), Pat(6), Pat(7)).choose
+    }
+  }
+
+  it should "work for Combinations" in { implicit sys =>
+    verifyLoop { i =>
+      Pat(4, 5, 6, 7).combinations(i)
+    }
+  }
+
+  it should "work for Differentiate" in { implicit sys =>
+    verifyLoop { i =>
+      ArithmSeq(0, i.hold().take(2)).differentiate
+    }
+  }
+
+  it should "work for Distinct and Flatten" in { implicit sys =>
+    verifyLoop { i =>
+      Pat(i, Pat(5), Pat(6), Pat(7)).flatten.distinct
+    }
+  }
+
+  it should "work for LoopWithIndex and Constant" in { implicit sys =>
     verify {
       Pat.loopWithIndex(12)(identity)
     }
   }
 
-//  "BinaryOp serialization" should "work" in { implicit sys =>
-//    verify {
-//      Pat.loopWithIndex(12) { i =>
-////        val j = i + i - i * i
-//        val k = ((i.toDouble / 1.5) % 4.0) mod 3.0
-//        val m = (k min i) max 0.56
-//        // m sig_== 1.0
-//        m
-//      }
-//    }
-//  }
-
-  "Brown and UnaryOp serialization" should "work" in { implicit sys =>
-    verify {
-      Brown(70, 120, 3).midicps
-    }
-  }
 }

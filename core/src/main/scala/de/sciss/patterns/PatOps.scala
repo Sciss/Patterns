@@ -17,15 +17,37 @@ import de.sciss.patterns.Types.{Eq, Num, NumBool, NumDouble, NumFrac, NumInt, Or
 import de.sciss.patterns.graph.{BinaryOp => BinOp, UnaryOp => UnOp, _}
 
 final class PatOps[A](private val x: Pat[A]) extends AnyVal {
+  /** Takes only the `length` first elements of the input pattern,
+    * or less if the input pattern is shorter.
+    *
+    * E.g. `Pat(4, 5, 6).take(2) == Pat(4, 5)`
+    */
   def take(length: Pat[Int] = 1): Pat[A] = Take(x, length)
+
+  /** Drops the first `length` elements of the input pattern.
+    * If the length is greater than the input pattern length, the
+    * result will be empty.
+    *
+    * E.g. `Pat(4, 5, 6).drop(2) == Pat(6)`
+    */
   def drop(length: Pat[Int]    ): Pat[A] = Drop(x, length)
 
 //  def head: Pat[A] = take(1)
+
+  /** Drops the first element of the pattern.
+    *
+    * E.g. `Pat(4, 5, 6).tail == Pat(5, 6)`.
+    */
   def tail: Pat[A] = drop(1)
 
+  /** Shorthand for calling both `take` and `drop`. */
   def splitAt(index: Pat[Int]): (Pat[A], Pat[A]) = (take(index), drop(index))
 
-  /** Updates a single element. */
+  /** Updates a single element. In other words, only one element from
+    * `index` and `elem` is ever read.
+    *
+    * E.g. `Pat(4, 5, 6).updated(2, 7) == Pat(4, 5, 7)`
+    */
   def updated[B >: A](index: Pat[Int], elem: B): Pat[B] = Updated(x, index, elem)
 
   /** Zips the indices with the elements, and then replaces these pairs.
@@ -166,13 +188,23 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   /** Same as `length`. */
   def size    : Pat[Int]  = Length(x)
+
+  /** Yields the number of elements in the input pattern.
+    *
+    * E.g. `Pat(4, 5, 6).length == Pat(3)`
+    */
   def length  : Pat[Int]  = Length(x)
 
   def indices : Pat[Int]  = Indices(x)
 
   def sorted(implicit ord: ScalarOrd[A]): Pat[A] = Sorted(x)
 
+  /** Randomly changes the positions of the elements in the input pattern.
+    * __Warning:__ the input must be finite.
+    */
   def shuffle: Pat[A] = Shuffle(x)
+
+  /** Chooses a random single element from the input pattern. */
   def choose : Pat[A] = Choose (x)
 
   /** Wraps each element in a singleton pattern. For example,
