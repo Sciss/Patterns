@@ -102,7 +102,7 @@ object FlatMapImpl extends StreamFactory {
     final def reset()(implicit tx: S#Tx): Unit = {  // XXX TODO --- do we need ctx.use here?
       logStream("FlatMap.iterator.reset()")
       mapItStreams /* ctx.getStreams(ref) */.foreach {
-        case m: MapItStream[S, _] => m.resetOuter()
+        case m: ItStream[S, _] => m.resetOuter()
       }
       innerStream.reset()
     }
@@ -118,7 +118,7 @@ object FlatMapImpl extends StreamFactory {
     private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
       logStream("FlatMap.iterator.advance()")
       mapItStreams /* ctx.getStreams(ref) */.foreach {
-        case m: MapItStream[S, _] => m.advance()
+        case m: ItStream[S, _] => m.advance()
       }
       innerStream.reset()
     }

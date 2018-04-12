@@ -138,14 +138,14 @@ object PatMapImpl extends StreamFactory {
 
     def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
       mapItStreams /* ctx.getStreams(ref) */.foreach {
-        case m: MapItStream[S, _] => m.resetOuter()
+        case m: ItStream[S, _] => m.resetOuter()
       }
       innerStream.reset()
     }
 
     private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
       mapItStreams /* ctx.getStreams(ref) */.foreach {
-        case m: MapItStream[S, _] => m.advance()
+        case m: ItStream[S, _] => m.advance()
       }
       innerStream.reset()
       buildNext()

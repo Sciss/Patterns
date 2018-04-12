@@ -21,7 +21,7 @@ object MapItStream extends StreamFactory {
 
   final val typeId = 0x4D704974 // "MpIt"
 
-  def expand[S <: Base[S], A](outer: Pat[Pat[A]])(implicit ctx: Context[S], tx: S#Tx): MapItStream[S, A] = {
+  def expand[S <: Base[S], A](outer: Pat[Pat[A]])(implicit ctx: Context[S], tx: S#Tx): ItStream[S, A] = {
     val id          = tx.newId()
     val outerStream = outer.expand[S]
     val inStream    = tx.newVar[Stream[S, A]](id, null)
@@ -54,7 +54,7 @@ object MapItStream extends StreamFactory {
                                             _hasNext    : S#Var[Boolean],
                                             valid       : S#Var[Int]  // bit 0 - outer, bit 1 - inner
                                            )
-    extends MapItStream[S, A] {
+    extends ItStream[S, A] {
 
     private[this] lazy val simpleString =
       s"MapItStream@${hashCode().toHexString}"
@@ -149,8 +149,8 @@ object MapItStream extends StreamFactory {
     }
   }
 }
-trait MapItStream[S <: Base[S], A] extends Stream[S, A] {
-  def resetOuter()(implicit tx: S#Tx): Unit
-
-  def advance()(implicit ctx: Context[S], tx: S#Tx): Unit
-}
+//trait MapItStream[S <: Base[S], A] extends Stream[S, A] {
+//  def resetOuter()(implicit tx: S#Tx): Unit
+//
+//  def advance()(implicit ctx: Context[S], tx: S#Tx): Unit
+//}

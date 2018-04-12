@@ -15,28 +15,65 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.serial.DataOutput
+import de.sciss.serial.{DataInput, DataOutput}
 
-final class IndexItStream[S <: Base[S]](iteration: S#Var[Int], tx0: S#Tx)
-  extends Stream[S, Int] {
+object IndexItStream extends StreamFactory {
+  final val typeId = 0x49784974 // "IxIt"
 
-  private[this] val id        = tx0.newId()
-  private[this] val _hasNext  = tx0.newBooleanVar(id, true)
+  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): ItStream[S, Int] = {
+    val id        = tx.newId()
+    val iteration = tx.newIntVar(id, 0)
+    val _hasNext  = tx.newBooleanVar(id, true)
 
-  protected def typeId: Int = ???
+    new Impl[S](id = id, iteration = iteration, _hasNext = _hasNext)
+  }
 
-  protected def writeData(out: DataOutput): Unit = ???
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
 
-  def dispose()(implicit tx: S#Tx): Unit = ???
+    val id        = tx.readId(in, access)
+    val iteration = tx.readIntVar(id, in)
+    val _hasNext  = tx.readBooleanVar(id, in)
 
-  def reset()(implicit tx: S#Tx): Unit =
-    _hasNext() = true
+    new Impl[S](id = id, iteration = iteration, _hasNext = _hasNext)
+  }
 
-  def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _hasNext()
+  private final class Impl[S <: Base[S]](id: S#Id, iteration: S#Var[Int], _hasNext: S#Var[Boolean])
+    extends ItStream[S, Int] {
 
-  def next()(implicit ctx: Context[S], tx: S#Tx): Int = {
-    if (!hasNext) Stream.exhausted()
-    _hasNext() = false
-    iteration()
+    protected def typeId: Int = IndexItStream.typeId
+
+    protected def writeData(out: DataOutput): Unit = {
+      id        .write(out)
+      iteration .write(out)
+      _hasNext  .write(out)
+    }
+
+    def dispose()(implicit tx: S#Tx): Unit = {
+      id        .dispose()
+      iteration .dispose()
+      _hasNext  .dispose()
+    }
+
+    def reset()(implicit tx: S#Tx): Unit =
+      _hasNext() = true
+
+    def resetOuter()(implicit tx: S#Tx): Unit = {
+      iteration() = 0
+      _hasNext () = true
+    }
+
+    def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
+      iteration() = iteration() + 1
+      _hasNext () = true
+    }
+
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _hasNext()
+
+    def next()(implicit ctx: Context[S], tx: S#Tx): Int = {
+      if (!hasNext) Stream.exhausted()
+      _hasNext() = false
+      iteration()
+    }
   }
 }

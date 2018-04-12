@@ -124,7 +124,7 @@ object LoopWithIndexImpl extends StreamFactory {
     }
 
     final def mkItStream()(implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = {
-      val res = new IndexItStream[S](iteration, tx)
+      val res = IndexItStream.expand[S]
       itStreams.add(res)
       res
     }
@@ -132,42 +132,51 @@ object LoopWithIndexImpl extends StreamFactory {
     final def pingFromIt(stream: Stream[S, Int])(implicit tx: S#Tx): Unit =
       itStreams.add(stream)
 
-    final def reset()(implicit tx: S#Tx): Unit = if (valid()) {
-      valid() = false
+    final def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+      itStreams /* ctx.getStreams(refIn) */.foreach {
+        case m: ItStream[S, _] => m.resetOuter()
+      }
       nStream.reset()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
-      if (!valid()) {
-        valid()     = true
-        val nhn     = nStream.hasNext
-        _hasNext()  = nhn
-        if (nhn) {
-          nValue()    = math.max(0, nStream.next())
-          iteration() = 0
-          nextIteration()
-        }
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+      val nhn     = nStream.hasNext
+      _hasNext()  = nhn
+      if (nhn) {
+        nValue() = math.max(0, nStream.next())
+        buildNext(adv = false)
       }
+    }
 
     final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
       validate()
       _hasNext()
     }
 
+    private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit =
+      buildNext(adv = true)
+
     @tailrec
-    private def nextIteration()(implicit ctx: Context[S], tx: S#Tx): Unit = {
-      val i   = iteration()
+    private def buildNext(adv: Boolean)(implicit ctx: Context[S], tx: S#Tx): Unit = {
+      val i = if (adv) {
+        itStreams /* ctx.getStreams(refIn) */.foreach {
+          case m: ItStream[S, _] => m.advance()
+        }
+        iteration() + 1
+      } else {
+        0
+      }
+      iteration() = i
       val nhn = i < nValue()
       _hasNext()  = nhn
       if (nhn) {
         // val itStreams = ctx.getStreams(ref)
-        itStreams.foreach(_.reset())
+//        itStreams.foreach(_.reset())
         innerStream.reset()
         val ihn = innerStream.hasNext
         _hasNext() = ihn
         if (!ihn) {
-          iteration() = i + 1
-          nextIteration()
+          buildNext(adv = adv)
         }
       }
     }
@@ -178,11 +187,7 @@ object LoopWithIndexImpl extends StreamFactory {
       val ihn = innerStream.hasNext
       _hasNext() = ihn
       if (!ihn) {
-        val i = iteration()
-        if (i < nValue()) {
-          iteration() = i + 1
-          nextIteration()
-        }
+        advance()
       }
       res
     }

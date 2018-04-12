@@ -35,6 +35,7 @@ final class StreamSerializer[S <: Base[S], A]()(implicit ctx: Context[S])
       case GeomSeqImpl      .typeId => GeomSeqImpl
       case GroupedImpl      .typeId => GroupedImpl
       case HoldImpl         .typeId => HoldImpl
+      case IndexItStream    .typeId => IndexItStream
       case IndexOfSliceImpl .typeId => IndexOfSliceImpl
       case IndicesImpl      .typeId => IndicesImpl
       case ItImpl           .typeId => ItImpl

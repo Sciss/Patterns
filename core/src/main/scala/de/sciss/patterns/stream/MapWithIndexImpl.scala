@@ -25,12 +25,11 @@ object MapWithIndexImpl extends StreamFactory {
     import pat._
     val id            = tx.newId()
     val mapStream     = tx.newVar[Pat[A]](id, null)
-    val iteration     = tx.newIntVar(id, 0)
     val _hasNext      = tx.newBooleanVar(id, false)
     val valid         = tx.newBooleanVar(id, false)
 
     new StreamNew[S, A1, A](ctx, tx, id = id, outer = outer, inTokenId = itIn.token, idxTokenId = itIdx.token,
-      mapStream = mapStream, iteration = iteration, _hasNext = _hasNext, valid = valid, inner = inner)
+      mapStream = mapStream, _hasNext = _hasNext, valid = valid, inner = inner)
   }
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
@@ -40,7 +39,6 @@ object MapWithIndexImpl extends StreamFactory {
     val inTokenId     = in.readInt()
     val idxTokenId    = in.readInt()
     val mapStream     = tx.readVar[Pat[Any]](id, in)
-    val iteration     = tx.readIntVar    (id, in)
     val _hasNext      = tx.readBooleanVar(id, in)
     val valid         = tx.readBooleanVar(id, in)
 
@@ -48,7 +46,7 @@ object MapWithIndexImpl extends StreamFactory {
     val itStream      = Stream.read[S, Any](in, access) // XXX TODO --- do we need to 'ping' itStream?
 
     new StreamRead[S, Any, Any](tx, id = id, outer = outer, inTokenId = inTokenId, idxTokenId = idxTokenId,
-      mapStream = mapStream, iteration = iteration, _hasNext = _hasNext, valid = valid,
+      mapStream = mapStream, _hasNext = _hasNext, valid = valid,
       innerStream = innerStream, itInStream = itStream)
   }
 
@@ -58,13 +56,12 @@ object MapWithIndexImpl extends StreamFactory {
                                                       inTokenId   : Int,
                                                       idxTokenId  : Int,
                                                       mapStream   : S#Var[Pat[A]],
-                                                      iteration   : S#Var[Int],
                                                       _hasNext    : S#Var[Boolean],
                                                       valid       : S#Var[Boolean],
                                                       inner       : Pat[A]
                                                      )
     extends StreamImpl[S, A1, A](tx0, id, outer = outer, inTokenId = inTokenId, idxTokenId = idxTokenId,
-      mapStream = mapStream, iteration = iteration, _hasNext = _hasNext, valid = valid) {
+      mapStream = mapStream, _hasNext = _hasNext, valid = valid) {
 
     protected val innerStream : Stream[S, A]  = ctx0.withItSources(ItInSource, ItIdxSource)(inner.expand[S](ctx0, tx0))(tx0)
     protected val itInStream  : Stream[S, A1] = ItInSource.mkItStream()(ctx0, tx0)
@@ -76,14 +73,13 @@ object MapWithIndexImpl extends StreamFactory {
                                                       inTokenId   : Int,
                                                       idxTokenId  : Int,
                                                       mapStream   : S#Var[Pat[A]],
-                                                      iteration   : S#Var[Int],
                                                       _hasNext    : S#Var[Boolean],
                                                       valid       : S#Var[Boolean],
                                                       protected val innerStream: Stream[S, A],
                                                       protected val itInStream : Stream[S, A1]
                                                      )
     extends StreamImpl[S, A1, A](tx0, id, outer = outer, inTokenId = inTokenId, idxTokenId = idxTokenId,
-      mapStream = mapStream, iteration = iteration, _hasNext = _hasNext, valid = valid)
+      mapStream = mapStream, _hasNext = _hasNext, valid = valid)
 
   private abstract class StreamImpl[S <: Base[S], A1, A](tx0: S#Tx,
                                                          id               : S#Id,
@@ -91,7 +87,6 @@ object MapWithIndexImpl extends StreamFactory {
                                                          inTokenId        : Int,
                                                          idxTokenId       : Int,
                                                          mapStream        : S#Var[Pat[A]],
-                                                         iteration        : S#Var[Int],
                                                          _hasNext         : S#Var[Boolean],
                                                          valid            : S#Var[Boolean]
                                                         )
@@ -107,33 +102,32 @@ object MapWithIndexImpl extends StreamFactory {
 
     // ---- impl ----
 
-    private[this] val itInStreams : RefSet[S, Stream[S, A1  ]] = tx0.newInMemorySet
-    private[this] val itIdxStreams: RefSet[S, Stream[S, Int ]] = tx0.newInMemorySet
+    private[this] val itStreams: RefSet[S, Stream[S, Any]] = tx0.newInMemorySet
 
     final protected object ItInSource extends ItStreamSource[S, A1] {
       def tokenId: Int = inTokenId
 
       def mkItStream()(implicit ctx: Context[S], tx: S#Tx): Stream[S, A1] = {
         val res = MapItStream.expand[S, A1](outer)
-        itInStreams.add(res)
+        itStreams.add(res)
         res
       }
 
       def pingFromIt(stream: Stream[S, A1])(implicit tx: S#Tx): Unit =
-        itInStreams.add(stream)
+        itStreams.add(stream)
     }
 
     final protected object ItIdxSource extends ItStreamSource[S, Int] {
       def tokenId: Int = idxTokenId
 
       def mkItStream()(implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = {
-        val res = new IndexItStream[S](iteration, tx)
-        itIdxStreams.add(res)
+        val res = IndexItStream.expand[S]
+        itStreams.add(res)
         res
       }
 
       def pingFromIt(stream: Stream[S, Int])(implicit tx: S#Tx): Unit =
-        itIdxStreams.add(stream)
+        itStreams.add(stream)
     }
 
     final protected def typeId: Int = MapWithIndexImpl.typeId
@@ -144,7 +138,6 @@ object MapWithIndexImpl extends StreamFactory {
       out.writeInt(inTokenId)
       out.writeInt(idxTokenId)
       mapStream   .write(out)
-      iteration   .write(out)
       _hasNext    .write(out)
       valid       .write(out)
       innerStream .write(out)
@@ -154,35 +147,28 @@ object MapWithIndexImpl extends StreamFactory {
     final def dispose()(implicit tx: S#Tx): Unit = {
       id          .dispose()
       mapStream   .dispose()
-      iteration   .dispose()
       _hasNext    .dispose()
       valid       .dispose()
       innerStream .dispose()
-      itInStreams .foreach(_.dispose())
-      itIdxStreams.foreach(_.dispose())
+      itStreams .foreach(_.dispose())
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
-      if (!valid()) {
-        logStream("MapWithIndex.iterator.validate()")
-        valid()    = true
-        iteration() = 0
-        buildNext()
-      }
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+      logStream("MapWithIndex.iterator.validate()")
+      buildNext()
+    }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid()) {
-      valid() = false
-      itInStreams /* ctx.getStreams(refIn) */.foreach {
-        case m: MapItStream[S, _] => m.resetOuter()
+    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+      itStreams /* ctx.getStreams(refIn) */.foreach {
+        case m: ItStream[S, _] => m.resetOuter()
       }
       innerStream.reset()
     }
 
     private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
-      itInStreams /* ctx.getStreams(refIn) */.foreach {
-        case m: MapItStream[S, _] => m.advance()
+      itStreams /* ctx.getStreams(refIn) */.foreach {
+        case m: ItStream[S, _] => m.advance()
       }
-      iteration() = iteration() + 1
       innerStream.reset()
       buildNext()
     }
@@ -192,7 +178,9 @@ object MapWithIndexImpl extends StreamFactory {
       _hasNext() = hn
       if (hn) {
         //        val itIdxStreams = ctx.getStreams(ref)
-        itIdxStreams.foreach(_.reset())
+//        itIdxStreams.foreach {
+//          _.reset()
+//        }
         val b = Vector.newBuilder[A]
         var i = 0
         // there is _no_ reasonable way to provide the
