@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.{Base, RefSet}
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.LoopWithIndex
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -25,7 +25,6 @@ object LoopWithIndexImpl extends StreamFactory {
 
   def expand[S <: Base[S], A](pat: LoopWithIndex[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
-    val itStreams   = tx.newInMemorySet[Stream[S, Int]]
     val id          = tx.newId()
     val nStream     = n.expand[S]
     val nValue      = tx.newIntVar(id, 0)
@@ -33,64 +32,65 @@ object LoopWithIndexImpl extends StreamFactory {
     val _hasNext    = tx.newBooleanVar(id, false)
     val valid       = tx.newBooleanVar(id, false)
 
-    new StreamNew[S, A](ctx, tx, id = id, nStream = nStream, tokenId = it.token, inner = inner,
-      nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid, itStreams = itStreams)
+    new StreamNew[S, A](ctx, tx, id = id, nStream = nStream, tokenId = it.token,
+      nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid, inner = inner)
   }
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val itStreams   = tx.newInMemorySet[Stream[S, Int]]
     val id          = tx.readId(in, access)
     val nStream     = Stream.read[S, Int](in, access)
     val tokenId     = in.readInt()
-    val innerStream = Stream.read[S, Any](in, access)
     val nValue      = tx.readIntVar(id, in)
     val iteration   = tx.readIntVar(id, in)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
 
-    new StreamRead[S, Any](id = id, nStream = nStream, tokenId = tokenId, innerStream = innerStream,
-      nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid, itStreams = itStreams)
+    new StreamRead[S, Any](ctx, tx, in, access, id = id, nStream = nStream, tokenId = tokenId,
+      nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid)
   }
 
   private final class StreamNew[S <: Base[S], A](ctx0: Context[S], tx0: S#Tx,
                                                    id         : S#Id,
                                                    nStream    : Stream[S, Int],
                                                    tokenId    : Int,
-                                                   inner      : Pat[A],
                                                    nValue     : S#Var[Int],
                                                    iteration  : S#Var[Int],
                                                    _hasNext   : S#Var[Boolean],
                                                    valid      : S#Var[Boolean],
-                                                   itStreams  : RefSet[S, Stream[S, Int]]
+                                                   inner      : Pat[A]
                                                  )
-    extends StreamImpl[S, A](id = id, nStream = nStream, tokenId = tokenId,
-      nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid, itStreams = itStreams) {
+    extends StreamImpl[S, A](tx0, id = id, nStream = nStream, token = tokenId,
+      nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid) {
 
-    protected val innerStream: Stream[S, A] = ctx0.withItSource(this)(inner.expand[S](ctx0, tx0))(tx0)
+    protected val innerStream: Stream[S, A] =
+      ctx0.withItSource(this)(inner.expand[S](ctx0, tx0))(tx0)
   }
 
-  private final class StreamRead[S <: Base[S], A](id         : S#Id,
+  private final class StreamRead[S <: Base[S], A](ctx0: Context[S], tx0: S#Tx, in0: DataInput, access0: S#Acc,
+                                                  id         : S#Id,
                                                   nStream    : Stream[S, Int],
                                                   tokenId    : Int,
-                                                  protected val innerStream: Stream[S, A],
                                                   nValue     : S#Var[Int],
                                                   iteration  : S#Var[Int],
                                                   _hasNext   : S#Var[Boolean],
                                                   valid      : S#Var[Boolean],
-                                                  itStreams  : RefSet[S, Stream[S, Int]]
                                                  )
-    extends StreamImpl[S, A](id = id, nStream = nStream, tokenId = tokenId,
-      nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid, itStreams = itStreams)
+    extends StreamImpl[S, A](tx0, id = id, nStream = nStream, token = tokenId,
+      nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid) {
 
-  private abstract class StreamImpl[S <: Base[S], A](final val tokenId: Int,
+    protected val innerStream: Stream[S, A] =
+      ctx0.withItSource(this)(Stream.read[S, A](in0, access0)(ctx0, tx0))(tx0)
+  }
+
+  private abstract class StreamImpl[S <: Base[S], A](tx0: S#Tx,
+                                                     final val token: Int,
                                                      id               : S#Id,
                                                      nStream          : Stream[S, Int],
                                                      nValue           : S#Var[Int],
                                                      iteration        : S#Var[Int],
                                                      _hasNext         : S#Var[Boolean],
                                                      valid            : S#Var[Boolean],
-                                                     itStreams        : RefSet[S, Stream[S, Int]]
                                                     )
     extends Stream[S, A] with ItStreamSource[S, Int] {
 
@@ -100,41 +100,43 @@ object LoopWithIndexImpl extends StreamFactory {
 
     // ---- impl ----
 
+    final protected val itStreams = tx0.newInMemorySet[ItStream[S, Int]]
+
     final protected def typeId: Int = LoopWithIndexImpl.typeId
 
     final protected def writeData(out: DataOutput): Unit = {
       id         .write(out)
       nStream    .write(out)
-      out.writeInt(tokenId)
-      innerStream.write(out)
+      out.writeInt(token)
       nValue     .write(out)
       iteration  .write(out)
       _hasNext   .write(out)
       valid      .write(out)
+      innerStream.write(out)
     }
 
     final def dispose()(implicit tx: S#Tx): Unit = {
       id         .dispose()
       nStream    .dispose()
-      innerStream.dispose()
       nValue     .dispose()
       iteration  .dispose()
       _hasNext   .dispose()
       valid      .dispose()
+      innerStream.dispose()
     }
 
-    final def mkItStream()(implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = {
-      val res = IndexItStream.expand[S]
+    final def mkItStream()(implicit ctx: Context[S], tx: S#Tx): ItStream[S, Int] = {
+      val res = IndexItStream.expand[S](token)
       itStreams.add(res)
       res
     }
 
-    final def pingFromIt(stream: Stream[S, Int])(implicit tx: S#Tx): Unit =
+    final def registerItStream(stream: ItStream[S, Int])(implicit tx: S#Tx): Unit =
       itStreams.add(stream)
 
     final def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
       itStreams /* ctx.getStreams(refIn) */.foreach {
-        case m: ItStream[S, _] => m.resetOuter()
+        case m: AdvanceItStream[S, _] => m.resetOuter()
       }
       nStream.reset()
     }
@@ -160,7 +162,7 @@ object LoopWithIndexImpl extends StreamFactory {
     private def buildNext(adv: Boolean)(implicit ctx: Context[S], tx: S#Tx): Unit = {
       val i = if (adv) {
         itStreams /* ctx.getStreams(refIn) */.foreach {
-          case m: ItStream[S, _] => m.advance()
+          case m: AdvanceItStream[S, _] => m.advance()
         }
         iteration() + 1
       } else {

@@ -23,7 +23,7 @@ import scala.collection.immutable.{IndexedSeq => Vec}
 object SortWithItStream extends StreamFactory {
   final val typeId = 0x53574974 // "SWIt"
 
-  def expand[S <: Base[S], A](implicit ctx: Context[S], tx: S#Tx): SortWithItStream[S, A] = {
+  def expand[S <: Base[S], A](token: Int)(implicit ctx: Context[S], tx: S#Tx): SortWithItStream[S, A] = {
     val id        = tx.newId()
     val pairIn    = {
       implicit val vec: ImmutableSerializer[Vec[A]] = PatElem.vecSerializer[A]
@@ -34,12 +34,14 @@ object SortWithItStream extends StreamFactory {
     val _hasNext  = tx.newBooleanVar(id, false)
     val valid     = tx.newBooleanVar(id, false)
 
-    new Impl[S, A](id = id, pairIn = pairIn, count = count, hasZ = hasZ, _hasNext = _hasNext, valid = valid)
+    new Impl[S, A](id = id, token = token, pairIn = pairIn, count = count, hasZ = hasZ,
+      _hasNext = _hasNext, valid = valid)
   }
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id        = tx.readId(in, access)
+    val token     = in.readInt()
     val pairIn    = {
       implicit val vec: ImmutableSerializer[Vec[Any]] = PatElem.vecSerializer[Any]
       tx.readVar[(Vec[Any], Vec[Any])](id, in)
@@ -49,17 +51,21 @@ object SortWithItStream extends StreamFactory {
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
 
-    new Impl[S, Any](id = id, pairIn = pairIn, count = count, hasZ = hasZ, _hasNext = _hasNext, valid = valid)
+    val res = new Impl[S, Any](id = id, token = token, pairIn = pairIn, count = count, hasZ = hasZ,
+      _hasNext = _hasNext, valid = valid)
+    ctx.registerItStream(res)
+    res
   }
 
 
   private final class Impl[S <: Base[S], A](
-                                            id      : S#Id,
-                                            pairIn  : S#Var[(Vec[A], Vec[A])],
-                                            count   : S#Var[Int],
-                                            hasZ    : S#Var[Boolean],
-                                            _hasNext: S#Var[Boolean],
-                                            valid   : S#Var[Boolean]
+                                            id        : S#Id,
+                                            val token : Int,
+                                            pairIn    : S#Var[(Vec[A], Vec[A])],
+                                            count     : S#Var[Int],
+                                            hasZ      : S#Var[Boolean],
+                                            _hasNext  : S#Var[Boolean],
+                                            valid     : S#Var[Boolean]
                                            )
     extends SortWithItStream[S, A] {
 
@@ -73,6 +79,7 @@ object SortWithItStream extends StreamFactory {
 
     protected def writeData(out: DataOutput): Unit = {
       id      .write(out)
+      out.writeInt(token)
       pairIn  .write(out)
       count   .write(out)
       hasZ    .write(out)
@@ -143,6 +150,6 @@ object SortWithItStream extends StreamFactory {
     }
   }
 }
-trait SortWithItStream[S <: Base[S], A] extends Stream[S, (A, A)] {
+trait SortWithItStream[S <: Base[S], A] extends ItStream[S, (A, A)] {
   def advance(x: Vec[A], y: Vec[A])(implicit tx: S#Tx): Unit
 }

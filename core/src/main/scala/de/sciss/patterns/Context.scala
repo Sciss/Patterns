@@ -16,11 +16,16 @@ package de.sciss.patterns
 import de.sciss.lucre.stm.{Base, Plain, Random, TxnRandom}
 import de.sciss.patterns.graph.It
 import de.sciss.patterns.impl.StreamSerializer
-import de.sciss.patterns.stream.ItStreamSource
+import de.sciss.patterns.stream.{ItStream, ItStreamSource}
 import de.sciss.serial.Serializer
 
 trait Context[S <: Base[S]] {
   def mkItStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A]
+
+  /** This method should be called by an `ItStream` after it has been
+    * read in de-serialization.
+    */
+  def registerItStream[A](it: ItStream[S, A])(implicit tx: S#Tx): Unit
 
   def withItSource[A, B](source: ItStreamSource[S, A])(thunk: => B)(implicit tx: S#Tx): B
 
@@ -94,27 +99,8 @@ private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](syste
   final def streamSerializer[A]: Serializer[S#Tx, S#Acc, Stream[S, A]] =
     streamSer.asInstanceOf[StreamSerializer[S, A]]
 
-//  def addStream[A](ref: AnyRef, stream: Stream[S, A])(implicit tx: S#Tx): Stream[S, A] = {
-//    implicit val itx: I1#Tx = i(tx)
-//    val map0 = streamMap()
-//    val map1 = map0 + (ref -> (stream :: map0.getOrElse(ref, Nil)))
-//    streamMap() = map1
-//    stream
-//  }
-//
-//  def getStreams(ref: AnyRef)(implicit tx: S#Tx): List[Stream[S, _]] = {
-//    implicit val itx: I1#Tx = i(tx)
-//    streamMap().getOrElse(ref, Nil)
-//  }
-//
-//  def provideOuterStream[A](token: Int, outer: S#Tx => Stream[S, A])(implicit tx: S#Tx): Unit = {
-//    logStream(s"Context.provideOuterStream($token, ...)")
-//    implicit val itx: I1#Tx = i(tx)
-//    tokenMap() = tokenMap() + (token -> outer)
-//  }
-
   def withItSource[A, B](source: ItStreamSource[S, A])(thunk: => B)(implicit tx: S#Tx): B = {
-    val token   = source.tokenId
+    val token   = source.token
     val list0   = tokenMap.get(token).getOrElse(Nil)
     val list1   = source :: list0
     tokenMap.put(token, list1)
@@ -127,7 +113,7 @@ private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](syste
 
   def withItSources[B](sources: ItStreamSource[S, _]*)(thunk: => B)(implicit tx: S#Tx): B = {
     sources.foreach { source =>
-      val token = source.tokenId
+      val token = source.token
       val list0 = tokenMap.get(token).getOrElse(Nil)
       val list1 = source :: list0
       tokenMap.put(token, list1)
@@ -136,7 +122,7 @@ private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](syste
       thunk
     } finally {
       sources.foreach { source =>
-        val token = source.tokenId
+        val token = source.token
         val _ :: list0 = tokenMap.get(token).get
         if (list0.isEmpty) tokenMap.remove(token) else tokenMap.put(token, list0)
       }
@@ -144,13 +130,21 @@ private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](syste
   }
 
   def mkItStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A] = {
-//    implicit val itx: I1#Tx = i(tx)
+    //    implicit val itx: I1#Tx = i(tx)
     val sources             = tokenMap.get(token).get
     val source              = sources.head
     val res0: Stream[S, _]  = source.mkItStream()(this, tx)
     val res                 = res0.asInstanceOf[Stream[S, A]]
-    logStream(s"Context.mkOuterStream($token) = $res")
+    logStream(s"Context.mkItStream($token) = $res")
     res
+  }
+
+  def registerItStream[A](it: ItStream[S, A])(implicit tx: S#Tx): Unit = {
+    logStream(s"Context.registerItStream($it)")
+    val token               = it.token
+    val sources             = tokenMap.get(token).get
+    val source: ItStreamSource[S, _] = sources.head
+    source.asInstanceOf[ItStreamSource[S, A]].registerItStream(it)
   }
 
   def mkRandom(ref: AnyRef)(implicit tx: S#Tx): TxnRandom[S] = {

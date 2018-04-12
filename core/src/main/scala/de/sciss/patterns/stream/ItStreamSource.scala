@@ -17,9 +17,9 @@ package stream
 import de.sciss.lucre.stm.Base
 
 trait ItStreamSource[S <: Base[S], A] {
-  def tokenId: Int
+  def token: Int
 
-  def mkItStream()(implicit ctx: Context[S], tx: S#Tx): Stream[S, A]
+  def mkItStream()(implicit ctx: Context[S], tx: S#Tx): ItStream[S, A]
 
-  def pingFromIt(stream: Stream[S, A])(implicit tx: S#Tx): Unit
+  def registerItStream(stream: ItStream[S, A])(implicit tx: S#Tx): Unit
 }

@@ -20,31 +20,35 @@ import de.sciss.serial.{DataInput, DataOutput}
 object IndexItStream extends StreamFactory {
   final val typeId = 0x49784974 // "IxIt"
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): ItStream[S, Int] = {
+  def expand[S <: Base[S]](token: Int)(implicit ctx: Context[S], tx: S#Tx): AdvanceItStream[S, Int] = {
     val id        = tx.newId()
     val iteration = tx.newIntVar(id, 0)
     val _hasNext  = tx.newBooleanVar(id, true)
 
-    new Impl[S](id = id, iteration = iteration, _hasNext = _hasNext)
+    new Impl[S](id = id, token = token, iteration = iteration, _hasNext = _hasNext)
   }
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
 
     val id        = tx.readId(in, access)
+    val token     = in.readInt()
     val iteration = tx.readIntVar(id, in)
     val _hasNext  = tx.readBooleanVar(id, in)
 
-    new Impl[S](id = id, iteration = iteration, _hasNext = _hasNext)
+    val res = new Impl[S](id = id, token = token, iteration = iteration, _hasNext = _hasNext)
+    ctx.registerItStream(res)
+    res
   }
 
-  private final class Impl[S <: Base[S]](id: S#Id, iteration: S#Var[Int], _hasNext: S#Var[Boolean])
-    extends ItStream[S, Int] {
+  private final class Impl[S <: Base[S]](id: S#Id, val token: Int, iteration: S#Var[Int], _hasNext: S#Var[Boolean])
+    extends AdvanceItStream[S, Int] {
 
     protected def typeId: Int = IndexItStream.typeId
 
     protected def writeData(out: DataOutput): Unit = {
       id        .write(out)
+      out.writeInt(token)
       iteration .write(out)
       _hasNext  .write(out)
     }

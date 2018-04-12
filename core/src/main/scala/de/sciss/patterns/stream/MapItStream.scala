@@ -21,7 +21,8 @@ object MapItStream extends StreamFactory {
 
   final val typeId = 0x4D704974 // "MpIt"
 
-  def expand[S <: Base[S], A](outer: Pat[Pat[A]])(implicit ctx: Context[S], tx: S#Tx): ItStream[S, A] = {
+  def expand[S <: Base[S], A](outer: Pat[Pat[A]], token: Int)
+                             (implicit ctx: Context[S], tx: S#Tx): AdvanceItStream[S, A] = {
     val id          = tx.newId()
     val outerStream = outer.expand[S]
     val inStream    = tx.newVar[Stream[S, A]](id, null)
@@ -29,32 +30,36 @@ object MapItStream extends StreamFactory {
     val _hasNext    = tx.newBooleanVar(id, false)
     val valid       = tx.newIntVar    (id, 0)
     
-    new Impl[S, A](id, outerStream = outerStream, inStream = inStream, hasIn = hasIn, 
+    new Impl[S, A](id, token = token, outerStream = outerStream, inStream = inStream, hasIn = hasIn,
       _hasNext = _hasNext, valid = valid)
   }
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id          = tx.readId(in, access)
+    val token       = in.readInt()
     val outerStream = Stream.read[S, Pat[Any]](in, access)
     val inStream    = tx.readVar[Stream[S, Any]](id, in)
     val hasIn       = tx.readBooleanVar(id, in)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readIntVar    (id, in)
 
-    new Impl[S, Any](id, outerStream = outerStream, inStream = inStream, hasIn = hasIn,
+    val res = new Impl[S, Any](id, token = token, outerStream = outerStream, inStream = inStream, hasIn = hasIn,
       _hasNext = _hasNext, valid = valid)
+    ctx.registerItStream(res)
+    res
   }
 
   private final class Impl[S <: Base[S], A](
                                             id          : S#Id,
+                                            val token   : Int,
                                             outerStream : Stream[S, Pat[A]],
                                             inStream    : S#Var[Stream[S, A]],
                                             hasIn       : S#Var[Boolean],
                                             _hasNext    : S#Var[Boolean],
                                             valid       : S#Var[Int]  // bit 0 - outer, bit 1 - inner
                                            )
-    extends ItStream[S, A] {
+    extends AdvanceItStream[S, A] {
 
     private[this] lazy val simpleString =
       s"MapItStream@${hashCode().toHexString}"
@@ -63,6 +68,7 @@ object MapItStream extends StreamFactory {
 
     protected def writeData(out: DataOutput): Unit = {
       id          .write(out)
+      out.writeInt(token)
       outerStream .write(out)
       inStream    .write(out)
       hasIn       .write(out)

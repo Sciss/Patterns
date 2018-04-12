@@ -28,7 +28,8 @@ object MapWithIndexImpl extends StreamFactory {
     val _hasNext      = tx.newBooleanVar(id, false)
     val valid         = tx.newBooleanVar(id, false)
 
-    new StreamNew[S, A1, A](ctx, tx, id = id, outer = outer, inTokenId = itIn.token, idxTokenId = itIdx.token,
+    new StreamNew[S, A1, A](ctx, tx, id = id, outer = outer,
+      inTokenId = itIn.token, idxTokenId = itIdx.token,
       mapStream = mapStream, _hasNext = _hasNext, valid = valid, inner = inner)
   }
 
@@ -42,12 +43,9 @@ object MapWithIndexImpl extends StreamFactory {
     val _hasNext      = tx.readBooleanVar(id, in)
     val valid         = tx.readBooleanVar(id, in)
 
-    val innerStream   = Stream.read[S, Any](in, access)
-    val itStream      = Stream.read[S, Any](in, access) // XXX TODO --- do we need to 'ping' itStream?
-
-    new StreamRead[S, Any, Any](tx, id = id, outer = outer, inTokenId = inTokenId, idxTokenId = idxTokenId,
-      mapStream = mapStream, _hasNext = _hasNext, valid = valid,
-      innerStream = innerStream, itInStream = itStream)
+    new StreamRead[S, Any, Any](ctx, tx, in, access, id = id, outer = outer,
+      inTokenId = inTokenId, idxTokenId = idxTokenId,
+      mapStream = mapStream, _hasNext = _hasNext, valid = valid)
   }
 
   private final class StreamNew [S <: Base[S], A1, A](ctx0: Context[S], tx0: S#Tx,
@@ -63,23 +61,32 @@ object MapWithIndexImpl extends StreamFactory {
     extends StreamImpl[S, A1, A](tx0, id, outer = outer, inTokenId = inTokenId, idxTokenId = idxTokenId,
       mapStream = mapStream, _hasNext = _hasNext, valid = valid) {
 
-    protected val innerStream : Stream[S, A]  = ctx0.withItSources(ItInSource, ItIdxSource)(inner.expand[S](ctx0, tx0))(tx0)
+    protected val innerStream : Stream[S, A]  =
+      ctx0.withItSources(ItInSource, ItIdxSource)(inner.expand[S](ctx0, tx0))(tx0)
+
     protected val itInStream  : Stream[S, A1] = ItInSource.mkItStream()(ctx0, tx0)
   }
 
-  private final class StreamRead[S <: Base[S], A1, A](tx0: S#Tx,
+  private final class StreamRead[S <: Base[S], A1, A](ctx0: Context[S], tx0: S#Tx, in0: DataInput, access0: S#Acc,
                                                       id          : S#Id,
                                                       outer       : Pat[Pat[A1]],
                                                       inTokenId   : Int,
                                                       idxTokenId  : Int,
                                                       mapStream   : S#Var[Pat[A]],
                                                       _hasNext    : S#Var[Boolean],
-                                                      valid       : S#Var[Boolean],
-                                                      protected val innerStream: Stream[S, A],
-                                                      protected val itInStream : Stream[S, A1]
+                                                      valid       : S#Var[Boolean]
                                                      )
     extends StreamImpl[S, A1, A](tx0, id, outer = outer, inTokenId = inTokenId, idxTokenId = idxTokenId,
-      mapStream = mapStream, _hasNext = _hasNext, valid = valid)
+      mapStream = mapStream, _hasNext = _hasNext, valid = valid) {
+
+    protected val (innerStream: Stream[S, A], itInStream: Stream[S, A1]) = {
+      ctx0.withItSources(ItInSource, ItIdxSource) {
+        val _1 = Stream.read[S, A ](in0, access0)(ctx0, tx0)
+        val _2 = Stream.read[S, A1](in0, access0)(ctx0, tx0)
+        (_1, _2)
+      } (tx0)
+    }
+  }
 
   private abstract class StreamImpl[S <: Base[S], A1, A](tx0: S#Tx,
                                                          id               : S#Id,
@@ -105,28 +112,28 @@ object MapWithIndexImpl extends StreamFactory {
     private[this] val itStreams: RefSet[S, Stream[S, Any]] = tx0.newInMemorySet
 
     final protected object ItInSource extends ItStreamSource[S, A1] {
-      def tokenId: Int = inTokenId
+      def token: Int = inTokenId
 
-      def mkItStream()(implicit ctx: Context[S], tx: S#Tx): Stream[S, A1] = {
-        val res = MapItStream.expand[S, A1](outer)
+      def mkItStream()(implicit ctx: Context[S], tx: S#Tx): ItStream[S, A1] = {
+        val res = MapItStream.expand[S, A1](outer, token = token)
         itStreams.add(res)
         res
       }
 
-      def pingFromIt(stream: Stream[S, A1])(implicit tx: S#Tx): Unit =
+      def registerItStream(stream: ItStream[S, A1])(implicit tx: S#Tx): Unit =
         itStreams.add(stream)
     }
 
     final protected object ItIdxSource extends ItStreamSource[S, Int] {
-      def tokenId: Int = idxTokenId
+      def token: Int = idxTokenId
 
-      def mkItStream()(implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = {
-        val res = IndexItStream.expand[S]
+      def mkItStream()(implicit ctx: Context[S], tx: S#Tx): ItStream[S, Int] = {
+        val res = IndexItStream.expand[S](token = token)
         itStreams.add(res)
         res
       }
 
-      def pingFromIt(stream: Stream[S, Int])(implicit tx: S#Tx): Unit =
+      def registerItStream(stream: ItStream[S, Int])(implicit tx: S#Tx): Unit =
         itStreams.add(stream)
     }
 
@@ -160,14 +167,14 @@ object MapWithIndexImpl extends StreamFactory {
 
     def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
       itStreams /* ctx.getStreams(refIn) */.foreach {
-        case m: ItStream[S, _] => m.resetOuter()
+        case m: AdvanceItStream[S, _] => m.resetOuter()
       }
       innerStream.reset()
     }
 
     private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
       itStreams /* ctx.getStreams(refIn) */.foreach {
-        case m: ItStream[S, _] => m.advance()
+        case m: AdvanceItStream[S, _] => m.advance()
       }
       innerStream.reset()
       buildNext()

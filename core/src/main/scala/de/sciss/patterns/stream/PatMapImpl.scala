@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.{Base, RefSet}
+import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.PatMap
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -23,18 +23,17 @@ object PatMapImpl extends StreamFactory {
 
   def expand[S <: Base[S], A1, A](pat: PatMap[A1, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = {
     import pat._
-    val mapItStreams  = tx.newInMemorySet[Stream[S, A1]]
     val id            = tx.newId()
     val mapStream     = tx.newVar[Pat[A]](id, null)
     val _hasNext      = tx.newBooleanVar(id, false)
     val valid         = tx.newBooleanVar(id, false)
+
     new StreamNew[S, A1, A](ctx, tx, id = id, outer = outer, tokenId = it.token, mapStream = mapStream,
-      _hasNext = _hasNext, valid = valid, inner = inner, mapItStreams = mapItStreams)
+      _hasNext = _hasNext, valid = valid, inner = inner)
   }
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val mapItStreams  = tx.newInMemorySet[Stream[S, Any]]
     val id            = tx.readId(in, access)
     val outer         = Pat.serializer[Pat[Any]].read(in)
     val tokenId       = in.readInt()
@@ -42,11 +41,8 @@ object PatMapImpl extends StreamFactory {
     val _hasNext      = tx.readBooleanVar(id, in)
     val valid         = tx.readBooleanVar(id, in)
 
-    val innerStream   = Stream.read[S, Any](in, access)
-    val itStream      = Stream.read[S, Any](in, access) // XXX TODO --- do we need to 'ping' itStream?
-
-    new StreamRead[S, Any, Any](id = id, outer = outer, tokenId = tokenId, mapStream = mapStream,
-      _hasNext = _hasNext, valid = valid, innerStream = innerStream, itStream = itStream, mapItStreams = mapItStreams)
+    new StreamRead[S, Any, Any](ctx, tx, in, access, id = id, outer = outer, tokenId = tokenId, mapStream = mapStream,
+      _hasNext = _hasNext, valid = valid)
   }
 
   private final class StreamNew [S <: Base[S], A1, A](ctx0: Context[S], tx0: S#Tx,
@@ -56,37 +52,44 @@ object PatMapImpl extends StreamFactory {
                                                       mapStream   : S#Var[Pat[A]],
                                                       _hasNext    : S#Var[Boolean],
                                                       valid       : S#Var[Boolean],
-                                                      inner       : Pat[A],
-                                                      mapItStreams: RefSet[S, Stream[S, A1]]
+                                                      inner       : Pat[A]
                                                      )
-    extends StreamImpl[S, A1, A](id, outer = outer, tokenId = tokenId, mapStream = mapStream,
-      _hasNext = _hasNext, valid = valid, mapItStreams = mapItStreams) {
+    extends StreamImpl[S, A1, A](tx0, id, outer = outer, token = tokenId, mapStream = mapStream,
+      _hasNext = _hasNext, valid = valid) {
 
-    protected val innerStream : Stream[S, A]  = ctx0.withItSource(this)(inner.expand[S](ctx0, tx0))(tx0)
+    protected val innerStream : Stream[S, A]  =
+      ctx0.withItSource(this)(inner.expand[S](ctx0, tx0))(tx0)
+
     protected val itStream    : Stream[S, A1] = mkItStream()(ctx0, tx0)
   }
 
-  private final class StreamRead[S <: Base[S], A1, A](id          : S#Id,
+  private final class StreamRead[S <: Base[S], A1, A](ctx0: Context[S], tx0: S#Tx, in0: DataInput, access0: S#Acc,
+                                                      id          : S#Id,
                                                       outer       : Pat[Pat[A1]],
                                                       tokenId     : Int,
                                                       mapStream   : S#Var[Pat[A]],
                                                       _hasNext    : S#Var[Boolean],
-                                                      valid       : S#Var[Boolean],
-                                                      protected val innerStream: Stream[S, A],
-                                                      protected val itStream   : Stream[S, A1],
-                                                      mapItStreams: RefSet[S, Stream[S, A1]]
+                                                      valid       : S#Var[Boolean]
                                                      )
-    extends StreamImpl[S, A1, A](id, outer = outer, tokenId = tokenId, mapStream = mapStream,
-      _hasNext = _hasNext, valid = valid, mapItStreams = mapItStreams)
+    extends StreamImpl[S, A1, A](tx0, id, outer = outer, token = tokenId, mapStream = mapStream,
+      _hasNext = _hasNext, valid = valid) {
 
-  private abstract class StreamImpl[S <: Base[S], A1, A](
-                                                         id               : S#Id,
-                                                         outer            : Pat[Pat[A1]],
-                                                         final val tokenId: Int,
-                                                         mapStream        : S#Var[Pat[A]],
-                                                         _hasNext         : S#Var[Boolean],
-                                                         valid            : S#Var[Boolean],
-                                                         mapItStreams     : RefSet[S, Stream[S, A1]]
+    protected val (innerStream: Stream[S, A], itStream: Stream[S, A1]) = {
+      ctx0.withItSource(this) {
+        val _1 = Stream.read[S, A ](in0, access0)(ctx0, tx0)
+        val _2 = Stream.read[S, A1](in0, access0)(ctx0, tx0)
+        (_1, _2)
+      } (tx0)
+    }
+  }
+
+  private abstract class StreamImpl[S <: Base[S], A1, A](tx0: S#Tx,
+                                                          id               : S#Id,
+                                                          outer            : Pat[Pat[A1]],
+                                                          final val token: Int,
+                                                          mapStream        : S#Var[Pat[A]],
+                                                          _hasNext         : S#Var[Boolean],
+                                                          valid            : S#Var[Boolean]
                                                         )
     extends Stream[S, Pat[A]] with ItStreamSource[S, A1] {
 
@@ -100,12 +103,14 @@ object PatMapImpl extends StreamFactory {
 
     // ---- impl ----
 
+    final protected val mapItStreams = tx0.newInMemorySet[ItStream[S, A1]]
+
     final protected def typeId: Int = PatMapImpl.typeId
 
     final protected def writeData(out: DataOutput): Unit = {
       id          .write(out)
       Pat.serializer[Pat[A1]].write(outer, out)
-      out.writeInt(tokenId)
+      out.writeInt(token)
       mapStream   .write(out)
       _hasNext    .write(out)
       valid       .write(out)
@@ -122,13 +127,13 @@ object PatMapImpl extends StreamFactory {
       mapItStreams.foreach(_.dispose())
     }
 
-    final def mkItStream()(implicit ctx: Context[S], tx: S#Tx): Stream[S, A1] = {
-      val res = MapItStream.expand[S, A1](outer)
+    final def mkItStream()(implicit ctx: Context[S], tx: S#Tx): ItStream[S, A1] = {
+      val res = MapItStream.expand[S, A1](outer, token = token)
       mapItStreams.add(res)
       res
     }
 
-    final def pingFromIt(stream: Stream[S, A1])(implicit tx: S#Tx): Unit =
+    final def registerItStream(stream: ItStream[S, A1])(implicit tx: S#Tx): Unit =
       mapItStreams.add(stream)
 
     private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
@@ -138,14 +143,14 @@ object PatMapImpl extends StreamFactory {
 
     def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
       mapItStreams /* ctx.getStreams(ref) */.foreach {
-        case m: ItStream[S, _] => m.resetOuter()
+        case m: AdvanceItStream[S, _] => m.resetOuter()
       }
       innerStream.reset()
     }
 
     private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
       mapItStreams /* ctx.getStreams(ref) */.foreach {
-        case m: ItStream[S, _] => m.advance()
+        case m: AdvanceItStream[S, _] => m.advance()
       }
       innerStream.reset()
       buildNext()
