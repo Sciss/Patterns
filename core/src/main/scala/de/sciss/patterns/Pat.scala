@@ -47,6 +47,8 @@ object Pat {
 
   def read[A](in: DataInput): Pat[A] = serializer[A].read(in)
 
+  def write[A](pat: Pat[A], out: DataOutput): Unit = serializer[A].write(pat, out)
+
   implicit def serializer[A]: ImmutableSerializer[Pat[A]] = anySer.asInstanceOf[ImmutableSerializer[Pat[A]]]
 
   private object anySer extends ImmutableSerializer[Pat[_]] {

@@ -30,7 +30,7 @@ object FlatMapImpl extends StreamFactory {
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val mapItStreams  = tx.newInMemorySet[Stream[S, Any]]
-    val outer         = Pat.serializer[Pat[Any]].read(in)
+    val outer         = Pat.read[Pat[Any]](in)
     val tokenId       = in.readInt()
     val innerStream   = Stream.read[S, Any](in, access)
     val itStream      = Stream.read[S, Any](in, access) // XXX TODO --- do we need to 'ping' itStream?
@@ -79,7 +79,7 @@ object FlatMapImpl extends StreamFactory {
     final protected def typeId: Int = FlatMapImpl.typeId
 
     final protected def writeData(out: DataOutput): Unit = {
-      Pat.serializer[Pat[A1]].write(outer, out)
+      Pat.write(outer, out)
       out.writeInt(tokenId)
       innerStream.write(out)
       itStream   .write(out)
@@ -91,7 +91,7 @@ object FlatMapImpl extends StreamFactory {
     }
 
     final def mkItStream()(implicit ctx: Context[S], tx: S#Tx): Stream[S, A1] = {
-      val res = new MapItStream[S, A1](outer, tx)
+      val res = MapItStream.expand[S, A1](outer)
       mapItStreams.add(res)
       res
     }
@@ -115,7 +115,7 @@ object FlatMapImpl extends StreamFactory {
     private def hasNextI(implicit ctx: Context[S], tx: S#Tx): Boolean =
       itStream.hasNext && innerStream.hasNext
 
-    private def advance()(implicit tx: S#Tx): Unit = {
+    private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
       logStream("FlatMap.iterator.advance()")
       mapItStreams /* ctx.getStreams(ref) */.foreach {
         case m: MapItStream[S, _] => m.advance()

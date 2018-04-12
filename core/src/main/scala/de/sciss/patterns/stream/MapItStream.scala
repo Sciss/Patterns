@@ -15,82 +15,142 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.serial.DataOutput
+import de.sciss.serial.{DataInput, DataOutput}
 
-final class MapItStream[S <: Base[S], A](outer: Pat[Pat[A]], tx0: S#Tx)(implicit ctx: Context[S])
-  extends Stream[S, A] {
+object MapItStream extends StreamFactory {
 
-  private[this] val id          = tx0.newId()
-  private[this] val outerStream = outer.expand(ctx, tx0)
-  private[this] val inStream    = tx0.newVar[Stream[S, A]](id, null)
-  private[this] val _valid      = tx0.newBooleanVar(id, false)
-  private[this] val _hasIn      = tx0.newBooleanVar(id, false)
-  private[this] val _hasNext    = tx0.newBooleanVar(id, false)
+  final val typeId = 0x4D704974 // "MpIt"
 
-  private[this] lazy val simpleString = {
-    val os0 = outer.toString
-    val os  = if (os0.length <= 24) os0 else s"${os0.substring(0, 23)}..."
-    s"MapItStream($os)"
+  def expand[S <: Base[S], A](outer: Pat[Pat[A]])(implicit ctx: Context[S], tx: S#Tx): MapItStream[S, A] = {
+    val id          = tx.newId()
+    val outerStream = outer.expand[S]
+    val inStream    = tx.newVar[Stream[S, A]](id, null)
+    val hasIn       = tx.newBooleanVar(id, false)
+    val _hasNext    = tx.newBooleanVar(id, false)
+    val valid       = tx.newIntVar    (id, 0)
+    
+    new Impl[S, A](id, outerStream = outerStream, inStream = inStream, hasIn = hasIn, 
+      _hasNext = _hasNext, valid = valid)
   }
 
-  protected def typeId: Int = ???
+  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
+                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+    val id          = tx.readId(in, access)
+    val outerStream = Stream.read[S, Pat[Any]](in, access)
+    val inStream    = tx.readVar[Stream[S, Any]](id, in)
+    val hasIn       = tx.readBooleanVar(id, in)
+    val _hasNext    = tx.readBooleanVar(id, in)
+    val valid       = tx.readIntVar    (id, in)
 
-  protected def writeData(out: DataOutput): Unit = ???
+    new Impl[S, Any](id, outerStream = outerStream, inStream = inStream, hasIn = hasIn,
+      _hasNext = _hasNext, valid = valid)
+  }
 
-  def dispose()(implicit tx: S#Tx): Unit = ???
+  private final class Impl[S <: Base[S], A](
+                                            id          : S#Id,
+                                            outerStream : Stream[S, Pat[A]],
+                                            inStream    : S#Var[Stream[S, A]],
+                                            hasIn       : S#Var[Boolean],
+                                            _hasNext    : S#Var[Boolean],
+                                            valid       : S#Var[Int]  // bit 0 - outer, bit 1 - inner
+                                           )
+    extends MapItStream[S, A] {
 
-  override def toString: String = simpleString
+    private[this] lazy val simpleString =
+      s"MapItStream@${hashCode().toHexString}"
 
-  def advance()(implicit tx: S#Tx): Unit = {
-    _valid()    = true // require(_valid())
-    val ohn     = outerStream.hasNext
-    _hasNext()  = ohn
-    _hasIn()    = false
-    logStream(s"$simpleString.advance(): outerStream.hasNext = $ohn")
-    if (ohn) {
-      val inPat     = outerStream.next()
-      val inValue   = inPat.expand
-      val ihn       = inValue.hasNext
-      logStream(s"$simpleString.advance(): inValue.hasNext = $ihn")
-      inStream()    = inValue
-      _hasIn()      = true
-      _hasNext()    = ihn
+    protected def typeId: Int = MapItStream.typeId
+
+    protected def writeData(out: DataOutput): Unit = {
+      id          .write(out)
+      outerStream .write(out)
+      inStream    .write(out)
+      hasIn       .write(out)
+      _hasNext    .write(out)
+      valid       .write(out)
+    }
+
+    def dispose()(implicit tx: S#Tx): Unit = {
+      id          .dispose()
+      outerStream .dispose()
+      inStream    .dispose()
+      hasIn       .dispose()
+      _hasNext    .dispose()
+      valid       .dispose()
+    }
+
+    override def toString: String = simpleString
+
+    def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
+      valid()   = 0x03 // hasIn and _hasNext will be valid
+      val ohn   = outerStream.hasNext
+      logStream(s"$simpleString.advance(): outerStream.hasNext = $ohn")
+      if (ohn) {
+        val inPat     = outerStream.next()
+        val inValue   = inPat.expand
+        val ihn       = inValue.hasNext
+        logStream(s"$simpleString.advance(): inValue.hasNext = $ihn")
+        inStream()    = inValue
+        hasIn()       = true
+        _hasNext()    = ihn
+      } else {
+        hasIn()       = false
+        _hasNext()    = false
+      }
+    }
+
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = {
+      val v0 = valid()
+      if ((v0 & 0x01) == 0) {         // hasIn is invalid
+        advance()                     // validate hasIn and _hasNext
+      } else if ((v0 & 0x02) == 0) {  // hasIn is valid but _hasNext is invalid
+        valid()     = 0x03            // _hasNext will be valid
+        val inValue = inStream()
+        val ihn     = inValue.hasNext
+        _hasNext()  = ihn
+      }
+    }
+
+    def resetOuter()(implicit tx: S#Tx): Unit = {
+      val v0 = valid()
+      val v1 = v0 & ~0x01 // invalidate hasIn
+      if (v1 != v0) {
+        valid() = v1
+        //    logStream(s"$simpleString.resetOuter()")
+          outerStream.reset()
+      }
+    }
+
+    def reset()(implicit tx: S#Tx): Unit = {
+      val v0 = valid()
+      if ((v0 & 0x03) == 0x03) {
+        val hi = hasIn()
+        logStream(s"$simpleString.reset(); hasIn = $hi")
+        if (hi) {
+          val inValue = inStream()
+          inValue.reset()
+          valid() = 0x01    // clear 0x02
+        }
+      }
+    }
+
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+      validate()
+      _hasNext()
+    }
+
+    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+      if (!hasNext) Stream.exhausted()
+      val in      = inStream()
+      val res     = in.next()
+      _hasNext()  = in.hasNext
+      logStream(s"$simpleString.next() = $res; hasNext = ${in.hasNext}")
+      res
     }
   }
+}
+trait MapItStream[S <: Base[S], A] extends Stream[S, A] {
+  def resetOuter()(implicit tx: S#Tx): Unit
 
-  private def validate()(implicit tx: S#Tx): Unit =
-    if (!_valid()) {
-//      _valid() = true
-      advance()
-    }
-
-  def resetOuter()(implicit tx: S#Tx): Unit = if (_valid.swap(false)) {
-//    logStream(s"$simpleString.resetOuter()")
-    outerStream.reset()
-  }
-
-  def reset()(implicit tx: S#Tx): Unit = {
-    val hi = _hasIn()
-    logStream(s"$simpleString.reset(); hasIn = $hi")
-    if (hi) {
-      val inValue   = inStream()
-      inValue.reset()
-      val ihn     = inValue.hasNext
-      _hasNext()  = ihn
-    }
-  }
-
-  def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
-    validate()
-    _hasNext()
-  }
-
-  def next()(implicit ctx: Context[S], tx: S#Tx): A = {
-    if (!hasNext) Stream.exhausted()
-    val in      = inStream()
-    val res     = in.next()
-    _hasNext()  = in.hasNext
-    logStream(s"$simpleString.next() = $res; hasNext = ${in.hasNext}")
-    res
-  }
+  def advance()(implicit ctx: Context[S], tx: S#Tx): Unit
 }

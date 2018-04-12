@@ -13,8 +13,8 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.{Base, Disposable}
-import de.sciss.serial.{DataInput, DataOutput, Serializer, Writable}
+import de.sciss.lucre.stm.{Base, Disposable, Plain}
+import de.sciss.serial.{DataInput, DataOutput, Serializer, Writable, Writer}
 
 import scala.collection.AbstractIterator
 
@@ -23,6 +23,12 @@ object Stream {
 
   implicit def serializer[S <: Base[S], A](implicit ctx: Context[S]): Serializer[S#Tx, S#Acc, Stream[S, A]] =
     ctx.streamSerializer // new Ser[S, A] // anySer.asInstanceOf[Ser[S, A]]
+
+  implicit def writer[S <: Base[S], A]: Writer[Stream[S, A]] = anyWriter.asInstanceOf[Writer[Stream[S, A]]]
+
+  private object anyWriter extends Writer[Stream[Plain, Any]] {
+    def write(v: Stream[Plain, Any], out: DataOutput): Unit = v.write(out)
+  }
 
   def read[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     serializer[S, A].read(in, access)

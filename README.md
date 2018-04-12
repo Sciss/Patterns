@@ -9,8 +9,7 @@ It is (C)opyright 2017&ndash;2018 by Hanns Holger Rutz. All rights reserved. Thi
 
 ## requirements / installation
 
-This project currently builds against Scala 2.12, 2.11 using sbt. For convenience, the [sbt-extras](https://github.com/paulp/sbt-extras)
-script by Paul Phillips (BSD-3-Clause) is included.
+This project currently builds against Scala 2.12, 2.11 using [sbt](http://www.scala-sbt.org/).
 
 To link to it:
 

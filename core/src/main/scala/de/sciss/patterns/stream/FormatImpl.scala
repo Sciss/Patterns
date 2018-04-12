@@ -16,7 +16,7 @@ package stream
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.Format
-import de.sciss.serial.{DataInput, DataOutput, Serializer}
+import de.sciss.serial.{DataInput, DataOutput, Serializer, Writer}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
@@ -49,7 +49,7 @@ object FormatImpl extends StreamFactory {
 
     protected def writeData(out: DataOutput): Unit = {
       sStream.write(out)
-      ??? // Serializer.indexedSeq[S#Tx, S#Acc, Stream[S, Any]].write(argStreams, out)
+      Writer.indexedSeq[Stream[S, Any]].write(argStreams, out)
     }
 
     def dispose()(implicit tx: S#Tx): Unit = {

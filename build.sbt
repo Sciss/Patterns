@@ -7,7 +7,7 @@ val deps = new {
   val core = new {
     val numbers             = "0.1.5"
     val optional            = "1.0.0"
-    val serial              = "1.1.0"
+    val serial              = "1.1.1"
     val lucre               = "3.6.0-SNAPSHOT"
   }
   val lucre = new {

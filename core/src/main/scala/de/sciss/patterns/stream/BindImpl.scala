@@ -16,7 +16,7 @@ package stream
 
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.Bind
-import de.sciss.serial.{DataInput, DataOutput, Serializer}
+import de.sciss.serial.{DataInput, DataOutput, Serializer, Writer}
 
 object BindImpl extends StreamFactory {
   final val typeId = 0x42696E64 // "Bind"
@@ -56,7 +56,7 @@ object BindImpl extends StreamFactory {
 
     protected def writeData(out: DataOutput): Unit = {
       id      .write(out)
-      ??? // Serializer.map[S#Tx, S#Acc, String, Stream[S, Any]].write(mapE, out)
+      Writer.map[String, Stream[S, Any]].write(mapE, out)
       _hasNext.write(out)
       valid   .write(out)
     }

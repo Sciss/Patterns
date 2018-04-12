@@ -123,7 +123,7 @@ object PatMapImpl extends StreamFactory {
     }
 
     final def mkItStream()(implicit ctx: Context[S], tx: S#Tx): Stream[S, A1] = {
-      val res = new MapItStream[S, A1](outer, tx)
+      val res = MapItStream.expand[S, A1](outer)
       mapItStreams.add(res)
       res
     }
