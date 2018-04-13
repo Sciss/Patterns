@@ -74,7 +74,7 @@ object LoopWithIndexImpl extends StreamFactory {
                                                   nValue     : S#Var[Int],
                                                   iteration  : S#Var[Int],
                                                   _hasNext   : S#Var[Boolean],
-                                                  valid      : S#Var[Boolean],
+                                                  valid      : S#Var[Boolean]
                                                  )
     extends StreamImpl[S, A](tx0, id = id, nStream = nStream, token = tokenId,
       nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid) {
@@ -90,7 +90,7 @@ object LoopWithIndexImpl extends StreamFactory {
                                                      nValue           : S#Var[Int],
                                                      iteration        : S#Var[Int],
                                                      _hasNext         : S#Var[Boolean],
-                                                     valid            : S#Var[Boolean],
+                                                     valid            : S#Var[Boolean]
                                                     )
     extends Stream[S, A] with ItStreamSource[S, Int] {
 

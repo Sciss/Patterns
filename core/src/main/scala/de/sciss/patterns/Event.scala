@@ -26,7 +26,7 @@ object Event {
       var sz = in.readInt()
       b.sizeHint(sz)
       val ref = if (sz <= 1) null else new PatElem.RefMapIn
-      while (sz > 1) {
+      while (sz > 0) {
         val k = in.readUTF()
         val v = PatElem.read(in, ref)
         b += (k -> v)

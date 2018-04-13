@@ -214,7 +214,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
     import context.scheduler.cursor
     implicit val _ctx: Context[S] = patterns.lucre.Context[S] // (system, system, itx) // InMemory()
     patContext.update(_ctx)(tx.peer)
-    val stream: patterns.Stream[S, Any] = ??? // g.expand[I]
+    val stream: patterns.Stream[S, Any] = g.expand[S]
     streamRef.update(stream)(tx.peer)
 
     val headElem  = nextElemFromStream(0L)

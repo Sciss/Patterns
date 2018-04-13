@@ -8,10 +8,10 @@ val deps = new {
     val numbers             = "0.1.5"
     val optional            = "1.0.0"
     val serial              = "1.1.1"
-    val lucre               = "3.6.0-SNAPSHOT"
+    val lucre               = "3.6.0"
   }
   val lucre = new {
-    val soundProcesses      = "3.18.0-SNAPSHOT"
+    val soundProcesses      = "3.18.0"
   }
   val test = new {
     val scalaCollider       = "1.25.0"
