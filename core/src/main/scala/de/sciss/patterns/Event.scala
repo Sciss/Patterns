@@ -136,6 +136,8 @@ object Event {
 //trait Event extends CTop {
 //  type COut = Event.Out // Map[String, _]
 //}
-final case class Event(map: Map[String, Any]) {
+final case class Event(map: Map[String, Any]) extends Iterable[(String, Any)] {
   def + (kv: (String, Any)): Event = copy(map = map + kv)
+
+  def iterator: Iterator[(String, Any)] = map.iterator
 }

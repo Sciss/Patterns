@@ -53,7 +53,29 @@ object PatElem {
       } else None
       case 'X' =>
         val ref = if (ref0 == null) new RefMapIn else ref0
-        readIdentifiedSeq(in, ref)
+        val num = in.readInt()
+        val b   = Vector.newBuilder[Any]
+        b.sizeHint(num)
+        var rem = num
+        while (rem > 0) {
+          b += read(in, ref)
+          rem -= 1
+        }
+        b.result()
+      case 'E' =>
+        val ref = if (ref0 == null) new RefMapIn else ref0
+        val num = in.readInt()
+        val b   = Map.newBuilder[String, Any]
+        b.sizeHint(num)
+        var rem = num
+        while (rem > 0) {
+          val k = in.readUTF()
+          val v = read(in, ref)
+          b += k -> v
+          rem -= 1
+        }
+        val m = b.result()
+        Event(m)
       case 'P' =>
         val ref = if (ref0 == null) new RefMapIn else ref0
         readIdentifiedProduct(in, ref)
@@ -68,12 +90,6 @@ object PatElem {
       case 'L' => in.readLong()
       case '\u0000' => null
     }
-
-  // expects that 'X' byte has already been read
-  private def readIdentifiedSeq(in: DataInput, ref: RefMapIn): Seq[Any] = {
-    val num = in.readInt()
-    Vector.fill(num)(read(in, ref))
-  }
 
   // expects that 'P' byte has already been read
   private def readIdentifiedProduct(in: DataInput, ref: RefMapIn): Product = {
@@ -153,6 +169,7 @@ object PatElem {
     case c: Constant[_] =>
       out.writeByte('C')
       write(c.value, out, ref0)
+
     case o: Option[_] =>
       out.writeByte('O')
       out.writeBoolean(o.isDefined)
@@ -160,36 +177,60 @@ object PatElem {
         val ref = if (ref0 == null) new RefMapOut else ref0
         write(o.get, out, ref)
       }
-    case xs: Seq[_] =>  // 'X'. either indexed seq or var arg (e.g. wrapped array)
-      val ref = if (ref0 == null) new RefMapOut else ref0
-      writeSeq(xs, out, ref)
+
+    case xs: Iterable[_] =>  // 'X'. either indexed seq or var arg (e.g. wrapped array)
+      var ref = if (ref0 == null) new RefMapOut else ref0
+      xs match {
+        case _: Seq[_] =>
+          out.writeByte('X')
+          out.writeInt(xs.size)
+          xs.foreach(x => ref = write(x, out, ref))
+        case ev: Event =>
+          val m = ev.map
+          out.writeByte('E')
+          out.writeInt(m.size)
+          m.foreach { tup =>
+            out.writeUTF(tup._1)
+            ref = write(tup._2, out, ref)
+          }
+        case _ => throw new Exception(s"Unsupported collection $xs")
+      }
+      ref
+
     case p: Product =>
       val ref = if (ref0 == null) new RefMapOut else ref0
       writeProduct(p, out, ref) // 'P' or '<'
+
     case i: Int =>
       out.writeByte('I')
       out.writeInt(i)
       ref0
+
     case s: String =>
       out.writeByte('S')
       out.writeUTF(s)
       ref0
+
     case b: Boolean =>
       out.writeByte('B')
       out.writeBoolean(b)
       ref0
+
     case f: Float =>
       out.writeByte('F')
       out.writeFloat(f)
       ref0
+
     case d: Double =>
       out.writeByte('D')
       out.writeDouble(d)
       ref0
+
     case l: Long =>
       out.writeByte('L')
       out.writeLong(l)
       ref0
+
     case null =>
       out.writeByte('\u0000')
       ref0
@@ -223,14 +264,6 @@ object PatElem {
 
     val id      = ref.size() // count
     ref.put(p, id)
-    ref
-  }
-
-  private def writeSeq(xs: Seq[Any], out: DataOutput, ref0: RefMapOut): RefMapOut = {
-    out.writeByte('X')
-    out.writeInt(xs.size)
-    var ref = ref0
-    xs.foreach(x => ref = write(x, out, ref))
     ref
   }
 

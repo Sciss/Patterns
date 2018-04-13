@@ -235,11 +235,11 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
     }
   }
 
-  ignore should "work for Par" in { implicit sys =>
+  it should "work for Par" in { implicit sys =>
     verifyLoop { i =>
-      val w = White(1.0, 4.0).take(i.pow(3.0).toInt.min(300))
+      val w = White(1.0, 4.0).take(i + 1)
       val p = w.grouped(10).map { dur =>
-        Bind(Event.keyDur -> dur)
+        Bind(Event.keyDur -> dur.roundTo(0.1))
       }
       Par(p)
     }

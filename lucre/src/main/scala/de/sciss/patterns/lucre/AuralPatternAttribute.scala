@@ -180,7 +180,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
                 val numFrames = (TimeRef.SampleRate * delta).toLong
                 val span      = Span(time, time + numFrames)
                 val view      = new ViewImpl(attr, v, span)
-                viewTree.add(time -> view)
+                viewTree.put(time, view)
                 // println(s"-> $view")
                 Some(view)
               }
