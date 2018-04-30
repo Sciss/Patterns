@@ -5,18 +5,18 @@ lazy val mimaVersion        = "0.2.0"
 
 val deps = new {
   val core = new {
+    val lucre               = "3.7.0"
     val numbers             = "0.1.5"
     val optional            = "1.0.0"
     val serial              = "1.1.1"
-    val lucre               = "3.6.0"
   }
   val lucre = new {
-    val soundProcesses      = "3.18.0"
+    val soundProcesses      = "3.19.0"
   }
   val test = new {
-    val scalaCollider       = "1.25.0"
     val kollFlitz           = "0.2.2"
-    val scalaColliderSwing  = "1.37.0"
+    val scalaCollider       = "1.26.0"
+    val scalaColliderSwing  = "1.38.0"
     val scalaTest           = "3.0.5"
     val ugens               = "1.18.0"
   }
@@ -27,8 +27,8 @@ lazy val commonSettings = Seq(
   organization        := "de.sciss",
   description         := "Translating SuperCollider's patterns to Scala",
   homepage            := Some(url(s"https://github.com/Sciss/$baseName")),
-  scalaVersion        := "2.12.5",
-  crossScalaVersions  := Seq("2.12.5", "2.11.12"),
+  scalaVersion        := "2.12.6",
+  crossScalaVersions  := Seq("2.12.6", "2.11.12"),
   licenses            := Seq(lgpl2),
   scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint"),
   resolvers           += "Oracle Repository" at "http://download.oracle.com/maven"  // required for sleepycat

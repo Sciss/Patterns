@@ -50,14 +50,14 @@ class AuralPatternAttributeTest[S <: Sys[S]](name: String)(implicit cursor: stm.
       _view
     }
 
-    cursor.step { implicit tx =>
+    context.scheduler.stepTag { implicit tx =>
       println("--issue play--")
       view.play()
 
       after(8.0) { implicit tx =>
         println("--issue stop--")
         view.stop()
-        after(1.0) { implicit tx =>
+        after(1.0, latency = true) { implicit tx =>
           println("--issue play--")
           view.play()
           stopAndQuit(8)

@@ -68,11 +68,15 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
     run()
   }
 
-  final def after(secs: Double)(code: S#Tx => Unit): Unit = {
+  final def after(secs: Double, latency: Boolean = false)(code: S#Tx => Unit)
+                 (implicit context: AuralContext[S]): Unit = {
     val t = new Thread {
       override def run(): Unit = {
         Thread.sleep((secs * 1000).toLong)
-        cursor.step { implicit tx =>
+        if (latency) context.scheduler.stepTag { implicit tx =>
+          code(tx)
+        }
+        else cursor.step { implicit tx =>
           code(tx)
         }
       }
@@ -123,7 +127,7 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
     proc.attr.put(key, value: DoubleObj[S])
   }
 
-  final def stopAndQuit(delay: Double = 4.0): Unit =
+  final def stopAndQuit(delay: Double = 4.0)(implicit context: AuralContext[S]): Unit =
     after(delay) { implicit tx =>
       as.stop()
       quit()

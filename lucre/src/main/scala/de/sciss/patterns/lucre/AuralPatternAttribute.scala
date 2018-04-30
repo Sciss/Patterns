@@ -266,7 +266,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
     val start0 = math.max(0L, spanP.start)
     viewTree.floor(start0)(iSys(tx)) match {
       case Some((_, view0)) =>
-        val it0 = new Iterator[PrepareResult] {
+        val it0: Iterator[PrepareResult] = new Iterator[PrepareResult] {
           private[this] var _next     = view0
           private[this] var _hasNext  = true
 
