@@ -1,6 +1,6 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.2.0-SNAPSHOT"
+lazy val projectVersion     = "0.2.0"
 lazy val mimaVersion        = "0.2.0"
 
 val deps = new {
