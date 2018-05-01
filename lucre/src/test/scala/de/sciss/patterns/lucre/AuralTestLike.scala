@@ -81,7 +81,7 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
         }
       }
     }
-    Txn.findCurrent.fold(t.start()) { implicit tx =>
+    Txn.findCurrent.fold  (t.start()) { implicit tx =>
       Txn.afterCommit(_ => t.start())
     }
   }
