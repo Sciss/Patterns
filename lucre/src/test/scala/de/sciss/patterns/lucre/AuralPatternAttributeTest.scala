@@ -39,7 +39,7 @@ class AuralPatternAttributeTest[S <: Sys[S]](name: String)(implicit cursor: stm.
         import synth._
         import ugen._
         val pitch   = "pitch".kr
-        val osc     = SinOsc.ar(pitch.midicps) * 0.25
+        val osc     = SinOsc.ar(pitch.midiCps) * 0.25
         Out.ar(0, Pan2.ar(osc))
       }
 

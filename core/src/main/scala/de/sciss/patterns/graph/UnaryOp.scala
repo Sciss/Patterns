@@ -166,49 +166,49 @@ object UnaryOp {
   }
 
   final case class Midicps[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = wd.midicps(wd.widen1(a))
+    def apply(a: A)           : B         = wd.midiCps(wd.widen1(a))
     def name                  : String    = "Midicps"
     private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
   final case class Cpsmidi[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = wd.cpsmidi(wd.widen1(a))
+    def apply(a: A)           : B         = wd.cpsMidi(wd.widen1(a))
     def name                  : String    = "Cpsmidi"
     private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
   final case class Midiratio[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = wd.midiratio(wd.widen1(a))
+    def apply(a: A)           : B         = wd.midiRatio(wd.widen1(a))
     def name                  : String    = "Midiratio"
     private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
   final case class Ratiomidi[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = wd.ratiomidi(wd.widen1(a))
+    def apply(a: A)           : B         = wd.ratioMidi(wd.widen1(a))
     def name                  : String    = "Ratiomidi"
     private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
   final case class Dbamp[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = wd.dbamp(wd.widen1(a))
+    def apply(a: A)           : B         = wd.dbAmp(wd.widen1(a))
     def name                  : String    = "Dbamp"
     private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
   final case class Ampdb[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = wd.ampdb(wd.widen1(a))
+    def apply(a: A)           : B         = wd.ampDb(wd.widen1(a))
     def name                  : String    = "Ampdb"
     private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
   final case class Octcps[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = wd.octcps(wd.widen1(a))
+    def apply(a: A)           : B         = wd.octCps(wd.widen1(a))
     def name                  : String    = "Octcps"
     private[patterns] def aux : List[Aux] = wd :: Nil
   }
 
   final case class Cpsoct[A, B]()(implicit wd: WidenToDouble[A, B]) extends PureOp[A, B] {
-    def apply(a: A)           : B         = wd.cpsoct(wd.widen1(a))
+    def apply(a: A)           : B         = wd.cpsOct(wd.widen1(a))
     def name                  : String    = "Cpsoct"
     private[patterns] def aux : List[Aux] = wd :: Nil
   }

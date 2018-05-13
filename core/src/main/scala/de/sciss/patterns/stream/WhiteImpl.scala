@@ -86,7 +86,7 @@ object WhiteImpl extends StreamFactory {
     }
 
     private def mkState()(implicit ctx: Context[S], tx: S#Tx): A =
-      num.rrand(loStream.next(), hiStream.next())
+      num.rangeRand(loStream.next(), hiStream.next())
 
     def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
       loStream.reset()
@@ -102,7 +102,7 @@ object WhiteImpl extends StreamFactory {
     private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
       _hasNext() = loStream.hasNext && hiStream.hasNext
       if (_hasNext()) {
-        state() = num.rrand(loStream.next(), hiStream.next())
+        state() = num.rangeRand(loStream.next(), hiStream.next())
       }
     }
 

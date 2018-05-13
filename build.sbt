@@ -1,24 +1,24 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.2.0"
-lazy val mimaVersion        = "0.2.0"
+lazy val projectVersion     = "0.3.0"
+lazy val mimaVersion        = "0.3.0"
 
 val deps = new {
   val core = new {
-    val lucre               = "3.7.0"
-    val numbers             = "0.1.5"
+    val lucre               = "3.8.0"
+    val numbers             = "0.2.0"
     val optional            = "1.0.0"
     val serial              = "1.1.1"
   }
   val lucre = new {
-    val soundProcesses      = "3.19.0"
+    val soundProcesses      = "3.20.0"
   }
   val test = new {
     val kollFlitz           = "0.2.2"
-    val scalaCollider       = "1.26.0"
-    val scalaColliderSwing  = "1.38.0"
+    val scalaCollider       = "1.27.0"
+    val scalaColliderSwing  = "1.39.0"
     val scalaTest           = "3.0.5"
-    val ugens               = "1.18.0"
+    val ugens               = "1.19.1"
   }
 }
 
@@ -83,6 +83,7 @@ lazy val core = project.in(file("core"))
       "de.sciss"      %% "kollflitz"                    % deps.test.kollFlitz           % "test",
       "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % "test",
       "de.sciss"      %% "scalacolliderswing-plotting"  % deps.test.scalaColliderSwing  % "test",
+      "de.sciss"      %% "scalacolliderugens-core"      % deps.test.ugens               % "test", // sbt fuck up
       "de.sciss"      %% "scalacolliderugens-plugins"   % deps.test.ugens               % "test",
       "org.scalatest" %% "scalatest"                    % deps.test.scalaTest           % "test"
     ),

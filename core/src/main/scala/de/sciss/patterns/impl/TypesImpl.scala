@@ -62,11 +62,11 @@ trait SeqLikeNum[A] extends SeqLikeOrd[A] with Num[Seq[A]] {
   final def roundTo   (a: In, b: In): In = binOp(a, b)(peer.roundTo   )
   final def roundUpTo (a: In, b: In): In = binOp(a, b)(peer.roundUpTo )
   final def trunc     (a: In, b: In): In = binOp(a, b)(peer.trunc     )
-  final def difsqr    (a: In, b: In): In = binOp(a, b)(peer.difsqr    )
-  final def sumsqr    (a: In, b: In): In = binOp(a, b)(peer.sumsqr    )
-  final def sqrsum    (a: In, b: In): In = binOp(a, b)(peer.sqrsum    )
-  final def sqrdif    (a: In, b: In): In = binOp(a, b)(peer.sqrdif    )
-  final def absdif    (a: In, b: In): In = binOp(a, b)(peer.absdif    )
+  final def difSqr(a: In, b: In): In = binOp(a, b)(peer.difSqr    )
+  final def sumSqr(a: In, b: In): In = binOp(a, b)(peer.sumSqr    )
+  final def sqrSum(a: In, b: In): In = binOp(a, b)(peer.sqrSum    )
+  final def sqrDif(a: In, b: In): In = binOp(a, b)(peer.sqrDif    )
+  final def absDif(a: In, b: In): In = binOp(a, b)(peer.absDif    )
 
   final def clip2     (a: In, b: In): In = binOp(a, b)(peer.clip2     )
   final def excess    (a: In, b: In): In = binOp(a, b)(peer.excess    )
@@ -85,7 +85,7 @@ trait SeqLikeNum[A] extends SeqLikeOrd[A] with Num[Seq[A]] {
 
   final def rand [Tx](a: In       )(implicit r: Random[Tx], tx: Tx): In = unOp (a   )(peer.rand [Tx])
   final def rand2[Tx](a: In       )(implicit r: Random[Tx], tx: Tx): In = unOp (a   )(peer.rand2[Tx])
-  final def rrand[Tx](a: In, b: In)(implicit r: Random[Tx], tx: Tx): In = binOp(a, b)(peer.rrand[Tx])
+  final def rangeRand[Tx](a: In, b: In)(implicit r: Random[Tx], tx: Tx): In = binOp(a, b)(peer.rangeRand[Tx])
 
   final def fold(a: In, lo: In, hi: In): In = ternOp(a, lo, hi)(peer.fold)
 }
@@ -107,14 +107,14 @@ trait SeqLikeNumDouble[A] extends SeqLikeNumFrac[A] with NumDouble[Seq[A]] {
   final def sqrt      (a: In): In = unOp(a)(peer.sqrt     )
   final def exp       (a: In): In = unOp(a)(peer.exp      )
 
-  final def midicps   (a: In): In = unOp(a)(peer.midicps  )
-  final def cpsmidi   (a: In): In = unOp(a)(peer.cpsmidi  )
-  final def midiratio (a: In): In = unOp(a)(peer.midiratio)
-  final def ratiomidi (a: In): In = unOp(a)(peer.ratiomidi)
-  final def dbamp     (a: In): In = unOp(a)(peer.dbamp    )
-  final def ampdb     (a: In): In = unOp(a)(peer.ampdb    )
-  final def octcps    (a: In): In = unOp(a)(peer.octcps   )
-  final def cpsoct    (a: In): In = unOp(a)(peer.cpsoct   )
+  final def midiCps(a: In): In = unOp(a)(peer.midiCps  )
+  final def cpsMidi(a: In): In = unOp(a)(peer.cpsMidi  )
+  final def midiRatio(a: In): In = unOp(a)(peer.midiRatio)
+  final def ratioMidi(a: In): In = unOp(a)(peer.ratioMidi)
+  final def dbAmp(a: In): In = unOp(a)(peer.dbAmp    )
+  final def ampDb(a: In): In = unOp(a)(peer.ampDb    )
+  final def octCps(a: In): In = unOp(a)(peer.octCps   )
+  final def cpsOct(a: In): In = unOp(a)(peer.cpsOct   )
   final def log       (a: In): In = unOp(a)(peer.log      )
   final def log2      (a: In): In = unOp(a)(peer.log2     )
   final def log10     (a: In): In = unOp(a)(peer.log10    )
@@ -130,7 +130,7 @@ trait SeqLikeNumDouble[A] extends SeqLikeNumFrac[A] with NumDouble[Seq[A]] {
 
   final def atan2     (a: In, b: In): In = binOp(a, b)(peer.atan2 )
   final def hypot     (a: In, b: In): In = binOp(a, b)(peer.hypot )
-  final def hypotx    (a: In, b: In): In = binOp(a, b)(peer.hypotx)
+  final def hypotApx(a: In, b: In): In = binOp(a, b)(peer.hypotApx)
   final def pow       (a: In, b: In): In = binOp(a, b)(peer.pow   )
 
   def coin[Tx](a: In)(implicit r: Random[Tx], tx: Tx): Boolean = unOp(a)(peer.coin[Tx])

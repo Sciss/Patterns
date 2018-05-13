@@ -94,8 +94,8 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
       val d     = bool7.toInt
       val e     = (c max d) min 5.0
       val f     = e.roundTo(0.1).roundUpTo(0.2).trunc(0.3)
-      val g     = (f atan2 a).hypot(1.0).hypotx(1.1).pow(3.0)
-      val h     = g.difsqr(3.0).sumsqr(3.1).sqrsum(3.2).sqrdif(3.3).absdif(3.4)
+      val g     = (f atan2 a).hypot(1.0).hypotApx(1.1).pow(3.0)
+      val h     = g.difSqr(3.0).sumSqr(3.1).sqrSum(3.2).sqrDif(3.3).absDif(3.4)
       val i     = h.wrap2(1.0e7).fold2(1.0e3).excess(1.0e2).clip2(500)
       val j     = i.toInt << 1 >> 1 >>> 1
       val k     = (j gcd 24) lcm 5
@@ -111,7 +111,7 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
 
   it should "work for Brown and UnaryOp" in { implicit sys =>
     verifyLoop { i =>
-      Brown(70, 120, i.hold().take(2)).midicps
+      Brown(70, 120, i.hold().take(2)).midiCps
     }
   }
 
@@ -163,10 +163,10 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
       val j = (i + 1).hold()
       val p = Pat(4, 5, 6, 7, 8, 9)
       val q = p.toDouble
-      val a = p.linlin(0, j, 0.0, 10.0)
-      val b = p.linexp(0, j, 1.0, 10.0)
-      val c = q.explin(4.0, 9.0, 0, j)
-      val d = q.expexp(4.0, 9.0, 1.0, 10.0)
+      val a = p.linLin(0, j, 0.0, 10.0)
+      val b = p.linExp(0, j, 1.0, 10.0)
+      val c = q.expLin(4.0, 9.0, 0, j)
+      val d = q.expExp(4.0, 9.0, 1.0, 10.0)
       a + b + c + d
     }
   }
@@ -273,7 +273,7 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
 
   it should "work for Sorted" in { implicit sys =>
     verifyLoop { i =>
-      White(1, 100).take(i absdif 7).sorted
+      White(1, 100).take(i absDif 7).sorted
     }
   }
 
@@ -325,7 +325,7 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
       implicitly[WidenToDouble[Int, Double]]
       val e = d.sqrt
       val f = e.log.exp
-      val g = f.midicps.cpsmidi.midiratio.ratiomidi.dbamp.ampdb.octcps.cpsoct.log2
+      val g = f.midiCps.cpsMidi.midiRatio.ratioMidi.dbAmp.ampDb.octCps.cpsOct.log2
       val h = g.log10.sin.cos.tan.sinh.cosh.tanh
       val i = h.atan.acos.asin
       val j = i.frac.reciprocal

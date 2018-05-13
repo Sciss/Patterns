@@ -214,7 +214,7 @@ object BinaryOp {
   }
 
   final case class Hypotx[A]()(implicit num: NumDouble[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.hypotx(a, b)
+    def apply(a: A, b: A)     : A         = num.hypotApx(a, b)
     def name                  : String    = "Hypotx"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
@@ -249,31 +249,31 @@ object BinaryOp {
   //  Ring4
 
   final case class Difsqr[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.difsqr(a, b)
+    def apply(a: A, b: A)     : A         = num.difSqr(a, b)
     def name                  : String    = "Difsqr"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
   final case class Sumsqr[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.sumsqr(a, b)
+    def apply(a: A, b: A)     : A         = num.sumSqr(a, b)
     def name                  : String    = "Sumsqr"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
   final case class Sqrsum[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.sqrsum(a, b)
+    def apply(a: A, b: A)     : A         = num.sqrSum(a, b)
     def name                  : String    = "Sqrsum"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
   final case class Sqrdif[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.sqrdif(a, b)
+    def apply(a: A, b: A)     : A         = num.sqrDif(a, b)
     def name                  : String    = "Sqrdif"
     private[patterns] def aux : List[Aux] = num :: Nil
   }
 
   final case class Absdif[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.absdif(a, b)
+    def apply(a: A, b: A)     : A         = num.absDif(a, b)
     def name                  : String    = "Absdif"
     private[patterns] def aux : List[Aux] = num :: Nil
   }

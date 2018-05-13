@@ -85,15 +85,15 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def reciprocal[B](implicit w: Widen[A, B], num: NumFrac[B]): Pat[B] = UnOp(UnOp.Reciprocal[A, B](), x)
 
-  def midicps  [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Midicps   [A, B](), x)
-  def cpsmidi  [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Cpsmidi   [A, B](), x)
-  def midiratio[B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Midiratio [A, B](), x)
-  def ratiomidi[B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Ratiomidi [A, B](), x)
-  def dbamp    [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Dbamp     [A, B](), x)
-  def ampdb    [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Ampdb     [A, B](), x)
+  def midiCps  [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Midicps   [A, B](), x)
+  def cpsMidi  [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Cpsmidi   [A, B](), x)
+  def midiRatio[B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Midiratio [A, B](), x)
+  def ratioMidi[B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Ratiomidi [A, B](), x)
+  def dbAmp    [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Dbamp     [A, B](), x)
+  def ampDb    [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Ampdb     [A, B](), x)
 
-  def octcps   [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Octcps    [A, B](), x)
-  def cpsoct   [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Cpsoct    [A, B](), x)
+  def octCps   [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Octcps    [A, B](), x)
+  def cpsOct   [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Cpsoct    [A, B](), x)
   def log      [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Log       [A, B](), x)
   def log2     [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Log2      [A, B](), x)
   def log10    [B](implicit wd: WidenToDouble[A, B]): Pat[B] = UnOp(UnOp.Log10     [A, B](), x)
@@ -148,37 +148,37 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
 
   def atan2     [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumDouble [A2]): Pat[A2] = BinOp(BinOp.Atan2    [A2](), x, that)
   def hypot     [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumDouble [A2]): Pat[A2] = BinOp(BinOp.Hypot    [A2](), x, that)
-  def hypotx    [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumDouble [A2]): Pat[A2] = BinOp(BinOp.Hypotx   [A2](), x, that)
+  def hypotApx  [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumDouble [A2]): Pat[A2] = BinOp(BinOp.Hypotx   [A2](), x, that)
   def pow       [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: NumDouble [A2]): Pat[A2] = BinOp(BinOp.Pow      [A2](), x, that)
 
   def <<  (that: Pat[A])(implicit num: NumInt[A]): Pat[A] = BinOp(BinOp.LeftShift         [A](), x, that)
   def >>  (that: Pat[A])(implicit num: NumInt[A]): Pat[A] = BinOp(BinOp.RightShift        [A](), x, that)
   def >>> (that: Pat[A])(implicit num: NumInt[A]): Pat[A] = BinOp(BinOp.UnsignedRightShift[A](), x, that)
 
-  def difsqr[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Difsqr[A2](), x, that)
-  def sumsqr[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Sumsqr[A2](), x, that)
-  def sqrsum[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Sqrsum[A2](), x, that)
-  def sqrdif[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Sqrdif[A2](), x, that)
-  def absdif[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Absdif[A2](), x, that)
+  def difSqr[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Difsqr[A2](), x, that)
+  def sumSqr[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Sumsqr[A2](), x, that)
+  def sqrSum[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Sqrsum[A2](), x, that)
+  def sqrDif[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Sqrdif[A2](), x, that)
+  def absDif[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Absdif[A2](), x, that)
 
   def clip2 [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Clip2 [A2](), x, that)
   def excess[A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Excess[A2](), x, that)
   def fold2 [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Fold2 [A2](), x, that)
   def wrap2 [A1, A2](that: Pat[A1])(implicit w: Widen2[A, A1, A2], num: Num[A2]): Pat[A2] = BinOp(BinOp.Wrap2 [A2](), x, that)
 
-  def linlin[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
+  def linLin[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
                     (implicit w: Widen2[A, A1, A2], num: NumFrac[A2]): Pat[A2] =
     LinLin[A, A1, A2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
 
-  def linexp[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
+  def linExp[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
                     (implicit w: Widen2[A, A1, A2], num: NumDouble[A2]): Pat[A2] =
     LinExp[A, A1, A2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
 
-  def explin[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
+  def expLin[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
                     (implicit w: Widen2[A, A1, A2], num: NumDouble[A2]): Pat[A2] =
     ExpLin[A, A1, A2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
 
-  def expexp[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
+  def expExp[A1, A2](inLo: Pat[A], inHi: Pat[A], outLo: Pat[A1], outHi: Pat[A1])
                     (implicit w: Widen2[A, A1, A2], num: NumDouble[A2]): Pat[A2] =
     ExpExp[A, A1, A2](x, inLo = inLo, inHi = inHi, outLo = outLo, outHi = outHi)
 

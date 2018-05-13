@@ -188,11 +188,11 @@ object Types {
     //    def ring2     (a: A, b: A): A
     //    def ring3     (a: A, b: A): A
     //    def ring4     (a: A, b: A): A
-    def difsqr    (a: A, b: A): A
-    def sumsqr    (a: A, b: A): A
-    def sqrsum    (a: A, b: A): A
-    def sqrdif    (a: A, b: A): A
-    def absdif    (a: A, b: A): A
+    def difSqr(a: A, b: A): A
+    def sumSqr(a: A, b: A): A
+    def sqrSum(a: A, b: A): A
+    def sqrDif(a: A, b: A): A
+    def absDif(a: A, b: A): A
     //    def thresh    (a: A, b: A): A
     //    def amclip    (a: A, b: A): A
     //    def scaleneg  (a: A, b: A): A
@@ -215,7 +215,7 @@ object Types {
     // random
     def rand [Tx](a: A      )(implicit r: Random[Tx], tx: Tx): A
     def rand2[Tx](a: A      )(implicit r: Random[Tx], tx: Tx): A
-    def rrand[Tx](a: A, b: A)(implicit r: Random[Tx], tx: Tx): A
+    def rangeRand[Tx](a: A, b: A)(implicit r: Random[Tx], tx: Tx): A
 
     // ternary
     def fold (a: A, lo: A, hi: A): A
@@ -281,14 +281,14 @@ object Types {
   trait NumDouble[A] extends NumFrac[A] {
     def sqrt      (a: A): A
     def exp       (a: A): A
-    def midicps   (a: A): A
-    def cpsmidi   (a: A): A
-    def midiratio (a: A): A
-    def ratiomidi (a: A): A
-    def dbamp     (a: A): A
-    def ampdb     (a: A): A
-    def octcps    (a: A): A
-    def cpsoct    (a: A): A
+    def midiCps(a: A): A
+    def cpsMidi(a: A): A
+    def midiRatio(a: A): A
+    def ratioMidi(a: A): A
+    def dbAmp(a: A): A
+    def ampDb(a: A): A
+    def octCps(a: A): A
+    def cpsOct(a: A): A
     def log       (a: A): A
     def log2      (a: A): A
     def log10     (a: A): A
@@ -304,7 +304,7 @@ object Types {
 
     def atan2     (a: A, b: A): A
     def hypot     (a: A, b: A): A
-    def hypotx    (a: A, b: A): A
+    def hypotApx(a: A, b: A): A
     def pow       (a: A, b: A): A
 
     def coin[Tx](a: A)(implicit r: Random[Tx], tx: Tx): Boolean
@@ -401,11 +401,11 @@ object Types {
     def >>        (a: Int, b: Int): Int = a >> b
     def >>>       (a: Int, b: Int): Int = a >>> b
 
-    def difsqr    (a: Int, b: Int): Int = ri2.difsqr(a, b).toInt
-    def sumsqr    (a: Int, b: Int): Int = ri2.sumsqr(a, b).toInt
-    def sqrsum    (a: Int, b: Int): Int = ri2.sqrsum(a, b).toInt
-    def sqrdif    (a: Int, b: Int): Int = ri2.sqrdif(a, b).toInt
-    def absdif    (a: Int, b: Int): Int = ri2.absdif(a, b)
+    def difSqr    (a: Int, b: Int): Int = ri2.difSqr(a, b).toInt
+    def sumSqr    (a: Int, b: Int): Int = ri2.sumSqr(a, b).toInt
+    def sqrSum    (a: Int, b: Int): Int = ri2.sqrSum(a, b).toInt
+    def sqrDif    (a: Int, b: Int): Int = ri2.sqrDif(a, b).toInt
+    def absDif    (a: Int, b: Int): Int = ri2.absDif(a, b)
 
     def clip2     (a: Int, b: Int): Int = ri.clip2  (a, b)
     def excess    (a: Int, b: Int): Int = ri.excess (a, b)
@@ -435,7 +435,7 @@ object Types {
       r.nextInt(2 * a1 + 1) - a1
     }
 
-    def rrand[Tx](a: Int, b: Int)(implicit r: Random[Tx], tx: Tx): Int =
+    def rangeRand[Tx](a: Int, b: Int)(implicit r: Random[Tx], tx: Tx): Int =
       if (a < b) r.nextInt(b - a + 1) + a
       else       r.nextInt(a - b + 1) + b
 
@@ -498,16 +498,16 @@ object Types {
     def roundUpTo (a: In, b: In): In = rd.roundUpTo(a, b)
     def trunc     (a: In, b: In): In = rd.trunc(a, b)
 
-    def atan2     (a: In, b: In): In = rd.atan2 (a, b)
-    def hypot     (a: In, b: In): In = rd.hypot (a, b)
-    def hypotx    (a: In, b: In): In = rd.hypotx(a, b)
-    def pow       (a: In, b: In): In = rd.pow   (a, b)
+    def atan2     (a: In, b: In): In = rd.atan2   (a, b)
+    def hypot     (a: In, b: In): In = rd.hypot   (a, b)
+    def hypotApx  (a: In, b: In): In = rd.hypotApx(a, b)
+    def pow       (a: In, b: In): In = rd.pow     (a, b)
 
-    def difsqr    (a: In, b: In): In = rd.difsqr(a, b)
-    def sumsqr    (a: In, b: In): In = rd.sumsqr(a, b)
-    def sqrsum    (a: In, b: In): In = rd.sqrsum(a, b)
-    def sqrdif    (a: In, b: In): In = rd.sqrdif(a, b)
-    def absdif    (a: In, b: In): In = rd.absdif(a, b)
+    def difSqr(a: In, b: In): In = rd.difSqr(a, b)
+    def sumSqr(a: In, b: In): In = rd.sumSqr(a, b)
+    def sqrSum(a: In, b: In): In = rd.sqrSum(a, b)
+    def sqrDif(a: In, b: In): In = rd.sqrDif(a, b)
+    def absDif(a: In, b: In): In = rd.absDif(a, b)
 
     def clip2     (a: In, b: In): In = rd.clip2(a, b)
     def excess    (a: In, b: In): In = rd.excess(a, b)
@@ -526,14 +526,14 @@ object Types {
     def floor     (a: In): In     = rd.floor    (a)
     def ceil      (a: In): In     = rd.ceil     (a)
     def frac      (a: In): In     = rd.frac     (a)
-    def midicps   (a: In): In     = rd.midicps  (a)
-    def cpsmidi   (a: In): In     = rd.cpsmidi  (a)
-    def midiratio (a: In): In     = rd.midiratio(a)
-    def ratiomidi (a: In): In     = rd.ratiomidi(a)
-    def dbamp     (a: In): In     = rd.dbamp    (a)
-    def ampdb     (a: In): In     = rd.ampdb    (a)
-    def octcps    (a: In): In     = rd.octcps   (a)
-    def cpsoct    (a: In): In     = rd.cpsoct   (a)
+    def midiCps   (a: In): In     = rd.midiCps  (a)
+    def cpsMidi   (a: In): In     = rd.cpsMidi  (a)
+    def midiRatio (a: In): In     = rd.midiRatio(a)
+    def ratioMidi (a: In): In     = rd.ratioMidi(a)
+    def dbAmp     (a: In): In     = rd.dbAmp    (a)
+    def ampDb     (a: In): In     = rd.ampDb    (a)
+    def octCps    (a: In): In     = rd.octCps   (a)
+    def cpsOct    (a: In): In     = rd.cpsOct   (a)
     def log       (a: In): In     = rd.log      (a)
     def log2      (a: In): In     = rd.log2     (a)
     def log10     (a: In): In     = rd.log10    (a)
@@ -561,7 +561,7 @@ object Types {
     def rand2[Tx](a: In)(implicit r: Random[Tx], tx: Tx): In =
       (r.nextDouble() * 2 - 1) * a
 
-    def rrand[Tx](a: In, b: In)(implicit r: Random[Tx], tx: Tx): In =
+    def rangeRand[Tx](a: In, b: In)(implicit r: Random[Tx], tx: Tx): In =
       r.nextDouble() * (b - a) + a
 
     def coin[Tx](a: In)(implicit r: Random[Tx], tx: Tx): Boolean =

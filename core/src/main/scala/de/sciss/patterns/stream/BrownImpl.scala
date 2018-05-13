@@ -108,7 +108,7 @@ object BrownImpl extends StreamFactory {
     private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
       _hasNext() = loStream.hasNext && hiStream.hasNext
       if (_hasNext()) {
-        state() = num.rrand(widen1(loStream.next()), widen1(hiStream.next()))
+        state() = num.rangeRand(widen1(loStream.next()), widen1(hiStream.next()))
       }
     }
 

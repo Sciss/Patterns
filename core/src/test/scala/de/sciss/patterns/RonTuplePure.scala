@@ -295,10 +295,10 @@ object RonTuplePure {
           "note"    -> mkNotes(notePat),
           "rest"    -> (notePat sig_== -100),
           "dur"     -> durPat,
-          "legato"  -> partsIdxH.linlin(0, numParts, 0.02, 1.0),  // note lincurve with parameter zero is equiv to linlin
+          "legato"  -> partsIdxH.linLin(0, numParts, 0.02, 1.0),  // note linCurve with parameter zero is equiv to linLin
           "i"       -> (partsIdxH + offset).mod(24),
           "ar"      -> 0.001,
-          "db"      -> partsIdxH.linlin(0, numParts, -40.0, -30.0)
+          "db"      -> partsIdxH.linLin(0, numParts, -40.0, -30.0)
         )
         Bind(map)
       }

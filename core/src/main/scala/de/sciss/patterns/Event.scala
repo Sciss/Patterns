@@ -120,7 +120,7 @@ object Event {
   def detunedFreq (out: Event): Double = getOrElseDouble(out, keyDetunedFreq, freq(out) + detune(out))
 
   def freq        (out: Event): Double = getOrElseDouble(out, keyFreq       , {
-    (midiNote(out) + cTranspose(out)).midicps * harmonic(out)
+    (midiNote(out) + cTranspose(out)).midiCps * harmonic(out)
   })
 
   def dur         (out: Event): Double = getOrElseDouble(out, keyDur        , 0.0)
@@ -130,7 +130,7 @@ object Event {
   def sustain     (out: Event): Double = getOrElseDouble(out, keySustain    , delta(out) * legato(out))
 
   def db          (out: Event): Double = getOrElseDouble(out, keyDb         , -20.0)
-  def amp         (out: Event): Double = getOrElseDouble(out, keyAmp        , db(out).dbamp)
+  def amp         (out: Event): Double = getOrElseDouble(out, keyAmp        , db(out).dbAmp)
   def pan         (out: Event): Double = getOrElseDouble(out, keyPan        , 0.0)
 }
 //trait Event extends CTop {
