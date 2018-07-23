@@ -39,7 +39,7 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
   protected def mkConst[S <: Sys[S]](id: S#Id, value: A)(implicit tx: S#Tx): Const[S] =
     new _Const[S](id, value)
 
-  protected def mkVar[S <: Sys[S]](targets: Targets[S], vr: S#Var[Ex[S]], connect: Boolean)
+  protected def mkVar[S <: Sys[S]](targets: Targets[S], vr: S#Var[_Ex[S]], connect: Boolean)
                                   (implicit tx: S#Tx): Var[S] = {
     val res = new _Var[S](targets, vr)
     if (connect) res.connect()
@@ -49,20 +49,21 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
   private final class _Const[S <: Sys[S]](val id: S#Id, val constValue: A)
     extends ConstImpl[S] with Pattern[S]
 
-  private final class _Var[S <: Sys[S]](val targets: Targets[S], val ref: S#Var[Ex[S]])
+  private final class _Var[S <: Sys[S]](val targets: Targets[S], val ref: S#Var[_Ex[S]])
     extends VarImpl[S] with Pattern[S]
 
   // ---- Code ----
 
-  implicit private object CodeWrapper extends CodeImpl.Wrapper[Unit, Pat[_], Pattern.Code] {
+  implicit private object CodeWrapper extends CodeImpl.Wrapper[Unit, Pat[_], Pat[_], Pattern.Code] {
     def id: Int = Pattern.Code.id
     def binding = Option.empty[String]
 
-    def wrap(in: Unit)(fun: => Any): Pat[_] = Graph {
-      fun match {
-        case ok: Pat[_] => ok // .asInstanceOf[Pat[Top]]
-        case other => throw new IllegalArgumentException(s"Not a pattern: $other")
-      }
+    def wrap(in: Unit)(fun: => Pat[_]): Pat[_] = Graph {
+      fun
+//      match {
+//        case ok: Pat[_] => ok // .asInstanceOf[Pat[Top]]
+//        case other => throw new IllegalArgumentException(s"Not a pattern: $other")
+//      }
     }
 
     def blockTag = "de.sciss.patterns.Pat[_]"
@@ -100,11 +101,11 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
     def id: Int = Code.id
 
     def compileBody()(implicit compiler: proc.Code.Compiler): Future[Unit] = {
-      CodeImpl.compileBody[In, Out, Code](this)
+      CodeImpl.compileBody[In, Out, Pat[_], Code](this)
     }
 
     def execute(in: In)(implicit compiler: proc.Code.Compiler): Out = {
-      CodeImpl.execute[In, Out, Code](this, in)
+      CodeImpl.execute[In, Out, Pat[_], Code](this, in)
     }
 
     def contextName: String = Code.name
@@ -118,7 +119,8 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
 
   private final val emptyCookie = 4
 
-  override protected def readCookie[S <: Sys[S]](in: DataInput, access: S#Acc, cookie: Byte)(implicit tx: S#Tx): Ex[S] =
+  override protected def readCookie[S <: Sys[S]](in: DataInput, access: S#Acc, cookie: Byte)
+                                                (implicit tx: S#Tx): _Ex[S] =
     cookie match {
       case `emptyCookie` =>
         val id = tx.readId(in, access)
@@ -128,9 +130,9 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
 
   private val emptyPat = Pat()
 
-  def empty[S <: Sys[S]](implicit tx: S#Tx): Ex[S] = apply(emptyCookie)
+  def empty[S <: Sys[S]](implicit tx: S#Tx): _Ex[S] = apply(emptyCookie)
 
-  private def apply[S <: Sys[S]](cookie: Int)(implicit tx: S#Tx): Ex[S] = {
+  private def apply[S <: Sys[S]](cookie: Int)(implicit tx: S#Tx): _Ex[S] = {
     val id = tx.newId()
     new Predefined(id, cookie)
   }

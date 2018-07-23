@@ -21,7 +21,7 @@ To link to it:
 
     libraryDependencies += "de.sciss" %% "patterns" % v
 
-The current version `v` is `"0.3.0"`.
+The current version `v` is `"0.4.0"`.
 
 There are two sub-modules which can be linked to separately:
 
