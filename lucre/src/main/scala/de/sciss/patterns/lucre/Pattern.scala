@@ -29,6 +29,9 @@ import scala.concurrent.Future
 object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
   final val typeId = 300
 
+  /** Source code of the graph function. */
+  final val attrSource = "graph-source"
+
   override def init(): Unit = {
     super   .init()
     //    Output  .init()
