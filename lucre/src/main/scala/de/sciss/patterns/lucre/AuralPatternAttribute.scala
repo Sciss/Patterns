@@ -17,7 +17,7 @@ import de.sciss.lucre.data.SkipList
 import de.sciss.lucre.event.impl.ObservableImpl
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.TxnLike.peer
-import de.sciss.lucre.stm.{Disposable, DummySerializerFactory, TxnLike}
+import de.sciss.lucre.stm.{Disposable, DummySerializerFactory, Obj, Source, TxnLike}
 import de.sciss.lucre.synth.Sys
 import de.sciss.patterns
 import de.sciss.patterns.lucre.AuralPatternAttribute.ViewImpl
@@ -25,9 +25,9 @@ import de.sciss.patterns.{Event, Pat}
 import de.sciss.serial.Serializer
 import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.proc.AuralAttribute.{Factory, Observer}
-import de.sciss.synth.proc.AuralView.{State, Stopped}
+import de.sciss.synth.proc.Runner.{State, Stopped}
 import de.sciss.synth.proc.impl.AuralScheduledBase
-import de.sciss.synth.proc.{AuralAttribute, AuralContext, AuralView, AuralViewBase, TimeRef}
+import de.sciss.synth.proc.{AuralAttribute, AuralContext, Runner, TimeRef, ViewBase}
 
 import scala.annotation.tailrec
 import scala.concurrent.stm.Ref
@@ -39,7 +39,7 @@ import scala.concurrent.stm.Ref
 object AuralPatternAttribute extends Factory {
   type Repr[S <: stm.Sys[S]] = Pattern[S]
 
-  def typeId: Int = Pattern.typeId
+  def tpe: Obj.Type = Pattern
 
   private[this] lazy val _init: Unit = AuralAttribute.addFactory(this)
 
@@ -67,7 +67,7 @@ object AuralPatternAttribute extends Factory {
     new AuralPatternAttribute[S, I1](key, tx.newHandle(value), observer, tree /* , viewMap */)
   }
 
-  trait View[S <: Sys[S]] extends AuralViewBase[S, AuralAttribute.Target[S]] {
+  trait View[S <: Sys[S]] extends ViewBase[S, AuralAttribute.Target[S]] {
     def span  : Span
     def value : AuralAttribute.Scalar
     def start : Long = span.start
@@ -75,22 +75,26 @@ object AuralPatternAttribute extends Factory {
   }
 
   private final class ViewImpl[S <: Sys[S]](pat: AuralAttribute[S], val value: AuralAttribute.Scalar, val span: Span)
-    extends View[S] with ObservableImpl[S, AuralView.State] {
+    extends View[S] with ObservableImpl[S, Runner.State] {
 
     private[this] final val stateRef = Ref[State](Stopped)
+
+    def tpe: Obj.Type = Pattern
+
+    def objH: Source[S#Tx, Obj[S]] = pat.objH
 
     override def toString = s"AuralPatternAttribute.View($value, $span)"
 
     def prepare(timeRef: TimeRef.Option)(implicit tx: S#Tx): Unit =
-      state = AuralView.Prepared
+      state = Runner.Prepared
 
-    def play(timeRef: TimeRef.Option, target: AuralAttribute.Target[S])(implicit tx: S#Tx): Unit = {
+    def run(timeRef: TimeRef.Option, target: AuralAttribute.Target[S])(implicit tx: S#Tx): Unit = {
       target.put(pat, value)
-      state = AuralView.Playing
+      state = Runner.Running
     }
 
     def stop()(implicit tx: S#Tx): Unit =
-      state = AuralView.Stopped
+      state = Runner.Stopped
 
     def dispose()(implicit tx: S#Tx): Unit = ()
 
@@ -103,9 +107,9 @@ object AuralPatternAttribute extends Factory {
   }
 }
 final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: String,
-                                                                val obj: stm.Source[S#Tx, Pattern[S]],
-                                                                observer: Observer[S],
-                                                                viewTree: SkipList.Map[I1, Long, AuralPatternAttribute.View[S]])
+                                                                  val objH: stm.Source[S#Tx, Pattern[S]],
+                                                                  observer: Observer[S],
+                                                                  viewTree: SkipList.Map[I1, Long, AuralPatternAttribute.View[S]])
                                                                (implicit protected val context: AuralContext[S],
                                                                 system: S { type I = I1 },
                                                                 protected val iSys: S#Tx => I1#Tx)
@@ -115,7 +119,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
 
   import TxnLike.peer
 
-  def typeId: Int = Pattern.typeId
+  def tpe: Obj.Type = Pattern
 
   type ViewId     = Unit
   type Elem       = AuralPatternAttribute.View[S]
@@ -298,7 +302,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
       case None =>
         if (isEmptyRef()) Iterator.empty
         else {    // we lost the cache
-          val graph = obj().value
+          val graph = objH().value
           // println("RESETTING GRAPH [1]")
           if (!setPattern(graph)) Iterator.empty  // became empty
           else processPrepare(spanP, timeRef, initial = initial) // repeat
@@ -336,7 +340,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
       case None =>
         if (isEmptyRef()) Long.MaxValue
         else {    // we lost the cache
-          val graph = obj().value
+          val graph = objH().value
           // println("RESETTING GRAPH [0]")
           if (!setPattern(graph)) Long.MaxValue // became empty
           else modelEventAfter(offset)  // repeat
@@ -381,7 +385,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
     val view = elemFromHandle(h)
     // logA(s"grapheme - playView: $view - $timeRef")
     stopViews()
-    view.play(timeRef, target)
+    view.run(timeRef, target)
     playingRef() = Some(h)
   }
 

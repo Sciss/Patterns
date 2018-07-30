@@ -5,7 +5,7 @@ import de.sciss.lucre.stm
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.lucre.synth.{Server, Sys}
 import de.sciss.synth.SynthGraph
-import de.sciss.synth.proc.{AuralContext, AuralObj, AuralSystem, Confluent, Durable, Proc, SoundProcesses, SynthGraphObj, TimeRef, Timeline, WorkspaceHandle, showAuralLog, showTransportLog}
+import de.sciss.synth.proc.{AuralContext, AuralObj, AuralSystem, Confluent, Durable, Proc, SoundProcesses, SynthGraphObj, TimeRef, Timeline, showAuralLog, showTransportLog}
 
 import scala.concurrent.stm.Txn
 
@@ -61,7 +61,7 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
 
     s.peer.dumpOSC()
     implicit val context: AuralContext[S] = cursor.step { implicit tx =>
-      import WorkspaceHandle.Implicits._
+      import de.sciss.lucre.stm.WorkspaceHandle.Implicits._
       AuralContext[S](s)
     }
 
