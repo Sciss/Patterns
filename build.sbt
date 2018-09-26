@@ -1,22 +1,22 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.4.0"
+lazy val projectVersion     = "0.5.0-SNAPSHOT"
 lazy val mimaVersion        = "0.4.0"
 
 val deps = new {
   val core = new {
-    val lucre               = "3.9.0"
+    val lucre               = "3.9.1"
     val numbers             = "0.2.0"
     val optional            = "1.0.0"
     val serial              = "1.1.1"
   }
   val lucre = new {
-    val soundProcesses      = "3.21.0"
+    val soundProcesses      = "3.22.0-SNAPSHOT"
   }
   val test = new {
     val kollFlitz           = "0.2.2"
     val scalaCollider       = "1.27.0"
-    val scalaColliderSwing  = "1.39.0"
+    val scalaColliderSwing  = "1.40.0-SNAPSHOT"
     val scalaTest           = "3.0.5"
     val ugens               = "1.19.1"
   }
@@ -31,7 +31,8 @@ lazy val commonSettings = Seq(
   crossScalaVersions  := Seq("2.12.6", "2.11.12"),
   licenses            := Seq(lgpl2),
   scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint"),
-  resolvers           += "Oracle Repository" at "http://download.oracle.com/maven"  // required for sleepycat
+  resolvers           += "Oracle Repository" at "http://download.oracle.com/maven",  // required for sleepycat
+  updateOptions       := updateOptions.value.withLatestSnapshots(false)
 ) ++ publishSettings
 
 lazy val lgpl2 = "LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")
@@ -80,12 +81,12 @@ lazy val core = project.in(file("core"))
       "de.sciss"      %% "optional"                     % deps.core.optional,
       "de.sciss"      %% "serial"                       % deps.core.serial,
       "de.sciss"      %% "lucre-data"                   % deps.core.lucre,
-      "de.sciss"      %% "kollflitz"                    % deps.test.kollFlitz           % "test",
-      "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % "test",
-      "de.sciss"      %% "scalacolliderswing-plotting"  % deps.test.scalaColliderSwing  % "test",
-      "de.sciss"      %% "scalacolliderugens-core"      % deps.test.ugens               % "test", // sbt fuck up
-      "de.sciss"      %% "scalacolliderugens-plugins"   % deps.test.ugens               % "test",
-      "org.scalatest" %% "scalatest"                    % deps.test.scalaTest           % "test"
+      "de.sciss"      %% "kollflitz"                    % deps.test.kollFlitz           % Test,
+      "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % Test,
+      "de.sciss"      %% "scalacolliderswing-plotting"  % deps.test.scalaColliderSwing  % Test,
+      "de.sciss"      %% "scalacolliderugens-core"      % deps.test.ugens               % Test, // sbt fuck up
+      "de.sciss"      %% "scalacolliderugens-plugins"   % deps.test.ugens               % Test,
+      "org.scalatest" %% "scalatest"                    % deps.test.scalaTest           % Test
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% baseNameL % mimaVersion),
     mainClass in (Test, run) := Some("de.sciss.patterns.RonWithESP")
