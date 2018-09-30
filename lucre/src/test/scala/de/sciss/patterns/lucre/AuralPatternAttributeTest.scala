@@ -50,7 +50,8 @@ class AuralPatternAttributeTest[S <: Sys[S]](name: String)(implicit cursor: stm.
       _view
     }
 
-    context.scheduler.stepTag { implicit tx =>
+    val sch = context.universe.scheduler
+    sch.stepTag { implicit tx =>
       println("--issue play--")
       view.play()
 

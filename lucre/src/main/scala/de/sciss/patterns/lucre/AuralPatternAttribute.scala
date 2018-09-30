@@ -48,7 +48,7 @@ object AuralPatternAttribute extends Factory {
   def apply[S <: Sys[S]](key: String, pat: Pattern[S], observer: Observer[S])
                         (implicit tx: S#Tx, context: AuralContext[S]): AuralAttribute[S] = {
     val system  = tx.system
-    val res     = prepare[S, system.I](key, pat, observer)(tx, system, context)
+    val res     = prepare[S, system.I](key, pat, observer)(tx, system, context) // IntelliJ highlight bug
     res.init(pat)
   }
 
@@ -215,7 +215,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
 //    assert(viewTree.isEmpty(iSys(tx)))
     viewTree.clear()
 
-    import context.scheduler.cursor
+    import context.universe.cursor
     implicit val _ctx: Context[S] = patterns.lucre.Context[S] // (system, system, itx) // InMemory()
     patContext.update(_ctx)(tx.peer)
     val stream: patterns.Stream[S, Any] = g.expand[S]

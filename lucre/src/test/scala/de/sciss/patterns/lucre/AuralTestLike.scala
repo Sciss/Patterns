@@ -5,7 +5,7 @@ import de.sciss.lucre.stm
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.lucre.synth.{Server, Sys}
 import de.sciss.synth.SynthGraph
-import de.sciss.synth.proc.{AuralContext, AuralObj, AuralSystem, Confluent, Durable, Proc, SoundProcesses, SynthGraphObj, TimeRef, Timeline, showAuralLog, showTransportLog}
+import de.sciss.synth.proc.{AuralContext, AuralObj, Confluent, Durable, Proc, SoundProcesses, SynthGraphObj, TimeRef, Timeline, Universe, showAuralLog, showTransportLog}
 
 import scala.concurrent.stm.Txn
 
@@ -47,8 +47,10 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
   showTransportLog  = true
   // de.sciss.lucre.synth.showLog = true
 
-  final val as: AuralSystem = AuralSystem()
+  implicit val universe: Universe[S] = cursor.step { implicit tx => Universe.dummy }
+
   cursor.step { implicit tx =>
+    val as = universe.auralSystem
     as.whenStarted(initView)
     as.start()
   }
@@ -61,7 +63,6 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
 
     s.peer.dumpOSC()
     implicit val context: AuralContext[S] = cursor.step { implicit tx =>
-      import de.sciss.lucre.stm.WorkspaceHandle.Implicits._
       AuralContext[S](s)
     }
 
@@ -73,7 +74,7 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
     val t = new Thread {
       override def run(): Unit = {
         Thread.sleep((secs * 1000).toLong)
-        if (latency) context.scheduler.stepTag { implicit tx =>
+        if (latency) context.universe.scheduler.stepTag { implicit tx =>
           code(tx)
         }
         else cursor.step { implicit tx =>
@@ -129,7 +130,7 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
 
   final def stopAndQuit(delay: Double = 4.0)(implicit context: AuralContext[S]): Unit =
     after(delay) { implicit tx =>
-      as.stop()
+      universe.auralSystem.stop()
       quit()
     }
 }
