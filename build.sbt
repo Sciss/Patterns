@@ -5,7 +5,7 @@ lazy val mimaVersion        = "0.5.0"
 
 val deps = new {
   val core = new {
-    val lucre               = "3.9.1"
+    val lucre               = "3.10.0-SNAPSHOT"
     val numbers             = "0.2.0"
     val optional            = "1.0.0"
     val serial              = "1.1.1"
