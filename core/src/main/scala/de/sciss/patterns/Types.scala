@@ -14,7 +14,7 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.stm.Random
-import de.sciss.numbers.{DoubleFunctions => rd, IntFunctions => ri, IntFunctions2 => ri2}
+import de.sciss.numbers.{DoubleFunctions => rd, IntFunctions => ri, IntFunctions2 => ri2, LongFunctions => rl, LongFunctions2 => rl2}
 import de.sciss.patterns.impl.{ScalarEqImpl, ScalarToNumImpl, SeqLikeEq, SeqLikeNum, SeqLikeNumDouble, SeqLikeNumFrac, SeqLikeToNum}
 import de.sciss.serial.{DataInput, DataOutput, Writable}
 
@@ -35,6 +35,7 @@ object Types {
         case DoubleSeqTop             .id => DoubleSeqTop
         case BooleanTop               .id => BooleanTop
         case BooleanSeqTop            .id => BooleanSeqTop
+        case LongTop                  .id => LongTop
         case StringTop                .id => StringTop
         case Widen.idIdentity             => Widen.identity[Any]
         case Widen .intSeqSeq         .id => Widen .intSeqSeq
@@ -42,7 +43,9 @@ object Types {
         case Widen .doubleSeqSeq      .id => Widen .doubleSeqSeq
         case Widen2.seqDoubleSeq      .id => Widen2.seqDoubleSeq
         case Widen .intDoubleDouble   .id => Widen .intDoubleDouble
+        case Widen .longDoubleDouble  .id => Widen .longDoubleDouble
         case Widen2.doubleIntDouble   .id => Widen2.doubleIntDouble
+        case Widen2.doubleLongDouble  .id => Widen2.doubleLongDouble
         case WidenToDouble.DoubleImpl .id => WidenToDouble.DoubleImpl
       }
     }
@@ -89,6 +92,12 @@ object Types {
       final val id = 0x104
     }
 
+    implicit object longDoubleDouble extends Widen2[Long, Double, Double] {
+      def widen1(a: Long   ): Double = a.toDouble
+      def widen2(a: Double ): Double = a
+
+      final val id = 0x106
+    }
   }
 
   object Widen extends WidenMidPriority {
@@ -131,6 +140,12 @@ object Types {
 
       final val id = 0x105
     }
+    implicit object doubleLongDouble extends Widen2[Double, Long, Double] {
+      def widen1(a: Double ): Double = a
+      def widen2(a: Long   ): Double = a.toDouble
+
+      final val id = 0x107
+    }
   }
 
   trait Widen2[A1, A2, A] extends Widen[A1, A] {
@@ -146,6 +161,7 @@ object Types {
   object Eq extends EqLowPriority {
     implicit def intTop   : IntTop    .type = IntTop
     implicit def doubleTop: DoubleTop .type = DoubleTop
+    implicit def longTop  : LongTop   .type = LongTop
   }
   trait Eq[A] extends Aux {
     type Boolean
@@ -268,7 +284,7 @@ object Types {
 
   object WidenToDouble {
 //    implicit def double     : WidenToDouble[Double, Double] = DoubleTop
-    implicit def intToDouble: WidenToDouble[Int   , Double] = DoubleImpl
+    implicit def intToDouble: WidenToDouble[Int, Double] = DoubleImpl
 
     private[Types] object DoubleImpl extends DoubleTop with WidenToDouble[Int, Double] {
       final val id = 0x120
@@ -319,6 +335,7 @@ object Types {
   object ToNum extends ToNumLowPriority {
     implicit def intTop       : IntTop      .type = IntTop
     implicit def doubleTop    : DoubleTop   .type = DoubleTop
+    implicit def longTop      : LongTop     .type = LongTop
   }
   trait ToNum[A] extends Aux {
     type Int
@@ -445,6 +462,75 @@ object Types {
     def geq (a: Int, b: Int): Boolean = a >= b
 
     def fold (a: Int, lo: Int, hi: Int): Int = ri.fold(a, lo, hi)
+  }
+
+  final object LongTop
+    extends NumInt          [Long]
+      with  ScalarEqImpl    [Long]
+      with  ScalarToNumImpl [Long] {
+
+    final val id = 6
+
+    def zero   : Long = 0L
+    def one    : Long = 1L
+
+    def toInt     (a: Long): Int     = a.toInt
+    def toDouble  (a: Long): Double  = a.toDouble
+
+    def +(a: Long, b: Long): Long = a + b
+    def -(a: Long, b: Long): Long = a - b
+    def *(a: Long, b: Long): Long = a * b
+    def %         (a: Long, b: Long): Long = a % b
+    def mod       (a: Long, b: Long): Long = rl.mod(a, b)
+    def min       (a: Long, b: Long): Long = rl.min(a, b)
+    def max       (a: Long, b: Long): Long = rl.max(a, b)
+
+    def &         (a: Long, b: Long): Long = a & b
+    def |         (a: Long, b: Long): Long = a | b
+    def ^         (a: Long, b: Long): Long = a ^ b
+    def lcm       (a: Long, b: Long): Long = rl.lcm(a, b)
+    def gcd       (a: Long, b: Long): Long = rl.gcd(a, b)
+
+    def roundTo   (a: Long, b: Long): Long = rl2.roundTo  (a, b)
+    def roundUpTo (a: Long, b: Long): Long = rl2.roundUpTo(a, b)
+    def trunc     (a: Long, b: Long): Long = rl2.trunc    (a, b)
+
+    def <<        (a: Long, b: Long): Long = a << b
+    def >>        (a: Long, b: Long): Long = a >> b
+    def >>>       (a: Long, b: Long): Long = a >>> b
+
+    def difSqr    (a: Long, b: Long): Long = rl2.difSqr(a, b)
+    def sumSqr    (a: Long, b: Long): Long = rl2.sumSqr(a, b)
+    def sqrSum    (a: Long, b: Long): Long = rl2.sqrSum(a, b)
+    def sqrDif    (a: Long, b: Long): Long = rl2.sqrDif(a, b)
+    def absDif    (a: Long, b: Long): Long = rl2.absDif(a, b)
+
+    def clip2     (a: Long, b: Long): Long = rl.clip2  (a, b)
+    def excess    (a: Long, b: Long): Long = rl.excess (a, b)
+    def fold2     (a: Long, b: Long): Long = rl.fold2  (a, b)
+    def wrap2     (a: Long, b: Long): Long = rl.wrap2  (a, b)
+
+    def negate    (a: Long): Long     = -a
+    def abs       (a: Long): Long     = rl.abs(a)
+    def signum    (a: Long): Long     = rl.signum(a)
+
+    def unary_~   (a: Long): Long = ~a
+
+    def squared   (a: Long): Long = rl.squared(a)
+    def cubed     (a: Long): Long = rl2.cubed (a)
+
+    def rand[Tx](a: Long)(implicit r: Random[Tx], tx: Tx): Long = ???
+
+    def rand2[Tx](a: Long)(implicit r: Random[Tx], tx: Tx): Long = ???
+
+    def rangeRand[Tx](a: Long, b: Long)(implicit r: Random[Tx], tx: Tx): Long = ???
+
+    def lt  (a: Long, b: Long): Boolean = a <  b
+    def leq (a: Long, b: Long): Boolean = a <= b
+    def gt  (a: Long, b: Long): Boolean = a >  b
+    def geq (a: Long, b: Long): Boolean = a >= b
+
+    def fold (a: Long, lo: Long, hi: Long): Long = rl.fold(a, lo, hi)
   }
 
   trait WidenSelfToDouble[A] extends WidenToDouble[A, A] {
