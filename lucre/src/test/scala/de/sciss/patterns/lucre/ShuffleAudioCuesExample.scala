@@ -33,10 +33,21 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
       )
     }
 
+    val patH = cursor.step { implicit tx =>
+      implicit val system: S = tx.system
+      val patObj: Pattern[S] = Pattern.newConst[S](pat)
+      implicit val ctx: Context[S] = Context[S] // (patObj)
+      val it = pat.expand[S].toIterator
+      it.foreach { evt =>
+        println(evt)
+      }
+      tx.newHandle(patObj)
+    }
+
     cursor.step { implicit tx =>
-      val patObj      = Pattern.newConst[S](pat)
       val procObj     = PProc[S]()
       procObj.graph() = SynthGraphObj.tape
+      val patObj      = patH()
       patObj.attr.put("proc", procObj)
 
       val fObj      = stm.Folder[S]

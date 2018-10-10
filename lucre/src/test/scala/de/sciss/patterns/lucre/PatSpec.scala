@@ -9,7 +9,10 @@ import scala.concurrent.stm.InTxn
 trait PatSpec extends FlatSpec with Matchers {
   type S = InMemory
   implicit val cursor: S = InMemory()
-  implicit val ctx: Context[S] = cursor.step { implicit tx => Context[S] }
+  implicit val ctx: Context[S] = cursor.step { implicit tx =>
+//    val pat = Pattern.empty[S]
+    Context[S] // (pat)
+  }
 
   type Tx = InTxn
 

@@ -216,7 +216,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
     viewTree.clear()
 
     import context.universe.cursor
-    implicit val _ctx: Context[S] = patterns.lucre.Context[S] // (system, system, itx) // InMemory()
+    implicit val _ctx: Context[S] = patterns.lucre.Context[S] // (objH()) // (system, system, itx) // InMemory()
     patContext.update(_ctx)(tx.peer)
     val stream: patterns.Stream[S, Any] = g.expand[S]
     streamRef.update(stream)(tx.peer)

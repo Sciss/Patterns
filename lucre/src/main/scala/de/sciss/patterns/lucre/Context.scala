@@ -51,11 +51,14 @@ object Context {
 //    }
 //  }
 
-  private final class SysImpl[S <: stm.Sys[S], I1 <: stm.Sys[I1]](system: S { type I = I1 }, tx0: S#Tx)(implicit val cursor: stm.Cursor[S])
+  private final class SysImpl[S <: stm.Sys[S], I1 <: stm.Sys[I1]](system: S { type I = I1 }, tx0: S#Tx)
+                                                                 (implicit val cursor: stm.Cursor[S])
     extends ContextLike[S, I1](system, tx0) with Context[S] {
 
     private[this] val seedRnd = Random[I1](id)(i(tx0))
     private[this] val tokenId = i(tx0).newIntVar(id, 1000000000) // 0x40000000
+
+//    def pattern(implicit tx: S#Tx): Pattern[S] = patternH()
 
     protected def nextSeed()(implicit tx: S#Tx): Long = {
       implicit val itx: I1#Tx = i(tx)
@@ -80,6 +83,8 @@ object Context {
 }
 trait Context[S <: Sys[S]] extends patterns.Context[S] {
   implicit def cursor: stm.Cursor[S]
+
+//  def pattern(implicit tx: S#Tx): Pattern[S]
 
 //  def step[A](fun: Tx => A): A
 }

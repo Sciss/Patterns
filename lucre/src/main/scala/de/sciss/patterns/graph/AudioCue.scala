@@ -23,21 +23,32 @@ object AudioCue extends Obj.Type[AudioCue] {
   def typeId: Int = proc.AudioCue.typeId
 
   final case class NumFrames(in: Pat[AudioCue]) extends Pattern[Long] {
-    def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Long] = ???
+    def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Long] = {
+      ???
+    }
 
-    def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Long] = ???
+    def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Long] = {
+      val inT = t(in)
+      if (inT.eq(in)) this else copy(in = inT)
+    }
   }
 
   final case class NumChannels(in: Pat[AudioCue]) extends Pattern[Int] {
     def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = ???
 
-    def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Int] = ???
+    def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Int] = {
+      val inT = t(in)
+      if (inT.eq(in)) this else copy(in = inT)
+    }
   }
 
   final case class SampleRate(in: Pat[AudioCue]) extends Pattern[Double] {
     def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Double] = ???
 
-    def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Double] = ???
+    def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Double] = {
+      val inT = t(in)
+      if (inT.eq(in)) this else copy(in = inT)
+    }
   }
 }
 trait AudioCue extends Obj {
