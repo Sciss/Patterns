@@ -14,6 +14,7 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.aux.{Aux, ProductWithAux}
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.stream.AttributeImpl
 
@@ -22,12 +23,16 @@ object Attribute {
     import me.{`this` => name}
 
     /** Creates an attribute without defaults (attribute must be present). */
-    def attr[A: Obj.Type]: Attribute[A] = Attribute(key = name, default = None)
+    def attr[A: Obj.Aux]: Attribute[A] = Attribute(key = name, default = None)
     /** Creates an attribute with defaults (attribute may be absent). */
-    def attr[A: Obj.Type](default: Pat[A]): Attribute[A] = Attribute(key = name, default = Some(default))
+    def attr[A: Obj.Aux](default: Pat[A]): Attribute[A] = Attribute(key = name, default = Some(default))
   }
 }
-final case class Attribute[A](key: String, default: Option[Pat[A]]) extends Pattern[A] {
+final case class Attribute[A](key: String, default: Option[Pat[A]])(implicit val ex: Obj.Aux[A])
+  extends Pattern[A] with ProductWithAux {
+
+  def aux: List[Aux] = ex :: Nil
+
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     AttributeImpl.expand(this)
 

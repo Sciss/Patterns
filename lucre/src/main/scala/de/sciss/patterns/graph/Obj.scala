@@ -15,19 +15,21 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.expr.{BooleanObj, DoubleObj, IntObj, LongObj}
-import de.sciss.lucre.stm
+import de.sciss.lucre.{aux, stm}
 import de.sciss.lucre.stm.Sys
 
 import scala.language.higherKinds
 
 object Obj {
-  object Type {
-    implicit object Int extends Type[scala.Int] {
-      def typeId: Int = IntObj.typeId
+  object Extractor {
+    implicit object Int extends Aux[scala.Int] {
+//      def typeId: Int = IntObj.typeId
 
       // type Repr[S <: Sys[S]] = IntObj[S]
 
-      def translate[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Int] = obj match {
+      final val id = 0x200
+
+      def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Int] = obj match {
         case i: IntObj    [S] => Some(i.value)
         case d: DoubleObj [S] => Some(d.value.toInt)
         case b: BooleanObj[S] => Some(if (b.value) 1 else 0)
@@ -37,13 +39,15 @@ object Obj {
     }
   }
 
-  trait Type[A] {
-    def typeId: Int
+  trait Extractor[+A] {
+//    def typeId: Int
 
 //    type Repr[S <: Sys[S]] <: stm.Obj[S]
 
-    def translate[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[A]
+    def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[A]
   }
+
+  trait Aux[A] extends Extractor[A] with aux.Aux
 }
 //trait Obj {
 //

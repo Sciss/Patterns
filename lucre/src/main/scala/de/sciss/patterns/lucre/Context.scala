@@ -38,7 +38,7 @@ object Context {
     *
     * @param name   name (key) of the attribute
     */
-  final case class Attribute[A](name: String)(implicit val tpe: Obj.Type[A]) extends patterns.Context.Input {
+  final case class Attribute[A](name: String)(implicit val tpe: Obj.Extractor[A]) extends patterns.Context.Input {
     type Key    = Attribute.Key
     type Value  = Attribute.Value[A]
 

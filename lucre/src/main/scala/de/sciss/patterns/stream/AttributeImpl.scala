@@ -32,7 +32,7 @@ object AttributeImpl {
                                                   inStream : Stream[S, graph.AudioCue],
                                                   _hasNext : S#Var[Boolean]
                                                  )(
-                                                 implicit val tpe: Obj.Type[A]
+                                                 implicit val tpe: Obj.Aux[A]
   )
     extends Stream[S, A] {
 

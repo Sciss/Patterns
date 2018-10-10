@@ -18,14 +18,14 @@ import de.sciss.lucre.stm.{Base, Obj, Sys}
 import de.sciss.patterns.stream.{AudioCueNumFramesImpl, AudioCueSampleRateImpl}
 import de.sciss.synth.proc
 
-object AudioCue extends Obj.Type[AudioCue] {
+object AudioCue extends Obj.Extractor[AudioCue] {
   def typeId: Int = proc.AudioCue.typeId
 
 //  type Repr[S <: Sys[S]] = proc.AudioCue.Obj[S]
 
-  implicit def tpe: Obj.Type[AudioCue] = this
+  implicit def tpe: Obj.Extractor[AudioCue] = this
 
-  def translate[S <: Sys[S]](obj: Obj[S])(implicit tx: S#Tx): Option[AudioCue] = obj match {
+  def extract[S <: Sys[S]](obj: Obj[S])(implicit tx: S#Tx): Option[AudioCue] = obj match {
     case ao: proc.AudioCue.Obj[S] => Some(AudioCue(ao.value))
     case _                        => None
   }

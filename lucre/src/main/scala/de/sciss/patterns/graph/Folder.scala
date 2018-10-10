@@ -15,19 +15,22 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Base, Obj, Sys}
+import de.sciss.lucre.stm.{Base, Sys}
 import de.sciss.patterns.stream.FolderCollectImpl
 
-object Folder extends Obj.Type[Folder] {
-  def typeId: Int = stm.Folder.typeId
+object Folder extends Obj.Aux[Folder] {
+//  def typeId: Int = stm.Folder.typeId
 
-//  type Repr[S <: Sys[S]] = stm.Folder[S]
+  final val id = 0x280
 
-  implicit def tpe: Obj.Type[Folder] = this
+  //  type Repr[S <: Sys[S]] = stm.Folder[S]
+
+  implicit def tpe: Obj.Aux[Folder] = this
 
 //  def translate[S <: Sys[S]](obj: stm.Folder[S])(implicit tx: S#Tx): Folder = ...
 
-  def translate[S <: Sys[S]](obj: Obj[S])(implicit tx: S#Tx): Option[Folder] = ???
+
+  def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[Folder] = ???
 
   final case class Collect[A](in: Pat[Folder]) extends Pattern[Pat[A]] {
     def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] =
