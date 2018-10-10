@@ -6,6 +6,7 @@ import de.sciss.lucre.expr.StringObj
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Cursor
 import de.sciss.lucre.synth.Sys
+import de.sciss.patterns
 import de.sciss.patterns.graph._
 import de.sciss.synth.io.AudioFile
 import de.sciss.synth.proc.{AuralContext, SynthGraphObj, Transport, AudioCue => PAudioCue, Proc => PProc}
@@ -36,7 +37,7 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
     val patH = cursor.step { implicit tx =>
       implicit val system: S = tx.system
       val patObj: Pattern[S] = Pattern.newConst[S](pat)
-      implicit val ctx: Context[S] = Context[S] // (patObj)
+      implicit val ctx: patterns.Context[S] = Context[S] // (patObj)
       val it = pat.expand[S].toIterator
       it.foreach { evt =>
         println(evt)

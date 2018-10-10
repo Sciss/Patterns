@@ -42,7 +42,7 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
       c.expand(p).toIterator.take(10).toList
     }
 
-    implicit val c: Context[S] = sys.step { implicit tx =>
+    implicit val c: patterns.Context[S] = sys.step { implicit tx =>
 //      val pat = Pattern.empty[S]
       Context[S] // (pat)
     }

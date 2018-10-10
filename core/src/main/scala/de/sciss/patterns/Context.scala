@@ -46,11 +46,14 @@ trait Context[S <: Base[S]] {
 object Context {
   def apply(): Context[Plain] = new PlainImpl
 
-  private final class PlainImpl extends ContextLike[Plain, Plain](Plain.instance, Plain.instance) {
+  private final class PlainImpl extends ContextLike[Plain](Plain.instance) {
     type S = Plain
 
     // A random number generator used for producing _seed_ values when creating a new RNG.
-    private[this] lazy val seedRnd = Random[Plain](id)
+    private[this] lazy val seedRnd = {
+      val id: Plain.Id = Plain.instance.newId()
+      Random[Plain](id)
+    }
 
     // Note: tokens are allocated first by the graph builder, these start at zero.
     // The context token-id allocation happens when rewriting `It` terms, as happens
@@ -75,10 +78,10 @@ object Context {
   }
 }
 
-private[patterns] abstract class ContextLike[S <: Base[S], I1 <: Base[I1]](system: S { type I = I1 }, tx0: S#Tx) extends Context[S] {
-  protected final def i(tx: S#Tx): I1#Tx = system.inMemoryTx(tx)
-
-  protected final val id: I1#Id = i(tx0).newId()
+private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Context[S] {
+//  protected final def i(tx: S#Tx): I1#Tx = system.inMemoryTx(tx)
+//
+//  protected final val id: I1#Id = i(tx0).newId()
 
   private[this] val streamSer = new StreamSerializer[S, Any]()(this)
 

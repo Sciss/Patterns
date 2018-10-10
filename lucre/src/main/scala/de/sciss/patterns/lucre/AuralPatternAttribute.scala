@@ -133,7 +133,10 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
 
   private[this] var patObserver: Disposable[S#Tx] = _
 
-  private[this] val patContext      = Ref.make[patterns.lucre.Context[S]]
+  private type Ctx  = patterns.lucre.Context[S, I1]
+  private type St   = patterns.Stream[I1, Any]
+
+  private[this] val patContext      = Ref.make[Ctx]
 
   private def getSingleFloat(in: Any): Option[Float] = in match {
     case i: Int     => Some(i.toFloat)
@@ -157,15 +160,13 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
     }
   }
 
-  private type St = patterns.Stream[S, Any]
-
   private[this] val streamRef = Ref.make[St]
 
   private def nextElemFromStream(time: Long)(implicit tx: S#Tx): Option[Elem] = {
     implicit val itx: I1#Tx = iSys(tx)
     val stream = streamRef()(tx.peer)
     if (stream == null) return None
-    implicit val ctx: Context[S] = patContext()(tx.peer)
+    implicit val ctx: Ctx = patContext()(tx.peer)
 
     @tailrec
     def loop(count: Int): Option[Elem] = if (count == 10 || !stream.hasNext) {
@@ -215,10 +216,10 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
 //    assert(viewTree.isEmpty(iSys(tx)))
     viewTree.clear()
 
-    import context.universe.cursor
-    implicit val _ctx: Context[S] = patterns.lucre.Context[S] // (objH()) // (system, system, itx) // InMemory()
+//    import context.universe.cursor
+    implicit val _ctx: Ctx = patterns.lucre.Context.dual[S](objH()) // (system, system, itx) // InMemory()
     patContext.update(_ctx)(tx.peer)
-    val stream: patterns.Stream[S, Any] = g.expand[S]
+    val stream: St = g.expand[I1]
     streamRef.update(stream)(tx.peer)
 
     val headElem  = nextElemFromStream(0L)
