@@ -20,7 +20,7 @@ final class AudioCueOps(private val x: Pat[graph.AudioCue]) extends AnyVal {
   def numFrames   : Pat[Long  ] = graph.AudioCue.NumFrames  (x)
   def sampleRate  : Pat[Double] = graph.AudioCue.SampleRate (x)
   def numChannels : Pat[Int   ] = graph.AudioCue.NumChannels(x)
-  def duration    : Pat[Double] = ??? // numFrames / sampleRate
+  def duration    : Pat[Double] = numFrames / sampleRate
 }
 
 final class FolderOps(private val x: Pat[graph.Folder]) extends AnyVal {
