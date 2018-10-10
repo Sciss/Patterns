@@ -16,8 +16,8 @@ package de.sciss.patterns.lucre
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Random, Sys, TxnRandom}
 import de.sciss.patterns
-import de.sciss.patterns.{ContextLike, Pat, Stream}
 import de.sciss.patterns.graph.{It, Obj}
+import de.sciss.patterns.{ContextLike, Pat, Stream}
 
 import scala.concurrent.stm.TxnLocal
 
@@ -38,13 +38,20 @@ object Context {
     *
     * @param name   name (key) of the attribute
     */
-  final case class Attribute[A](name: String)(implicit val tpe: Obj.Extractor[A]) extends patterns.Context.Input {
+  final case class Attribute[A](name: String)(implicit val ex: Obj.Extractor[A]) extends patterns.Context.Input {
     type Key    = Attribute.Key
     type Value  = Attribute.Value[A]
 
     def key = Attribute.Key(name)
 
     override def productPrefix = "Context.Attribute"
+
+    def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Value = {
+      val peer = ex.extract(obj)
+      Attribute.Value(peer)
+    }
+
+    def none: Value = Attribute.Value(None)
   }
 
   private abstract class Impl[S <: stm.Sys[S], I1 <: stm.Sys[I1]](tx0: S#Tx)
@@ -108,6 +115,20 @@ object Context {
       outer.set(tx)(tx.peer)
       s.next()(this, system.inMemoryTx(tx))
     }
+
+    override def requestInput[V](input: patterns.Context.Input { type Value = V })(implicit tx: I1#Tx): V =
+      input match {
+        case a @ Context.Attribute(name) =>
+          implicit val tx1: S#Tx = outer.get(tx.peer)
+          val p = pattern
+          val res = p.attr.get(name) match {
+            case Some(value)  => a.extract[S](value)
+            case None         => a.none
+          }
+          res
+
+        case _ => super.requestInput(input)
+      }
   }
 }
 trait Context[S <: Sys[S], T <: Sys[T]] extends patterns.Context[T] {

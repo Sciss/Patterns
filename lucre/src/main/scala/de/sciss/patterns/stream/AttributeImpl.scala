@@ -1,7 +1,9 @@
 package de.sciss.patterns.stream
 
+import de.sciss.lucre.aux.Aux
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.Obj
+import de.sciss.patterns.impl.PatElem
 import de.sciss.patterns.lucre.{Context => LContext}
 import de.sciss.patterns.{Context, Stream, graph}
 import de.sciss.serial.{DataInput, DataOutput}
@@ -10,29 +12,33 @@ object AttributeImpl {
   final val typeId = 0x61747472 // "attr"
 
   def expand[S <: Base[S], A](pat: graph.Attribute[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+    import pat.{key, ex}
     val id        = tx.newId()
-//    val inStream  = in.expand[S]
-    val _hasNext  = tx.newBooleanVar(id, true)
-//    new StreamImpl[S](id = id, inStream = inStream, _hasNext = _hasNext)
-    ???
+    val _next     = PatElem.makeVar[S, A](id)
+    val _hasNext  = tx.newBooleanVar(id, false)
+    val valid     = tx.newBooleanVar(id, false)
+    new StreamImpl[S, A](id = id, key = key, _next = _next, _hasNext = _hasNext, valid = valid)(ex)
   }
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id        = tx.readId(in, access)
-    val inStream  = Stream.read[S, graph.AudioCue](in, access)
+    val key       = in.readUTF()
+    val _next     = PatElem.readVar[S, Any](id, in)
     val _hasNext  = tx.readBooleanVar(id, in)
+    val valid     = tx.readBooleanVar(id, in)
+    val ex        = Aux.readT[Obj.Aux[Any]](in)
 
-    new StreamImpl[S, Any](id = id, key = ???, inStream = inStream, _hasNext = _hasNext)(???)
+    new StreamImpl[S, Any](id = id, key = key, _next = _next, _hasNext = _hasNext, valid = valid)(ex)
   }
 
-
-  private final class StreamImpl[S <: Base[S], A](id       : S#Id,
-                                                  key      : String,
-                                                  inStream : Stream[S, graph.AudioCue],
-                                                  _hasNext : S#Var[Boolean]
+  private final class StreamImpl[S <: Base[S], A](id      : S#Id,
+                                                  key     : String,
+                                                  _next   : S#Var[A],
+                                                  _hasNext: S#Var[Boolean],
+                                                  valid   : S#Var[Boolean]
                                                  )(
-                                                 implicit val tpe: Obj.Aux[A]
+                                                   implicit ex: Obj.Aux[A]
   )
     extends Stream[S, A] {
 
@@ -40,37 +46,45 @@ object AttributeImpl {
 
     protected def writeData(out: DataOutput): Unit = {
       id      .write(out)
-      inStream.write(out)
+      out.writeUTF(key)
+      _next   .write(out)
       _hasNext.write(out)
+      valid   .write(out)
+      ex     .write(out)
     }
 
     def dispose()(implicit tx: S#Tx): Unit = {
       id      .dispose()
-      inStream.dispose()
+      _next   .dispose()
       _hasNext.dispose()
+      valid   .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = {
-      inStream.reset()
-      _hasNext() = true
-    }
+    def reset()(implicit tx: S#Tx): Unit =
+      valid() = false
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _hasNext()
-
-    private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
+    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
       val v: LContext.Attribute.Value[A] = ctx.requestInput(LContext.Attribute[A](key))
+      v.peer match {
+        case Some(value) =>
+          _next()     = value
+          _hasNext()  = true
+
+        case None =>
+          _hasNext()  = false
+      }
+    }
+
+    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+      validate()
+      _hasNext()
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {
       if (!hasNext) Stream.exhausted()
-      var res = 0
-      while (inStream.hasNext) {
-        inStream.next()
-        res += 1
-      }
-      _hasNext() = false
+      val res     = _next()
+      _hasNext()  = false
       res
-      ???
     }
   }
 }

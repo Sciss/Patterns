@@ -15,16 +15,14 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.lucre.{Context => LContext}
 import de.sciss.serial.{DataInput, DataOutput}
-
-import scala.annotation.tailrec
 
 object FolderCollectImpl extends StreamFactory {
   final val typeId = 0x466C436C // "FlCl"
 
   def expand[S <: Base[S], A](pat: graph.Folder.Collect[A])
                              (implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = {
-    import pat._
     val id        = tx.newId()
 //    val keyStream = folder.key.expand[S]
     val _hasNext  = tx.newBooleanVar(id, false)
@@ -86,10 +84,11 @@ object FolderCollectImpl extends StreamFactory {
       val khn = keyStream.hasNext
       if (khn) {
         val keyVal = keyStream.next()
-        ???
-//        ctx.requestInput(Context.Input.Attribute(keyVal)) match {
-//          case Some(f: stm.F)
-//        }
+        val vf = ctx.requestInput(LContext.Attribute[graph.Folder](keyVal))
+        vf.peer match {
+          case Some(_) =>
+          case _ =>
+        }
 //        val ihn = inStream.hasNext
 //        if (ihn) {
 //          val inVal = inStream.next()
@@ -99,8 +98,8 @@ object FolderCollectImpl extends StreamFactory {
 //          remain() = 0
 //        }
 //
-//      } else {
-//        remain() = 0
+      } else {
+        ???
       }
     }
 

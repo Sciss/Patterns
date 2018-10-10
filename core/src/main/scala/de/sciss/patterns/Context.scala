@@ -42,7 +42,7 @@ trait Context[S <: Base[S]] {
 
   def expand[A](pat: Pat[A])(implicit tx: S#Tx): Stream[S, A]
 
-  def requestInput(input: Context.Input): input.Value
+  def requestInput[V](input: Context.Input { type Value = V })(implicit tx: S#Tx): V
 
   implicit def streamSerializer[A]: Serializer[S#Tx, S#Acc, Stream[S, A]]
 }
@@ -161,7 +161,8 @@ private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Co
   // ---- impl ----
 
   /** Default implementation just throws `MissingIn` */
-  def requestInput(input: Context.Input): input.Value = throw Context.MissingIn(input)
+  def requestInput[V](input: Context.Input { type Value = V })(implicit tx: S#Tx): V =
+    throw Context.MissingIn(input)
 
   final def streamSerializer[A]: Serializer[S#Tx, S#Acc, Stream[S, A]] =
     streamSer.asInstanceOf[StreamSerializer[S, A]]
