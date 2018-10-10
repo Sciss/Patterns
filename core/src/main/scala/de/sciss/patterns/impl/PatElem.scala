@@ -16,8 +16,8 @@ package impl
 
 import java.util
 
+import de.sciss.lucre.aux.{Aux, ProductWithAux}
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.Types.Aux
 import de.sciss.patterns.graph.Constant
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 

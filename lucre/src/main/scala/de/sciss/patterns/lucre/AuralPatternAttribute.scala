@@ -169,11 +169,11 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
     implicit val ctx: Ctx = patContext()(tx.peer)
 
     @tailrec
-    def loop(count: Int): Option[Elem] = if (count == 10 || !stream.hasNext) {
+    def loop(count: Int): Option[Elem] = if (count == 10 || !ctx.hasNext(stream)) {
       // println(if (count == 10) "-> count = 10" else "-> !stream.hasNext")
       None
     } else {
-      stream.next() match {
+      ctx.next(stream) match {
         case evt: Event =>
           getValue(evt) match {
             case Some(v) =>
@@ -219,7 +219,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
 //    import context.universe.cursor
     implicit val _ctx: Ctx = patterns.lucre.Context.dual[S](objH()) // (system, system, itx) // InMemory()
     patContext.update(_ctx)(tx.peer)
-    val stream: St = g.expand[I1]
+    val stream: St = _ctx.expandDual(g) // g.expand[I1]
     streamRef.update(stream)(tx.peer)
 
     val headElem  = nextElemFromStream(0L)

@@ -1,10 +1,10 @@
 package de.sciss.patterns
 package lucre
 
+import de.sciss.lucre.aux.Aux.WidenToDouble
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.lucre.stm.{Durable, Plain}
 import de.sciss.patterns
-import de.sciss.patterns.Types.WidenToDouble
 import org.scalatest.{Matchers, Outcome, fixture}
 
 class StreamSerializationSpec extends fixture.FlatSpec with Matchers {

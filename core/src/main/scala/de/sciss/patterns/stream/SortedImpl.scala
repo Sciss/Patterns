@@ -14,8 +14,9 @@
 package de.sciss.patterns
 package stream
 
+import de.sciss.lucre.aux.Aux
+import de.sciss.lucre.aux.Aux.ScalarOrd
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.Types.{Aux, ScalarOrd}
 import de.sciss.patterns.graph.Sorted
 import de.sciss.serial.{DataInput, DataOutput}
 

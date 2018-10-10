@@ -14,14 +14,15 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.aux.Aux.Num
+import de.sciss.lucre.aux.{Aux, ProductWithAux}
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.Types.{Aux, Num}
 import de.sciss.patterns.stream.WhiteImpl
 
 final case class White[A](lo: Pat[A], hi: Pat[A])(implicit val num: Num[A])
-  extends Pattern[A] { pat =>
+  extends Pattern[A] with ProductWithAux { pat =>
 
-  override private[patterns] def aux: List[Aux] = num :: Nil
+  override def aux: List[Aux] = num :: Nil
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     WhiteImpl.expand(this)

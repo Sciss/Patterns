@@ -22,8 +22,8 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
 
   protected def run()(implicit context: AuralContext[S]): Unit = {
     val pat   = Graph {
-      val f     = Folder("folder")
-      val cues  = f.collect[AudioCue]
+      val f     = "folder".attr[Folder] //  Folder("folder")
+      val cues  = f.collect[AudioCue].flatten
       val rnd   = cues.shuffle
       val dur   = rnd.duration
 
@@ -39,6 +39,7 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
       val patObj: Pattern[S] = Pattern.newConst[S](pat)
       implicit val ctx: patterns.Context[S] = Context[S] // (patObj)
       val it = pat.expand[S].toIterator
+      println(s"hasNext? ${it.hasNext}")
       it.foreach { evt =>
         println(evt)
       }

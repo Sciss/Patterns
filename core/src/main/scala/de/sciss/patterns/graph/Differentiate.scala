@@ -14,12 +14,15 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.aux.{Aux, ProductWithAux}
+import de.sciss.lucre.aux.Aux.Num
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.Types.{Aux, Num}
 import de.sciss.patterns.stream.DifferentiateImpl
 
-final case class Differentiate[A](in: Pat[A])(implicit val num: Num[A]) extends Pattern[A] {
-  override private[patterns] def aux: List[Aux] = num :: Nil
+final case class Differentiate[A](in: Pat[A])(implicit val num: Num[A])
+  extends Pattern[A] with ProductWithAux {
+
+  override def aux: List[Aux] = num :: Nil
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     DifferentiateImpl.expand(this)

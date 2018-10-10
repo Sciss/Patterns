@@ -15,8 +15,8 @@ package de.sciss.patterns
 package stream
 package impl
 
+import de.sciss.lucre.aux.Aux.{Num, Widen2}
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.Types.{Num, Widen2}
 import de.sciss.serial.DataOutput
 
 abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A] {

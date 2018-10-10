@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.Types.{Eq, Num, NumBool, NumDouble, NumFrac, NumInt, Ord, ScalarOrd, ToNum, Widen, WidenToDouble, Widen2}
+import de.sciss.lucre.aux.Aux.{Eq, Num, NumBool, NumDouble, NumFrac, NumInt, Ord, ScalarOrd, ToNum, Widen, Widen2, WidenToDouble}
 import de.sciss.patterns.graph.{BinaryOp => BinOp, UnaryOp => UnOp, _}
 
 final class PatOps[A](private val x: Pat[A]) extends AnyVal {
@@ -30,7 +30,7 @@ final class PatOps[A](private val x: Pat[A]) extends AnyVal {
     *
     * E.g. `Pat(4, 5, 6).drop(2) == Pat(6)`
     */
-  def drop(length: Pat[Int]    ): Pat[A] = Drop(x, length)
+  def drop(length: Pat[Int]): Pat[A] = Drop(x, length)
 
 //  def head: Pat[A] = take(1)
 

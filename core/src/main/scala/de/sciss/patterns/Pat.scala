@@ -14,7 +14,6 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.Types.Aux
 import de.sciss.patterns.graph.{Constant, LoopWithIndex, PatSeq}
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
@@ -93,11 +92,7 @@ object Pat {
   //  var COUNT = 0
 }
 
-trait ProductWithAux extends Product {
-  private[patterns] def aux: List[Aux]
-}
-
-trait Pat[+A] extends ProductWithAux {
+trait Pat[+A] extends Product {
 //  Pat.COUNT += 1
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A]
@@ -115,9 +110,6 @@ abstract class Pattern[+A] extends Pat[A] {
 //  Graph.builder.addPattern(this)
 
   private[patterns] final def ref: AnyRef = _ref
-
-  // default is _no aux_
-  private[patterns] def aux: List[Aux] = Nil
 
 //  /** A final implementation of this method which looks up the current stream graph
 //    * builder and then performs the expansion just as `force`, returning the

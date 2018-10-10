@@ -16,8 +16,10 @@ package de.sciss.patterns.lucre
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Random, Sys, TxnRandom}
 import de.sciss.patterns
-import de.sciss.patterns.ContextLike
-import de.sciss.patterns.graph.It
+import de.sciss.patterns.{ContextLike, Pat, Stream}
+import de.sciss.patterns.graph.{It, Obj}
+
+import scala.concurrent.stm.TxnLocal
 
 object Context {
   def apply[S <: stm.Sys[S]](implicit system: S, tx: S#Tx): patterns.Context[S] =
@@ -25,6 +27,25 @@ object Context {
 
   def dual[S <: stm.Sys[S]](pat: Pattern[S])(implicit system: S, tx: S#Tx): Context[S, system.I] =
     new DualImpl[S, system.I](system, tx, tx.newHandle(pat))
+
+  object Attribute {
+    final case class Key(peer: String) extends patterns.Context.Key
+    final case class Value[A](peer: Option[A]) extends patterns.Context.Value {
+      override def productPrefix = "Context.Attribute.Value"
+    }
+  }
+  /** Specifies access to a an attribute's value at build time.
+    *
+    * @param name   name (key) of the attribute
+    */
+  final case class Attribute[A](name: String)(implicit val tpe: Obj.Type[A]) extends patterns.Context.Input {
+    type Key    = Attribute.Key
+    type Value  = Attribute.Value[A]
+
+    def key = Attribute.Key(name)
+
+    override def productPrefix = "Context.Attribute"
+  }
 
   private abstract class Impl[S <: stm.Sys[S], I1 <: stm.Sys[I1]](tx0: S#Tx)
     extends ContextLike[S](tx0) {
@@ -70,6 +91,23 @@ object Context {
     protected def i(tx: I1#Tx): I1#Tx = tx
 
     def pattern(implicit tx: S#Tx): Pattern[S] = patH()
+
+    private[this] val outer = TxnLocal[S#Tx]()
+
+    def expandDual[A](pat: Pat[A])(implicit tx: S#Tx): Stream[I1, A] = {
+      outer.set(tx)(tx.peer)
+      expand[A](pat)(system.inMemoryTx(tx))
+    }
+
+    def hasNext[A](s: Stream[I1, A])(implicit tx: S#Tx): Boolean = {
+      outer.set(tx)(tx.peer)
+      s.hasNext(this, system.inMemoryTx(tx))
+    }
+
+    def next[A](s: Stream[I1, A])(implicit tx: S#Tx): A = {
+      outer.set(tx)(tx.peer)
+      s.next()(this, system.inMemoryTx(tx))
+    }
   }
 }
 trait Context[S <: Sys[S], T <: Sys[T]] extends patterns.Context[T] {
@@ -77,5 +115,9 @@ trait Context[S <: Sys[S], T <: Sys[T]] extends patterns.Context[T] {
 
   def pattern(implicit tx: S#Tx): Pattern[S]
 
-//  def step[A](fun: Tx => A): A
+  def expandDual[A](pat: Pat[A])(implicit tx: S#Tx): Stream[T, A]
+
+  def hasNext[A](s: Stream[T, A])(implicit tx: S#Tx): Boolean
+
+  def next[A](s: Stream[T, A])(implicit tx: S#Tx): A
 }

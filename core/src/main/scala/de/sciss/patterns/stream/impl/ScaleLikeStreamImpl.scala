@@ -15,8 +15,9 @@ package de.sciss.patterns
 package stream
 package impl
 
+import de.sciss.lucre.aux.Aux
+import de.sciss.lucre.aux.Aux.Widen2
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.Types.{Aux, Widen2}
 import de.sciss.serial.DataOutput
 
 abstract class ScaleLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A] {
@@ -24,6 +25,8 @@ abstract class ScaleLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A]
 
   protected val widen: Widen2[A1, A2, A]
   protected val num  : Aux
+
+  import widen._
 
   protected def inStream   : Stream[S, A1]
   protected def inLoStream : Stream[S, A1]
@@ -70,8 +73,6 @@ abstract class ScaleLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A]
 
   final def next()(implicit ctx: Context[S], tx: S#Tx): A = {
     if (!hasNext) Stream.exhausted()
-
-    import widen._
     val inVal     = widen1(inStream    .next())
     val inLoVal   = widen1(inLoStream  .next())
     val inHiVal   = widen1(inHiStream  .next())

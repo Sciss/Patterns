@@ -1,5 +1,5 @@
 /*
- *  AudioCueNumFramesImpl.scala
+ *  AudioCueSampleRateImpl.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
@@ -17,10 +17,10 @@ package stream
 import de.sciss.lucre.stm.Base
 import de.sciss.serial.{DataInput, DataOutput}
 
-object AudioCueNumFramesImpl extends StreamFactory {
-  final val typeId = 0x41436E66 // "ACnf"
+object AudioCueSampleRateImpl extends StreamFactory {
+  final val typeId = 0x41437372 // "ACsr"
 
-  def expand[S <: Base[S], A](pat: graph.AudioCue.NumFrames)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Long] = {
+  def expand[S <: Base[S], A](pat: graph.AudioCue.SampleRate)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Double] = {
     import pat._
     val id        = tx.newId()
     val inStream  = in.expand[S]
@@ -41,7 +41,7 @@ object AudioCueNumFramesImpl extends StreamFactory {
                                                inStream: Stream[S, graph.AudioCue],
                                                _hasNext: S#Var[Boolean]
                                               )
-    extends Stream[S, Long] {
+    extends Stream[S, Double] {
 
     protected def typeId: Int = AudioCueNumFramesImpl.typeId
 
@@ -64,7 +64,7 @@ object AudioCueNumFramesImpl extends StreamFactory {
 
     def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = _hasNext()
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): Long = {
+    def next()(implicit ctx: Context[S], tx: S#Tx): Double = {
       if (!hasNext) Stream.exhausted()
       var res = 0
       while (inStream.hasNext) {

@@ -82,6 +82,7 @@ lazy val core = project.in(file("core"))
       "de.sciss"      %% "numbers"                      % deps.core.numbers,
       "de.sciss"      %% "optional"                     % deps.core.optional,
       "de.sciss"      %% "serial"                       % deps.core.serial,
+      "de.sciss"      %% "lucre-aux"                    % deps.core.lucre,
       "de.sciss"      %% "lucre-data"                   % deps.core.lucre,
       "de.sciss"      %% "kollflitz"                    % deps.test.kollFlitz           % Test,
       "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % Test,

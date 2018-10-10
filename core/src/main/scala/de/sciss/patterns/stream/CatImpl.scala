@@ -14,8 +14,9 @@
 package de.sciss.patterns
 package stream
 
+import de.sciss.lucre.aux.Aux
+import de.sciss.lucre.aux.Aux.Widen2
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.Types.{Aux, Widen2}
 import de.sciss.patterns.graph.Cat
 import de.sciss.serial.{DataInput, DataOutput}
 

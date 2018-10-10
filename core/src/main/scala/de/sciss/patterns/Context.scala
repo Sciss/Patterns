@@ -19,6 +19,8 @@ import de.sciss.patterns.impl.StreamSerializer
 import de.sciss.patterns.stream.{ItStream, ItStreamSource}
 import de.sciss.serial.Serializer
 
+import scala.util.control.ControlThrowable
+
 trait Context[S <: Base[S]] {
   def mkItStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A]
 
@@ -40,11 +42,71 @@ trait Context[S <: Base[S]] {
 
   def expand[A](pat: Pat[A])(implicit tx: S#Tx): Stream[S, A]
 
+  def requestInput(input: Context.Input): input.Value
+
   implicit def streamSerializer[A]: Serializer[S#Tx, S#Acc, Stream[S, A]]
 }
 
 object Context {
   def apply(): Context[Plain] = new PlainImpl
+
+  /** A pure marker trait to rule out some type errors. */
+  trait Key
+//  /** A scalar value found in the attribute map. */
+//  final case class AttributeKey(name: String) extends Key
+  /** A pure marker trait to rule out some type errors. */
+  trait Value
+
+  case object Unit extends Value
+  type Unit = Unit.type
+
+//  object Input {
+//    object Attribute {
+//      final case class Value(peer: Option[Any]) extends Context.Value {
+//        override def productPrefix = "Input.Attribute.Value"
+//      }
+//    }
+//    /** Specifies access to a an attribute's value at build time.
+//      *
+//      * @param name   name (key) of the attribute
+//      */
+//    final case class Attribute(name: String) extends Input {
+//      type Key    = AttributeKey
+//      type Value  = Attribute.Value
+//
+//      def key = AttributeKey(name)
+//
+//      override def productPrefix = "Input.Attribute"
+//    }
+//
+//    object Action {
+//      /** An "untyped" action reference, i.e. without system type and transactions revealed */
+//      trait Value extends Context.Value {
+//        def key: String
+//        def execute(value: Any): scala.Unit
+//      }
+//    }
+//    /** Specifies access to an action.
+//      *
+//      * @param name   name (key) of the attribute referring to an action
+//      */
+//    final case class Action(name: String) extends Input {
+//      type Key    = AttributeKey
+//      type Value  = Action.Value
+//
+//      def key = AttributeKey(name)
+//
+//      override def productPrefix = "Input.Action"
+//    }
+//  }
+  trait Input {
+    type Key   <: Context.Key
+    type Value <: Context.Value
+
+    def key: Key
+  }
+
+  final case class MissingIn(input: Input) extends ControlThrowable
 
   private final class PlainImpl extends ContextLike[Plain](Plain.instance) {
     type S = Plain
@@ -63,7 +125,7 @@ object Context {
 
     protected def nextSeed()(implicit tx: S#Tx): Long = seedRnd.nextLong()
 
-    def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = seedRnd.setSeed(n)
+    def setRandomSeed(n: Long)(implicit tx: S#Tx): scala.Unit = seedRnd.setSeed(n)
 
     def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S] =
       TxnRandom[S](seed)
@@ -97,6 +159,9 @@ private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Co
   protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S]
 
   // ---- impl ----
+
+  /** Default implementation just throws `MissingIn` */
+  def requestInput(input: Context.Input): input.Value = throw Context.MissingIn(input)
 
   final def streamSerializer[A]: Serializer[S#Tx, S#Acc, Stream[S, A]] =
     streamSer.asInstanceOf[StreamSerializer[S, A]]

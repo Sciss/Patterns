@@ -14,8 +14,9 @@
 package de.sciss.patterns
 package stream
 
+import de.sciss.lucre.aux.Aux
+import de.sciss.lucre.aux.Aux.{Num, Widen2}
 import de.sciss.lucre.stm.{Base, Random, TxnRandom}
-import de.sciss.patterns.Types.{Aux, Num, Widen2}
 import de.sciss.patterns.graph.Brown
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}

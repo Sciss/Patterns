@@ -15,7 +15,6 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.Types.Aux
 import de.sciss.patterns.stream.ConstantImpl
 
 final case class Constant[A](value: A) extends Pat[A] {
@@ -25,8 +24,6 @@ final case class Constant[A](value: A) extends Pat[A] {
   // $COVERAGE-OFF$
   override def toString: String = value.toString
   // $COVERAGE-ON$
-
-  private[patterns] def aux: List[Aux] = Nil
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = this
 }
