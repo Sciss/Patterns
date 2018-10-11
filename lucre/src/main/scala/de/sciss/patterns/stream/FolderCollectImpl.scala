@@ -27,36 +27,34 @@ object FolderCollectImpl extends StreamFactory {
   final val typeId = 0x466C436C // "FlCl"
 
   def expand[S <: Base[S], A](pat: graph.Folder.Collect[A])
-                             (implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
-    import pat._
+                             (implicit ctx: Context[S], tx: S#Tx, ex: graph.Obj.Aux[A]): Stream[S, A] = {
+    import pat.key
     val id        = tx.newId()
-    val keyStream = ??? // in.key.expand[S]
+    val index     = tx.newIntVar    (id, 0)
+    val state     = PatElem.makeVar[S, A](id)
     val _hasNext  = tx.newBooleanVar(id, false)
     val valid     = tx.newBooleanVar(id, false)
-//    ctx.requestInput(Context.Input.Attribute(folder.key))
 
-//    new StreamImpl[S, A](id = id, keyStream = keyStream, _hasNext = _hasNext, valid = valid)
-    ???
+    new StreamImpl[S, A](id = id, key = key, index = index, state = state,
+      _hasNext = _hasNext, valid = valid, ex = ex)
   }
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val id        = tx.readId(in, access)
-    val keyStream = Stream.read[S, String](in, access)
-    val key       = tx.readVar[String]      (id, in)
+    val key       = in.readUTF()
     val index     = tx.readIntVar           (id, in)
     val state     = PatElem.readVar[S, Any] (id, in)
     val _hasNext  = tx.readBooleanVar       (id, in)
     val valid     = tx.readBooleanVar       (id, in)
     val ex        = Aux.readT[graph.Obj.Aux[Any]](in)
 
-    new StreamImpl[S, Any](id = id, keyStream = keyStream, key = key, index = index, state = state,
+    new StreamImpl[S, Any](id = id, key = key, index = index, state = state,
       _hasNext = _hasNext, valid = valid, ex = ex)
   }
 
   private final class StreamImpl[S <: Base[S], A](id       : S#Id,
-                                                  keyStream: Stream[S, String],
-                                                  key      : S#Var[String ],
+                                                  key      : String,
                                                   index    : S#Var[Int    ],
                                                   state    : S#Var[A      ],
                                                   _hasNext : S#Var[Boolean],
@@ -69,8 +67,7 @@ object FolderCollectImpl extends StreamFactory {
 
     protected def writeData(out: DataOutput): Unit = {
       id        .write(out)
-      keyStream .write(out)
-      key       .write(out)
+      out.writeUTF(key)
       index     .write(out)
       state     .write(out)
       _hasNext  .write(out)
@@ -80,8 +77,6 @@ object FolderCollectImpl extends StreamFactory {
 
     def dispose()(implicit tx: S#Tx): Unit = {
       id        .dispose()
-      keyStream .dispose()
-      key       .dispose()
       index     .dispose()
       state     .dispose()
       _hasNext  .dispose()
@@ -89,7 +84,8 @@ object FolderCollectImpl extends StreamFactory {
     }
 
     def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
-      keyStream.reset()
+      index() = 0
+//      keyStream.reset()
     }
 
     def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
@@ -112,12 +108,15 @@ object FolderCollectImpl extends StreamFactory {
           @tailrec
           def loop(i: Int): Option[A] =
             if (i >= sz) None else {
+              val j = i + 1
+              index.update(j)(tx1)
+              // XXX TODO --- `get` is O(N), but we cannot use
+              // iterator; the only alternative would be to complete
+              // iterate once and then keep the extracted values.
               val opt = f.get(i).flatMap { child =>
                 ex.extract(child)
               }
               if (opt.isDefined) opt else {
-                val j = i + 1
-                index.update(j)(tx1)
                 loop(j)
               }
             }
@@ -129,33 +128,34 @@ object FolderCollectImpl extends StreamFactory {
       }
     }
 
-    @tailrec
+//    @tailrec
     private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
-      val i = index()
-      val hasKey = (i >= 0) || {
-        val khn = keyStream.hasNext
-        if (khn) {
-          val keyVal = keyStream.next()
-          key   () = keyVal
-          index () = 0
-        }
-        khn
-      }
-      if (hasKey) {
-        val keyVal = key()
+//      val i = index()
+//      val hasKey = (i >= 0) || {
+//        val khn = keyStream.hasNext
+//        if (khn) {
+//          val keyVal = keyStream.next()
+//          key   () = keyVal
+//          index () = 0
+//        }
+//        khn
+//      }
+//      if (hasKey) {
+//        val keyVal = key()
         txRef.set(tx)
-        val vf = ctx.requestInput(LContext.Attribute[A](keyVal)(Extractor))
+        val vf = ctx.requestInput(LContext.Attribute[A](key)(Extractor))
         vf.peer match {
           case Some(x) =>
             state()     = x
             _hasNext()  = true
           case None    =>
-            index() = -1
-            advance()
+            _hasNext()  = false
+//            index() = -1
+//            advance()
         }
-      } else {
-        _hasNext() = false
-      }
+//      } else {
+//        _hasNext() = false
+//      }
     }
 
     def next()(implicit ctx: Context[S], tx: S#Tx): A = {

@@ -23,6 +23,10 @@ final class AudioCueOps(private val x: Pat[graph.AudioCue]) extends AnyVal {
   def duration    : Pat[Double] = numFrames / sampleRate
 }
 
-final class FolderOps(private val x: Pat[graph.Folder]) extends AnyVal {
-  def collect[A: Obj.Aux]: Pat[A] = graph.Folder.Collect[A](x)
+//final class FolderOps(private val x: Pat[graph.Folder]) extends AnyVal {
+//  def collect[A: Obj.Aux]: Pat[A] = graph.Folder.Collect[A](x)
+//}
+
+final class FolderOps(private val x: graph.Attribute[graph.Folder]) extends AnyVal {
+  def collect[A: Obj.Aux]: Pat[A] = graph.Folder.Collect[A](x.key)
 }

@@ -18,8 +18,6 @@ import de.sciss.lucre.expr.{BooleanObj, DoubleObj, IntObj, LongObj}
 import de.sciss.lucre.{aux, stm}
 import de.sciss.lucre.stm.Sys
 
-import scala.language.higherKinds
-
 object Obj {
   object Extractor {
     implicit object Int extends Aux[scala.Int] {

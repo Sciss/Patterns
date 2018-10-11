@@ -13,11 +13,13 @@
 
 package de.sciss.patterns
 
+import de.sciss.patterns.graph.Attribute
+
 import scala.language.implicitConversions
 
 package object lucre {
-  implicit def audioCueOps[A](p: Pat[graph.AudioCue]): AudioCueOps  = new AudioCueOps (p)
-  implicit def folderOps  [A](p: Pat[graph.Folder  ]): FolderOps    = new FolderOps   (p)
+  implicit def audioCueOps[A](p: Pat      [graph.AudioCue]): AudioCueOps  = new AudioCueOps (p)
+  implicit def folderOps  [A](p: Attribute[graph.Folder  ]): FolderOps    = new FolderOps   (p)
 
   implicit def stringToAttr(s: String): graph.Attribute.Factory = new graph.Attribute.Factory(s)
 }

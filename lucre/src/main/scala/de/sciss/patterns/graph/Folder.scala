@@ -14,6 +14,7 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.aux.{Aux, ProductWithAux}
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Base, Sys}
 import de.sciss.patterns.stream.FolderCollectImpl
@@ -35,13 +36,18 @@ object Folder extends Obj.Aux[Folder] {
     case _ => None
   }
 
-  final case class Collect[A](in: Pat[Folder]) extends Pattern[A] {
+  final case class Collect[A](key: String)(implicit val ex: Obj.Aux[A])
+    extends Pattern[A] with ProductWithAux {
+
+    override def aux: List[Aux] = ex :: Nil
+
     def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
       FolderCollectImpl.expand(this)
 
     def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
-      val inT = t(in)
-      if (inT.eq(in)) this else copy(in = inT)
+      this
+//      val inT = t(in)
+//      if (inT.eq(in)) this else copy(in = inT)
     }
 
     override def productPrefix: String = s"Folder$$Collect"

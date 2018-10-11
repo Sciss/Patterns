@@ -6,7 +6,6 @@ import de.sciss.lucre.expr.StringObj
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Cursor
 import de.sciss.lucre.synth.Sys
-import de.sciss.patterns
 import de.sciss.patterns.graph._
 import de.sciss.synth.io.AudioFile
 import de.sciss.synth.proc.{AuralContext, SynthGraphObj, Transport, AudioCue => PAudioCue, Proc => PProc}
@@ -23,9 +22,9 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
   protected def run()(implicit context: AuralContext[S]): Unit = {
     val pat   = Graph {
       val f     = "folder".attr[Folder] //  Folder("folder")
-      val cues  = f.collect[AudioCue]
+      val cues  = f.collect[AudioCue].<|(_.poll("cues"))
       val rnd   = cues.shuffle
-      val dur   = rnd.duration
+      val dur   = rnd.duration.<|(_.poll("dur"))
 
       Bind(
         "delta" -> dur,
@@ -37,10 +36,10 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
     val patH = cursor.step { implicit tx =>
       implicit val system: S = tx.system
       val patObj: Pattern[S] = Pattern.newConst[S](pat)
-      implicit val ctx: patterns.Context[S] = Context[S] // (patObj)
-      val it = pat.expand[S].toIterator
-      println(s"hasNext? ${it.hasNext}")
-      it.foreach { evt =>
+      val ctx = Context.dual[S](patObj) // (patObj)
+      val stream = ctx.expandDual(pat)
+      while ({ val res = ctx.hasNext(stream); println(s"hasNext? $res"); res }) {
+        val evt = ctx.next(stream)
         println(evt)
       }
       tx.newHandle(patObj)
@@ -61,6 +60,7 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
         val cueObj  = PAudioCue.Obj.newConst[S](cueVal)
         fObj.addLast(cueObj)
       }
+      patObj.attr.put("folder", fObj)
 
       val t = Transport[S](context)
       t.addObject(patObj)
