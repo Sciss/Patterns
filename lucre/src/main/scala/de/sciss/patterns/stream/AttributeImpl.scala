@@ -2,10 +2,9 @@ package de.sciss.patterns.stream
 
 import de.sciss.lucre.aux.Aux
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.graph.Obj
 import de.sciss.patterns.impl.PatElem
 import de.sciss.patterns.lucre.{Context => LContext}
-import de.sciss.patterns.{Context, Stream, graph}
+import de.sciss.patterns.{Context, Obj, Stream, graph}
 import de.sciss.serial.{DataInput, DataOutput}
 
 object AttributeImpl {

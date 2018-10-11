@@ -16,8 +16,8 @@ package de.sciss.patterns.lucre
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Random, Sys, TxnRandom}
 import de.sciss.patterns
-import de.sciss.patterns.graph.{It, Obj}
-import de.sciss.patterns.{ContextLike, Pat, Stream}
+import de.sciss.patterns.graph.It
+import de.sciss.patterns.{ContextLike, Obj, Pat, Stream}
 
 import scala.concurrent.stm.TxnLocal
 

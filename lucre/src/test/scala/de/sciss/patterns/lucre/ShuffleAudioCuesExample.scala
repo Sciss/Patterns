@@ -22,7 +22,7 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
   protected def run()(implicit context: AuralContext[S]): Unit = {
     val pat   = Graph {
       val f     = "folder".attr[Folder] //  Folder("folder")
-      val cues  = f.collect[AudioCue].<|(_.poll("cues"))
+      val cues  = f.collect[AudioCue] // .<|(_.poll("cues"))
       val rnd   = cues.shuffle
       val dur   = rnd.duration.<|(_.poll("dur"))
 
@@ -36,19 +36,8 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
     val patH = cursor.step { implicit tx =>
       implicit val system: S = tx.system
       val patObj: Pattern[S] = Pattern.newConst[S](pat)
-      val ctx = Context.dual[S](patObj) // (patObj)
-      val stream = ctx.expandDual(pat)
-      while ({ val res = ctx.hasNext(stream); println(s"hasNext? $res"); res }) {
-        val evt = ctx.next(stream)
-        println(evt)
-      }
-      tx.newHandle(patObj)
-    }
-
-    cursor.step { implicit tx =>
       val procObj     = PProc[S]()
       procObj.graph() = SynthGraphObj.tape
-      val patObj      = patH()
       patObj.attr.put("proc", procObj)
 
       val fObj      = stm.Folder[S]
@@ -62,7 +51,18 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
       }
       patObj.attr.put("folder", fObj)
 
+      val ctx = Context.dual[S](patObj) // (patObj)
+      val stream = ctx.expandDual(pat)
+      while ({ val res = ctx.hasNext(stream); /* println(s"hasNext? $res"); */ res }) {
+        val evt = ctx.next(stream)
+        println(evt)
+      }
+      tx.newHandle(patObj)
+    }
+
+    cursor.step { implicit tx =>
       val t = Transport[S](context)
+      val patObj = patH()
       t.addObject(patObj)
       t.play()
     }

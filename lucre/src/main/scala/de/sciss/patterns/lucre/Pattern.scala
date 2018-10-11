@@ -14,10 +14,11 @@
 package de.sciss.patterns.lucre
 
 import de.sciss.lucre.event.{Dummy, Event, EventLike, Targets}
-import de.sciss.lucre.expr
 import de.sciss.lucre.expr.Expr
-import de.sciss.lucre.stm.{Copy, Elem, Obj, Sys}
+import de.sciss.lucre.stm.{Copy, Elem, Sys}
+import de.sciss.lucre.{expr, stm}
 import de.sciss.model.Change
+import de.sciss.patterns
 import de.sciss.patterns.{Graph, Pat}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 import de.sciss.synth.proc
@@ -88,6 +89,7 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
         "de.sciss.patterns.Types._",
         "de.sciss.patterns.graph._"
       ))
+      patterns.Obj.init()
       //      proc.Code.registerImports(proc.Code.Action.id, Vec(
       //        "de.sciss.patterns.lucre.Pattern"
       //      ))
@@ -145,7 +147,7 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
 
     def event(slot: Int): Event[S, Any] = throw new UnsupportedOperationException
 
-    def tpe: Obj.Type = Pattern
+    def tpe: stm.Obj.Type = Pattern
 
     def copy[Out <: Sys[Out]]()(implicit tx: S#Tx, txOut: Out#Tx, context: Copy[S, Out]): Elem[Out] =
       new Predefined(txOut.newId(), cookie) // .connect()

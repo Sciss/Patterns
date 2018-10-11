@@ -16,7 +16,7 @@ package graph
 
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Base, Sys}
-import de.sciss.patterns.stream.{AudioCueNumFramesImpl, AudioCueSampleRateImpl}
+import de.sciss.patterns.stream.{AudioCueNumChannelsImpl, AudioCueNumFramesImpl, AudioCueSampleRateImpl}
 import de.sciss.synth.proc
 
 object AudioCue extends Obj.Aux[AudioCue] {
@@ -49,7 +49,8 @@ object AudioCue extends Obj.Aux[AudioCue] {
   }
 
   final case class NumChannels(in: Pat[AudioCue]) extends Pattern[Int] {
-    def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = ???
+    def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] =
+      AudioCueNumChannelsImpl.expand(this)
 
     def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Int] = {
       val inT = t(in)

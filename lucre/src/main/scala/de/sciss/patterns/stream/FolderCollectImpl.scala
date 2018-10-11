@@ -27,7 +27,7 @@ object FolderCollectImpl extends StreamFactory {
   final val typeId = 0x466C436C // "FlCl"
 
   def expand[S <: Base[S], A](pat: graph.Folder.Collect[A])
-                             (implicit ctx: Context[S], tx: S#Tx, ex: graph.Obj.Aux[A]): Stream[S, A] = {
+                             (implicit ctx: Context[S], tx: S#Tx, ex: Obj.Aux[A]): Stream[S, A] = {
     import pat.key
     val id        = tx.newId()
     val index     = tx.newIntVar    (id, 0)
@@ -47,7 +47,7 @@ object FolderCollectImpl extends StreamFactory {
     val state     = PatElem.readVar[S, Any] (id, in)
     val _hasNext  = tx.readBooleanVar       (id, in)
     val valid     = tx.readBooleanVar       (id, in)
-    val ex        = Aux.readT[graph.Obj.Aux[Any]](in)
+    val ex        = Aux.readT[Obj.Aux[Any]](in)
 
     new StreamImpl[S, Any](id = id, key = key, index = index, state = state,
       _hasNext = _hasNext, valid = valid, ex = ex)
@@ -59,7 +59,7 @@ object FolderCollectImpl extends StreamFactory {
                                                   state    : S#Var[A      ],
                                                   _hasNext : S#Var[Boolean],
                                                   valid    : S#Var[Boolean],
-                                                  ex       : graph.Obj.Aux[A]
+                                                  ex       : Obj.Aux[A]
                                                  )
     extends Stream[S, A] {
 
@@ -99,7 +99,7 @@ object FolderCollectImpl extends StreamFactory {
 
     private[this] val txRef = new ThreadLocal[S#Tx]
 
-    private object Extractor extends graph.Obj.Extractor[A] {
+    private object Extractor extends Obj.Extractor[A] {
       def extract[T <: Sys[T]](obj: stm.Obj[T])(implicit tx: T#Tx): Option[A] = obj match {
         case f: stm.Folder[T] =>
           val tx1: S#Tx = txRef.get

@@ -1,5 +1,5 @@
 /*
- *  AudioCueSampleRateImpl.scala
+ *  AudioCueNumChannelsImpl.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
@@ -18,10 +18,10 @@ import de.sciss.lucre.stm.Base
 import de.sciss.serial.DataInput
 import de.sciss.synth.proc
 
-object AudioCueSampleRateImpl extends StreamFactory {
+object AudioCueNumChannelsImpl extends StreamFactory {
   final val typeId = 0x41437372 // "ACsr"
 
-  def expand[S <: Base[S], A](pat: graph.AudioCue.SampleRate)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Double] = {
+  def expand[S <: Base[S], A](pat: graph.AudioCue.NumChannels)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = {
     import pat._
     val inStream = in.expand[S]
     new StreamImpl[S](inStream = inStream)
@@ -34,10 +34,10 @@ object AudioCueSampleRateImpl extends StreamFactory {
   }
 
   private final class StreamImpl[S <: Base[S]](inStream: Stream[S, graph.AudioCue])
-    extends AudioCueStreamImpl[S, Double](inStream) {
+    extends AudioCueStreamImpl[S, Int](inStream) {
 
-    protected def typeId: Int = AudioCueSampleRateImpl.typeId
+    protected def typeId: Int = AudioCueNumChannelsImpl.typeId
 
-    protected def mapCue(cue: proc.AudioCue): Double = cue.sampleRate
+    protected def mapCue(cue: proc.AudioCue): Int = cue.numChannels
   }
 }
