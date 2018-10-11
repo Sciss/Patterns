@@ -19,7 +19,8 @@ import de.sciss.lucre.stm.{Copy, Elem, Sys}
 import de.sciss.lucre.{expr, stm}
 import de.sciss.model.Change
 import de.sciss.patterns
-import de.sciss.patterns.{Graph, Pat}
+import de.sciss.patterns.stream
+import de.sciss.patterns.{Graph, Pat, Stream}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 import de.sciss.synth.proc
 import de.sciss.synth.proc.impl.CodeImpl
@@ -93,6 +94,11 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
       //      proc.Code.registerImports(proc.Code.Action.id, Vec(
       //        "de.sciss.patterns.lucre.Pattern"
       //      ))
+      Stream.addFactory(stream.AttributeImpl)
+      Stream.addFactory(stream.AudioCueNumChannelsImpl)
+      Stream.addFactory(stream.AudioCueNumFramesImpl)
+      Stream.addFactory(stream.AudioCueSampleRateImpl)
+      Stream.addFactory(stream.FolderCollectImpl)
     }
 
     // override because we need register imports

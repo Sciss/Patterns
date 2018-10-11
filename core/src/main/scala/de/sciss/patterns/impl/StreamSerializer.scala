@@ -2,10 +2,26 @@ package de.sciss.patterns
 package impl
 
 import de.sciss.lucre.stm.Base
+import de.sciss.patterns.stream.StreamFactory
 import de.sciss.serial.{DataInput, DataOutput, Serializer}
 
 import scala.annotation.switch
 
+object StreamSerializer {
+  private final val sync = new AnyRef
+
+  @volatile private var factoryMap = Map.empty[Int, StreamFactory]
+
+  def addFactory(f: StreamFactory): Unit = {
+    val tpeId = f.typeId
+    sync.synchronized {
+      if (factoryMap.contains(tpeId))
+        throw new IllegalArgumentException(s"Stream $tpeId was already registered ($f overrides ${factoryMap(tpeId)})")
+
+      factoryMap += tpeId -> f
+    }
+  }
+}
 final class StreamSerializer[S <: Base[S], A]()(implicit ctx: Context[S])
   extends Serializer[S#Tx, S#Acc, Stream[S, A]] {
 

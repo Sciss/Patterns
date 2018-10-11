@@ -7,7 +7,7 @@ import de.sciss.patterns.lucre.{Context => LContext}
 import de.sciss.patterns.{Context, Obj, Stream, graph}
 import de.sciss.serial.{DataInput, DataOutput}
 
-object AttributeImpl {
+object AttributeImpl extends StreamFactory {
   final val typeId = 0x61747472 // "attr"
 
   def expand[S <: Base[S], A](pat: graph.Attribute[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {

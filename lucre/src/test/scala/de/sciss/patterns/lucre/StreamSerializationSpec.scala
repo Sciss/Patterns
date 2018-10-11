@@ -349,4 +349,11 @@ class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
       Pat(4 to 14: _*).updatedAll(i ++ (i + 1), -1)
     }
   }
+
+//  it should "work for Attribute" in { implicit sys =>
+//    verifyLoop { i =>
+//      val j = "foo".attr[Int](666)
+//      j + i
+//    }
+//  }
 }

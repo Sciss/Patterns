@@ -14,6 +14,8 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.stm.{Base, Disposable, Plain}
+import de.sciss.patterns.impl.StreamSerializer
+import de.sciss.patterns.stream.StreamFactory
 import de.sciss.serial.{DataInput, DataOutput, Serializer, Writable, Writer}
 
 import scala.collection.AbstractIterator
@@ -29,6 +31,9 @@ object Stream {
   private object anyWriter extends Writer[Stream[Plain, Any]] {
     def write(v: Stream[Plain, Any], out: DataOutput): Unit = v.write(out)
   }
+
+  def addFactory(f: StreamFactory): Unit =
+    StreamSerializer.addFactory(f)
 
   def read[S <: Base[S], A](in: DataInput, access: S#Acc)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     serializer[S, A].read(in, access)
