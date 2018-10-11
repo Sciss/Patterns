@@ -23,7 +23,7 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
   protected def run()(implicit context: AuralContext[S]): Unit = {
     val pat   = Graph {
       val f     = "folder".attr[Folder] //  Folder("folder")
-      val cues  = f.collect[AudioCue].flatten
+      val cues  = f.collect[AudioCue]
       val rnd   = cues.shuffle
       val dur   = rnd.duration
 

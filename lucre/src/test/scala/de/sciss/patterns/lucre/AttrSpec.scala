@@ -46,7 +46,7 @@ class AttrSpec extends fixture.FlatSpec with Matchers {
       val e = Graph {
         import graph._
         val f = "folder".attr[Folder]
-        val i = f.collect[Int].flatten
+        val i = f.collect[Int]
         i
       }
       val p = Pattern.newConst[S](e)
