@@ -94,11 +94,11 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
       //      proc.Code.registerImports(proc.Code.Action.id, Vec(
       //        "de.sciss.patterns.lucre.Pattern"
       //      ))
-      Stream.addFactory(stream.AttributeImpl)
+      Stream.addFactory(stream.AttributeImpl          )
       Stream.addFactory(stream.AudioCueNumChannelsImpl)
-      Stream.addFactory(stream.AudioCueNumFramesImpl)
-      Stream.addFactory(stream.AudioCueSampleRateImpl)
-      Stream.addFactory(stream.FolderCollectImpl)
+      Stream.addFactory(stream.AudioCueNumFramesImpl  )
+      Stream.addFactory(stream.AudioCueSampleRateImpl )
+      Stream.addFactory(stream.FolderCollectImpl      )
     }
 
     // override because we need register imports

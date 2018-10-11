@@ -19,7 +19,7 @@ import de.sciss.serial.DataInput
 import de.sciss.synth.proc
 
 object AudioCueNumChannelsImpl extends StreamFactory {
-  final val typeId = 0x41437372 // "ACsr"
+  final val typeId = 0x41436E63 // "ACnc"
 
   def expand[S <: Base[S], A](pat: graph.AudioCue.NumChannels)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = {
     import pat._

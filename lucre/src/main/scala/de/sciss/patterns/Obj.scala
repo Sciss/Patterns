@@ -19,7 +19,7 @@ object Obj {
 
   object Extractor {
     implicit object Int extends Aux[scala.Int] with Factory {
-      final val id = 0x200
+      final val id = 0x400
 
       def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Int] = obj match {
         case i: IntObj    [S] => Some(i.value)
@@ -33,7 +33,7 @@ object Obj {
     }
 
     implicit object Double extends Aux[scala.Double] with Factory {
-      final val id = 0x202
+      final val id = 0x402
 
       def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Double] = obj match {
         case d: DoubleObj [S] => Some(d.value)
@@ -47,7 +47,7 @@ object Obj {
     }
 
     implicit object Boolean extends Aux[scala.Boolean] with Factory {
-      final val id = 0x204
+      final val id = 0x404
 
       def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Boolean] = obj match {
         case b: BooleanObj[S] => Some(b.value)
@@ -61,7 +61,7 @@ object Obj {
     }
 
     implicit object Long extends Aux[scala.Long] with Factory {
-      final val id = 0x206
+      final val id = 0x406
 
       def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Long] = obj match {
         case n: LongObj   [S] => Some(n.value)
@@ -75,7 +75,7 @@ object Obj {
     }
 
     implicit object String extends Aux[java.lang.String] with Factory {
-      final val id = 0x210
+      final val id = 0x410
 
       def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[java.lang.String] = obj match {
         case s: StringObj [S] => Some(s.value)

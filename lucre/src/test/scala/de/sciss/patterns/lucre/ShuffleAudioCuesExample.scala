@@ -29,7 +29,7 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
       Bind(
         "delta" -> dur,
         "proc"  -> "proc",
-        "sig"   -> cues,
+        "sig"   -> cues
       )
     }
 

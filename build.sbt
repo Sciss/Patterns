@@ -5,7 +5,7 @@ lazy val mimaVersion        = "0.6.0"
 
 val deps = new {
   val core = new {
-    val lucre               = "3.10.1-SNAPSHOT"
+    val lucre               = "3.10.1"
     val numbers             = "0.2.0"
     val optional            = "1.0.0"
     val serial              = "1.1.1"
@@ -104,8 +104,8 @@ lazy val lucre = project.in(file("lucre"))
     name := s"$baseName-lucre",
     libraryDependencies ++= Seq(
       "de.sciss"      %% "soundprocesses-core"  % deps.lucre.soundProcesses,
-      "de.sciss"      %% s"lucre-$bdb"          % deps.core.lucre           % "test",
-      "org.scalatest" %% "scalatest"            % deps.test.scalaTest       % "test"
+      "de.sciss"      %% s"lucre-$bdb"          % deps.core.lucre           % Test,
+      "org.scalatest" %% "scalatest"            % deps.test.scalaTest       % Test
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)
   )
