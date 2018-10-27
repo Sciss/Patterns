@@ -20,7 +20,6 @@ object Event {
   final val empty = Event(Map.empty)
 
   implicit object serializer extends ImmutableSerializer[Event] {
-
     def read(in: DataInput): Event = {
       val b = Map.newBuilder[String, Any]
       var sz = in.readInt()
@@ -60,9 +59,9 @@ object Event {
   final val keyStretch    = "stretch"
   final val keyDur        = "dur"
 
-  final val keyMTranspose = "mtranspose"
-  final val keyGTranspose = "gtranspose"
-  final val keyCTranspose = "ctranspose"
+  final val keyMTranspose = "mTranspose"
+  final val keyGTranspose = "gTranspose"
+  final val keyCTranspose = "cTranspose"
 
   final val keyOctave     = "octave"
   final val keyRoot       = "root"
@@ -73,7 +72,7 @@ object Event {
   final val keyHarmonic   = "harmonic"
 
   final val keyNote       = "note"
-  final val keyMidiNote   = "midinote"
+  final val keyMidiNote   = "midiNote"
   final val keyFreq       = "freq"
   final val keyDetunedFreq= "detunedFreq"
 
@@ -84,8 +83,10 @@ object Event {
   final val keyAmp        = "amp"
   final val keyPan        = "pan"
 
-  /** SoundProcesses specific */
+  /** SoundProcesses specific: Scalar value when using pattern as input to proc attribute */
   final val keyValue      = "value"
+  /** SoundProcesses specific: String value to look up 'instrument' when playing pattern as such */
+  final val keyPlay       = "play"
 
   def scale(out: Event): Scale =
     out.map.get(keyScale).fold(Scale.default) {
@@ -138,6 +139,8 @@ object Event {
 //}
 final case class Event(map: Map[String, Any]) extends Iterable[(String, Any)] {
   def + (kv: (String, Any)): Event = copy(map = map + kv)
+
+  def get(key: String): Option[Any] = map.get(key)
 
   def iterator: Iterator[(String, Any)] = map.iterator
 }

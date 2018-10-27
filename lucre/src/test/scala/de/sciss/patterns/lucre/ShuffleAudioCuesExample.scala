@@ -27,9 +27,9 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
       val dur   = rnd.duration.<|(_.poll("dur"))
 
       Bind(
-        "delta" -> dur,
-        "proc"  -> "proc",
-        "sig"   -> cues
+        Event.keyDelta  -> dur,
+        Event.keyPlay   -> "proc",
+        "sig"           -> cues
       )
     }
 
@@ -51,12 +51,12 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
       }
       patObj.attr.put("folder", fObj)
 
-      val ctx = Context.dual[S](patObj) // (patObj)
-      val stream = ctx.expandDual(pat)
-      while ({ val res = ctx.hasNext(stream); /* println(s"hasNext? $res"); */ res }) {
-        val evt = ctx.next(stream)
-        println(evt)
-      }
+//      val ctx = Context.dual[S](patObj) // (patObj)
+//      val stream = ctx.expandDual(pat)
+//      while ({ val res = ctx.hasNext(stream); /* println(s"hasNext? $res"); */ res }) {
+//        val evt = ctx.next(stream)
+//        println(evt)
+//      }
       tx.newHandle(patObj)
     }
 

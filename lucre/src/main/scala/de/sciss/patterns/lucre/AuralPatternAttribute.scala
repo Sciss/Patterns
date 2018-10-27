@@ -24,7 +24,6 @@ import de.sciss.patterns.lucre.AuralPatternAttribute.ViewImpl
 import de.sciss.patterns.{Event, Pat}
 import de.sciss.serial.Serializer
 import de.sciss.span.{Span, SpanLike}
-import de.sciss.synth.proc.AuralAttribute.{Factory, Observer}
 import de.sciss.synth.proc.Runner.{State, Stopped}
 import de.sciss.synth.proc.impl.AuralScheduledBase
 import de.sciss.synth.proc.{AuralAttribute, AuralContext, Runner, TimeRef, ViewBase}
@@ -36,7 +35,7 @@ import scala.concurrent.stm.Ref
   XXX TODO: some DRY with AuralGraphemeBase
 
  */
-object AuralPatternAttribute extends Factory {
+object AuralPatternAttribute extends AuralAttribute.Factory {
   type Repr[S <: stm.Sys[S]] = Pattern[S]
 
   def tpe: Obj.Type = Pattern
@@ -45,7 +44,7 @@ object AuralPatternAttribute extends Factory {
 
   def init(): Unit = _init
 
-  def apply[S <: Sys[S]](key: String, pat: Pattern[S], observer: Observer[S])
+  def apply[S <: Sys[S]](key: String, pat: Pattern[S], observer: AuralAttribute.Observer[S])
                         (implicit tx: S#Tx, context: AuralContext[S]): AuralAttribute[S] = {
     val system  = tx.system
     val res     = prepare[S, system.I](key, pat, observer)(tx, system, context) // IntelliJ highlight bug
@@ -53,7 +52,7 @@ object AuralPatternAttribute extends Factory {
   }
 
   private def prepare[S <: Sys[S], I1 <: stm.Sys[I1]](key: String, value: Pattern[S],
-                                                      observer: Observer[S])
+                                                      observer: AuralAttribute.Observer[S])
                                                      (implicit tx: S#Tx, system: S { type I = I1 },
                                                       context: AuralContext[S]): AuralPatternAttribute[S, I1] = {
     implicit val iSys: S#Tx => I1#Tx = system.inMemoryTx _
@@ -108,8 +107,8 @@ object AuralPatternAttribute extends Factory {
 }
 final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: String,
                                                                   val objH: stm.Source[S#Tx, Pattern[S]],
-                                                                  observer: Observer[S],
-                                                                  viewTree: SkipList.Map[I1, Long, AuralPatternAttribute.View[S]])
+                                                                  observer: AuralAttribute.Observer[S],
+                                                                  tree: SkipList.Map[I1, Long, AuralPatternAttribute.View[S]])
                                                                (implicit protected val context: AuralContext[S],
                                                                 system: S { type I = I1 },
                                                                 protected val iSys: S#Tx => I1#Tx)
@@ -185,7 +184,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
                 val numFrames = (TimeRef.SampleRate * delta).toLong
                 val span      = Span(time, time + numFrames)
                 val view      = new ViewImpl(attr, v, span)
-                viewTree.put(time, view)
+                tree.put(time, view)
                 // println(s"-> $view")
                 Some(view)
               }
@@ -214,7 +213,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
 //    }
 //
 //    assert(viewTree.isEmpty(iSys(tx)))
-    viewTree.clear()
+    tree.clear()
 
 //    import context.universe.cursor
     implicit val _ctx: Ctx = patterns.lucre.Context.dual[S](objH()) // (system, system, itx) // InMemory()
@@ -269,7 +268,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
   protected def processPrepare(spanP: Span, timeRef: TimeRef, initial: Boolean)
                               (implicit tx: S#Tx): Iterator[PrepareResult] = {
     val start0 = math.max(0L, spanP.start)
-    viewTree.floor(start0)(iSys(tx)) match {
+    tree.floor(start0)(iSys(tx)) match {
       case Some((_, view0)) =>
         val it0: Iterator[PrepareResult] = new Iterator[PrepareResult] {
           private[this] var _next     = view0
@@ -281,7 +280,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
             if (_next.stop >= spanP.stop) {
               _hasNext = false
             } else {
-              viewTree.get(_next.stop)(iSys(tx)) match {
+              tree.get(_next.stop)(iSys(tx)) match {
                 case Some(succ) => _next = succ
                 case None =>
                   nextElemFromStream(_next.stop) match {
@@ -312,7 +311,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
   }
 
   protected def viewEventAfter(offset: Long)(implicit tx: S#Tx): Long =
-    viewTree.ceil(offset + 1)(iSys(tx)).fold(Long.MaxValue)(_._1)
+    tree.ceil(offset + 1)(iSys(tx)).fold(Long.MaxValue)(_._1)
 
   /** Report the next interesting frame greater than the given frame for which
     * `gridReached` (internal) and `processPrepare` will be called.
@@ -320,7 +319,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
     */
   protected def modelEventAfter(offset: Long)(implicit tx: S#Tx): Long = {
     val offsetC = math.max(-1L, offset)
-    viewTree.floor(offsetC + 1)(iSys(tx)) match {
+    tree.floor(offsetC + 1)(iSys(tx)) match {
       case Some((time0, pred0)) =>
         if (time0 > offset) time0   // i.e. time0 == offset + 1
         else {
@@ -351,7 +350,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
 
   protected def processPlay(timeRef: TimeRef, target: Target)(implicit tx: S#Tx): Unit = {
     implicit val itx: I1#Tx = iSys(tx)
-    viewTree.floor(timeRef.offset).foreach { case (_, entry) =>
+    tree.floor(timeRef.offset).foreach { case (_, entry) =>
       playEntry(entry, timeRef = timeRef, target = target)
     }
   }
@@ -364,7 +363,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
 
   protected def processEvent(play: IPlaying, timeRef: TimeRef)(implicit tx: S#Tx): Unit = {
     val start = timeRef.offset
-    val entry = viewTree.get(start)(iSys(tx))
+    val entry = tree.get(start)(iSys(tx))
       .getOrElse(throw new IllegalStateException(s"No element at event ${timeRef.offset}"))
     playEntry(entry, timeRef = timeRef, target = play.target)
   }
@@ -406,7 +405,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
   private def removeView(h: ElemHandle)(implicit tx: S#Tx): Unit = {
     implicit val itx: I1#Tx = iSys(tx)
     val start = h.start
-    viewTree.remove(start)
+    tree.remove(start)
     // println(s"removeView($h)")
   }
 }

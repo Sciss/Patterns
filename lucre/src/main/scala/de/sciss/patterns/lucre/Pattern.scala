@@ -36,9 +36,17 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
 
   override def init(): Unit = {
     super   .init()
-    //    Output  .init()
-    Code    .init()
-    AuralPatternAttribute.init()
+
+    Code                  .init()
+    AuralPatternAttribute .init()
+    AuralPatternObj       .init()
+    patterns.Obj          .init()
+
+    Stream.addFactory(stream.AttributeImpl          )
+    Stream.addFactory(stream.AudioCueNumChannelsImpl)
+    Stream.addFactory(stream.AudioCueNumFramesImpl  )
+    Stream.addFactory(stream.AudioCueSampleRateImpl )
+    Stream.addFactory(stream.FolderCollectImpl      )
   }
 
   protected def mkConst[S <: Sys[S]](id: S#Id, value: A)(implicit tx: S#Tx): Const[S] =
@@ -90,15 +98,9 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
         "de.sciss.patterns.Types._",
         "de.sciss.patterns.graph._"
       ))
-      patterns.Obj.init()
       //      proc.Code.registerImports(proc.Code.Action.id, Vec(
       //        "de.sciss.patterns.lucre.Pattern"
       //      ))
-      Stream.addFactory(stream.AttributeImpl          )
-      Stream.addFactory(stream.AudioCueNumChannelsImpl)
-      Stream.addFactory(stream.AudioCueNumFramesImpl  )
-      Stream.addFactory(stream.AudioCueSampleRateImpl )
-      Stream.addFactory(stream.FolderCollectImpl      )
     }
 
     // override because we need register imports
