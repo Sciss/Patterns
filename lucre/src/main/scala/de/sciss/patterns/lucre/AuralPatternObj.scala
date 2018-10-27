@@ -16,9 +16,9 @@ package de.sciss.patterns.lucre
 import de.sciss.lucre.bitemp.BiGroup
 import de.sciss.lucre.bitemp.impl.BiGroupImpl
 import de.sciss.lucre.data.SkipOctree
-import de.sciss.lucre.geom.{LongPoint2D, LongSpace}
+import de.sciss.lucre.geom.{LongPoint2D, LongRectangle, LongSpace}
 import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Disposable, DummySerializerFactory, IdentifierMap, Obj, TxnLike}
+import de.sciss.lucre.stm.{Disposable, DummySerializerFactory, Obj, TxnLike}
 import de.sciss.lucre.synth.Sys
 import de.sciss.patterns
 import de.sciss.patterns.lucre.AuralPatternObj.ElemHandle
@@ -49,7 +49,8 @@ object AuralPatternObj extends AuralObj.Factory {
     res.init(pat)
   }
 
-  private type Leaf[S <: Sys[S]] = (SpanLike, Vec[(stm.Source[S#Tx, S#Id], AuralObj[S])])
+//  private type Leaf[S <: Sys[S]] = (SpanLike, Vec[(stm.Source[S#Tx, S#Id], AuralObj[S])])
+  private type Leaf[S <: Sys[S]] = (SpanLike, Vec[AuralObj[S]])
 
   private def prepare[S <: Sys[S], I1 <: stm.Sys[I1]](value: Pattern[S])
                                                      (implicit tx: S#Tx, system: S { type I = I1 },
@@ -65,10 +66,11 @@ object AuralPatternObj extends AuralObj.Factory {
     new AuralPatternObj[S, I1](tx.newHandle(value), tree /* , viewMap */)
   }
 
-  protected final case class ElemHandle[S <: Sys[S], Elem](idH: stm.Source[S#Tx, S#Id], span: SpanLike, view: Elem)
+  protected final case class ElemHandle[S <: Sys[S], Elem](/* idH: stm.Source[S#Tx, S#Id], */ span: SpanLike, view: Elem)
 }
 final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source[S#Tx, Pattern[S]],
-                                                            tree: SkipOctree[I1, LongSpace.TwoDim, (SpanLike, Vec[(stm.Source[S#Tx, S#Id], AuralObj[S])])]
+//                                                            tree: SkipOctree[I1, LongSpace.TwoDim, (SpanLike, Vec[(stm.Source[S#Tx, S#Id], AuralObj[S])])]
+                                                            tree: SkipOctree[I1, LongSpace.TwoDim, (SpanLike, Vec[AuralObj[S]])]
                                                            )
                                                            (implicit protected val context: AuralContext[S],
                                                             system: S { type I = I1 },
@@ -85,11 +87,13 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
   type Elem       = AuralObj[S]
   type ElemHandle = AuralPatternObj.ElemHandle[S, Elem]
   type Target     = Unit
-  type Model      = Elem // AuralAttribute.Scalar
+
+//  type Model      = Elem // AuralAttribute.Scalar
+  type Model      = (Event, Obj[S])
 
   private[this] val playingRef = TSet.empty[ElemHandle]
 
-  private[this] var viewMap   : IdentifierMap[S#Id, S#Tx, ElemHandle] = _
+//  private[this] var viewMap   : IdentifierMap[S#Id, S#Tx, ElemHandle] = _
 
   private[this] var patObserver: Disposable[S#Tx] = _
 
@@ -98,9 +102,10 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
 
   private[this] val patContext  = Ref.make[Ctx]
   private[this] val streamRef   = Ref(Option.empty[St])
-  private[this] val streamPos   = Ref(Long.MaxValue)
+  private[this] val streamPos   = Ref(0L)
 
-  private type Leaf = (SpanLike, Vec[(stm.Source[S#Tx, S#Id], Elem)])
+//  private type Leaf = (SpanLike, Vec[(stm.Source[S#Tx, S#Id], Elem)])
+  private type Leaf = (SpanLike, Vec[Elem])
 
   @inline
   private def spanToPoint(span: SpanLike): LongPoint2D = BiGroupImpl.spanToPoint(span)
@@ -118,7 +123,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
   }
 
   def init(pat: Pattern[S])(implicit tx: S#Tx): this.type = {
-    viewMap = tx.newInMemoryIdMap[ElemHandle]
+//    viewMap = tx.newInMemoryIdMap[ElemHandle]
     val graph0 = pat.value
     setPattern(graph0)
     patObserver = pat.changed.react { implicit tx => upd =>
@@ -151,20 +156,22 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
       private[this] var time  : Long        = streamPos.get(tx.peer)
 
       implicit private[this] val itx: I1#Tx = iSys(tx)
-      implicit private[this] val ctx: Ctx   = patContext.get(tx.peer)
 
       private[this] val st: St = streamRef.get(tx.peer) match {
         case Some(_st) if !initial && time == spanP.start => _st
         case _ =>
-          implicit val _ctx: Ctx = patterns.lucre.Context.dual[S](patObj)
+          val _ctx: Ctx = patterns.lucre.Context.dual[S](patObj)
           patContext.update(_ctx)(tx.peer)
           val _st: St = _ctx.expandDual(patObj.value) // g.expand[I1]
           streamRef.swap(Some(_st))(tx.peer).foreach(_.dispose())
+          time = 0L
           _st
       }
 
+      implicit private[this] val ctx: Ctx = patContext.get(tx.peer)
+
       private[this] var patSpan: Span = _
-      private[this] var patView: AuralObj[S] = _
+      private[this] var patModel: Model = _ // AuralObj[S] = _
 
       private[this] var _hasNext  = true
       private[this] var countLoop = 0     // cheesy way to avoid infinite loops
@@ -192,7 +199,8 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
                       case Some(playObj) =>
                         val hit = if (initial) patSpan.overlaps(spanP) else patSpan.start >= spanP.start
                         if (hit) {
-                          patView = AuralObj(playObj)
+//                          patModel = AuralObj(playObj)
+                          patModel = (evt, playObj)
                         } else {
                           countLoop = 0
                           advance()
@@ -216,9 +224,9 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
         }
       }
 
-      def next(): (Target, SpanLike, Elem) = {
+      def next(): (Target, SpanLike, Model) = {
         if (!_hasNext) Iterator.empty.next()
-        val res = ((), patSpan, patView)
+        val res = ((), patSpan, patModel)
         countLoop = 0
         advance()
         res
@@ -283,29 +291,70 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
     playViews(toStart, timeRef, target)
   }
 
-//  protected def processPlay(timeRef: TimeRef, target: Target)(implicit tx: S#Tx): Unit = {
-//    implicit val itx: I1#Tx = iSys(tx)
-//    tree.floor(timeRef.offset).foreach { case (_, entry) =>
-//      playEntry(entry, timeRef = timeRef, target = target)
-//    }
-//  }
-
-  private def playEntry(entry: Elem, timeRef: TimeRef, target: Target)
-                       (implicit tx: S#Tx): Unit = {
-    val childTime = timeRef.child(??? /* entry.span */)
-    playView(??? /* entry */, childTime, target)
-  }
-
+  // XXX TODO -- DRY with AuralTimelineBase
   protected def processEvent(play: IPlaying, timeRef: TimeRef)(implicit tx: S#Tx): Unit = {
-    val start = timeRef.offset
-    val entry = tree.get(??? /* start */)(iSys(tx))
-      .getOrElse(throw new IllegalStateException(s"No element at event ${timeRef.offset}"))
-    ??? // playEntry(entry, timeRef = timeRef, target = play.target)
+    //    val (toStartI, toStopI) = eventsAt(timeRef.offset)
+
+    val itx       = iSys(tx)
+    val stopShape = LongRectangle(BiGroup.MinCoordinate, timeRef.offset, BiGroup.MaxSide, 1)
+    val toStop    = tree.rangeQuery(stopShape )(itx)
+
+    // this is a pretty tricky decision...
+    // do we first free the stopped views and then launch the started ones?
+    // or vice versa?
+    //
+    // we stick now to stop-then-start because it seems advantageous
+    // for aural-attr-target as we don't build up unnecessary temporary
+    // attr-set/attr-map synths. however, I'm not sure this doesn't
+    // cause a problem where the stop action schedules on immediate
+    // bundle and the start action requires a sync'ed bundle? or is
+    // this currently prevented automatically? we might have to
+    // reverse this decision.
+
+    // N.B.: as crucial is to understand that the iterators from `rangeQuery` may become
+    // invalid if modifying the tree while iterating. Thus, we first create only the
+    // `toStop` iterator, and if i not empty, force it to a stable collection. Only after
+    // stopping the views, we create the `toStart` iterator which might otherwise have
+    // become invalid as well. (Mellite bug #71).
+
+    //        playViews(toStart, tr, play.target)
+    //        stopAndDisposeViews(toStop)
+
+    if (toStop.hasNext) {
+      // N.B. `toList` to avoid iterator invalidation
+      toStop.toList.foreach { case (span, views) =>
+        views.foreach { view => // case (idH, view) =>
+          stopView(ElemHandle(/* idH, */ span, view))
+        }
+      }
+    }
+
+    val startShape  = LongRectangle(timeRef.offset, BiGroup.MinCoordinate, 1, BiGroup.MaxSide)
+    val toStart     = tree.rangeQuery(startShape)(itx)
+
+    playViews(toStart, timeRef, play.target)
   }
 
   protected def elemFromHandle(h: ElemHandle): Elem = h.view
 
-  protected def mkView(vid: Unit, span: SpanLike, obj: Model)(implicit tx: S#Tx): ElemHandle = ??? // obj
+  /** Should create a new view for the given object
+    * and return a handle to it. As a side effect should
+    * also memorize the view in a view-tree, if such structure is maintained,
+    * for later retrieval in `viewEventAfter`
+    */
+  protected def mkView(vid: Unit, span: SpanLike, m: Model)(implicit tx: S#Tx): ElemHandle = {
+    val (_ /* evt */, playObj) = m
+    val childView = AuralObj(playObj)
+    val h         = ElemHandle[S, Elem](span, childView)
+//    viewMap.put(tid, h)
+    tree.transformAt(spanToPoint(span)) { opt =>
+      // import expr.IdentifierSerializer
+      val tup       = childView // (idH, childView)
+      val newViews  = opt.fold(span -> Vec(tup)) { case (span1, views) => (span1, views :+ tup) }
+      Some(newViews)
+    } (iSys(tx))
+    h
+  }
 
   protected def checkReschedule(h: ElemHandle, currentOffset: Long, oldTarget: Long, elemPlays: Boolean)
                                (implicit tx: S#Tx): Boolean =
@@ -327,20 +376,20 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
   private def playViews(it: Iterator[Leaf], timeRef: TimeRef, target: Target)(implicit tx: S#Tx): Unit =
     if (it.hasNext) it.foreach { case (span, views) =>
       val tr = timeRef.child(span)
-      views.foreach { case (idH, elem) =>
-        playView(ElemHandle(idH, span, elem), tr, target)
+      views.foreach { elem => // case (idH, elem) =>
+        playView(ElemHandle(/* idH, */ span, elem), tr, target)
       }
     }
 
   /** A notification method that may be used to `fire` an event
     * such as `AuralObj.Timeline.ViewAdded`.
     */
-  protected def viewPlaying(h: ElemHandle)(implicit tx: S#Tx): Unit = ???
+  protected def viewPlaying(h: ElemHandle)(implicit tx: S#Tx): Unit = ()
 
   /** A notification method that may be used to `fire` an event
     * such as `AuralObj.Timeline.ViewRemoved`.
     */
-  protected def viewStopped(h: ElemHandle)(implicit tx: S#Tx): Unit = ???
+  protected def viewStopped(h: ElemHandle)(implicit tx: S#Tx): Unit = ()
 
   protected def stopView(h: ElemHandle)(implicit tx: S#Tx): Unit = {
     val view = elemFromHandle(h)
@@ -368,7 +417,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
     // preparingViews.remove(view).foreach(_.dispose())
     tree.transformAt(spanToPoint(span)) { opt =>
       opt.flatMap { case (span1, views) =>
-        val i = views.indexWhere(_._2 == view)
+        val i = views.indexOf(view) // indexWhere(_._2 == view)
         val views1 = if (i >= 0) {
           views.patch(i, Nil, 1)
         } else {
@@ -379,13 +428,6 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
       }
     } (iSys(tx))
 
-    viewMap.remove(idH())
+//    viewMap.remove(idH())
   }
-
-//  private def removeView(h: ElemHandle)(implicit tx: S#Tx): Unit = {
-//    implicit val itx: I1#Tx = iSys(tx)
-//    val start = ??? // h.start
-//    tree.remove(start)
-//    // println(s"removeView($h)")
-//  }
 }
