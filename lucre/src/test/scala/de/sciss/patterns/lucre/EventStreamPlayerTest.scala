@@ -18,9 +18,9 @@ class EventStreamPlayerTest[S <: Sys[S]](implicit cursor: Cursor[S])
 
   protected def run()(implicit context: AuralContext[S]): Unit = {
     val pat   = Graph {
-//      val dur = Brown(2.0, 6.0, 1.0) // .reciprocal
+      val dur = Brown(2.0, 6.0, 1.0).reciprocal
       Bind(
-        Event.keyDelta  -> 4.0, // dur,
+        Event.keyDelta  -> dur,
         Event.keyPlay   -> "proc",
       )
     }
@@ -32,8 +32,12 @@ class EventStreamPlayerTest[S <: Sys[S]](implicit cursor: Cursor[S])
       procObj.graph() = SynthGraph {
         import de.sciss.synth._
         import de.sciss.synth.ugen._
-        val sig = SinOsc.ar(600) * Line.ar(1.0, 0.0, dur = 0.5)
-        Out.ar(0, Pan2.ar(sig) * -12.0.dbAmp)
+        import de.sciss.synth.proc.graph.{Time, Duration}
+        val time  = Time()
+        val dur   = Duration()
+        val freq  = (time % 10.0).linExp(0, 10, 300, 1000)
+        val sig   = SinOsc.ar(freq) * Line.ar(1.0, 0.0, dur = dur)
+        Out.ar(0, Pan2.ar(sig) * AmpCompA.ir(freq))
       }
       patObj.attr.put("proc", procObj)
       tx.newHandle(patObj)

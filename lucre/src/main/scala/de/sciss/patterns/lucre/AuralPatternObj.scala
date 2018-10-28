@@ -158,8 +158,11 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
       implicit private[this] val itx: I1#Tx = iSys(tx)
 
       private[this] val st: St = streamRef.get(tx.peer) match {
-        case Some(_st) if !initial && time == spanP.start => _st
+        case Some(_st) if !initial && time == spanP.start =>
+//          println("(reuse)")
+          _st
         case _ =>
+//          println("(new expansion)")
           val _ctx: Ctx = patterns.lucre.Context.dual[S](patObj)
           patContext.update(_ctx)(tx.peer)
           val _st: St = _ctx.expandDual(patObj.value) // g.expand[I1]
@@ -192,6 +195,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
                 val durFrames   = math.max(32L, (TimeRef.SampleRate * sustain).toLong)    // XXX TODO hard-coded min
                 patSpan         = Span(time, time + durFrames)
                 time += deltaFrames
+                streamPos.set(time)(tx.peer)
 
                 evt.get(Event.keyPlay) match {
                   case Some(key: String) =>
@@ -220,6 +224,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
 
         } else {
           _hasNext = false
+          if (!ctx.hasNext(st)) streamPos.set(Long.MinValue)(tx.peer)
           if (countLoop >= 100) Console.err.println("Pattern does not advance (100 elements counted)")
         }
       }
@@ -235,7 +240,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
       // constructor
       {
         advance()
-        streamPos.set(spanP.stop)(tx.peer)
+//        streamPos.set(spanP.stop)(tx.peer)
       }
     }
 
@@ -251,35 +256,11 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
     * If no such event exists, the method must return `Long.MaxValue`.
     */
   protected def modelEventAfter(offset: Long)(implicit tx: S#Tx): Long = {
-    math.max(0L, offset + 1)
-//    val offsetC = math.max(-1L, offset)
-//    tree.floor(offsetC + 1)(iSys(tx)) match {
-//      case Some((time0, pred0)) =>
-//        if (time0 > offset) time0   // i.e. time0 == offset + 1
-//        else {
-//          val existing = viewEventAfter(offset)
-//          if (existing != Long.MaxValue) existing else {
-//            @tailrec
-//            def loop(pred: Elem): Long =
-//              nextElemFromStream(??? /* pred.stop */) match {
-//                case Some(succ) =>
-//                  if (??? /* succ.start >= offset */) ??? // succ.start
-//                  else loop(succ)
-//                case None => Long.MaxValue
-//              }
-//
-//            loop(??? /* pred0 */)
-//          }
-//        }
-//      case None =>
-//        if (??? /* isEmptyRef() */) Long.MaxValue
-//        else {    // we lost the cache
-//          val graph = objH().value
-//          // println("RESETTING GRAPH [0]")
-//          if (??? /* !setPattern(graph) */) Long.MaxValue // became empty
-//          else modelEventAfter(offset)  // repeat
-//        }
-//    }
+//    val foo = offset / TimeRef.SampleRate
+//    math.max(0L, offset + 1)
+    val p = streamPos.get(tx.peer)
+//    val bar = p / TimeRef.SampleRate
+    if (p > offset) p else Long.MaxValue
   }
 
   @inline
@@ -358,11 +339,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
 
   protected def checkReschedule(h: ElemHandle, currentOffset: Long, oldTarget: Long, elemPlays: Boolean)
                                (implicit tx: S#Tx): Boolean =
-    !elemPlays && {
-      // reschedule if the span has a start and that start is greater than the current frame,
-      // and elem.start == oldTarget
-      ??? // h.start > currentOffset && h.start == oldTarget
-    }
+    throw new UnsupportedOperationException   // only called from `elemRemoved`, and `elemRemoved` is never called
 
   protected def playView(h: ElemHandle, timeRef: TimeRef.Option, target: Target)
                         (implicit tx: S#Tx): Unit = {
