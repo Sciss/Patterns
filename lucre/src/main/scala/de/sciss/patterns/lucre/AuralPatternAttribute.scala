@@ -73,6 +73,28 @@ object AuralPatternAttribute extends AuralAttribute.Factory {
     def stop  : Long = span.stop
   }
 
+  def getScalarValue(evt: Event, key: String): Option[AuralAttribute.Scalar] = evt.map.get(key).flatMap { v =>
+    (getSingleFloat(v), v) match {
+      case (Some(f), _) => Some(AuralAttribute.ScalarValue(f))
+      case (None, xs: Seq[_]) =>
+        val vecOpt = (Option(Vector.empty[Float]) /: xs) {
+          case (Some(ys), w) => getSingleFloat(w).map(ys :+ _)
+          case _ => None
+        }
+        vecOpt.map(AuralAttribute.ScalarVector)
+
+      case _ => None
+    }
+  }
+
+  private def getSingleFloat(in: Any): Option[Float] = in match {
+    case i: Int     => Some(i.toFloat)
+    case f: Float   => Some(f)
+    case d: Double  => Some(d.toFloat)
+    case b: Boolean => Some(if (b) 1f else 0f)
+    case _          => None
+  }
+
   private final class ViewImpl[S <: Sys[S]](pat: AuralAttribute[S], val value: AuralAttribute.Scalar, val span: Span)
     extends View[S] with ObservableImpl[S, Runner.State] {
 
@@ -137,28 +159,6 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
 
   private[this] val patContext      = Ref.make[Ctx]
 
-  private def getSingleFloat(in: Any): Option[Float] = in match {
-    case i: Int     => Some(i.toFloat)
-    case f: Float   => Some(f)
-    case d: Double  => Some(d.toFloat)
-    case b: Boolean => Some(if (b) 1f else 0f)
-    case _          => None
-  }
-
-  private def getValue(evt: Event): Option[AuralAttribute.Scalar] = evt.map.get(Event.keyValue).flatMap { v =>
-    (getSingleFloat(v), v) match {
-      case (Some(f), _) => Some(AuralAttribute.ScalarValue(f))
-      case (None, xs: Seq[_]) =>
-        val vecOpt = (Option(Vector.empty[Float]) /: xs) {
-          case (Some(ys), w) => getSingleFloat(w).map(ys :+ _)
-          case _ => None
-        }
-        vecOpt.map(AuralAttribute.ScalarVector)
-
-      case _ => None
-    }
-  }
-
   private[this] val streamRef = Ref.make[St]
 
   private def nextElemFromStream(time: Long)(implicit tx: S#Tx): Option[Elem] = {
@@ -174,7 +174,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
     } else {
       ctx.next(stream) match {
         case evt: Event =>
-          getValue(evt) match {
+          AuralPatternAttribute.getScalarValue(evt, Event.keyValue) match {
             case Some(v) =>
               val delta = Event.delta(evt)
               if (delta <= 0.0) {

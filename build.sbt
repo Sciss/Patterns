@@ -11,7 +11,7 @@ val deps = new {
     val serial              = "1.1.1"
   }
   val lucre = new {
-    val soundProcesses      = "3.22.0"
+    val soundProcesses      = "3.22.1-SNAPSHOT"
   }
   val test = new {
     val kollFlitz           = "0.2.2"

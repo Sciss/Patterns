@@ -17,25 +17,28 @@ class EventStreamPlayerTest[S <: Sys[S]](implicit cursor: Cursor[S])
   extends AuralTestLike[S] {
 
   protected def run()(implicit context: AuralContext[S]): Unit = {
-    val pat   = Graph {
-      val dur = Brown(2.0, 6.0, 1.0).reciprocal
+    val pat     = Graph {
+      val dur   = Brown(2.0, 6.0, 1.0).reciprocal
+      val freq  = Brown(70, 120, 2).midiCps
       Bind(
         Event.keyDelta  -> dur,
-        Event.keyPlay   -> "proc",
+        Event.keyLegato -> 0.8,
+        Event.keyFreq   -> freq,
+        Event.keyPlay   -> "proc"
       )
     }
 
     val patH = cursor.step { implicit tx =>
-      implicit val system: S = tx.system
+//      implicit val system: S = tx.system
       val patObj: Pattern[S] = Pattern.newConst[S](pat)
       val procObj     = PProc[S]()
       procObj.graph() = SynthGraph {
         import de.sciss.synth._
         import de.sciss.synth.ugen._
-        import de.sciss.synth.proc.graph.{Time, Duration}
-        val time  = Time()
+        import de.sciss.synth.proc.graph.Duration
+        import de.sciss.synth.proc.graph.Ops.stringToControl
         val dur   = Duration()
-        val freq  = (time % 10.0).linExp(0, 10, 300, 1000)
+        val freq  = "freq".ar
         val sig   = SinOsc.ar(freq) * Line.ar(1.0, 0.0, dur = dur)
         Out.ar(0, Pan2.ar(sig) * AmpCompA.ir(freq))
       }

@@ -126,7 +126,9 @@ object Event {
 
   def dur         (out: Event): Double = getOrElseDouble(out, keyDur        , 0.0)
   def stretch     (out: Event): Double = getOrElseDouble(out, keyStretch    , 1.0)
-  def legato      (out: Event): Double = getOrElseDouble(out, keyLegato     , 0.8)
+
+  /** Note: default legato is 1.0 not 0.8 as in sclang. */
+  def legato      (out: Event): Double = getOrElseDouble(out, keyLegato     , 1.0) // 0.8
   def delta       (out: Event): Double = getOrElseDouble(out, keyDelta      , stretch(out) * dur(out))
   def sustain     (out: Event): Double = getOrElseDouble(out, keySustain    , delta(out) * legato(out))
 
@@ -140,7 +142,8 @@ object Event {
 final case class Event(map: Map[String, Any]) extends Iterable[(String, Any)] {
   def + (kv: (String, Any)): Event = copy(map = map + kv)
 
-  def get(key: String): Option[Any] = map.get(key)
+  def get     (key: String): Option[Any]  = map.get(key)
+  def contains(key: String): Boolean      = map.contains(key)
 
   def iterator: Iterator[(String, Any)] = map.iterator
 }

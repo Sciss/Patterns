@@ -7,8 +7,9 @@ import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Cursor
 import de.sciss.lucre.synth.Sys
 import de.sciss.patterns.graph._
+import de.sciss.synth.SynthGraph
 import de.sciss.synth.io.AudioFile
-import de.sciss.synth.proc.{AuralContext, SynthGraphObj, Transport, AudioCue => PAudioCue, Proc => PProc}
+import de.sciss.synth.proc.{AuralContext, ObjKeys, Transport, AudioCue => PAudioCue, Proc => PProc}
 
 object ShuffleAudioCuesExample extends AuralTestLike.Factory {
   def main(args: Array[String]): Unit = init(args)
@@ -27,9 +28,9 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
       val dur   = rnd.duration.<|(_.poll("dur"))
 
       Bind(
-        Event.keyDelta  -> dur,
-        Event.keyPlay   -> "proc",
-        "sig"           -> cues
+        Event.keyDelta    -> dur,
+        Event.keyPlay     -> "proc",
+        PProc.graphAudio  -> rnd
       )
     }
 
@@ -37,9 +38,16 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
       implicit val system: S = tx.system
       val patObj: Pattern[S] = Pattern.newConst[S](pat)
       val procObj     = PProc[S]()
-      procObj.graph() = SynthGraphObj.tape
+      procObj.graph() = SynthGraph {
+        import de.sciss.synth._
+        import de.sciss.synth.proc.graph
+        import de.sciss.synth.ugen._
+        val sig   = graph.VDiskIn  .ar(PProc.graphAudio)
+        val amp   = graph.Attribute.kr(ObjKeys.attrGain, 1.0)
+        val out   = sig * amp
+        Out.ar(0, out)
+      }
       patObj.attr.put("proc", procObj)
-
       val fObj      = stm.Folder[S]
       fObj.addLast(StringObj.newConst("Ignore"))
       val dirIn     = file("/data/projects/Maeanderungen/audio_work/edited")
@@ -67,6 +75,6 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
       t.play()
     }
 
-    stopAndQuit(30.0)
+    stopAndQuit(60.0)
   }
 }

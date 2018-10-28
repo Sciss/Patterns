@@ -22,13 +22,14 @@ import de.sciss.lucre.stm.{Disposable, DummySerializerFactory, Obj, TxnLike}
 import de.sciss.lucre.synth.Sys
 import de.sciss.patterns
 import de.sciss.patterns.lucre.AuralPatternObj.ElemHandle
+import de.sciss.patterns.lucre.impl.AuralProcEvtImpl
 import de.sciss.patterns.{Event, Pat}
 import de.sciss.serial.Serializer
 import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.UGenSource.Vec
 import de.sciss.synth.proc.impl.AuralScheduledBase
 import de.sciss.synth.proc.impl.AuralTimelineBase.spanToPoint
-import de.sciss.synth.proc.{AuralContext, AuralObj, TimeRef}
+import de.sciss.synth.proc.{AuralContext, AuralObj, Proc, TimeRef}
 
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
@@ -324,8 +325,11 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
     * for later retrieval in `viewEventAfter`
     */
   protected def mkView(vid: Unit, span: SpanLike, m: Model)(implicit tx: S#Tx): ElemHandle = {
-    val (_ /* evt */, playObj) = m
-    val childView = AuralObj(playObj)
+    val (evt, playObj) = m
+    val childView = playObj match {
+      case p: Proc[S] => new AuralProcEvtImpl[S](evt).init(p)
+      case _          => AuralObj(playObj)
+    }
     val h         = ElemHandle[S, Elem](span, childView)
 //    viewMap.put(tid, h)
     tree.transformAt(spanToPoint(span)) { opt =>
@@ -344,10 +348,10 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
   protected def playView(h: ElemHandle, timeRef: TimeRef.Option, target: Target)
                         (implicit tx: S#Tx): Unit = {
     val view = elemFromHandle(h)
-    // logA(s"grapheme - playView: $view - $timeRef")
+    // logA(s"pattern - playView: $view - $timeRef")
     view.run(timeRef, target)
     playingRef.add(h)
-    viewPlaying(h)
+//    viewPlaying(h)
   }
 
   private def playViews(it: Iterator[Leaf], timeRef: TimeRef, target: Target)(implicit tx: S#Tx): Unit =
@@ -358,19 +362,19 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
       }
     }
 
-  /** A notification method that may be used to `fire` an event
-    * such as `AuralObj.Timeline.ViewAdded`.
-    */
-  protected def viewPlaying(h: ElemHandle)(implicit tx: S#Tx): Unit = ()
-
-  /** A notification method that may be used to `fire` an event
-    * such as `AuralObj.Timeline.ViewRemoved`.
-    */
-  protected def viewStopped(h: ElemHandle)(implicit tx: S#Tx): Unit = ()
+//  /** A notification method that may be used to `fire` an event
+//    * such as `AuralObj.Timeline.ViewAdded`.
+//    */
+//  protected def viewPlaying(h: ElemHandle)(implicit tx: S#Tx): Unit = ()
+//
+//  /** A notification method that may be used to `fire` an event
+//    * such as `AuralObj.Timeline.ViewRemoved`.
+//    */
+//  protected def viewStopped(h: ElemHandle)(implicit tx: S#Tx): Unit = ()
 
   protected def stopView(h: ElemHandle)(implicit tx: S#Tx): Unit = {
     val view = elemFromHandle(h)
-    // logA(s"aural - stopView: $view")
+    // logA(s"pattern - stopView: $view")
     view.stop()
     view.dispose()
     playingRef.remove(h)
@@ -386,7 +390,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
 
   private def removeView(h: ElemHandle)(implicit tx: S#Tx): Unit = {
     import h._
-//    logA(s"timeline - removeView - $span - $view")
+//    logA(s"pattern - removeView - $span - $view")
 
     // note: this doesn't have to check for `IPreparing`, as it is called only
     // via `eventReached`, thus during playing. correct?
