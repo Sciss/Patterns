@@ -16,22 +16,33 @@ package de.sciss.patterns.lucre
 import de.sciss.lucre.event.{Dummy, Event, EventLike, Targets}
 import de.sciss.lucre.expr.Expr
 import de.sciss.lucre.stm.{Copy, Elem, Sys}
+import de.sciss.lucre.synth.{Sys => SSys}
 import de.sciss.lucre.{expr, stm}
 import de.sciss.model.Change
 import de.sciss.patterns
 import de.sciss.patterns.{Graph, Pat, Stream, stream}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 import de.sciss.synth.proc
-import de.sciss.synth.proc.impl.CodeImpl
+import de.sciss.synth.proc.Runner
+import de.sciss.synth.proc.impl.{BasicRunnerImpl, CodeImpl}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.concurrent.Future
 
-object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
+object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Factory {
   final val typeId = 300
 
   /** Source code of the graph function. */
   final val attrSource = "graph-source"
+
+  def prefix      : String  = "Pattern"
+  def humanName   : String  = prefix
+  def isSingleton : Boolean = false
+
+  type Repr[~ <: Sys[~]] = Pattern[~]
+
+  def mkRunner[S <: SSys[S]](obj: Pattern[S])(implicit tx: S#Tx, universe: Runner.Universe[S]): Runner[S] =
+    BasicRunnerImpl(obj)
 
   override def init(): Unit = {
     super.init()
@@ -43,6 +54,8 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
     AuralPatternAttribute .init()
     AuralPatternObj       .init()
     patterns.Obj          .init()
+
+    Runner.addFactory(Pattern)
 
     Stream.addFactory(stream.AttributeImpl          )
     Stream.addFactory(stream.AudioCueNumChannelsImpl)
