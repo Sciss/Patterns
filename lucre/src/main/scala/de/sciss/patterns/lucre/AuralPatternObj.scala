@@ -13,6 +13,7 @@
 
 package de.sciss.patterns.lucre
 
+import de.sciss.equal.Implicits._
 import de.sciss.lucre.bitemp.BiGroup
 import de.sciss.lucre.bitemp.impl.BiGroupImpl
 import de.sciss.lucre.data.SkipOctree
@@ -190,8 +191,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
             case evt: Event =>
               val delta = Event.delta(evt)
               if (delta > 0.0) {
-                val legato      = Event.legato(evt)
-                val sustain     = delta * legato
+                val sustain     = Event.sustain(evt)
                 val deltaFrames = (TimeRef.SampleRate * delta).toLong
                 val durFrames   = math.max(32L, (TimeRef.SampleRate * sustain).toLong)    // XXX TODO hard-coded min
                 patSpan         = Span(time, time + durFrames)
@@ -343,7 +343,11 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
 
   protected def checkReschedule(h: ElemHandle, currentOffset: Long, oldTarget: Long, elemPlays: Boolean)
                                (implicit tx: S#Tx): Boolean =
-    throw new UnsupportedOperationException   // only called from `elemRemoved`, and `elemRemoved` is never called
+    !elemPlays && {
+      // reschedule if the span has a start and that start is greater than the current frame,
+      // and elem.start == oldTarget
+      h.span.compareStart(currentOffset) > 0 && h.span.compareStart(oldTarget) === 0
+    }
 
   protected def playView(h: ElemHandle, timeRef: TimeRef.Option, target: Target)
                         (implicit tx: S#Tx): Unit = {

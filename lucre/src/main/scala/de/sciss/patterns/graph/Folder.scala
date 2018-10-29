@@ -18,18 +18,18 @@ import de.sciss.lucre.aux.{Aux, ProductWithAux}
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Base, Sys}
 import de.sciss.patterns.stream.FolderCollectImpl
+import de.sciss.serial.DataInput
 
-object Folder extends Obj.Aux[Folder] {
+object Folder extends Obj.Aux[Folder] with Aux.Factory {
 //  def typeId: Int = stm.Folder.typeId
 
-  final val id = 0x280
+  final val id = 0x480
 
   //  type Repr[S <: Sys[S]] = stm.Folder[S]
 
   implicit def tpe: Obj.Aux[Folder] = this
 
-//  def translate[S <: Sys[S]](obj: stm.Folder[S])(implicit tx: S#Tx): Folder = ...
-
+  def readIdentifiedAux(in: DataInput): Aux = this
 
   def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[Folder] = obj match {
     case _: stm.Folder[S] => Some(Folder())

@@ -19,8 +19,7 @@ import de.sciss.lucre.stm.{Copy, Elem, Sys}
 import de.sciss.lucre.{expr, stm}
 import de.sciss.model.Change
 import de.sciss.patterns
-import de.sciss.patterns.stream
-import de.sciss.patterns.{Graph, Pat, Stream}
+import de.sciss.patterns.{Graph, Pat, Stream, stream}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 import de.sciss.synth.proc
 import de.sciss.synth.proc.impl.CodeImpl
@@ -35,8 +34,11 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
   final val attrSource = "graph-source"
 
   override def init(): Unit = {
-    super   .init()
+    super.init()
+    _init
+  }
 
+  private lazy val _init: Unit = {
     Code                  .init()
     AuralPatternAttribute .init()
     AuralPatternObj       .init()
@@ -94,9 +96,10 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] {
         //        "Predef.{any2stringadd => _, _}", // cf. http://stackoverflow.com/questions/7634015/
         "de.sciss.numbers.Implicits._",
         "de.sciss.kollflitz.Ops._",
+        "de.sciss.lucre.aux.Aux",
         "de.sciss.patterns._",
-        "de.sciss.patterns.Types._",
-        "de.sciss.patterns.graph._"
+        "de.sciss.patterns.graph._",
+        "de.sciss.patterns.graph.Ops._"
       ))
       //      proc.Code.registerImports(proc.Code.Action.id, Vec(
       //        "de.sciss.patterns.lucre.Pattern"

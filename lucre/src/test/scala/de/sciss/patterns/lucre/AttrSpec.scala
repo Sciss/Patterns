@@ -6,6 +6,7 @@ import de.sciss.lucre.stm.{Durable, InMemory}
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.patterns.Graph
 import de.sciss.patterns.graph
+import de.sciss.patterns.graph.Ops._
 import de.sciss.synth.proc.SoundProcesses
 import org.scalatest.{Matchers, Outcome, fixture}
 

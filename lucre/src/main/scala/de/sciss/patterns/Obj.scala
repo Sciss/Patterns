@@ -4,6 +4,7 @@ import de.sciss.lucre.aux.Aux.Factory
 import de.sciss.lucre.expr.{BooleanObj, DoubleObj, IntObj, LongObj, StringObj}
 import de.sciss.lucre.stm.Sys
 import de.sciss.lucre.{aux, stm}
+import de.sciss.patterns.graph.{AudioCue, Folder}
 import de.sciss.serial.DataInput
 
 object Obj {
@@ -13,6 +14,8 @@ object Obj {
     aux.Aux.addFactory(Extractor.Double)
     aux.Aux.addFactory(Extractor.Boolean)
     aux.Aux.addFactory(Extractor.String)
+    aux.Aux.addFactory(AudioCue )
+    aux.Aux.addFactory(Folder   )
   }
 
   def init(): Unit = _init

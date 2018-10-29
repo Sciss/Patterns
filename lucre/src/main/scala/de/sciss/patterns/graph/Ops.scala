@@ -1,5 +1,5 @@
 /*
- *  package.scala
+ *  Ops.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
@@ -11,13 +11,14 @@
  *  contact@sciss.de
  */
 
-package de.sciss.patterns
+package de.sciss.patterns.graph
 
-import de.sciss.patterns.graph.Attribute
+import de.sciss.patterns.{Pat, graph}
+import de.sciss.patterns.lucre.{AudioCueOps, FolderOps}
 
 import scala.language.implicitConversions
 
-package object lucre {
+object Ops {
   implicit def audioCueOps[A](p: Pat      [graph.AudioCue]): AudioCueOps  = new AudioCueOps (p)
   implicit def folderOps  [A](p: Attribute[graph.Folder  ]): FolderOps    = new FolderOps   (p)
 

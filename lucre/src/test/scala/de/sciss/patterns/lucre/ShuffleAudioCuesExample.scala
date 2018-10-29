@@ -7,6 +7,7 @@ import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Cursor
 import de.sciss.lucre.synth.Sys
 import de.sciss.patterns.graph._
+import de.sciss.patterns.graph.Ops._
 import de.sciss.synth.SynthGraph
 import de.sciss.synth.io.AudioFile
 import de.sciss.synth.proc.{AuralContext, ObjKeys, Transport, AudioCue => PAudioCue, Proc => PProc}
@@ -22,8 +23,8 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
 
   protected def run()(implicit context: AuralContext[S]): Unit = {
     val pat   = Graph {
-      val f     = "folder".attr[Folder] //  Folder("folder")
-      val cues  = f.collect[AudioCue] // .<|(_.poll("cues"))
+      val f     = "folder".attr[Folder]
+      val cues  = f.collect[AudioCue]
       val rnd   = cues.shuffle
       val dur   = rnd.duration.<|(_.poll("dur"))
 
@@ -35,7 +36,7 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
     }
 
     val patH = cursor.step { implicit tx =>
-      implicit val system: S = tx.system
+//      implicit val system: S = tx.system
       val patObj: Pattern[S] = Pattern.newConst[S](pat)
       val procObj     = PProc[S]()
       procObj.graph() = SynthGraph {

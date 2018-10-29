@@ -14,19 +14,23 @@
 package de.sciss.patterns
 package graph
 
+import de.sciss.lucre.aux.Aux
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Base, Sys}
 import de.sciss.patterns.stream.{AudioCueNumChannelsImpl, AudioCueNumFramesImpl, AudioCueSampleRateImpl}
+import de.sciss.serial.DataInput
 import de.sciss.synth.proc
 
-object AudioCue extends Obj.Aux[AudioCue] {
+object AudioCue extends Obj.Aux[AudioCue] with Aux.Factory {
 //  def typeId: Int = proc.AudioCue.typeId
 
 //  type Repr[S <: Sys[S]] = proc.AudioCue.Obj[S]
 
-  final val id: Int = 0x281
+  final val id: Int = 0x481
 
   implicit def tpe: Obj.Aux[AudioCue] = this
+
+  def readIdentifiedAux(in: DataInput): Aux = this
 
   def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[AudioCue] = obj match {
     case ao: proc.AudioCue.Obj[S] => Some(AudioCue(ao.value))
@@ -46,6 +50,8 @@ object AudioCue extends Obj.Aux[AudioCue] {
       val inT = t(in)
       if (inT.eq(in)) this else copy(in = inT)
     }
+
+    override def productPrefix: String = s"AudioCue$$NumFrames"
   }
 
   final case class NumChannels(in: Pat[AudioCue]) extends Pattern[Int] {
@@ -56,6 +62,8 @@ object AudioCue extends Obj.Aux[AudioCue] {
       val inT = t(in)
       if (inT.eq(in)) this else copy(in = inT)
     }
+
+    override def productPrefix: String = s"AudioCue$$NumChannels"
   }
 
   final case class SampleRate(in: Pat[AudioCue]) extends Pattern[Double] {
@@ -66,6 +74,8 @@ object AudioCue extends Obj.Aux[AudioCue] {
       val inT = t(in)
       if (inT.eq(in)) this else copy(in = inT)
     }
+
+    override def productPrefix: String = s"AudioCue$$SampleRate"
   }
 }
 final case class AudioCue(peer: proc.AudioCue) // extends Obj
