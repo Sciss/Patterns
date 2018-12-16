@@ -18,9 +18,6 @@ import de.sciss.patterns.graph.{Constant, LoopWithIndex, PatSeq}
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
-import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable
-
 object Pat {
 //  def Int    (elems: scala.Int*    ): Pat[Int]      = apply[Int    ](elems: _*)
 //  def Double (elems: scala.Double* ): Pat[Double]   = apply[Double ](elems: _*)
@@ -69,25 +66,25 @@ object Pat {
     }
   }
 
-  /** Note: this is not particularly efficient, as we build an entirely redundant seq */
-  implicit def cbf[A]: CanBuildFrom[Nothing, A, Pat[A]] = anyCBF.asInstanceOf[CanBuildFrom[Nothing, A, Pat[A]]]
-
-  private object anyCBF extends CanBuildFrom[Any, Any, Pat[Any]] {
-    def apply(from: Any): mutable.Builder[Any, Pat[Any]] = apply()
-
-    def apply(): mutable.Builder[Any, Pat[Any]] = new mutable.Builder[Any, Pat[Any]] {
-      private[this] val peer = Seq.newBuilder[Any]
-
-      def +=(elem: Any): this.type = {
-        peer += elem
-        this
-      }
-
-      def clear(): Unit = peer.clear()
-
-      def result(): Pat[Any] = Pat(peer.result(): _*)
-    }
-  }
+//  /** Note: this is not particularly efficient, as we build an entirely redundant seq */
+//  implicit def cbf[A]: CanBuildFrom[Nothing, A, Pat[A]] = anyCBF.asInstanceOf[CanBuildFrom[Nothing, A, Pat[A]]]
+//
+//  private object anyCBF extends CanBuildFrom[Any, Any, Pat[Any]] {
+//    def apply(from: Any): mutable.Builder[Any, Pat[Any]] = apply()
+//
+//    def apply(): mutable.Builder[Any, Pat[Any]] = new mutable.Builder[Any, Pat[Any]] {
+//      private[this] val peer = Seq.newBuilder[Any]
+//
+//      def +=(elem: Any): this.type = {
+//        peer += elem
+//        this
+//      }
+//
+//      def clear(): Unit = peer.clear()
+//
+//      def result(): Pat[Any] = Pat(peer.result(): _*)
+//    }
+//  }
 
   //  var COUNT = 0
 }

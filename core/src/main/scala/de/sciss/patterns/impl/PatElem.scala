@@ -276,7 +276,7 @@ object PatElem {
     def read          (in: DataInput ): Any   = PatElem.read(in)
   }
 
-  private abstract class CollectionSer[That <: Traversable[Any]] extends ImmutableSerializer[That] {
+  private abstract class CollectionSer[That <: Iterable[Any]] extends ImmutableSerializer[That] {
     def newBuilder: mutable.Builder[Any, That]
     def empty: That
 

@@ -216,7 +216,13 @@ class RonTupleSpec extends PatSpec {
     val plainOut  = computeDurs_Seq(seqIn, cantus)
     assert(plainOut === expOut)
 
-    val patOut = Graph { computeDurs_Pat[Double](seqIn.to[Pat], cantus.to[Pat]) }
+    val patOut = Graph {
+//      val patIn     = seqIn .to[Pat]
+      val patIn     = Pat(seqIn: _*)
+//      val patCantus = cantus.to[Pat]
+      val patCantus = Pat(cantus: _*)
+      computeDurs_Pat[Double](patIn, patCantus)
+    }
     eval(patOut) shouldBe expOut
   }
 

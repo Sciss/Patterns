@@ -1,24 +1,24 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.6.1"
-lazy val mimaVersion        = "0.6.0"
+lazy val projectVersion     = "0.7.0-SNAPSHOT"
+lazy val mimaVersion        = "0.7.0"
 
 val deps = new {
   val core = new {
-    val lucre               = "3.10.1"
+    val lucre               = "3.11.0-SNAPSHOT"
     val numbers             = "0.2.0"
     val optional            = "1.0.0"
     val serial              = "1.1.1"
   }
   val lucre = new {
-    val soundProcesses      = "3.23.1"
+    val soundProcesses      = "3.24.0-SNAPSHOT"
   }
   val test = new {
-    val kollFlitz           = "0.2.2"
-    val scalaCollider       = "1.27.0"
-    val scalaColliderSwing  = "1.40.0"
+    val kollFlitz           = "0.2.3-SNAPSHOT"
+    val scalaCollider       = "1.28.0-SNAPSHOT"
+    val scalaColliderSwing  = "1.41.0-SNAPSHOT"
     val scalaTest           = "3.0.5"
-    val ugens               = "1.19.1"
+    val ugens               = "1.19.2-SNAPSHOT"
   }
 }
 
@@ -26,9 +26,9 @@ lazy val commonSettings = Seq(
   version             := projectVersion,
   organization        := "de.sciss",
   description         := "Translating SuperCollider's patterns to Scala",
-  homepage            := Some(url(s"https://github.com/Sciss/$baseName")),
-  scalaVersion        := "2.12.7",
-  crossScalaVersions  := Seq("2.12.7", "2.11.12"),
+  homepage            := Some(url(s"https://git.iem.at/sciss/$baseName")),
+  scalaVersion        := "2.13.0-M5",
+  crossScalaVersions  := Seq("2.12.8", "2.11.12", "2.13.0-M5"),
   licenses            := Seq(lgpl2),
   scalacOptions      ++= Seq(
     "-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint", "-Xsource:2.13"
@@ -74,8 +74,16 @@ lazy val publishSettings = Seq(
   }
 )
 
+lazy val testSettings = Seq(
+  libraryDependencies += {
+    val v = if (scalaVersion.value == "2.13.0-M5") "3.0.6-SNAP5" else deps.test.scalaTest
+    "org.scalatest" %% "scalatest" % v % Test
+  }
+)
+
 lazy val core = project.in(file("core"))
   .settings(commonSettings)
+  .settings(testSettings)
   .settings(
     name := s"$baseName-core",
     libraryDependencies ++= Seq(
@@ -89,7 +97,6 @@ lazy val core = project.in(file("core"))
       "de.sciss"      %% "scalacolliderswing-plotting"  % deps.test.scalaColliderSwing  % Test,
       "de.sciss"      %% "scalacolliderugens-core"      % deps.test.ugens               % Test, // sbt fuck up
       "de.sciss"      %% "scalacolliderugens-plugins"   % deps.test.ugens               % Test,
-      "org.scalatest" %% "scalatest"                    % deps.test.scalaTest           % Test
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% baseNameL % mimaVersion),
     mainClass in (Test, run) := Some("de.sciss.patterns.RonWithESP")
@@ -100,12 +107,13 @@ lazy val bdb = "bdb"  // either "bdb" or "bdb6"
 lazy val lucre = project.in(file("lucre"))
   .dependsOn(core % "compile->compile;test->test")
   .settings(commonSettings)
+  .settings(testSettings)
   .settings(
     name := s"$baseName-lucre",
     libraryDependencies ++= Seq(
       "de.sciss"      %% "soundprocesses-core"  % deps.lucre.soundProcesses,
-      "de.sciss"      %% s"lucre-$bdb"          % deps.core.lucre           % Test,
-      "org.scalatest" %% "scalatest"            % deps.test.scalaTest       % Test
+      "de.sciss"      %% s"lucre-$bdb"          % deps.core.lucre  % Test
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)
   )
+

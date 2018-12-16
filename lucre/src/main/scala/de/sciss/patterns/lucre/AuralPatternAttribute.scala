@@ -77,7 +77,7 @@ object AuralPatternAttribute extends AuralAttribute.Factory {
     (getSingleFloat(v), v) match {
       case (Some(f), _) => Some(AuralAttribute.ScalarValue(f))
       case (None, xs: Seq[_]) =>
-        val vecOpt = (Option(Vector.empty[Float]) /: xs) {
+        val vecOpt = xs.foldLeft(Option(Vector.empty[Float])) {
           case (Some(ys), w) => getSingleFloat(w).map(ys :+ _)
           case _ => None
         }
