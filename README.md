@@ -6,11 +6,11 @@
 ## statement
 
 Patterns is a library that brings SuperCollider style patterns to Scala, and ultimately
-to [SoundProcesses](https://github.com/Sciss/SoundProcesses)). Patterns are descriptions of streams,
+to [SoundProcesses](https://git.iem.at/sciss/SoundProcesses)). Patterns are descriptions of streams,
 streams are stateful iterators, here implemented with an optional transactional layer.
 
 This project is (C)opyright 2017&ndash;2018 by Hanns Holger Rutz. All rights reserved. This project is released under 
-the [GNU Lesser General Public License](https://raw.github.com/Sciss/Patterns/master/LICENSE) v2.1+ and comes 
+the [GNU Lesser General Public License](https://git.iem.at/sciss/Patterns/raw/master/LICENSE) v2.1+ and comes 
 with absolutely no warranties. To contact the author, send an email to `contact at sciss.de`
 
 ## requirements / installation
@@ -21,12 +21,12 @@ To link to it:
 
     libraryDependencies += "de.sciss" %% "patterns" % v
 
-The current version `v` is `"0.6.1"`.
+The current version `v` is `"0.7.0"`.
 
 There are two sub-modules which can be linked to separately:
 
 - `patterns-core` is the foundation, it works with the mutable (non-transactional) `Base` system
-- `patterns-lucre` adds support for [Lucre](https://github.com/Sciss/Lucre/) type transactional systems
+- `patterns-lucre` adds support for [Lucre](https://git.iem.at/sciss/Lucre/) type transactional systems
   (what is used in SoundProcesses)
 
 ## contributing

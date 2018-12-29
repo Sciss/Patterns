@@ -1,24 +1,24 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.7.0-SNAPSHOT"
+lazy val projectVersion     = "0.7.0"
 lazy val mimaVersion        = "0.7.0"
 
 val deps = new {
   val core = new {
-    val lucre               = "3.11.0-SNAPSHOT"
+    val lucre               = "3.11.0"
     val numbers             = "0.2.0"
     val optional            = "1.0.0"
     val serial              = "1.1.1"
   }
   val lucre = new {
-    val soundProcesses      = "3.24.0-SNAPSHOT"
+    val soundProcesses      = "3.24.0"
   }
   val test = new {
-    val kollFlitz           = "0.2.3-SNAPSHOT"
-    val scalaCollider       = "1.28.0-SNAPSHOT"
-    val scalaColliderSwing  = "1.41.0-SNAPSHOT"
+    val kollFlitz           = "0.2.3"
+    val scalaCollider       = "1.28.0"
+    val scalaColliderSwing  = "1.41.0"
     val scalaTest           = "3.0.5"
-    val ugens               = "1.19.2-SNAPSHOT"
+    val ugens               = "1.19.2"
   }
 }
 
@@ -61,8 +61,8 @@ lazy val publishSettings = Seq(
   pomIncludeRepository := { _ => false },
   pomExtra := { val n = baseName
   <scm>
-    <url>git@github.com:Sciss/{n}.git</url>
-    <connection>scm:git:git@github.com:Sciss/{n}.git</connection>
+    <url>git@git.iem.at:sciss/{n}.git</url>
+    <connection>scm:git:git@git.iem.at:sciss/{n}.git</connection>
   </scm>
     <developers>
       <developer>
