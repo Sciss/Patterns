@@ -1,7 +1,7 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.7.0"
-lazy val mimaVersion        = "0.7.0"
+lazy val projectVersion     = "0.8.0-SNAPSHOT"
+lazy val mimaVersion        = "0.8.0"
 
 val deps = new {
   val core = new {
@@ -11,13 +11,13 @@ val deps = new {
     val serial              = "1.1.1"
   }
   val lucre = new {
-    val soundProcesses      = "3.24.0"
+    val soundProcesses      = "3.25.0-SNAPSHOT"
   }
   val test = new {
     val kollFlitz           = "0.2.3"
     val scalaCollider       = "1.28.0"
     val scalaColliderSwing  = "1.41.0"
-    val scalaTest           = "3.0.5"
+    val scalaTest           = "3.0.6"
     val ugens               = "1.19.2"
   }
 }
@@ -76,8 +76,7 @@ lazy val publishSettings = Seq(
 
 lazy val testSettings = Seq(
   libraryDependencies += {
-    val v = if (scalaVersion.value == "2.13.0-M5") "3.0.6-SNAP5" else deps.test.scalaTest
-    "org.scalatest" %% "scalatest" % v % Test
+    "org.scalatest" %% "scalatest" % deps.test.scalaTest % Test
   }
 )
 

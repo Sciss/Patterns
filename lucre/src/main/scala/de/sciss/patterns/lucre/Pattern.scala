@@ -82,20 +82,16 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
 
   // ---- Code ----
 
-  implicit private object CodeWrapper extends CodeImpl.Wrapper[Unit, Pat[_], Pat[_], Pattern.Code] {
-    def id: Int = Pattern.Code.id
-    def binding = Option.empty[String]
-
-    def wrap(in: Unit)(fun: => Pat[_]): Pat[_] = Graph {
-      fun
-//      match {
-//        case ok: Pat[_] => ok // .asInstanceOf[Pat[Top]]
-//        case other => throw new IllegalArgumentException(s"Not a pattern: $other")
-//      }
-    }
-
-    def blockTag = "de.sciss.patterns.Pat[_]"
-  }
+//  implicit private object CodeWrapper extends CodeImpl.Wrapper[Unit, Pat[_], Pat[_], Pattern.Code] {
+//    def id: Int = Pattern.Code.id
+//    def binding = Option.empty[String]
+//
+//    def wrap(in: Unit)(fun: => Pat[_]): Pat[_] = Graph {
+//      fun
+//    }
+//
+//    def blockTag = "de.sciss.patterns.Pat[_]"
+//  }
 
   object Code extends proc.Code.Type {
     final val id    = 5
@@ -126,18 +122,25 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
   }
   final case class Code(source: String) extends proc.Code {
     type In     = Unit
-    type Out    = Pat[_] // patterns.Graph[_]
+    type Out    = Pat[_]
     def id: Int = Code.id
 
-    def compileBody()(implicit compiler: proc.Code.Compiler): Future[Unit] = {
+    def compileBody()(implicit compiler: proc.Code.Compiler): Future[Unit] =
       CodeImpl.compileBody[In, Out, Pat[_], Code](this)
-    }
 
-    def execute(in: In)(implicit compiler: proc.Code.Compiler): Out = {
-      CodeImpl.execute[In, Out, Pat[_], Code](this, in)
-    }
+    def execute(in: In)(implicit compiler: proc.Code.Compiler): Out =
+      Graph {
+        CodeImpl.compileThunk(this, execute = true)
+      }
 
     def contextName: String = Code.name
+
+    def prelude : String =
+      """object Main {
+        |  def __result__ : de.sciss.patterns.Pat[_] = {
+        |""".stripMargin
+
+    def postlude: String = "\n  }\n}\n"
 
     def updateSource(newText: String): Code = copy(source = newText)
   }
