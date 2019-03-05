@@ -98,6 +98,8 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
     final val name  = "Pattern"
     type Repr = Code
 
+    def docBaseSymbol: String = "de.sciss.patterns.graph"
+
     private[this] lazy val _init: Unit = {
       proc.Code.addType(this)
       proc.Code.registerImports(id, Vec(
@@ -122,18 +124,20 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
   }
   final case class Code(source: String) extends proc.Code {
     type In     = Unit
-    type Out    = Pat[_]
+    type Out    = Pat[Any]
     def id: Int = Code.id
 
     def compileBody()(implicit compiler: proc.Code.Compiler): Future[Unit] =
-      CodeImpl.compileBody[In, Out, Pat[_], Code](this)
+      CodeImpl.compileBody[In, Out, Pat[Any], Code](this)
 
     def execute(in: In)(implicit compiler: proc.Code.Compiler): Out =
       Graph {
-        CodeImpl.compileThunk(this, execute = true)
+        CodeImpl.compileThunk[Pat[Any]](this, execute = true)
       }
 
     def contextName: String = Code.name
+
+    def docBaseSymbol: String = Code.docBaseSymbol
 
     def prelude : String =
       """object Main {
