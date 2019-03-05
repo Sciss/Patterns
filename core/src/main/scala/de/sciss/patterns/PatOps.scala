@@ -16,6 +16,11 @@ package de.sciss.patterns
 import de.sciss.lucre.aux.Aux.{Eq, Num, NumBool, NumDouble, NumFrac, NumInt, Ord, ScalarOrd, ToNum, Widen, Widen2, WidenToDouble}
 import de.sciss.patterns.graph.{BinaryOp => BinOp, UnaryOp => UnOp, _}
 
+/** `PatOps` are operations for patterns (`Pat`). Instead of having these operations directly defined
+  * in each pattern, which is a huge list, they appear here as extension methods.
+  *
+  * @see [[Pat]]
+  */
 final class PatOps[A](private val x: Pat[A]) extends AnyVal {
   /** Takes only the `length` first elements of the input pattern,
     * or less if the input pattern is shorter.

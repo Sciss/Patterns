@@ -89,6 +89,12 @@ object Pat {
   //  var COUNT = 0
 }
 
+/** The main trait used to define pattern elements.
+  *
+  * A lot of operations on `Pat` are defined separately in `PatOps`.
+  *
+  * @see  [[PatOps]]
+  */
 trait Pat[+A] extends Product {
 //  Pat.COUNT += 1
 
