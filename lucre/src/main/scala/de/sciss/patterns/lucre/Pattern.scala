@@ -94,8 +94,11 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
 //  }
 
   object Code extends proc.Code.Type {
-    final val id    = 5
-    final val name  = "Pattern"
+    final val id = 5
+
+    final val prefix    = "Pattern"
+    final val humanName = "Pattern Graph"
+
     type Repr = Code
 
     def docBaseSymbol: String = "de.sciss.patterns.graph"
@@ -125,19 +128,19 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
   final case class Code(source: String) extends proc.Code {
     type In     = Unit
     type Out    = Pat[Any]
-    def id: Int = Code.id
 
-    def compileBody()(implicit compiler: proc.Code.Compiler): Future[Unit] =
-      CodeImpl.compileBody[In, Out, Pat[Any], Code](this)
+    def tpe: proc.Code.Type = Code
+
+    def compileBody()(implicit compiler: proc.Code.Compiler): Future[Unit] = {
+      import scala.reflect.runtime.universe._
+      CodeImpl.compileBody[In, Out, Pat[Any], Code](this, typeTag[Pat[Any]])
+    }
 
     def execute(in: In)(implicit compiler: proc.Code.Compiler): Out =
       Graph {
-        CodeImpl.compileThunk[Pat[Any]](this, execute = true)
+        import scala.reflect.runtime.universe._
+        CodeImpl.compileThunk[Pat[Any]](this, typeTag[Pat[Any]], execute = true)
       }
-
-    def contextName: String = Code.name
-
-    def docBaseSymbol: String = Code.docBaseSymbol
 
     def prelude : String =
       """object Main {
