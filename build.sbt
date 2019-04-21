@@ -1,23 +1,23 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.10.0"
-lazy val mimaVersion        = "0.10.0"
+lazy val projectVersion     = "0.11.0-SNAPSHOT"
+lazy val mimaVersion        = "0.11.0"
 
 val deps = new {
   val core = new {
-    val lucre               = "3.11.0"
+    val lucre               = "3.12.0-SNAPSHOT"
     val numbers             = "0.2.0"
     val optional            = "1.0.0"
     val serial              = "1.1.1"
   }
   val lucre = new {
-    val soundProcesses      = "3.27.0"
+    val soundProcesses      = "3.28.0-SNAPSHOT"
   }
   val test = new {
     val kollFlitz           = "0.2.3"
-    val scalaCollider       = "1.28.1"
-    val scalaColliderSwing  = "1.41.0"
-    val scalaTest           = "3.0.7"
+    val scalaCollider       = "1.28.2"
+    val scalaColliderSwing  = "1.41.1"
+    val scalaTest           = "3.0.8-RC2"
     val ugens               = "1.19.3"
   }
 }
@@ -28,10 +28,10 @@ lazy val commonSettings = Seq(
   description         := "Translating SuperCollider's patterns to Scala",
   homepage            := Some(url(s"https://git.iem.at/sciss/$baseName")),
   scalaVersion        := "2.12.8",
-  crossScalaVersions  := Seq("2.12.8", "2.11.12", "2.13.0-M5"),
+  crossScalaVersions  := Seq("2.12.8", "2.11.12", "2.13.0-RC1"),
   licenses            := Seq(lgpl2),
   scalacOptions      ++= Seq(
-    "-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint", "-Xsource:2.13"
+    "-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xlint", "-Xsource:2.13"
   ),
   resolvers           += "Oracle Repository" at "http://download.oracle.com/maven",  // required for sleepycat
   updateOptions       := updateOptions.value.withLatestSnapshots(false)
