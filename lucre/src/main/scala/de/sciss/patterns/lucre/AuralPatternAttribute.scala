@@ -55,7 +55,7 @@ object AuralPatternAttribute extends AuralAttribute.Factory {
                                                       observer: AuralAttribute.Observer[S])
                                                      (implicit tx: S#Tx, system: S { type I = I1 },
                                                       context: AuralContext[S]): AuralPatternAttribute[S, I1] = {
-    implicit val iSys: S#Tx => I1#Tx = system.inMemoryTx _
+    implicit val iSys: S#Tx => I1#Tx = system.inMemoryTx
     implicit val itx: I1#Tx = iSys(tx)
     implicit val dummyKeySer: Serializer[I1#Tx, I1#Acc, AuralPatternAttribute.View[S]] =
       DummySerializerFactory[I1].dummySerializer

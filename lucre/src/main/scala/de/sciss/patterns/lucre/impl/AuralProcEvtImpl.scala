@@ -24,6 +24,9 @@ import de.sciss.synth.proc.impl.AuralProcImpl
 import de.sciss.synth.proc.impl.AuralProcImpl.BufferAndGain
 import de.sciss.synth.proc.{AuralContext, TimeRef, UGenGraphBuilder => UGB}
 
+/** Extends the standard aural proc implementation by injecting scalar values and
+  * others (audio-cues) directly from an event value, typically coming from a pattern.
+  */
 final class AuralProcEvtImpl[S <: Sys[S]](evt: Event)(implicit context: AuralContext[S])
   extends AuralProcImpl.Impl[S] {
 

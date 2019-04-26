@@ -57,7 +57,7 @@ object AuralPatternObj extends AuralObj.Factory {
   private def prepare[S <: Sys[S], I1 <: stm.Sys[I1]](value: Pattern[S])
                                                      (implicit tx: S#Tx, system: S { type I = I1 },
                                                       context: AuralContext[S]): AuralPatternObj[S, I1] = {
-    implicit val iSys: S#Tx => I1#Tx = system.inMemoryTx _
+    implicit val iSys: S#Tx => I1#Tx = system.inMemoryTx
     implicit val itx: I1#Tx = iSys(tx)
     implicit val pointView: (Leaf[S], I1#Tx) => LongPoint2D = (l, _) => spanToPoint(l._1)
     implicit val dummyKeySer: Serializer[I1#Tx, I1#Acc, Leaf[S]] =
