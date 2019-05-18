@@ -15,10 +15,10 @@ val deps = new {
   }
   val test = new {
     val kollFlitz           = "0.2.3"
-    val scalaCollider       = "1.28.2"
-    val scalaColliderSwing  = "1.41.1"
+    val scalaCollider       = "1.28.3"
+    val scalaColliderSwing  = "1.41.2"
     val scalaTest           = "3.0.8-RC2"
-    val ugens               = "1.19.3"
+    val ugens               = "1.19.4"
   }
 }
 
@@ -28,7 +28,7 @@ lazy val commonSettings = Seq(
   description         := "Translating SuperCollider's patterns to Scala",
   homepage            := Some(url(s"https://git.iem.at/sciss/$baseName")),
   scalaVersion        := "2.12.8",
-  crossScalaVersions  := Seq("2.12.8", "2.11.12", "2.13.0-RC1"),
+  crossScalaVersions  := Seq("2.12.8", "2.11.12", "2.13.0-RC2"),
   licenses            := Seq(lgpl2),
   scalacOptions      ++= Seq(
     "-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xlint", "-Xsource:2.13"
@@ -76,7 +76,11 @@ lazy val publishSettings = Seq(
 
 lazy val testSettings = Seq(
   libraryDependencies += {
-    "org.scalatest" %% "scalatest" % deps.test.scalaTest % Test
+    if (scalaVersion.value == "2.13.0-RC2") {
+      "org.scalatest" % "scalatest_2.13.0-RC1" % deps.test.scalaTest % Test exclude("org.scala-lang.modules", "scala-xml_2.13.0-RC1")
+    } else {
+      "org.scalatest" %% "scalatest" % deps.test.scalaTest % Test
+    }
   }
 )
 

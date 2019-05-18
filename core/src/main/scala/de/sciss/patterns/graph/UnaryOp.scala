@@ -83,7 +83,7 @@ object UnaryOp {
   }
 
   final case class Not[A]()(implicit num: NumBool[A]) extends PureOp[A, A] {
-    def apply(a: A)           : A         = num.not(a)
+    def apply(a: A)           : A         = num.unary_!(a)
     def name                  : String    = "Not"
     override def aux : List[Aux] = num :: Nil
   }
