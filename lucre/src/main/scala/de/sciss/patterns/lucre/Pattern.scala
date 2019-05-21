@@ -23,6 +23,7 @@ import de.sciss.patterns
 import de.sciss.patterns.{Graph, Pat, Stream, stream}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 import de.sciss.synth.proc
+import de.sciss.synth.proc.Code.Import
 import de.sciss.synth.proc.Runner
 import de.sciss.synth.proc.impl.{BasicRunnerImpl, CodeImpl}
 
@@ -105,15 +106,16 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
 
     private[this] lazy val _init: Unit = {
       proc.Code.addType(this)
+      import Import._
       proc.Code.registerImports(id, Vec(
         // doesn't work:
         //        "Predef.{any2stringadd => _, _}", // cf. http://stackoverflow.com/questions/7634015/
-        "de.sciss.numbers.Implicits._",
-        "de.sciss.kollflitz.Ops._",
-        "de.sciss.lucre.aux.Aux",
-        "de.sciss.patterns._",
-        "de.sciss.patterns.graph._",
-        "de.sciss.patterns.graph.Ops._"
+        Import("de.sciss.numbers.Implicits", All),
+        Import("de.sciss.kollflitz.Ops", All),
+        Import("de.sciss.lucre.aux", Name("Aux") :: Nil),
+        Import("de.sciss.patterns", All),
+        Import("de.sciss.patterns.graph", All),
+        Import("de.sciss.patterns.graph.Ops", All)
       ))
       //      proc.Code.registerImports(proc.Code.Action.id, Vec(
       //        "de.sciss.patterns.lucre.Pattern"
