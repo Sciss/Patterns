@@ -23,11 +23,11 @@ import de.sciss.patterns
 import de.sciss.patterns.{Graph, Pat, Stream, stream}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 import de.sciss.synth.proc
-import de.sciss.synth.proc.Code.Import
+import de.sciss.synth.proc.Code.{Example, Import}
 import de.sciss.synth.proc.Runner
 import de.sciss.synth.proc.impl.{BasicRunnerImpl, CodeImpl}
 
-import scala.collection.immutable.{IndexedSeq => Vec}
+import scala.collection.immutable.{IndexedSeq => Vec, Seq => ISeq}
 import scala.concurrent.Future
 
 object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Factory {
@@ -102,6 +102,15 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
 
     type Repr = Code
 
+    override def examples: ISeq[Example] = List(
+      Example("Brownian", 'b',
+        """val b = Brown(0, 127, 2)
+          |b
+          |""".stripMargin)
+    )
+
+    override def defaultSource: String = s"${super.defaultSource}Pat()\n"
+
     def docBaseSymbol: String = "de.sciss.patterns.graph"
 
     private[this] lazy val _init: Unit = {
@@ -166,7 +175,8 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
       case `emptyCookie` =>
         val id = tx.readId(in, access)
         new Predefined(id, cookie)
-      case _ => super.readCookie(in, access, cookie)
+      case _ =>
+        super.readCookie(in, access, cookie)
     }
 
   private val emptyPat = Pat()
