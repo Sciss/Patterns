@@ -1,9 +1,10 @@
-package de.sciss.patterns
-package lucre
+package de.sciss.patterns.lucre.tests
 
 import de.sciss.lucre.stm.Cursor
 import de.sciss.lucre.synth.Sys
 import de.sciss.patterns.graph._
+import de.sciss.patterns.lucre.Pattern
+import de.sciss.patterns.{Event, Graph}
 import de.sciss.synth.SynthGraph
 import de.sciss.synth.proc.{AuralContext, Transport, Proc => PProc}
 
@@ -34,9 +35,9 @@ class EventStreamPlayerTest[S <: Sys[S]](implicit cursor: Cursor[S])
       val procObj     = PProc[S]()
       procObj.graph() = SynthGraph {
         import de.sciss.synth._
-        import de.sciss.synth.ugen._
         import de.sciss.synth.proc.graph.Duration
         import de.sciss.synth.proc.graph.Ops.stringToControl
+        import de.sciss.synth.ugen._
         val dur   = Duration()
         val freq  = "freq".ar
         val sig   = SinOsc.ar(freq) * Line.ar(1.0, 0.0, dur = dur)

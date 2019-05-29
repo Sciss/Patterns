@@ -1,9 +1,10 @@
-package de.sciss.patterns.lucre
+package de.sciss.patterns.lucre.tests
 
 import de.sciss.lucre.expr.DoubleObj
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.lucre.synth.{Server, Sys}
+import de.sciss.patterns.lucre.Pattern
 import de.sciss.synth.SynthGraph
 import de.sciss.synth.proc.{AuralContext, AuralObj, Confluent, Durable, Proc, SoundProcesses, SynthGraphObj, TimeRef, Timeline, Universe, showAuralLog, showTransportLog}
 
@@ -114,7 +115,7 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
     _view
   }
 
-  final def timeline()(implicit tx: S#Tx): Timeline[S] = {
+  final def timeline()(implicit tx: S#Tx): Timeline.Modifiable[S] = {
     val tl    = Timeline[S]
     tl // Obj(Timeline.Elem(tl))
   }

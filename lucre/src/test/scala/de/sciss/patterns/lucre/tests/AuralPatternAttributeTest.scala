@@ -1,9 +1,10 @@
-package de.sciss.patterns.lucre
+package de.sciss.patterns.lucre.tests
 
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Cursor
 import de.sciss.lucre.synth.Sys
 import de.sciss.patterns.Graph
+import de.sciss.patterns.lucre.Pattern
 import de.sciss.synth
 import de.sciss.synth.proc.AuralContext
 

@@ -1,13 +1,14 @@
-package de.sciss.patterns
-package lucre
+package de.sciss.patterns.lucre.tests
 
 import de.sciss.file._
 import de.sciss.lucre.expr.StringObj
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Cursor
 import de.sciss.lucre.synth.Sys
-import de.sciss.patterns.graph._
 import de.sciss.patterns.graph.Ops._
+import de.sciss.patterns.graph._
+import de.sciss.patterns.lucre.Pattern
+import de.sciss.patterns.{Event, Graph}
 import de.sciss.synth.SynthGraph
 import de.sciss.synth.io.AudioFile
 import de.sciss.synth.proc.{AuralContext, ObjKeys, Transport, AudioCue => PAudioCue, Proc => PProc}

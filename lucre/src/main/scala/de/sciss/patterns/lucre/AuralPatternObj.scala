@@ -31,6 +31,7 @@ import de.sciss.synth.UGenSource.Vec
 import de.sciss.synth.proc.impl.AuralScheduledBase
 import de.sciss.synth.proc.impl.AuralTimelineBase.spanToPoint
 import de.sciss.synth.proc.{AuralContext, AuralObj, Proc, TimeRef}
+import de.sciss.synth.proc.{logAural => logA}
 
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
@@ -156,6 +157,8 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
     new AbstractIterator[PrepareResult] {
       private[this] val patObj: Pattern[S]  = objH()
       private[this] var time  : Long        = streamPos.get(tx.peer)
+
+      logA(s"pattern processPrepare($spanP, $timeRef, $initial); time = $time")
 
       implicit private[this] val itx: I1#Tx = iSys(tx)
 
@@ -331,6 +334,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
       case _          => AuralObj(playObj)
     }
     val h         = ElemHandle[S, Elem](span, childView)
+    logA(s"pattern - mkView: $span, $childView")
 //    viewMap.put(tid, h)
     tree.transformAt(spanToPoint(span)) { opt =>
       // import expr.IdentifierSerializer
@@ -352,7 +356,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
   protected def playView(h: ElemHandle, timeRef: TimeRef.Option, target: Target)
                         (implicit tx: S#Tx): Unit = {
     val view = elemFromHandle(h)
-    // logA(s"pattern - playView: $view - $timeRef")
+    logA(s"pattern - playView: $view - $timeRef (${hashCode().toHexString})")
     view.run(timeRef, target)
     playingRef.add(h)
 //    viewPlaying(h)
@@ -378,7 +382,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
 
   protected def stopView(h: ElemHandle)(implicit tx: S#Tx): Unit = {
     val view = elemFromHandle(h)
-    // logA(s"pattern - stopView: $view")
+    logA(s"pattern - stopView: $view (${hashCode().toHexString})")
     view.stop()
     view.dispose()
     playingRef.remove(h)
@@ -386,9 +390,25 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
   }
 
   protected def stopViews()(implicit tx: S#Tx): Unit = {
-    playingRef.foreach { h =>
-      stopView(h)
+    // Regarding https://git.iem.at/sciss/SoundProcesses/issues/63
+    // - processPrepare may be called more than once
+    // - it calls `stopViews`
+    // - but previously prepared views are not in playingRef
+    // - they reside still in the tree
+    // - therefore, instead of clearing playingRef, clear the entire tree
+
+//    playingRef.foreach { h =>
+//      stopView(h)
+//    }
+    val itx = iSys(tx)
+    tree.iterator(itx).foreach { case (_, vec) =>
+      vec.foreach { view =>
+        view.stop()
+        view.dispose()
+      }
     }
+    playingRef.clear()
+    tree      .clear()(itx)
     disposeStream()
   }
 
