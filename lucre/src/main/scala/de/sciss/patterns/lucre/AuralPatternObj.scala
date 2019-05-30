@@ -193,7 +193,7 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
           ctx.next(st) match {
             case evt: Event =>
               val delta = Event.delta(evt)
-              if (delta > 0.0) {
+              if (delta >= 0.0) {
                 val sustain     = Event.sustain(evt)
                 val deltaFrames = (TimeRef.SampleRate * delta).toLong
                 val durFrames   = math.max(32L, (TimeRef.SampleRate * sustain).toLong)    // XXX TODO hard-coded min
