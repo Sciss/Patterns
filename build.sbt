@@ -1,6 +1,6 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.12.1"
+lazy val projectVersion     = "0.12.2"
 lazy val mimaVersion        = "0.12.0"
 
 val deps = new {
@@ -11,13 +11,13 @@ val deps = new {
     val serial              = "1.1.1"
   }
   val lucre = new {
-    val soundProcesses      = "3.29.1"
+    val soundProcesses      = "3.29.2"
   }
   val test = new {
     val kollFlitz           = "0.2.3"
     val scalaCollider       = "1.28.4"
-    val scalaColliderSwing  = "1.41.2"
-    val scalaTest           = "3.0.8-RC4"
+    val scalaColliderSwing  = "1.41.3"
+    val scalaTest           = "3.0.8-RC5"
     val ugens               = "1.19.4"
   }
 }
@@ -28,7 +28,7 @@ lazy val commonSettings = Seq(
   description         := "Translating SuperCollider's patterns to Scala",
   homepage            := Some(url(s"https://git.iem.at/sciss/$baseName")),
   scalaVersion        := "2.12.8",
-  crossScalaVersions  := Seq("2.12.8", "2.11.12", "2.13.0-RC2"),
+  crossScalaVersions  := Seq("2.12.8", "2.11.12", "2.13.0"),
   licenses            := Seq(lgpl2),
   scalacOptions      ++= Seq(
     "-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xlint", "-Xsource:2.13"
@@ -76,11 +76,11 @@ lazy val publishSettings = Seq(
 
 lazy val testSettings = Seq(
   libraryDependencies += {
-    // if (scalaVersion.value == "2.13.0-RC2") {
-    //   "org.scalatest" % "scalatest_2.13.0-RC1" % deps.test.scalaTest % Test exclude("org.scala-lang.modules", "scala-xml_2.13.0-RC1")
-    // } else {
+    if (scalaVersion.value == "2.13.0") {
+      "org.scalatest" % "scalatest_2.13.0-RC3" % deps.test.scalaTest % Test exclude("org.scala-lang.modules", "scala-xml_2.13.0-RC3")
+    } else {
       "org.scalatest" %% "scalatest" % deps.test.scalaTest % Test
-    // }
+    }
   }
 )
 
@@ -98,7 +98,7 @@ lazy val core = project.in(file("core"))
       "de.sciss"      %% "kollflitz"                    % deps.test.kollFlitz           % Test,
       "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % Test,
       "de.sciss"      %% "scalacolliderswing-plotting"  % deps.test.scalaColliderSwing  % Test,
-      "de.sciss"      %% "scalacolliderugens-core"      % deps.test.ugens               % Test, // sbt fuck up
+      "de.sciss"      %% "scalacolliderugens-core"      % deps.test.ugens               % Test, // sbt problem
       "de.sciss"      %% "scalacolliderugens-plugins"   % deps.test.ugens               % Test,
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% baseNameL % mimaVersion),

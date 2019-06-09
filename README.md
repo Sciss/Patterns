@@ -15,13 +15,13 @@ with absolutely no warranties. To contact the author, send an email to `contact 
 
 ## requirements / installation
 
-This project builds against Scala 2.12, 2.11 using [sbt](http://www.scala-sbt.org/).
+This project builds against Scala 2.13, 2.12, 2.11 using [sbt](http://www.scala-sbt.org/).
 
 To link to it:
 
     libraryDependencies += "de.sciss" %% "patterns" % v
 
-The current version `v` is `"0.12.1"`.
+The current version `v` is `"0.12.2"`.
 
 There are two sub-modules which can be linked to separately:
 
