@@ -24,8 +24,8 @@ final case class Stutter[A](in: Pat[A], n: Pat[Int])
     StutterImpl.expand(this)
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
-    val inT = t(in) .transform(t)
-    val nT  = t(n)  .transform(t)
+    val inT = t(in)
+    val nT  = t(n)
     if (inT.eq(in) && nT.eq(n)) this else copy(in = inT, n = nT)
   }
 }
