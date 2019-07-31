@@ -1,7 +1,7 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.12.3-SNAPSHOT"
-lazy val mimaVersion        = "0.12.0"
+lazy val projectVersion     = "0.13.0"
+lazy val mimaVersion        = "0.13.0"
 
 val deps = new {
   val core = new {
@@ -11,14 +11,14 @@ val deps = new {
     val serial              = "1.1.1"
   }
   val lucre = new {
-    val soundProcesses      = "3.29.2"
+    val soundProcesses      = "3.30.0"
   }
   val test = new {
     val kollFlitz           = "0.2.3"
     val scalaCollider       = "1.28.4"
-    val scalaColliderSwing  = "1.41.3"
-    val scalaTest           = "3.0.8-RC5"
-    val ugens               = "1.19.4"
+    val scalaColliderSwing  = "1.41.4"
+    val scalaTest           = "3.0.8"
+    val ugens               = "1.19.5"
   }
 }
 
@@ -76,11 +76,7 @@ lazy val publishSettings = Seq(
 
 lazy val testSettings = Seq(
   libraryDependencies += {
-    if (scalaVersion.value == "2.13.0") {
-      "org.scalatest" % "scalatest_2.13.0-RC3" % deps.test.scalaTest % Test exclude("org.scala-lang.modules", "scala-xml_2.13.0-RC3")
-    } else {
-      "org.scalatest" %% "scalatest" % deps.test.scalaTest % Test
-    }
+    "org.scalatest" %% "scalatest" % deps.test.scalaTest % Test
   }
 )
 
@@ -114,9 +110,10 @@ lazy val lucre = project.in(file("lucre"))
   .settings(
     name := s"$baseName-lucre",
     libraryDependencies ++= Seq(
-      "de.sciss"        %% "soundprocesses-core"  % deps.lucre.soundProcesses,
-      "org.scala-lang"  %  "scala-reflect"        % scalaVersion.value,
-      "de.sciss"        %% s"lucre-$bdb"          % deps.core.lucre  % Test
+      "de.sciss"        %% "soundprocesses-core"     % deps.lucre.soundProcesses,
+      "org.scala-lang"  %  "scala-reflect"           % scalaVersion.value,
+      "de.sciss"        %% "scalacolliderugens-core" % deps.test.ugens,             // sbt problem
+      "de.sciss"        %% s"lucre-$bdb"             % deps.core.lucre  % Test
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)
   )
