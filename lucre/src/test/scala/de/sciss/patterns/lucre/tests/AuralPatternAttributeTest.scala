@@ -46,7 +46,7 @@ class AuralPatternAttributeTest[S <: Sys[S]](name: String)(implicit cursor: stm.
 
       val pat = Pattern.newConst[S](patVal)
 //      pat.graph() = patVal
-      _view.objH().attr.put("pitch", pat)
+      _view.obj.attr.put("pitch", pat)
 
       _view
     }

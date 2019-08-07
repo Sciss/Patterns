@@ -95,14 +95,17 @@ object AuralPatternAttribute extends AuralAttribute.Factory {
     case _          => None
   }
 
-  private final class ViewImpl[S <: Sys[S]](pat: AuralAttribute[S], val value: AuralAttribute.Scalar, val span: Span)
+  private final class ViewImpl[S <: Sys[S]](pat: AuralAttribute[S] { type Repr = Pattern[S] },
+                                            val value: AuralAttribute.Scalar, val span: Span)
     extends View[S] with ObservableImpl[S, Runner.State] {
 
     private[this] final val stateRef = Ref[State](Stopped)
 
     def tpe: Obj.Type = Pattern
 
-    def objH: Source[S#Tx, Obj[S]] = pat.objH
+    type Repr = Pattern[S]
+
+    def obj(implicit tx: S#Tx): Repr = pat.obj
 
     override def toString = s"AuralPatternAttribute.View($value, $span)"
 
@@ -128,7 +131,7 @@ object AuralPatternAttribute extends AuralAttribute.Factory {
   }
 }
 final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: String,
-                                                                  val objH: stm.Source[S#Tx, Pattern[S]],
+                                                                  objH: stm.Source[S#Tx, Pattern[S]],
                                                                   observer: AuralAttribute.Observer[S],
                                                                   tree: SkipList.Map[I1, Long, AuralPatternAttribute.View[S]])
                                                                (implicit protected val context: AuralContext[S],
@@ -141,6 +144,10 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](val key: Strin
   import TxnLike.peer
 
   def tpe: Obj.Type = Pattern
+
+  type Repr = Pattern[S]
+
+  def obj(implicit tx: S#Tx): Pattern[S] = objH()
 
   type ViewId     = Unit
   type Elem       = AuralPatternAttribute.View[S]

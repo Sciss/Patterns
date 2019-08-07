@@ -55,7 +55,7 @@ class PatternOnTimelineTest[S <: Sys[S]](name: String)(implicit cursor: stm.Curs
       pat.attr.put("play", p)
 
       val tl = timelineV()
-      tl.objH().modifiableOption.get.add(Span(frame(0.1), frame(5.0)), pat)
+      tl.obj.modifiableOption.get.add(Span(frame(0.1), frame(5.0)), pat)
       tl
     }
 

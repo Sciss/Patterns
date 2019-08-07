@@ -25,7 +25,7 @@ import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 import de.sciss.synth.proc
 import de.sciss.synth.proc.Code.{Example, Import}
 import de.sciss.synth.proc.Runner
-import de.sciss.synth.proc.impl.{BasicRunnerImpl, CodeImpl}
+import de.sciss.synth.proc.impl.{BasicAuralRunnerImpl, CodeImpl}
 
 import scala.collection.immutable.{IndexedSeq => Vec, Seq => ISeq}
 import scala.concurrent.Future
@@ -43,7 +43,7 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
   type Repr[~ <: Sys[~]] = Pattern[~]
 
   def mkRunner[S <: SSys[S]](obj: Pattern[S])(implicit tx: S#Tx, universe: Runner.Universe[S]): Runner[S] =
-    BasicRunnerImpl(obj)
+    BasicAuralRunnerImpl(obj)
 
   override def init(): Unit = {
     super.init()

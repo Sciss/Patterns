@@ -72,7 +72,7 @@ object AuralPatternObj extends AuralObj.Factory {
 
   protected final case class ElemHandle[S <: Sys[S], Elem](/* idH: stm.Source[S#Tx, S#Id], */ span: SpanLike, view: Elem)
 }
-final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source[S#Tx, Pattern[S]],
+final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](objH: stm.Source[S#Tx, Pattern[S]],
 //                                                            tree: SkipOctree[I1, LongSpace.TwoDim, (SpanLike, Vec[(stm.Source[S#Tx, S#Id], AuralObj[S])])]
                                                             tree: SkipOctree[I1, LongSpace.TwoDim, (SpanLike, Vec[AuralObj[S]])]
                                                            )
@@ -86,6 +86,10 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](val objH: stm.Source
   import TxnLike.peer
 
   def tpe: Obj.Type = Pattern
+
+  type Repr = Pattern[S]
+
+  def obj(implicit tx: S#Tx): Pattern[S] = objH()
 
   type ViewId     = Unit
   type Elem       = AuralObj[S]
