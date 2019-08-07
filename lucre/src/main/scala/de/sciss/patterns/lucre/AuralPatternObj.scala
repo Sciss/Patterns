@@ -30,8 +30,7 @@ import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.UGenSource.Vec
 import de.sciss.synth.proc.impl.AuralScheduledBase
 import de.sciss.synth.proc.impl.AuralTimelineBase.spanToPoint
-import de.sciss.synth.proc.{AuralContext, AuralObj, Proc, TimeRef}
-import de.sciss.synth.proc.{logAural => logA}
+import de.sciss.synth.proc.{AuralContext, AuralObj, Proc, Runner, TimeRef, logAural => logA}
 
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
@@ -46,8 +45,10 @@ object AuralPatternObj extends AuralObj.Factory {
 
   def init(): Unit = _init
 
-  def apply[S <: Sys[S]](pat: Pattern[S])(implicit tx: S#Tx, context: AuralContext[S]): AuralObj[S] = {
+  def apply[S <: Sys[S]](pat: Pattern[S], attr: Runner.Attr
+                        )(implicit tx: S#Tx, context: AuralContext[S]): AuralObj[S] = {
     val system  = tx.system
+    // XXX TODO --- pass on `attr`
     val res     = prepare[S, system.I](pat)(tx, system, context) // IntelliJ highlight bug
     res.init(pat)
   }

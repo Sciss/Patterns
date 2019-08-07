@@ -26,7 +26,7 @@ import de.sciss.serial.Serializer
 import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.proc.Runner.{State, Stopped}
 import de.sciss.synth.proc.impl.AuralScheduledBase
-import de.sciss.synth.proc.{AuralAttribute, AuralContext, Runner, TimeRef, ViewBase}
+import de.sciss.synth.proc.{AuralAttribute, AuralContext, ObjViewBase, Runner, TimeRef}
 
 import scala.annotation.tailrec
 import scala.concurrent.stm.Ref
@@ -66,7 +66,7 @@ object AuralPatternAttribute extends AuralAttribute.Factory {
     new AuralPatternAttribute[S, I1](key, tx.newHandle(value), observer, tree /* , viewMap */)
   }
 
-  trait View[S <: Sys[S]] extends ViewBase[S, AuralAttribute.Target[S]] {
+  trait View[S <: Sys[S]] extends ObjViewBase[S, AuralAttribute.Target[S]] {
     def span  : Span
     def value : AuralAttribute.Scalar
     def start : Long = span.start

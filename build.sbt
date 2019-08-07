@@ -1,17 +1,17 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.13.0"
-lazy val mimaVersion        = "0.13.0"
+lazy val projectVersion     = "0.14.0-SNAPSHOT"
+lazy val mimaVersion        = "0.14.0"
 
 val deps = new {
   val core = new {
-    val lucre               = "3.13.1"
+    val lucre               = "3.13.2-SNAPSHOT"
     val numbers             = "0.2.0"
     val optional            = "1.0.0"
     val serial              = "1.1.1"
   }
   val lucre = new {
-    val soundProcesses      = "3.30.0"
+    val soundProcesses      = "3.31.0-SNAPSHOT"
   }
   val test = new {
     val kollFlitz           = "0.2.3"
@@ -27,8 +27,8 @@ lazy val commonSettings = Seq(
   organization        := "de.sciss",
   description         := "Translating SuperCollider's patterns to Scala",
   homepage            := Some(url(s"https://git.iem.at/sciss/$baseName")),
-  scalaVersion        := "2.12.8",
-  crossScalaVersions  := Seq("2.12.8", "2.11.12", "2.13.0"),
+  scalaVersion        := "2.12.9",
+  crossScalaVersions  := Seq("2.13.0", "2.12.9"),
   licenses            := Seq(lgpl2),
   scalacOptions      ++= Seq(
     "-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xlint", "-Xsource:2.13"
