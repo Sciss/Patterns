@@ -28,7 +28,7 @@ import de.sciss.synth.proc.{AuralContext, TimeRef, UGenGraphBuilder => UGB}
   * others (audio-cues) directly from an event value, typically coming from a pattern.
   */
 final class AuralProcEvtImpl[S <: Sys[S]](evt: Event)(implicit context: AuralContext[S])
-  extends AuralProcImpl.Impl[S](evt.map) {
+  extends AuralProcImpl.Impl[S](??? /*evt.map*/) {
 
   override def requestInput[Res](in: UGB.Input { type Value = Res }, st: UGB.Requester[S])
                                 (implicit tx: S#Tx): Res = in match {

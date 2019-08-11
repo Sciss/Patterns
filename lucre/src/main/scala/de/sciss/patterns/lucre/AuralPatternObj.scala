@@ -45,7 +45,7 @@ object AuralPatternObj extends AuralObj.Factory {
 
   def init(): Unit = _init
 
-  def apply[S <: Sys[S]](pat: Pattern[S], attr: Runner.Attr
+  def apply[S <: Sys[S]](pat: Pattern[S], attr: Runner.Attr[S]
                         )(implicit tx: S#Tx, context: AuralContext[S]): AuralObj[S] = {
     val system  = tx.system
     // XXX TODO --- pass on `attr`
