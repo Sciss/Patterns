@@ -24,8 +24,8 @@ import de.sciss.patterns.{Graph, Pat, Stream, stream}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 import de.sciss.synth.proc
 import de.sciss.synth.proc.Code.{Example, Import}
-import de.sciss.synth.proc.{Runner, Universe}
 import de.sciss.synth.proc.impl.{BasicAuralRunnerImpl, CodeImpl}
+import de.sciss.synth.proc.{Runner, Universe}
 
 import scala.collection.immutable.{IndexedSeq => Vec, Seq => ISeq}
 import scala.concurrent.Future
@@ -41,6 +41,11 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
   def isSingleton : Boolean = false
 
   type Repr[~ <: Sys[~]] = Pattern[~]
+
+  def tryParse(value: Any): Option[Pat[_]] = value match {
+    case x: Pat[_]  => Some(x)
+    case _          => None
+  }
 
   def mkRunner[S <: SSys[S]](obj: Pattern[S])(implicit tx: S#Tx, universe: Universe[S]): Runner[S] =
     BasicAuralRunnerImpl(obj)
