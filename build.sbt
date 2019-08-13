@@ -33,6 +33,7 @@ lazy val commonSettings = Seq(
   scalacOptions      ++= Seq(
     "-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xlint", "-Xsource:2.13"
   ),
+  scalacOptions in (Compile, compile) ++= (if (scala.util.Properties.isJavaAtLeast("9")) Seq("-release", "8") else Nil), // JDK >8 breaks API; skip scala-doc
   resolvers           += "Oracle Repository" at "http://download.oracle.com/maven",  // required for sleepycat
   updateOptions       := updateOptions.value.withLatestSnapshots(false)
 ) ++ publishSettings
