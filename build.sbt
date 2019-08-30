@@ -29,7 +29,7 @@ lazy val commonSettings = Seq(
   homepage            := Some(url(s"https://git.iem.at/sciss/$baseName")),
   scalaVersion        := "2.12.9",
   crossScalaVersions  := Seq("2.13.0", "2.12.9"),
-  licenses            := Seq(lgpl2),
+  licenses            := Seq(agpl),
   scalacOptions      ++= Seq(
     "-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xlint", "-Xsource:2.13"
   ),
@@ -38,7 +38,7 @@ lazy val commonSettings = Seq(
   updateOptions       := updateOptions.value.withLatestSnapshots(false)
 ) ++ publishSettings
 
-lazy val lgpl2 = "LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")
+lazy val agpl = "AGPL v3+" -> url("http://www.gnu.org/licenses/agpl-3.0.txt")
 
 lazy val root = project.in(file("."))
   .aggregate(core, lucre)

@@ -10,7 +10,7 @@ to [SoundProcesses](https://git.iem.at/sciss/SoundProcesses)). Patterns are desc
 streams are stateful iterators, here implemented with an optional transactional layer.
 
 This project is (C)opyright 2017&ndash;2019 by Hanns Holger Rutz. All rights reserved. This project is released under 
-the [GNU Lesser General Public License](https://git.iem.at/sciss/Patterns/raw/master/LICENSE) v2.1+ and comes 
+the [GNU Affero General Public License](https://git.iem.at/sciss/Patterns/raw/master/LICENSE) v3+ and comes 
 with absolutely no warranties. To contact the author, send an email to `contact at sciss.de`
 
 ## requirements / installation
