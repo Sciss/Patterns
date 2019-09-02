@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.aux.Aux
+import de.sciss.lucre.adjunct.Adjunct
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Base, Sys}
 import de.sciss.patterns.impl.PatElem
@@ -27,7 +27,7 @@ object FolderCollectImpl extends StreamFactory {
   final val typeId = 0x466C436C // "FlCl"
 
   def expand[S <: Base[S], A](pat: graph.Folder.Collect[A])
-                             (implicit ctx: Context[S], tx: S#Tx, ex: Obj.Aux[A]): Stream[S, A] = {
+                             (implicit ctx: Context[S], tx: S#Tx, ex: Obj.Adjunct[A]): Stream[S, A] = {
     import pat.key
     val id        = tx.newId()
     val index     = tx.newIntVar    (id, 0)
@@ -47,7 +47,7 @@ object FolderCollectImpl extends StreamFactory {
     val state     = PatElem.readVar[S, Any] (id, in)
     val _hasNext  = tx.readBooleanVar       (id, in)
     val valid     = tx.readBooleanVar       (id, in)
-    val ex        = Aux.readT[Obj.Aux[Any]](in)
+    val ex        = Adjunct.readT[Obj.Adjunct[Any]](in)
 
     new StreamImpl[S, Any](id = id, key = key, index = index, state = state,
       _hasNext = _hasNext, valid = valid, ex = ex)
@@ -59,7 +59,7 @@ object FolderCollectImpl extends StreamFactory {
                                                   state    : S#Var[A      ],
                                                   _hasNext : S#Var[Boolean],
                                                   valid    : S#Var[Boolean],
-                                                  ex       : Obj.Aux[A]
+                                                  ex       : Obj.Adjunct[A]
                                                  )
     extends Stream[S, A] {
 

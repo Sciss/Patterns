@@ -1,25 +1,10 @@
 package de.sciss.patterns
 package lucre
 
-import de.sciss.lucre.stm.Durable
-import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.patterns.graph.Constant
-import org.scalatest.{Matchers, Outcome, fixture}
+import org.scalatest.Matchers
 
-class EventSerializationSpec extends fixture.FlatSpec with Matchers {
-  type S = Durable
-  type FixtureParam = S
-
-  final def withFixture(test: OneArgTest): Outcome = {
-    val system = Durable(BerkeleyDB.tmp())
-    try {
-      test(system)
-    }
-    finally {
-      system.close()
-    }
-  }
-
+class EventSerializationSpec extends DurableSpec with Matchers {
   "Event" should "be serializable" in { implicit sys =>
     sys.step { implicit tx =>
       val e = Event(Map("dur" -> Pat(1.0, 2.0, 3.0), "blah" -> Constant(-1)))

@@ -13,28 +13,29 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.aux.Aux.Factory
+import de.sciss.lucre.adjunct.Adjunct.Factory
+import de.sciss.lucre.adjunct.{Adjunct => _Adjunct}
 import de.sciss.lucre.expr.{BooleanObj, DoubleObj, IntObj, LongObj, StringObj}
+import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Sys
-import de.sciss.lucre.{aux, stm}
 import de.sciss.patterns.graph.{AudioCue, Folder}
 import de.sciss.serial.DataInput
 
 object Obj {
   private lazy val _init: Unit = {
-    aux.Aux.addFactory(Extractor.Int)
-    aux.Aux.addFactory(Extractor.Long)
-    aux.Aux.addFactory(Extractor.Double)
-    aux.Aux.addFactory(Extractor.Boolean)
-    aux.Aux.addFactory(Extractor.String)
-    aux.Aux.addFactory(AudioCue )
-    aux.Aux.addFactory(Folder   )
+    _Adjunct.addFactory(Extractor.Int)
+    _Adjunct.addFactory(Extractor.Long)
+    _Adjunct.addFactory(Extractor.Double)
+    _Adjunct.addFactory(Extractor.Boolean)
+    _Adjunct.addFactory(Extractor.String)
+    _Adjunct.addFactory(AudioCue )
+    _Adjunct.addFactory(Folder   )
   }
 
   def init(): Unit = _init
 
   object Extractor {
-    implicit object Int extends Aux[scala.Int] with Factory {
+    implicit object Int extends Adjunct[scala.Int] with Factory {
       final val id = 0x400
 
       def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Int] = obj match {
@@ -45,10 +46,10 @@ object Obj {
         case _                => None
       }
 
-      def readIdentifiedAux(in: DataInput): aux.Aux = this
+      override def readIdentifiedAdjunct(in: DataInput): _Adjunct = this
     }
 
-    implicit object Double extends Aux[scala.Double] with Factory {
+    implicit object Double extends Adjunct[scala.Double] with Factory {
       final val id = 0x402
 
       def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Double] = obj match {
@@ -59,10 +60,10 @@ object Obj {
         case _                => None
       }
 
-      def readIdentifiedAux(in: DataInput): aux.Aux = this
+      override def readIdentifiedAdjunct(in: DataInput): _Adjunct = this
     }
 
-    implicit object Boolean extends Aux[scala.Boolean] with Factory {
+    implicit object Boolean extends Adjunct[scala.Boolean] with Factory {
       final val id = 0x404
 
       def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Boolean] = obj match {
@@ -73,10 +74,10 @@ object Obj {
         case _                => None
       }
 
-      def readIdentifiedAux(in: DataInput): aux.Aux = this
+      override def readIdentifiedAdjunct(in: DataInput): _Adjunct = this
     }
 
-    implicit object Long extends Aux[scala.Long] with Factory {
+    implicit object Long extends Adjunct[scala.Long] with Factory {
       final val id = 0x406
 
       def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Long] = obj match {
@@ -87,10 +88,10 @@ object Obj {
         case _                => None
       }
 
-      def readIdentifiedAux(in: DataInput): aux.Aux = this
+      override def readIdentifiedAdjunct(in: DataInput): _Adjunct = this
     }
 
-    implicit object String extends Aux[java.lang.String] with Factory {
+    implicit object String extends Adjunct[java.lang.String] with Factory {
       final val id = 0x410
 
       def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[java.lang.String] = obj match {
@@ -102,7 +103,7 @@ object Obj {
         case _                => None
       }
 
-      def readIdentifiedAux(in: DataInput): aux.Aux = this
+      override def readIdentifiedAdjunct(in: DataInput): _Adjunct = this
     }
   }
 
@@ -114,5 +115,5 @@ object Obj {
     def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[A]
   }
 
-  trait Aux[A] extends Extractor[A] with aux.Aux
+  trait Adjunct[A] extends Extractor[A] with _Adjunct
 }

@@ -14,8 +14,8 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.aux.Aux
-import de.sciss.lucre.aux.Aux.ScalarOrd
+import de.sciss.lucre.adjunct.Adjunct
+import de.sciss.lucre.adjunct.Adjunct.ScalarOrd
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.Sorted
 import de.sciss.serial.{DataInput, DataOutput}
@@ -39,7 +39,7 @@ object SortedImpl extends StreamFactory {
     val inStream      = Stream.read[S, Any](in, access)
     val sortedStream  = tx.readVar[Stream[S, Any]](id, in)
     val valid         = tx.readBooleanVar(id, in)
-    val ord           = Aux.readT[ScalarOrd[Any]](in)
+    val ord           = Adjunct.readT[ScalarOrd[Any]](in)
 
     new StreamImpl[S, Any](id = id, inStream = inStream, sortedStream = sortedStream, valid = valid)(ord)
   }

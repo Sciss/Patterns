@@ -126,7 +126,7 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
         //        "Predef.{any2stringadd => _, _}", // cf. http://stackoverflow.com/questions/7634015/
         Import("de.sciss.numbers.Implicits", All),
         Import("de.sciss.kollflitz.Ops", All),
-        Import("de.sciss.lucre.aux", Name("Aux") :: Nil),
+        Import("de.sciss.lucre.adjunct", Name("Adjunct") :: Nil),
         Import("de.sciss.patterns", All),
         Import("de.sciss.patterns.graph", All),
         Import("de.sciss.patterns.graph.Ops", All)

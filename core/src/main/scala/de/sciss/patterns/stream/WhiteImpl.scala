@@ -14,8 +14,8 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.aux.Aux
-import de.sciss.lucre.aux.Aux.Num
+import de.sciss.lucre.adjunct.Adjunct
+import de.sciss.lucre.adjunct.Adjunct.Num
 import de.sciss.lucre.stm.{Base, TxnRandom}
 import de.sciss.patterns.graph.White
 import de.sciss.patterns.impl.PatElem
@@ -47,7 +47,7 @@ object WhiteImpl extends StreamFactory {
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
     val r         = TxnRandom.read(in, access)
-    val num       = Aux.readT[Num[Any]](in)
+    val num       = Adjunct.readT[Num[Any]](in)
 
     new StreamImpl[S, Any](id = id, loStream = loStream, hiStream = hiStream, state = state, _hasNext = _hasNext,
       valid = valid)(r, num)
@@ -82,7 +82,7 @@ object WhiteImpl extends StreamFactory {
       _hasNext.write(out)
       valid   .write(out)
       r       .write(out)
-//      Aux.write(out, num)
+//      Adjunct.write(out, num)
       num     .write(out)
     }
 

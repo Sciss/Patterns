@@ -14,8 +14,8 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.aux.Aux
-import de.sciss.lucre.aux.Aux.Num
+import de.sciss.lucre.adjunct.Adjunct
+import de.sciss.lucre.adjunct.Adjunct.Num
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.Differentiate
 import de.sciss.patterns.impl.PatElem
@@ -45,7 +45,7 @@ object DifferentiateImpl extends StreamFactory {
     val state     = PatElem.readVar[S, Any](id, in)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
-    val num       = Aux.readT[Num[Any]](in)
+    val num       = Adjunct.readT[Num[Any]](in)
 
     new StreamImpl[S, Any](id = id, inStream = inStream, x1 = x1, state = state, _hasNext = _hasNext,
       valid = valid)(num)

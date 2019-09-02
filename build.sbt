@@ -1,17 +1,17 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.14.0"
-lazy val mimaVersion        = "0.14.0"
+lazy val projectVersion     = "0.15.1"
+lazy val mimaVersion        = "0.15.1"
 
 val deps = new {
   val core = new {
-    val lucre               = "3.14.0"
+    val lucre               = "3.15.0"
     val numbers             = "0.2.0"
     val optional            = "1.0.0"
     val serial              = "1.1.1"
   }
   val lucre = new {
-    val soundProcesses      = "3.31.0"
+    val soundProcesses      = "3.32.0"
   }
   val test = new {
     val kollFlitz           = "0.2.3"
@@ -35,7 +35,8 @@ lazy val commonSettings = Seq(
   ),
   scalacOptions in (Compile, compile) ++= (if (scala.util.Properties.isJavaAtLeast("9")) Seq("-release", "8") else Nil), // JDK >8 breaks API; skip scala-doc
   resolvers           += "Oracle Repository" at "http://download.oracle.com/maven",  // required for sleepycat
-  updateOptions       := updateOptions.value.withLatestSnapshots(false)
+  updateOptions       := updateOptions.value.withLatestSnapshots(false),
+  parallelExecution in Test := false,
 ) ++ publishSettings
 
 lazy val agpl = "AGPL v3+" -> url("http://www.gnu.org/licenses/agpl-3.0.txt")
@@ -90,7 +91,7 @@ lazy val core = project.in(file("core"))
       "de.sciss"      %% "numbers"                      % deps.core.numbers,
       "de.sciss"      %% "optional"                     % deps.core.optional,
       "de.sciss"      %% "serial"                       % deps.core.serial,
-      "de.sciss"      %% "lucre-aux"                    % deps.core.lucre,
+      "de.sciss"      %% "lucre-adjunct"                % deps.core.lucre,
       "de.sciss"      %% "lucre-data"                   % deps.core.lucre,
       "de.sciss"      %% "kollflitz"                    % deps.test.kollFlitz           % Test,
       "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % Test,

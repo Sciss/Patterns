@@ -15,8 +15,8 @@ package de.sciss.patterns
 package stream
 package impl
 
-import de.sciss.lucre.aux.Aux
-import de.sciss.lucre.aux.Aux.Widen2
+import de.sciss.lucre.adjunct.Adjunct
+import de.sciss.lucre.adjunct.Adjunct.Widen2
 import de.sciss.lucre.stm.Base
 import de.sciss.serial.DataOutput
 
@@ -24,7 +24,7 @@ abstract class ScaleLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A]
   // ---- abstract ----
 
   protected val widen: Widen2[A1, A2, A]
-  protected val num  : Aux
+  protected val num  : Adjunct
 
   import widen._
 

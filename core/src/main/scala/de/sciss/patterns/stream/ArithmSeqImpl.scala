@@ -14,8 +14,8 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.aux.Aux
-import de.sciss.lucre.aux.Aux.{Num, Widen2}
+import de.sciss.lucre.adjunct.Adjunct
+import de.sciss.lucre.adjunct.Adjunct.{Num, Widen2}
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.ArithmSeq
 import de.sciss.patterns.impl.PatElem
@@ -47,8 +47,8 @@ object ArithmSeqImpl extends StreamFactory {
     val state       = PatElem.readVar[S, Any](id, in)
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
-    val num         = Aux.readT[Num[Any]](in)
-    val widen       = Aux.readT[Widen2[Any, Any, Any]](in)
+    val num         = Adjunct.readT[Num[Any]](in)
+    val widen       = Adjunct.readT[Widen2[Any, Any, Any]](in)
 
     new StreamImpl[S, Any, Any, Any](id = id, startStream = startStream, stepStream = stepStream, state = state,
       _hasNext = _hasNext, valid = valid)(num, widen)

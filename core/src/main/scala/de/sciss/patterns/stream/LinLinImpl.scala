@@ -14,8 +14,8 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.aux.Aux
-import de.sciss.lucre.aux.Aux.{NumFrac, Widen2}
+import de.sciss.lucre.adjunct.Adjunct
+import de.sciss.lucre.adjunct.Adjunct.{NumFrac, Widen2}
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.LinLin
 import de.sciss.patterns.stream.impl.ScaleLikeStreamImpl
@@ -44,8 +44,8 @@ object LinLinImpl extends StreamFactory {
     val outLoStream = Stream.read[S, Any](in, access)
     val outHiStream = Stream.read[S, Any](in, access)
 
-    val widen       = Aux.readT[Widen2[Any, Any, Any]](in)
-    val num         = Aux.readT[NumFrac[Any]]         (in)
+    val widen       = Adjunct.readT[Widen2[Any, Any, Any]](in)
+    val num         = Adjunct.readT[NumFrac[Any]]         (in)
 
     new StreamImpl[S, Any, Any, Any](inStream = inStream, inLoStream = inLoStream, inHiStream = inHiStream,
       outLoStream = outLoStream, outHiStream = outHiStream)(widen, num)

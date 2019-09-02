@@ -14,8 +14,8 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.aux.Aux
-import de.sciss.lucre.aux.Aux.Widen2
+import de.sciss.lucre.adjunct.Adjunct
+import de.sciss.lucre.adjunct.Adjunct.Widen2
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.Cat
 import de.sciss.serial.{DataInput, DataOutput}
@@ -35,7 +35,7 @@ object CatImpl extends StreamFactory {
                                   (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
     val aStream     = Stream.read[S, Any](in, access)
     val bStream     = Stream.read[S, Any](in, access)
-    val widen       = Aux.readT[Widen2[Any, Any, Any]](in)
+    val widen       = Adjunct.readT[Widen2[Any, Any, Any]](in)
 
     new StreamImpl[S, Any, Any, Any](aStream = aStream, bStream = bStream, widen = widen)
   }

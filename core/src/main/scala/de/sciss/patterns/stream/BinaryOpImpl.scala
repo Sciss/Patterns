@@ -14,8 +14,8 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.aux.Aux
-import de.sciss.lucre.aux.Aux.Widen2
+import de.sciss.lucre.adjunct.Adjunct
+import de.sciss.lucre.adjunct.Adjunct.Widen2
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.BinaryOp
 import de.sciss.patterns.impl.PatElem
@@ -42,7 +42,7 @@ object BinaryOpImpl extends StreamFactory {
     val state       = op.readState(in, access)
     val aStream     = Stream.read[S, Pat[Any]](in, access)
     val bStream     = Stream.read[S, Pat[Any]](in, access)
-    val widen       = Aux.readT[Widen2[Any, Any, Any]](in)
+    val widen       = Adjunct.readT[Widen2[Any, Any, Any]](in)
 
     new StreamImpl[S, Any, Any, Any, Any, op.State](op = op, state = state, aStream = aStream, bStream = bStream)(widen)
   }

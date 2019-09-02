@@ -14,23 +14,23 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.aux.Aux
+import de.sciss.lucre.adjunct.Adjunct
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Base, Sys}
 import de.sciss.patterns.stream.{AudioCueNumChannelsImpl, AudioCueNumFramesImpl, AudioCueSampleRateImpl}
 import de.sciss.serial.DataInput
 import de.sciss.synth.proc
 
-object AudioCue extends Obj.Aux[AudioCue] with Aux.Factory {
+object AudioCue extends Obj.Adjunct[AudioCue] with Adjunct.Factory {
 //  def typeId: Int = proc.AudioCue.typeId
 
 //  type Repr[S <: Sys[S]] = proc.AudioCue.Obj[S]
 
   final val id: Int = 0x481
 
-  implicit def tpe: Obj.Aux[AudioCue] = this
+  implicit def tpe: Obj.Adjunct[AudioCue] = this
 
-  def readIdentifiedAux(in: DataInput): Aux = this
+  override def readIdentifiedAdjunct(in: DataInput): Adjunct = this
 
   def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[AudioCue] = obj match {
     case ao: proc.AudioCue.Obj[S] => Some(AudioCue(ao.value))

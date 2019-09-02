@@ -1,29 +1,10 @@
 package de.sciss.patterns.lucre
 
-import de.sciss.lucre.stm.Durable
-import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.patterns.{Graph, Pat, RonTuplePure, graph}
 import de.sciss.serial.{DataInput, DataOutput}
-import de.sciss.synth.proc.SoundProcesses
-import org.scalatest.{Matchers, Outcome, fixture}
+import org.scalatest.Matchers
 
-class SerializationSpec extends fixture.FlatSpec with Matchers {
-  type S = Durable
-  type FixtureParam = S
-
-  SoundProcesses.init()
-  Pattern       .init()
-
-  protected def withFixture(test: OneArgTest): Outcome = {
-    val store  = BerkeleyDB.tmp()
-    val system = Durable(store)
-    try {
-      test(system)
-    } finally {
-      system.close()
-    }
-  }
-
+class SerializationSpec extends DurableSpec with Matchers {
   "A Pattern object" should "be serializable" in { cursor =>
     val g = Graph[Int] {
       import graph._

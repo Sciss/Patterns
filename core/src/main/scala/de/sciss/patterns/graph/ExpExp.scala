@@ -13,8 +13,8 @@
 
 package de.sciss.patterns.graph
 
-import de.sciss.lucre.aux.{Aux, ProductWithAux}
-import de.sciss.lucre.aux.Aux.{NumDouble, Widen2}
+import de.sciss.lucre.adjunct.Adjunct.{NumDouble, Widen2}
+import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.stream.ExpExpImpl
 import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
@@ -22,9 +22,9 @@ import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
 final case class ExpExp[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
                                    outLo: Pat[A2], outHi: Pat[A2])
                                   (implicit val widen: Widen2[A1, A2, A], val num: NumDouble[A])
-  extends Pattern[A] with ProductWithAux {
+  extends Pattern[A] with ProductWithAdjuncts {
 
-  override def aux: List[Aux] = widen :: num :: Nil
+  override def adjuncts: List[Adjunct] = widen :: num :: Nil
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     ExpExpImpl.expand(this)

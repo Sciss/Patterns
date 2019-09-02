@@ -1,7 +1,7 @@
 package de.sciss.patterns
 
 import de.sciss.kollflitz
-import de.sciss.lucre.aux.Aux.{Num, ScalarEq}
+import de.sciss.lucre.adjunct.Adjunct.{Num, ScalarEq}
 import de.sciss.lucre.stm.Plain
 import de.sciss.patterns.graph._
 

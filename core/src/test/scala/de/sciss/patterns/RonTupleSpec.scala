@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.lucre.aux.Aux.{Num, ScalarEq}
+import de.sciss.lucre.adjunct.Adjunct.{Num, ScalarEq}
 import de.sciss.patterns.graph.{Constant, Gate, Hold}
 
 class RonTupleSpec extends PatSpec {

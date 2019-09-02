@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.lucre.aux.Aux.{Num, Widen, Widen2}
+import de.sciss.lucre.adjunct.Adjunct.{Num, Widen, Widen2}
 import de.sciss.patterns.graph._
 
 trait TypeInferenceTests {

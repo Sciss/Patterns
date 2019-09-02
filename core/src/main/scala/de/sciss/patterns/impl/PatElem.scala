@@ -16,7 +16,7 @@ package impl
 
 import java.util
 
-import de.sciss.lucre.aux.{Aux, ProductWithAux}
+import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.graph.Constant
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
@@ -95,8 +95,8 @@ object PatElem {
   private def readIdentifiedProduct(in: DataInput, ref: RefMapIn): Product = {
     val prefix    = in.readUTF()
     val arity     = in.readShort()
-    val numAux    = in.readByte()
-    val numElem   = arity + numAux
+    val numAdj    = in.readByte()
+    val numElem   = arity + numAdj
     val className = if (Character.isUpperCase(prefix.charAt(0))) s"de.sciss.patterns.graph.$prefix" else prefix
 
     val res = try {
@@ -115,9 +115,9 @@ object PatElem {
           elems(i) = read(in, ref).asInstanceOf[AnyRef]
           i += 1
         }
-        val i1 = i + numAux
+        val i1 = i + numAdj
         while (i < i1) {
-          elems(i) = Aux.read(in)
+          elems(i) = Adjunct.read(in)
           i += 1
         }
         //    val m         = companion.getClass.getMethods.find(_.getName == "apply")
@@ -244,8 +244,8 @@ object PatElem {
       return ref0
     }
     out.writeByte('P')
-    val aux     = p match {
-      case hasAux: ProductWithAux => hasAux.aux
+    val adjuncts = p match {
+      case hasAdj: ProductWithAdjuncts => hasAdj.adjuncts
       case _ => Nil
     }
     val pck     = p.getClass.getPackage.getName
@@ -253,14 +253,14 @@ object PatElem {
     val name    = if (pck == "de.sciss.patterns.graph") prefix else s"$pck.$prefix"
     out.writeUTF(name)
     out.writeShort(p.productArity)
-    out.writeByte(aux.size)
+    out.writeByte(adjuncts.size)
 
     var ref = ref0
     val it = p.productIterator
     while (it.hasNext) {
       ref = write(it.next(), out, ref)
     }
-    aux.foreach(Aux.write(out, _))
+    adjuncts.foreach(Adjunct.write(out, _))
 
     val id      = ref.size() // count
     ref.put(p, id)

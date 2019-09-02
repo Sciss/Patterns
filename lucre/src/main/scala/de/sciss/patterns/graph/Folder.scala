@@ -14,32 +14,32 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.aux.{Aux, ProductWithAux}
+import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Base, Sys}
 import de.sciss.patterns.stream.FolderCollectImpl
 import de.sciss.serial.DataInput
 
-object Folder extends Obj.Aux[Folder] with Aux.Factory {
+object Folder extends Obj.Adjunct[Folder] with Adjunct.Factory {
 //  def typeId: Int = stm.Folder.typeId
 
   final val id = 0x480
 
   //  type Repr[S <: Sys[S]] = stm.Folder[S]
 
-  implicit def tpe: Obj.Aux[Folder] = this
+  implicit def tpe: Obj.Adjunct[Folder] = this
 
-  def readIdentifiedAux(in: DataInput): Aux = this
+  override def readIdentifiedAdjunct(in: DataInput): Adjunct = this
 
   def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[Folder] = obj match {
     case _: stm.Folder[S] => Some(Folder())
     case _ => None
   }
 
-  final case class Collect[A](key: String)(implicit val ex: Obj.Aux[A])
-    extends Pattern[A] with ProductWithAux {
+  final case class Collect[A](key: String)(implicit val ex: Obj.Adjunct[A])
+    extends Pattern[A] with ProductWithAdjuncts {
 
-    override def aux: List[Aux] = ex :: Nil
+    override def adjuncts: List[Adjunct] = ex :: Nil
 
     def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
       FolderCollectImpl.expand(this)

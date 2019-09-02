@@ -15,7 +15,7 @@ package de.sciss.patterns
 package stream
 package impl
 
-import de.sciss.lucre.aux.Aux.{Num, Widen2}
+import de.sciss.lucre.adjunct.Adjunct.{Num, Widen2}
 import de.sciss.lucre.stm.Base
 import de.sciss.serial.DataOutput
 
@@ -42,8 +42,8 @@ abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A
     state       .write(out)
     _hasNext    .write(out)
     valid       .write(out)
-//    Aux.write(out, num  )
-//    Aux.write(out, widen)
+//    Adjunct.write(out, num  )
+//    Adjunct.write(out, widen)
     num         .write(out)
     widen       .write(out)
   }

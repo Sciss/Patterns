@@ -14,16 +14,16 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.aux.{Aux, ProductWithAux}
-import de.sciss.lucre.aux.Aux.{Num, Widen2}
+import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
+import de.sciss.lucre.adjunct.Adjunct.{Num, Widen2}
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.stream.BrownImpl
 
 final case class Brown[A1, A2, A](lo: Pat[A1], hi: Pat[A1], step: Pat[A2])
                                  (implicit val widen: Widen2[A1, A2, A], val num: Num[A])
-  extends Pattern[A] with ProductWithAux {
+  extends Pattern[A] with ProductWithAdjuncts {
 
-  override def aux: List[Aux] = widen :: num :: Nil
+  override def adjuncts: List[Adjunct] = widen :: num :: Nil
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     BrownImpl.expand(this)

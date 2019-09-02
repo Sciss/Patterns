@@ -14,8 +14,8 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.aux.Aux
-import de.sciss.lucre.aux.Aux.{Num, Widen2}
+import de.sciss.lucre.adjunct.Adjunct
+import de.sciss.lucre.adjunct.Adjunct.{Num, Widen2}
 import de.sciss.lucre.stm.{Base, Random, TxnRandom}
 import de.sciss.patterns.graph.Brown
 import de.sciss.patterns.impl.PatElem
@@ -51,8 +51,8 @@ object BrownImpl extends StreamFactory {
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
     val r           = TxnRandom.read[S](in, access)
-    val widen       = Aux.readT[Widen2[Any, Any, Any]](in)
-    val num         = Aux.readT[Num[Any]](in)
+    val widen       = Adjunct.readT[Widen2[Any, Any, Any]](in)
+    val num         = Adjunct.readT[Num[Any]](in)
 
     new StreamImpl[S, Any, Any, Any](id = id, loStream = loStream, hiStream = hiStream, stepStream = stepStream,
       state = state, _hasNext = _hasNext,

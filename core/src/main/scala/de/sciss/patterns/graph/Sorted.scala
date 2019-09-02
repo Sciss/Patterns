@@ -14,15 +14,15 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.aux.{Aux, ProductWithAux}
-import de.sciss.lucre.aux.Aux.ScalarOrd
+import de.sciss.lucre.adjunct.Adjunct.ScalarOrd
+import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.stream.SortedImpl
 
 final case class Sorted[A](in: Pat[A])(implicit val ord: ScalarOrd[A])
-  extends Pattern[A] with ProductWithAux {
+  extends Pattern[A] with ProductWithAdjuncts {
 
-  override def aux: List[Aux] = ord :: Nil
+  override def adjuncts: List[Adjunct] = ord :: Nil
 
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     SortedImpl.expand(this)

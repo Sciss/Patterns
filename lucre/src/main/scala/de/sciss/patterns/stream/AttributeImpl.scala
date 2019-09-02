@@ -13,7 +13,7 @@
 
 package de.sciss.patterns.stream
 
-import de.sciss.lucre.aux.Aux
+import de.sciss.lucre.adjunct.Adjunct
 import de.sciss.lucre.stm.Base
 import de.sciss.patterns.impl.PatElem
 import de.sciss.patterns.lucre.{Context => LContext}
@@ -39,7 +39,7 @@ object AttributeImpl extends StreamFactory {
     val _next     = PatElem.readVar[S, Any](id, in)
     val _hasNext  = tx.readBooleanVar(id, in)
     val valid     = tx.readBooleanVar(id, in)
-    val ex        = Aux.readT[Obj.Aux[Any]](in)
+    val ex        = Adjunct.readT[Obj.Adjunct[Any]](in)
 
     new StreamImpl[S, Any](id = id, key = key, _next = _next, _hasNext = _hasNext, valid = valid)(ex)
   }
@@ -50,7 +50,7 @@ object AttributeImpl extends StreamFactory {
                                                   _hasNext: S#Var[Boolean],
                                                   valid   : S#Var[Boolean]
                                                  )(
-                                                   implicit ex: Obj.Aux[A]
+                                                   implicit ex: Obj.Adjunct[A]
   )
     extends Stream[S, A] {
 

@@ -1,26 +1,12 @@
 package de.sciss.patterns
 package lucre
 
-import de.sciss.lucre.aux.Aux.WidenToDouble
-import de.sciss.lucre.stm.store.BerkeleyDB
-import de.sciss.lucre.stm.{Durable, Plain}
+import de.sciss.lucre.adjunct.Adjunct.WidenToDouble
+import de.sciss.lucre.stm.Plain
 import de.sciss.patterns
-import org.scalatest.{Matchers, Outcome, fixture}
+import org.scalatest.Matchers
 
-class StreamSerializationSpec extends fixture.FlatSpec with Matchers {
-  type S = Durable
-  type FixtureParam = Durable
-
-  final def withFixture(test: OneArgTest): Outcome = {
-    val system = Durable(BerkeleyDB.tmp())
-    try {
-      test(system)
-    }
-    finally {
-      system.close()
-    }
-  }
-
+class StreamSerializationSpec extends DurableSpec with Matchers {
   def verify[A](thunk: => Pat[A])(implicit sys: S): Unit = {
     val p = Graph(thunk)
     verifyGraph(p)

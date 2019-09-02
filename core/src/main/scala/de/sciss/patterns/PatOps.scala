@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.aux.Aux.{Eq, Num, NumBool, NumDouble, NumFrac, NumInt, Ord, ScalarOrd, ToNum, Widen, Widen2, WidenToDouble}
+import de.sciss.lucre.adjunct.Adjunct.{Eq, Num, NumBool, NumDouble, NumFrac, NumInt, Ord, ScalarOrd, ToNum, Widen, Widen2, WidenToDouble}
 import de.sciss.patterns.graph.{BinaryOp => BinOp, UnaryOp => UnOp, _}
 
 /** `PatOps` are operations for patterns (`Pat`). Instead of having these operations directly defined
