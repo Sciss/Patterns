@@ -2,7 +2,7 @@
  *  TapImpl.scala
  *  (Patterns)
  *
- *  Copyright (c) 2017-2018 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2017-2020 Hanns Holger Rutz. All rights reserved.
  *
  *	This software is published under the GNU Affero General Public License v3+
  *
