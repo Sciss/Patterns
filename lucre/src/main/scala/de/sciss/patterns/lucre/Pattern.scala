@@ -52,6 +52,7 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
 
   override def init(): Unit = {
     super.init()
+    Stream.init()
     _init
   }
 

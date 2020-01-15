@@ -17,19 +17,14 @@ import de.sciss.lucre.event.Publisher
 import de.sciss.lucre.stm.{Obj, Sys}
 import de.sciss.lucre.synth.{Sys => SSys}
 import de.sciss.patterns
+import de.sciss.patterns.Pat
 import de.sciss.patterns.lucre.impl.{StreamImpl => Impl}
-import de.sciss.patterns.{Graph, Pat}
-import de.sciss.serial.DataInput
-import de.sciss.synth.proc
-import de.sciss.synth.proc.Code.{Example, Import}
-import de.sciss.synth.proc.impl.{BasicAuralRunnerImpl, CodeImpl}
+import de.sciss.serial.{DataInput, Serializer}
+import de.sciss.synth.proc.impl.BasicAuralRunnerImpl
 import de.sciss.synth.proc.{Runner, Universe}
 
-import scala.collection.immutable.{IndexedSeq => Vec, Seq => ISeq}
-import scala.concurrent.Future
-
 object Stream extends Obj.Type with Runner.Factory {
-  final val typeId = 300
+  final val typeId = 301
 
   /** Source code of the graph function. */
   final val attrSource = "graph-source"
@@ -50,7 +45,8 @@ object Stream extends Obj.Type with Runner.Factory {
   def mkRunner[S <: SSys[S]](obj: Stream[S])(implicit tx: S#Tx, universe: Universe[S]): Runner[S] =
     BasicAuralRunnerImpl(obj)
 
-  override def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Obj[S] = ???
+  override def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Obj[S] =
+    Impl.readIdentifiedObj(in, access)
 
   override def init(): Unit = {
     super.init()
@@ -58,84 +54,17 @@ object Stream extends Obj.Type with Runner.Factory {
   }
 
   private lazy val _init: Unit = {
-    Code  .init()
+//    Code  .init()
     Runner.addFactory(Stream)
-  }
-
-  // ---- Code ----
-
-  object Code extends proc.Code.Type {
-    final val id = 5
-
-    final val prefix    = "Stream"
-    final val humanName = "Stream Graph"
-
-    type Repr = Code
-
-    override def examples: ISeq[Example] = List(
-      Example("Brownian", 'b',
-        """val b = Brown(0, 127, 2)
-          |b
-          |""".stripMargin)
-    )
-
-    override def defaultSource: String = s"${super.defaultSource}Pat()\n"
-
-    def docBaseSymbol: String = "de.sciss.patterns.graph"
-
-    private[this] lazy val _init: Unit = {
-      proc.Code.addType(this)
-      import Import._
-      proc.Code.registerImports(id, Vec(
-        // doesn't work:
-        //        "Predef.{any2stringadd => _, _}", // cf. http://stackoverflow.com/questions/7634015/
-        Import("de.sciss.numbers.Implicits", All),
-        Import("de.sciss.kollflitz.Ops", All),
-        Import("de.sciss.lucre.adjunct", Name("Adjunct") :: Nil),
-        Import("de.sciss.patterns", All),
-        Import("de.sciss.patterns.graph", All),
-        Import("de.sciss.patterns.graph.Ops", All)
-      ))
-      //      proc.Code.registerImports(proc.Code.Action.id, Vec(
-      //        "de.sciss.patterns.lucre.Stream"
-      //      ))
-    }
-
-    // override because we need register imports
-    override def init(): Unit = _init
-
-    def mkCode(source: String): Repr = Code(source)
-  }
-  final case class Code(source: String) extends proc.Code {
-    type In     = Unit
-    type Out    = Pat[Any]
-
-    def tpe: proc.Code.Type = Code
-
-    def compileBody()(implicit compiler: proc.Code.Compiler): Future[Unit] = {
-      import scala.reflect.runtime.universe._
-      CodeImpl.compileBody[In, Out, Pat[Any], Code](this, typeTag[Pat[Any]])
-    }
-
-    def execute(in: In)(implicit compiler: proc.Code.Compiler): Out =
-      Graph {
-        import scala.reflect.runtime.universe._
-        CodeImpl.compileThunk[Pat[Any]](this, typeTag[Pat[Any]], execute = true)
-      }
-
-    def prelude : String =
-      """object Main {
-        |  def __result__ : de.sciss.patterns.Pat[_] = {
-        |""".stripMargin
-
-    def postlude: String = "\n  }\n}\n"
-
-    def updateSource(newText: String): Code = copy(source = newText)
   }
 
   // ---- construction ----
 
   def apply[S <: Sys[S]]()(implicit tx: S#Tx): Stream[S] = Impl()
+
+  def read[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S] = Impl.read(in, access)
+
+  implicit def serializer[S <: Sys[S]]: Serializer[S#Tx, S#Acc, Stream[S]] = Impl.serializer[S]
 
   // ---- events ----
 
