@@ -107,6 +107,7 @@ object Obj {
     }
   }
 
+  // XXX TODO --- DRY --- there should be an equivalent in Lucre now?
   trait Extractor[+A] {
 //    def typeId: Int
 

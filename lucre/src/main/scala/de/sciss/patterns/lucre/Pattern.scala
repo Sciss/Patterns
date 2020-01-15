@@ -1,5 +1,5 @@
 /*
- *  PatObj.scala
+ *  Pattern.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2020 Hanns Holger Rutz. All rights reserved.
@@ -20,7 +20,7 @@ import de.sciss.lucre.synth.{Sys => SSys}
 import de.sciss.lucre.{expr, stm}
 import de.sciss.model.Change
 import de.sciss.patterns
-import de.sciss.patterns.{Graph, Pat, Stream, stream}
+import de.sciss.patterns.{Graph, Pat, Stream => PStream, stream}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 import de.sciss.synth.proc
 import de.sciss.synth.proc.Code.{Example, Import}
@@ -63,11 +63,11 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
 
     Runner.addFactory(Pattern)
 
-    Stream.addFactory(stream.AttributeImpl          )
-    Stream.addFactory(stream.AudioCueNumChannelsImpl)
-    Stream.addFactory(stream.AudioCueNumFramesImpl  )
-    Stream.addFactory(stream.AudioCueSampleRateImpl )
-    Stream.addFactory(stream.FolderCollectImpl      )
+    PStream.addFactory(stream.AttributeImpl          )
+    PStream.addFactory(stream.AudioCueNumChannelsImpl)
+    PStream.addFactory(stream.AudioCueNumFramesImpl  )
+    PStream.addFactory(stream.AudioCueSampleRateImpl )
+    PStream.addFactory(stream.FolderCollectImpl      )
   }
 
   protected def mkConst[S <: Sys[S]](id: S#Id, value: A)(implicit tx: S#Tx): Const[S] =

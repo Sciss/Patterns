@@ -56,6 +56,7 @@ final class StreamSerializer[S <: Base[S], A]()(implicit ctx: Context[S])
         case DifferentiateImpl.typeId => DifferentiateImpl
         case DistinctImpl     .typeId => DistinctImpl
         case DropImpl         .typeId => DropImpl
+        case EmptyImpl        .typeId => EmptyImpl
         case ExpExpImpl       .typeId => ExpExpImpl
         case ExpLinImpl       .typeId => ExpLinImpl
         case FlatMapImpl      .typeId => FlatMapImpl

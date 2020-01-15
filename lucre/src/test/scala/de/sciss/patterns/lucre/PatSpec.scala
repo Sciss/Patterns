@@ -2,7 +2,7 @@ package de.sciss.patterns.lucre
 
 import de.sciss.lucre.stm.InMemory
 import de.sciss.patterns
-import de.sciss.patterns.{Pat, Stream}
+import de.sciss.patterns.{Pat, Stream => PStream}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.stm.InTxn
@@ -28,7 +28,7 @@ trait PatSpec extends FlatSpec with Matchers {
 
   def evalH[A](p: Pat[Pat[A]], n: Int = Int.MaxValue): Seq[Seq[A]] = {
     cursor.step { implicit tx =>
-      val it0: Stream[S, Pat[A]] = p.expand[S]
+      val it0: PStream[S, Pat[A]] = p.expand[S]
       val it1 = it0.toIterator.map(_.expand.toList)
       val it: Iterator[Seq[A]] = if (n == Int.MaxValue) it1 else it1.take(n)
       it.toList
