@@ -134,7 +134,7 @@ object Context {
 trait Context[S <: Sys[S], T <: Sys[T]] extends patterns.Context[T] {
 //  implicit def cursor: stm.Cursor[S]
 
-  def pattern(implicit tx: S#Tx): Pattern[S]
+//  def pattern(implicit tx: S#Tx): Pattern[S]
 
   def expandDual[A](pat: Pat[A])(implicit tx: S#Tx): patterns.Stream[T, A]
 

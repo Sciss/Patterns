@@ -19,7 +19,7 @@ import de.sciss.patterns.stream.EmptyImpl
 
 final case class Empty() extends Pat[Nothing] { pat =>
   def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Nothing] =
-    EmptyImpl.expand(this)
+    EmptyImpl()
 
   def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Nothing] = this
 }

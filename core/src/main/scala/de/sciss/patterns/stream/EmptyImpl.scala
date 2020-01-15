@@ -15,13 +15,12 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.stm.Base
-import de.sciss.patterns.graph.Empty
 import de.sciss.serial.{DataInput, DataOutput}
 
 object EmptyImpl extends StreamFactory {
   final val typeId = 0x456D7074 // "Empt"
 
-  def expand[S <: Base[S]](pat: Empty)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Nothing] =
+  def apply[S <: Base[S]]()(implicit tx: S#Tx): Stream[S, Nothing] =
     new StreamImpl[S]
 
   def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
