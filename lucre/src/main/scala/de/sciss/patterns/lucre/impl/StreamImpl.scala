@@ -16,7 +16,7 @@ package de.sciss.patterns.lucre.impl
 import de.sciss.lucre.event.Targets
 import de.sciss.lucre.stm.impl.ObjSerializer
 import de.sciss.lucre.stm.{Copy, Elem, NoSys, Obj, Sys}
-import de.sciss.lucre.{event => evt}
+import de.sciss.lucre.{stm, event => evt}
 import de.sciss.patterns
 import de.sciss.patterns.{Context => PContext}
 import de.sciss.patterns.lucre.{Context, Stream}
@@ -47,19 +47,21 @@ object StreamImpl {
   }
 
   private sealed trait Impl[S <: Sys[S]]
-    extends Stream[S] with evt.impl.SingleNode[S, Stream.Update[S]] {
+    extends Stream[S] with evt.impl.SingleNode[S, Stream.Update[S]] with stm.Ref[S#Tx, patterns.Stream[S, Any]] {
     stream =>
 
     protected def ref: S#Var[patterns.Stream[S, Any]]
 
     final def tpe: Obj.Type = Stream
 
-    def peer(implicit tx: S#Tx): patterns.Stream[S, Any] = ref()
+    final def peer: stm.Ref[S#Tx, patterns.Stream[S, Any]] = this
 
-    def peer_=(value: patterns.Stream[S, _])(implicit tx: S#Tx): Unit = {
+    def apply()(implicit tx: S#Tx): patterns.Stream[S, Any] = ref()
+
+    def update(v: patterns.Stream[S, Any])(implicit tx: S#Tx): Unit = {
       val before = ref()
-      if (before != value) {
-        ref() = value
+      if (before != v) {
+        ref() = v
         changed.fire(Stream.PeerChange(this))
       }
     }
@@ -69,7 +71,7 @@ object StreamImpl {
         protected val targets: Targets[Out]                   = Targets[Out]
         protected val ref: Out#Var[patterns.Stream[Out, Any]] = {
           implicit val ctx: PContext[Out] = Context[Out](txOut.system, txOut)
-          txOut.newVar[patterns.Stream[Out, Any]](targets.id, stream.peer.copyStream[Out]())
+          txOut.newVar[patterns.Stream[Out, Any]](targets.id, stream.peer().copyStream[Out]())
         }
         connect()
       }
@@ -92,10 +94,12 @@ object StreamImpl {
 
     final protected def writeData(out: DataOutput): Unit = {
       out.writeShort(SER_VERSION)
+      ref.write(out)
     }
 
     final protected def disposeData()(implicit tx: S#Tx): Unit = {
       disconnect()
+      ref.dispose()
     }
 
     override def toString: String = s"Stream$id"

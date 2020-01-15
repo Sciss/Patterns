@@ -14,6 +14,7 @@
 package de.sciss.patterns.lucre
 
 import de.sciss.lucre.event.Publisher
+import de.sciss.lucre.stm
 import de.sciss.lucre.stm.{Obj, Sys}
 import de.sciss.lucre.synth.{Sys => SSys}
 import de.sciss.patterns
@@ -75,9 +76,9 @@ object Stream extends Obj.Type with Runner.Factory {
   final case class PeerChange[S <: Sys[S]](stream: Stream[S]) extends Update[S]
 }
 trait Stream[S <: Sys[S]] extends Obj[S] with Publisher[S, Stream.Update[S]] {
-//  def peer: stm.Var[S#Tx, patterns.Stream[S, _]]
+  def peer: stm.Ref[S#Tx, patterns.Stream[S, Any]]
 
-  def peer(implicit tx: S#Tx): patterns.Stream[S, Any]
-
-  def peer_=(value: patterns.Stream[S, _])(implicit tx: S#Tx): Unit
+//  def peer(implicit tx: S#Tx): patterns.Stream[S, Any]
+//
+//  def peer_=(value: patterns.Stream[S, _])(implicit tx: S#Tx): Unit
 }
