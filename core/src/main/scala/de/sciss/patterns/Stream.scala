@@ -93,5 +93,6 @@ abstract class Stream[S <: Base[S], +A] extends Writable with Disposable[S#Tx] {
   }
 
   /** Makes a deep copy of this stream, possibly translating it to a different system `Out`. */
-  private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = ???
+  private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                       ctx: Context[Out]): Stream[Out, A] = ???
 }

@@ -40,6 +40,9 @@ object PatElem {
   def readVar[S <: Base[S], A](id: S#Id, in: DataInput)(implicit tx: S#Tx): S#Var[A] =
     tx.readVar[A](id, in)(serializer)
 
+  def copyVar[S <: Base[S], A](id: S#Id, value: A)(implicit tx: S#Tx): S#Var[A] =
+    tx.newVar[A](id, value)(serializer)
+
   def read[A](in: DataInput): A = read(in, null).asInstanceOf[A]
 
   def read(in: DataInput, ref0: RefMapIn): Any =

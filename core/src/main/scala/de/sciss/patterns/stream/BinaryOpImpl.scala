@@ -57,6 +57,15 @@ object BinaryOpImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
+    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                                  ctx: Context[Out]): Stream[Out, A] = {
+      val aStreamOut     = aStream.copyStream[Out]()
+      val bStreamOut     = bStream.copyStream[Out]()
+      val stateOut       = op.copyState[S, Out](state)
+      new StreamImpl[Out, A1, A2, A3, A, op.State](op = op, state = stateOut, aStream = aStreamOut,
+        bStream = bStreamOut)(widen)
+    }
+
     protected def typeId: Int = BinaryOpImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

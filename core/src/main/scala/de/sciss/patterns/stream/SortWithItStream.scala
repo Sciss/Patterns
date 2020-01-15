@@ -69,11 +69,21 @@ object SortWithItStream extends StreamFactory {
                                            )
     extends SortWithItStream[S, A] {
 
+    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                                  ctx: Context[Out]): Stream[Out, (A, A)] = {
+      val idOut     = txOut.newId()
+      val pairInOut = {
+        implicit val vec: ImmutableSerializer[Vec[A]] = PatElem.vecSerializer[A]
+        txOut.newVar[(Vec[A], Vec[A])](idOut, pairIn())
+      }
+      val countOut    = txOut.newIntVar     (idOut, count())
+      val hasZOut     = txOut.newBooleanVar (idOut, hasZ())
+      val hasNextOut  = txOut.newBooleanVar (idOut, _hasNext())
+      val validOut    = txOut.newBooleanVar (idOut, valid())
 
-    //      ({
-    //      implicit val vec: ImmutableSerializer[Vec[A]] = PatElem.vecSerializer[A]
-    //      ImmutableSerializer.tuple2[Vec[A], Vec[A]]
-    //    })
+      new Impl[Out, A](id = idOut, token = token, pairIn = pairInOut, count = countOut, hasZ = hasZOut,
+        _hasNext = hasNextOut, valid = validOut)
+    }
 
     protected def typeId: Int = SortWithItStream.typeId
 

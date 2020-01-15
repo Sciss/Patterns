@@ -67,6 +67,19 @@ object ArithmSeqImpl extends StreamFactory {
   )
     extends SeriesLikeStreamImpl[S, A1, A2, A] {
 
+    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                                  ctx: Context[Out]): Stream[Out, A] = {
+      val idOut           = txOut.newId()
+      val startStreamOut  = startStream.copyStream[Out]()
+      val stepStreamOut   = stepStream .copyStream[Out]()
+      val stateOut        = PatElem.copyVar[Out, A](idOut, state())
+      val hasNextOut      = txOut.newBooleanVar(idOut, false)
+      val validOut        = txOut.newBooleanVar(idOut, false)
+
+      new StreamImpl[Out, A1, A2, A](id = idOut, startStream = startStreamOut, stepStream = stepStreamOut, state = stateOut,
+        _hasNext = hasNextOut, valid = validOut)(num, widen)
+    }
+
     protected def typeId: Int = ArithmSeqImpl.typeId
 
     protected def op(a: A, b: A): A = num.+(a, b)

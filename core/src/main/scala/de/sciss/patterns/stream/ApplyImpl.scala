@@ -57,6 +57,23 @@ object ApplyImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
+    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                                  ctx: Context[Out]): Stream[Out, A] = {
+      val idOut         = txOut.newId()
+      val inStreamOut   = inStream  .copyStream[Out]()
+      val idxStreamOut  = idxStream .copyStream[Out]()
+      val stateOutV     = {
+        val s = state()
+        if (s == null) null else s.copyStream[Out]()
+      }
+      val stateOut      = txOut.newVar        (idOut, stateOutV)
+      val hasNextOut    = txOut.newBooleanVar (idOut, false)
+      val validOut      = txOut.newBooleanVar (idOut, false)
+
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, idxStream = idxStreamOut,
+        valid = validOut, _hasNext = hasNextOut, state = stateOut)
+    }
+
     protected def typeId: Int = ApplyImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

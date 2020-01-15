@@ -108,26 +108,5 @@ abstract class Pattern[+A] extends Pat[A] {
   // this acts now as a fast unique reference
   @transient final private[this] lazy val _ref = new AnyRef
 
-//  private[patterns] final def classTag[Tx]: ClassTag[Out[Tx]] = ClassTag(classOf[Out[Tx]])
-
-//  Graph.builder.addPattern(this)
-
   private[patterns] final def ref: AnyRef = _ref
-
-//  /** A final implementation of this method which looks up the current stream graph
-//    * builder and then performs the expansion just as `force`, returning the
-//    * expanded object
-//    *
-//    * @return  the expanded object (e.g. `Unit` for a stream with no outputs,
-//    *          or a single stream, or a group of streams)
-//    */
-//  final private[patterns] def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S#Tx, A] = {
-////    ctx.visit(ref, iterator)
-//    ctx.addStream(_ref, iterator)
-//  }
-
-//  final private[patterns] def reset[Tx]()(implicit ctx: Context[S], tx: S#Tx): Unit =
-//    ctx.getStreams(_ref).foreach(_.reset())
-//
-//  final def embed[Tx](implicit ctx: Context[S], tx: S#Tx): Stream[S#Tx, A] = iterator
 }

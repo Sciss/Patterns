@@ -27,7 +27,6 @@ object PatSeqImpl extends StreamFactory {
     val id    = tx.newId()
     val xs    = elem.toIndexedSeq
     val count = tx.newIntVar(id, 0)
-
     new StreamImpl[S, A](id = id, xs = xs, count = count)
   }
 
@@ -36,7 +35,6 @@ object PatSeqImpl extends StreamFactory {
     val id    = tx.readId(in, access)
     val xs    = PatElem.vecSerializer[Any].read(in)
     val count = tx.readIntVar(id, in)
-
     new StreamImpl[S, Any](id = id, xs = xs, count = count)
   }
 
@@ -46,6 +44,13 @@ object PatSeqImpl extends StreamFactory {
     count : S#Var[Int]
   )
     extends Stream[S, A] {
+
+    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                                  ctx: Context[Out]): Stream[Out, A] = {
+      val idOut     = txOut.newId()
+      val countOut  = txOut.newIntVar(idOut, count())
+      new StreamImpl[Out, A](id = idOut, xs = xs, count = countOut)
+    }
 
     protected def typeId: Int = PatSeqImpl.typeId
 
@@ -63,9 +68,7 @@ object PatSeqImpl extends StreamFactory {
     private[this] lazy val simpleString =
       xs.mkString("Stream(", ", ", ")")
 
-    // $COVERAGE-OFF$
     override def toString = s"$simpleString; count = $count"
-    // $COVERAGE-ON$
 
     def reset()(implicit tx: S#Tx): Unit =
       count() = 0

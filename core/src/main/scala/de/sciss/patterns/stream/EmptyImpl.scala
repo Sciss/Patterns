@@ -42,5 +42,9 @@ object EmptyImpl extends StreamFactory {
 
     def next()(implicit ctx: Context[S], tx: S#Tx): Nothing =
       Stream.exhausted()
+
+    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                                  ctx: Context[Out]): Stream[Out, Nothing] =
+      EmptyImpl[Out]()
   }
 }

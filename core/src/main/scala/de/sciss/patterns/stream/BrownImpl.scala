@@ -27,7 +27,6 @@ object BrownImpl extends StreamFactory {
   def expand[S <: Base[S], A1, A2, A](pat: Brown[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val id          = tx.newId()
-
     val loStream    = lo.expand[S]
     val hiStream    = hi.expand[S]
     val stepStream  = step.expand[S]
@@ -75,6 +74,25 @@ object BrownImpl extends StreamFactory {
     extends Stream[S, A] {
 
     import widen._
+
+    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                                  ctx: Context[Out]): Stream[Out, A] = {
+      val idOut         = txOut.newId()
+      val loStreamOut   = loStream  .copyStream[Out]()
+      val hiStreamOut   = hiStream  .copyStream[Out]()
+      val stepStreamOut = stepStream.copyStream[Out]()
+      val stateOut      = PatElem.copyVar[Out, A](idOut, state())
+      val hasNextOut    = txOut.newBooleanVar(idOut, false)
+      val validOut      = txOut.newBooleanVar(idOut, false)
+      val rOut          = {
+        // ctx.mkRandom(ref)
+        TxnRandom[Out]()
+      }  // XXX TODO --- huh! should we be able to copy the internal RNG state?
+
+      new StreamImpl[Out, A1, A2, A](id = idOut, loStream = loStreamOut, hiStream = hiStreamOut, stepStream = stepStreamOut,
+        state = stateOut, _hasNext = hasNextOut,
+        valid = validOut)(rOut, widen, num)
+    }
 
     protected def typeId: Int = BrownImpl.typeId
 
