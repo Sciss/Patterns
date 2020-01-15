@@ -3,7 +3,7 @@ package de.sciss.patterns.lucre
 import de.sciss.lucre.adjunct.Adjunct.WidenToDouble
 import de.sciss.lucre.stm.Plain
 import de.sciss.patterns
-import de.sciss.patterns.{Stream => PStream, _}
+import de.sciss.patterns.{Stream => PStream, Context => _, _}
 import org.scalatest.Matchers
 
 class StreamSerializationSpec extends DurableSpec with Matchers {
