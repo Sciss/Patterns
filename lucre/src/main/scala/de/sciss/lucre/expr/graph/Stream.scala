@@ -26,124 +26,106 @@ import de.sciss.lucre.stm.TxnLike.peer
 import de.sciss.model.Change
 import de.sciss.patterns
 import de.sciss.patterns.lucre.{Stream => LStream}
-import de.sciss.serial.{DataInput, DataOutput, Serializer}
+import de.sciss.serial.{DataInput, Serializer}
 
 import scala.concurrent.stm.Ref
 
 object Stream {
-  def apply[A]()(implicit from: FromAny[A]): Ex[Stream[A]] with Obj.Make = Apply[A]()
+  def apply(): Ex[Stream] with Obj.Make = Apply()
 
   private lazy val _init: Unit =
-    Adjunct.addFactory(BridgeFactory)
+    Adjunct.addFactory(Bridge)
 
   def init(): Unit = _init
 
-  private object BridgeFactory extends Adjunct.Factory {
-    final val id = 1154
-
-    override def readIdentifiedAdjunct(in: DataInput): Adjunct = {
-      val from = Adjunct.readT[FromAny[Any]](in)
-      new Bridge[Any]()(from)
-    }
-  }
-
-  private final class CellViewImpl[S <: Sys[S], A: FromAny](h: stm.Source[S#Tx, stm.Obj[S]], key: String)
-    extends ObjCellViewVarImpl[S, LStream, Stream[A]](h, key) {
+  private final class CellViewImpl[S <: Sys[S]](h: stm.Source[S#Tx, stm.Obj[S]], key: String)
+    extends ObjCellViewVarImpl[S, LStream, Stream](h, key) {
 
     implicit def serializer: Serializer[S#Tx, S#Acc, Option[LStream[S]]] =
       Serializer.option
 
-    protected def lower(peer: LStream[S])(implicit tx: S#Tx): Stream[A] =
-      wrap[S, A](peer)
+    protected def lower(peer: LStream[S])(implicit tx: S#Tx): Stream =
+      wrap[S](peer)
   }
 
-  implicit def bridge[A: FromAny]: Obj.Bridge[Stream[A]] = new Bridge()
-
-  private final class Bridge[A]()(implicit from: FromAny[A]) extends Obj.Bridge[Stream[A]] {
+  implicit object Bridge extends Obj.Bridge[Stream] with Adjunct.Factory {
 
     final val id = 1154
 
-    override def write(out: DataOutput): Unit = {
-      super.write(out)
-      from .write(out)
-    }
+    override def readIdentifiedAdjunct(in: DataInput): Adjunct = this
 
-    def cellView[S <: Sys[S]](obj: stm.Obj[S], key: String)(implicit tx: S#Tx): CellView.Var[S#Tx, Option[Stream[A]]] =
+    def cellView[S <: Sys[S]](obj: stm.Obj[S], key: String)(implicit tx: S#Tx): CellView.Var[S#Tx, Option[Stream]] =
       new CellViewImpl(tx.newHandle(obj), key)
 
-    def contextCellView[S <: Sys[S]](key: String)(implicit tx: S#Tx, context: Context[S]): CellView[S#Tx, Option[Stream[A]]] =
-      new AbstractCtxCellView[S, Stream[A]](context.attr, key) {
-        protected def tryParseValue(value: Any)(implicit tx: S#Tx): Option[Stream[A]] = value match {
-          case st: Stream[_] if st.from == from => Some(st.asInstanceOf[Stream[A]])
-          case _                                => None
+    def contextCellView[S <: Sys[S]](key: String)(implicit tx: S#Tx, context: Context[S]): CellView[S#Tx, Option[Stream]] =
+      new AbstractCtxCellView[S, Stream](context.attr, key) {
+        protected def tryParseValue(value: Any)(implicit tx: S#Tx): Option[Stream] = value match {
+          case st: Stream => Some(st)
+          case _          => None
         }
 
-        protected def tryParseObj(obj: stm.Obj[S])(implicit tx: S#Tx): Option[Stream[A]] = obj match {
+        protected def tryParseObj(obj: stm.Obj[S])(implicit tx: S#Tx): Option[Stream] = obj match {
           case peer: LStream[S] => Some(wrap(peer))
           case _                => None
         }
       }
 
-    def cellValue[S <: Sys[S]](obj: stm.Obj[S], key: String)(implicit tx: S#Tx): Option[Stream[A]] =
+    def cellValue[S <: Sys[S]](obj: stm.Obj[S], key: String)(implicit tx: S#Tx): Option[Stream] =
       obj.attr.$[LStream](key).map(wrap(_))
 
-    def tryParseObj[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[Stream[A]] = obj match {
+    def tryParseObj[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[Stream] = obj match {
       case a: LStream[S]  => Some(wrap(a))
       case _              => None
     }
   }
 
   // used by Mellite (no transaction available)
-  private[lucre] def wrapH[S <: Sys[S], A: FromAny](peer: stm.Source[S#Tx, LStream[S]], system: S): Stream[A] =
-    new Impl[S, A](peer, system)
+  private[lucre] def wrapH[S <: Sys[S]](peer: stm.Source[S#Tx, LStream[S]], system: S): Stream =
+    new Impl[S](peer, system)
 
-  private[lucre] def wrap[S <: Sys[S], A: FromAny](peer: LStream[S])(implicit tx: S#Tx): Stream[A] =
-    new Impl[S, A](tx.newHandle(peer), tx.system)
+  private[lucre] def wrap[S <: Sys[S]](peer: LStream[S])(implicit tx: S#Tx): Stream =
+    new Impl[S](tx.newHandle(peer), tx.system)
 
-  private final class Impl[S <: Sys[S], A](in: stm.Source[S#Tx, LStream[S]], system: S)(implicit val from: FromAny[A])
-    extends ObjImplBase[S, LStream](in, system) with Stream[A] {
+  private final class Impl[S <: Sys[S]](in: stm.Source[S#Tx, LStream[S]], system: S)
+    extends ObjImplBase[S, LStream](in, system) with Stream {
 
     override type Peer[~ <: Sys[~]] = LStream[~]
   }
 
-  private[lucre] final class Empty[A](implicit val from: FromAny[A])
-    extends Stream[A] {
-
+  private[lucre] object Empty extends Stream {
     private[lucre] def peer[S <: Sys[S]](implicit tx: S#Tx): Option[Peer[S]] = None
   }
 
-  private final class ApplyExpanded[S <: Sys[S], A: FromAny](implicit targets: ITargets[S])
-    extends ExpandedObjMakeImpl[S, Stream[A]] {
+  private final class ApplyExpanded[S <: Sys[S]](implicit targets: ITargets[S])
+    extends ExpandedObjMakeImpl[S, Stream] {
 
-    protected def empty: Stream[A] = new Empty[A]
+    protected def empty: Stream = Empty
 
-    protected def make()(implicit tx: S#Tx): Stream[A] = {
+    protected def make()(implicit tx: S#Tx): Stream = {
       val peer = LStream[S]()
       new Impl(tx.newHandle(peer), tx.system)
     }
   }
 
-  private final case class Apply[A]()(implicit from: FromAny[A])
-    extends Ex[Stream[A]] with Act with Obj.Make with ProductWithAdjuncts {
+  private final case class Apply()
+    extends Ex[Stream] with Act with Obj.Make {
 
     override def productPrefix: String = "Stream" // serialization
 
-    type Repr[S <: Sys[S]] = IExpr[S, Stream[A]] with IAction[S]
+    type Repr[S <: Sys[S]] = IExpr[S, Stream] with IAction[S]
 
     def make: Act = this
 
-    def adjuncts: List[Adjunct] = from :: Nil
-
     protected def mkRepr[S <: Sys[S]](implicit ctx: Context[S], tx: S#Tx): Repr[S] = {
       import ctx.targets
-      new ApplyExpanded[S, A]
+      new ApplyExpanded[S]
     }
   }
 
   // ---- operations ----
 
-  private final class NextExpanded[S <: Sys[S], A](in: IExpr[S, Stream[A]], tx0: S#Tx)
-                                                  (implicit protected val targets: ITargets[S])
+  private final class NextExpanded[S <: Sys[S], A](in: IExpr[S, Stream], tx0: S#Tx)
+                                                  (implicit protected val targets: ITargets[S], from: FromAny[A])
     extends IAction[S] with IExpr[S, Option[A]]
       with IChangeGenerator [S, Option[A]]
       with ITriggerConsumer [S, Option[A]]
@@ -178,16 +160,20 @@ object Stream {
         val p = obj.peer()
         if (!p.hasNext) None else {
           val any = p.next()
-          st.from.fromAny(any)
+          from.fromAny(any)
         }
       }
     }
   }
 
-  final case class Next[A](in: Ex[Stream[A]]) extends Ex[Option[A]] with Act {
+  final case class Next[A](in: Ex[Stream])(implicit from: FromAny[A])
+    extends Ex[Option[A]] with Act with ProductWithAdjuncts {
+
     override def productPrefix: String = s"Stream$$Next" // serialization
 
     type Repr[S <: Sys[S]] = IExpr[S, Option[A]] with IAction[S]
+
+    def adjuncts: List[Adjunct] = from :: Nil
 
     protected def mkRepr[S <: Sys[S]](implicit ctx: Context[S], tx: S#Tx): Repr[S] = {
       import ctx.targets
@@ -195,13 +181,11 @@ object Stream {
     }
   }
 
-  implicit final class Ops[A](private val st: Ex[Stream[A]]) extends AnyVal {
-    def next            : Ex[Option [A]] with Act = Next(st)
+  implicit final class Ops(private val st: Ex[Stream]) extends AnyVal {
+    def next[A: FromAny] : Ex[Option [A]] with Act = Next(st)
     // def take(n: Ex[Int]): Ex[Seq    [A]] with Act = ...
   }
 }
-trait Stream[A] extends Obj {
-  def from: FromAny[A]
-
+trait Stream extends Obj {
   type Peer[~ <: Sys[~]] = LStream[~]
 }
