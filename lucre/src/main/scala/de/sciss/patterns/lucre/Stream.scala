@@ -14,7 +14,7 @@
 package de.sciss.patterns.lucre
 
 import de.sciss.lucre.event.Publisher
-import de.sciss.lucre.stm
+import de.sciss.lucre.{expr, stm}
 import de.sciss.lucre.stm.{Obj, Sys}
 import de.sciss.lucre.synth.{Sys => SSys}
 import de.sciss.patterns
@@ -57,6 +57,7 @@ object Stream extends Obj.Type with Runner.Factory {
   private lazy val _init: Unit = {
 //    Code  .init()
     Runner.addFactory(Stream)
+    expr.graph.Stream.init()
   }
 
   // ---- construction ----

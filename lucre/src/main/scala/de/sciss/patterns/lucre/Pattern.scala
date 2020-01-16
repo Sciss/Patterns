@@ -52,7 +52,6 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
 
   override def init(): Unit = {
     super.init()
-    Stream.init()
     _init
   }
 
@@ -61,6 +60,7 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
     AuralPatternAttribute .init()
     AuralPatternObj       .init()
     patterns.Obj          .init()
+    Stream                .init()
 
     Runner.addFactory(Pattern)
 
