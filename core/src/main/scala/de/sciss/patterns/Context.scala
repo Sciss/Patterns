@@ -22,10 +22,14 @@ import de.sciss.serial.Serializer
 import scala.util.control.ControlThrowable
 
 trait Context[S <: Base[S]] {
+  /** This method should be called by an `ItStream` when it is expanded (new).
+    * Looks up the `ItStreamSource` for the token, and invokes its own `mkItStream`.
+    */
   def mkItStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A]
 
   /** This method should be called by an `ItStream` after it has been
     * read in de-serialization.
+    * Looks up the `ItStreamSource` for `it.token`, and invokes its own `registerItStream`.
     */
   def registerItStream[A](it: ItStream[S, A])(implicit tx: S#Tx): Unit
 

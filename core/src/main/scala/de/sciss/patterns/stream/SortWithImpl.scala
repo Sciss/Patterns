@@ -48,17 +48,17 @@ object SortWithImpl extends StreamFactory {
       sortedStream = sortedStream, hasSorted = hasSorted, valid = valid)
   }
 
-//  private final class StreamCopy[S <: Base[S], A](tx0: S#Tx,
-//                                                  id          : S#Id,
-//                                                  outerStream : Stream[S, Pat[A]],
-//                                                  token       : Int,
-//                                                  sortedStream: S#Var[Stream[S, Pat[A]]],
-//                                                  hasSorted   : S#Var[Boolean],
-//                                                  valid       : S#Var[Boolean],
-//                                                  protected val ltStream: Stream[S, Boolean]
-//                                                 )
-//    extends StreamImpl[S, A](tx0, id, outerStream = outerStream, token = token, sortedStream = sortedStream,
-//      hasSorted = hasSorted, valid = valid)
+  private final class StreamCopy[S <: Base[S], A](tx0: S#Tx,
+                                                  id          : S#Id,
+                                                  outerStream : Stream[S, Pat[A]],
+                                                  token       : Int,
+                                                  sortedStream: S#Var[Stream[S, Pat[A]]],
+                                                  hasSorted   : S#Var[Boolean],
+                                                  valid       : S#Var[Boolean],
+                                                  protected val ltStream: Stream[S, Boolean]
+                                                 )
+    extends StreamImpl[S, A](tx0, id, outerStream = outerStream, token = token, sortedStream = sortedStream,
+      hasSorted = hasSorted, valid = valid)
 
   private final class StreamNew [S <: Base[S], A](ctx0: Context[S], tx0: S#Tx,
                                                   id          : S#Id,
@@ -108,20 +108,15 @@ object SortWithImpl extends StreamFactory {
 
     private[patterns] final def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
                                                             (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Pat[A]] = {
-      ???
-//      val idOut           = txOut.newId()
-//      val outerStreamOut  = outerStream.copyStream[Out]()
-//      val sortedStreamOut = {
-//        val s = sortedStream()
-//        val sOut = if (s == null) null else s.copyStream[Out]()
-//        txOut.newVar[Stream[Out, Pat[A]]](idOut, sOut)
-//      }
-//      val hasSortedOut    = txOut.newBooleanVar(idOut, hasSorted())
-//      val validOut        = txOut.newBooleanVar(idOut, valid())
-//      val ltStreamOut     = ltStream.copyStream[Out]()
-//
-//      new StreamCopy[Out, A](txOut, id = idOut, outerStream = outerStreamOut, token = token,
-//        sortedStream = sortedStreamOut, hasSorted = hasSortedOut, valid = validOut, ltStream = ltStreamOut)
+      val idOut           = txOut.newId()
+      val outerStreamOut  = c(outerStream)
+      val sortedStreamOut = c.copyVar(idOut, sortedStream)
+      val hasSortedOut    = txOut.newBooleanVar(idOut, hasSorted())
+      val validOut        = txOut.newBooleanVar(idOut, valid())
+      val ltStreamOut     = c(ltStream)
+
+      new StreamCopy[Out, A](txOut, id = idOut, outerStream = outerStreamOut, token = token,
+        sortedStream = sortedStreamOut, hasSorted = hasSortedOut, valid = validOut, ltStream = ltStreamOut)
     }
 
     final protected val mapItStreams = tx0.newInMemorySet[Stream[S, (A, A)]]

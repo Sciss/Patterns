@@ -79,7 +79,5 @@ object Stream extends Obj.Type with Runner.Factory {
 trait Stream[S <: Sys[S]] extends Obj[S] with Publisher[S, Stream.Update[S]] {
   def peer: stm.Ref[S#Tx, patterns.Stream[S, Any]]
 
-//  def peer(implicit tx: S#Tx): patterns.Stream[S, Any]
-//
-//  def peer_=(value: patterns.Stream[S, _])(implicit tx: S#Tx): Unit
+  implicit def context: patterns.Context[S]
 }
