@@ -14,7 +14,7 @@
 package de.sciss.patterns.lucre
 
 import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Random, Sys, TxnRandom}
+import de.sciss.lucre.stm.{Disposable, Random, Sys, TxnRandom}
 import de.sciss.patterns
 import de.sciss.patterns.graph.It
 import de.sciss.patterns.{ContextLike, Obj, Pat}
@@ -37,7 +37,7 @@ object Context {
 
   private final val COOKIE = 0x5043 // "PC"
 
-  trait Persistent[S <: stm.Sys[S]] extends patterns.Context[S] with Writable {
+  trait Persistent[S <: stm.Sys[S]] extends patterns.Context[S] with Writable with Disposable[S#Tx] {
     def copy[Out <: stm.Sys[Out]]()(implicit tx: S#Tx, txOut: Out#Tx): Persistent[Out]
   }
 
@@ -142,6 +142,11 @@ object Context {
       out.writeShort(COOKIE)
       seedRnd.write(out)
       tokenId.write(out)
+    }
+
+    def dispose()(implicit tx: S#Tx): Unit = {
+      seedRnd.dispose()
+      tokenId.dispose()
     }
   }
 

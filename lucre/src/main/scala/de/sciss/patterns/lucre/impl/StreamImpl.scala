@@ -102,11 +102,13 @@ object StreamImpl {
 
     final protected def writeData(out: DataOutput): Unit = {
       out.writeShort(SER_VERSION)
-      ref.write(out)
+      context .write(out)
+      ref     .write(out)
     }
 
     final protected def disposeData()(implicit tx: S#Tx): Unit = {
       disconnect()
+      context.dispose()
       ref.dispose()
     }
 
