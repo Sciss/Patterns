@@ -41,10 +41,10 @@ object TapImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, A] = {
-      val inStreamOut    = inStream   .copyStream[Out]()
-      val sideStreamOut  = sideStream .copyStream[Out]()
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+      val inStreamOut    = c(inStream  )
+      val sideStreamOut  = c(sideStream)
       new StreamImpl[Out, A, A1](inStream = inStreamOut, sideStream = sideStreamOut)
     }
 

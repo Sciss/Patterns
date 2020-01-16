@@ -18,7 +18,7 @@ import de.sciss.lucre.stm.impl.ObjSerializer
 import de.sciss.lucre.stm.{Copy, Elem, NoSys, Obj, Sys}
 import de.sciss.lucre.{stm, event => evt}
 import de.sciss.patterns
-import de.sciss.patterns.{Context => PContext}
+import de.sciss.patterns.{Context => PContext, Stream => PStream}
 import de.sciss.patterns.lucre.{Context, Stream}
 import de.sciss.serial.{DataInput, DataOutput, Serializer}
 
@@ -47,18 +47,18 @@ object StreamImpl {
   }
 
   private sealed trait Impl[S <: Sys[S]]
-    extends Stream[S] with evt.impl.SingleNode[S, Stream.Update[S]] with stm.Ref[S#Tx, patterns.Stream[S, Any]] {
+    extends Stream[S] with evt.impl.SingleNode[S, Stream.Update[S]] with stm.Ref[S#Tx, PStream[S, Any]] {
     stream =>
 
-    protected def ref: S#Var[patterns.Stream[S, Any]]
+    protected def ref: S#Var[PStream[S, Any]]
 
     final def tpe: Obj.Type = Stream
 
-    final def peer: stm.Ref[S#Tx, patterns.Stream[S, Any]] = this
+    final def peer: stm.Ref[S#Tx, PStream[S, Any]] = this
 
-    def apply()(implicit tx: S#Tx): patterns.Stream[S, Any] = ref()
+    def apply()(implicit tx: S#Tx): PStream[S, Any] = ref()
 
-    def update(v: patterns.Stream[S, Any])(implicit tx: S#Tx): Unit = {
+    def update(v: PStream[S, Any])(implicit tx: S#Tx): Unit = {
       val before = ref()
       if (before != v) {
         ref() = v
@@ -69,9 +69,11 @@ object StreamImpl {
     def copy[Out <: Sys[Out]]()(implicit tx: S#Tx, txOut: Out#Tx, context: Copy[S, Out]): Elem[Out] = {
       new Impl[Out] { out =>
         protected val targets: Targets[Out]                   = Targets[Out]
-        protected val ref: Out#Var[patterns.Stream[Out, Any]] = {
+        protected val ref: Out#Var[PStream[Out, Any]] = {
           implicit val ctx: PContext[Out] = Context[Out](txOut.system, txOut)
-          txOut.newVar[patterns.Stream[Out, Any]](targets.id, stream.peer().copyStream[Out]())
+          implicit val cpy: PStream.Copy[S, Out] = PStream.Copy[S, Out]
+          val peerOut = cpy(stream.peer())
+          txOut.newVar[PStream[Out, Any]](targets.id, peerOut)
         }
         connect()
       }
@@ -105,10 +107,10 @@ object StreamImpl {
     override def toString: String = s"Stream$id"
   }
 
-  private final class New[S <: Sys[S]](s0: patterns.Stream[S, Any])(implicit tx0: S#Tx) extends Impl[S] {
+  private final class New[S <: Sys[S]](s0: PStream[S, Any])(implicit tx0: S#Tx) extends Impl[S] {
     protected val targets: Targets[S] = evt.Targets[S](tx0)
 
-    protected val ref: S#Var[patterns.Stream[S, Any]] = {
+    protected val ref: S#Var[PStream[S, Any]] = {
       implicit val ctx: PContext[S] = Context[S](tx0.system, tx0)
       tx0.newVar(targets.id, s0)
     }
@@ -125,7 +127,7 @@ object StreamImpl {
       if (serVer != SER_VERSION) sys.error(s"Incompatible serialized (found $serVer, required $SER_VERSION)")
     }
 
-    protected val ref: S#Var[patterns.Stream[S, Any]] = {
+    protected val ref: S#Var[PStream[S, Any]] = {
       // XXX TODO --- we should not need "full" new context,
       // because state is in RNG, and that should not be needed in de-serialization!
       implicit val ctx: PContext[S] = Context[S](tx0.system, tx0)

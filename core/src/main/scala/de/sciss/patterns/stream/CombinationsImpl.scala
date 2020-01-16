@@ -76,11 +76,11 @@ object CombinationsImpl extends StreamFactory {
   )
     extends Stream[S, Pat[A]] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, Pat[A]] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Pat[A]] = {
       val idOut       = txOut.newId()
-      val inStreamOut = inStream.copyStream[Out]()
-      val nStreamOut  = nStream .copyStream[Out]()
+      val inStreamOut = c(inStream)
+      val nStreamOut  = c(nStream )
       val elementsOut = txOut.newVar[Vec[A]]  (idOut, elements())(PatElem.vecSerializer)
       val countsOut   = txOut.newVar[Vec[Int]](idOut, counts())
       val numbersOut  = txOut.newVar[Vec[Int]](idOut, numbers())

@@ -47,9 +47,9 @@ object UnaryOpImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, A] = {
-      val aStreamOut     = aStream.copyStream[Out]()
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+      val aStreamOut     = c(aStream)
       val stateOut       = op.copyState[S, Out](state)
       new StreamImpl[Out, A1, A, op.State](op = op, state = stateOut, aStream = aStreamOut)
     }

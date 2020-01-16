@@ -37,9 +37,9 @@ object ItImpl extends StreamFactory {
   private final class StreamImpl[S <: Base[S], A](refStream: Stream[S, A])
     extends Stream[S, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, A] = {
-      val refStreamOut = refStream.copyStream[Out]()
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+      val refStreamOut = c(refStream)
       new StreamImpl[Out, A](refStream = refStreamOut)
     }
 

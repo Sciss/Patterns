@@ -37,9 +37,9 @@ object AudioCueNumFramesImpl extends StreamFactory {
 
     extends AudioCueStreamImpl[S, Long](inStream) {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, Long] = {
-      val inStreamOut = inStream.copyStream[Out]()
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Long] = {
+      val inStreamOut = c(inStream)
       new StreamImpl[Out](inStream = inStreamOut)
     }
 

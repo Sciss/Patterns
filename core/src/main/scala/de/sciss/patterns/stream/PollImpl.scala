@@ -45,11 +45,11 @@ object PollImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, A] = {
-      val inStreamOut    = inStream   .copyStream[Out]()
-      val gateStreamOut  = gateStream .copyStream[Out]()
-      val labelStreamOut = labelStream.copyStream[Out]()
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+      val inStreamOut    = c(inStream   )
+      val gateStreamOut  = c(gateStream )
+      val labelStreamOut = c(labelStream)
       new StreamImpl[Out, A](inStream = inStreamOut, gateStream = gateStreamOut, labelStream = labelStreamOut)
     }
 

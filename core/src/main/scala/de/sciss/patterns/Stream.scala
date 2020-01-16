@@ -18,7 +18,7 @@ import de.sciss.patterns.impl.StreamSerializer
 import de.sciss.patterns.stream.StreamFactory
 import de.sciss.serial.{DataInput, DataOutput, Serializer, Writable, Writer}
 
-import scala.collection.AbstractIterator
+import scala.collection.{AbstractIterator, mutable}
 
 object Stream {
   def exhausted(): Nothing = throw new NoSuchElementException("next on empty iterator")
@@ -42,6 +42,40 @@ object Stream {
 
   def apply[S <: Base[S], A](elems: A*)(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
     stream.PatSeqImpl(elems)
+
+  object Copy {
+    def apply[In <: Base[In], Out <: Base[Out]](implicit txIn: In#Tx, txOut: Out#Tx,
+                                                context: Context[Out]): Copy[In, Out] =
+      new Impl[In, Out]
+
+    private final class Impl[In <: Base[In], Out <: Base[Out]](implicit txIn: In#Tx, txOut: Out#Tx,
+                                                               val context: Context[Out])
+      extends Copy[In, Out] {
+
+      // copy is used within one transaction, so we can use a mutable map here
+      private[this] val seen = mutable.Map.empty[Stream[In, _], Stream[Out, _]]
+
+      def apply[A](in: Stream[In, A]): Stream[Out, A] = if (in == null) null else {
+        val out = seen.getOrElseUpdate(in, {
+          in.copyStream[Out](this)
+        })
+        out.asInstanceOf[Stream[Out, A]]
+      }
+
+      def copyVar[A](id: Out#Id, in: In#Var[Stream[In, A]]): Out#Var[Stream[Out, A]] = {
+        val inV   = in()
+        val outV  = apply(inV)
+        txOut.newVar(id, outV)
+      }
+    }
+  }
+  trait Copy[In <: Base[In], Out <: Base[Out]] {
+    implicit def context: Context[Out]
+
+    def apply[A](in: Stream[In, A]): Stream[Out, A]
+
+    def copyVar[A](id: Out#Id, in: In#Var[Stream[In, A]]): Out#Var[Stream[Out, A]]
+  }
 }
 abstract class Stream[S <: Base[S], +A] extends Writable with Disposable[S#Tx] { outer =>
 //  Stream.COUNT += 1
@@ -93,6 +127,6 @@ abstract class Stream[S <: Base[S], +A] extends Writable with Disposable[S#Tx] {
   }
 
   /** Makes a deep copy of this stream, possibly translating it to a different system `Out`. */
-  private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                       ctx: Context[Out]): Stream[Out, A]
+  private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                    (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A]
 }

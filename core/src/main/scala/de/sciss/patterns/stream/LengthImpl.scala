@@ -45,10 +45,10 @@ object LengthImpl extends StreamFactory {
   )
     extends Stream[S, Int] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, Int] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Int] = {
       val idOut       = txOut.newId()
-      val inStreamOut = inStream.copyStream[Out]()
+      val inStreamOut = c(inStream)
       val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, _hasNext = hasNextOut)
     }

@@ -62,12 +62,12 @@ object IndexOfSliceImpl extends StreamFactory {
   )
     extends Stream[S, Int] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, Int] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Int] = {
       val idOut         = txOut.newId()
-      val inStreamOut   = inStream  .copyStream[Out]()
-      val subStreamOut  = subStream .copyStream[Out]()
-      val fromStreamOut = fromStream.copyStream[Out]()
+      val inStreamOut   = c(inStream  )
+      val subStreamOut  = c(subStream )
+      val fromStreamOut = c(fromStream)
       val fromValueOut  = txOut.newIntVar    (idOut, fromValue())
       val hasNextOut    = txOut.newBooleanVar(idOut, _hasNext())
       val validOut      = txOut.newBooleanVar(idOut, valid())

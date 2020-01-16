@@ -75,12 +75,12 @@ object BrownImpl extends StreamFactory {
 
     import widen._
 
-    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                                  ctx: Context[Out]): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
       val idOut         = txOut.newId()
-      val loStreamOut   = loStream  .copyStream[Out]()
-      val hiStreamOut   = hiStream  .copyStream[Out]()
-      val stepStreamOut = stepStream.copyStream[Out]()
+      val loStreamOut   = c(loStream)
+      val hiStreamOut   = c(hiStream)
+      val stepStreamOut = c(stepStream)
       val stateOut      = PatElem.copyVar[Out, A](idOut, state())
       val hasNextOut    = txOut.newBooleanVar(idOut, _hasNext())
       val validOut      = txOut.newBooleanVar(idOut, valid())

@@ -36,9 +36,9 @@ object BubbleImpl extends StreamFactory {
   private final class StreamImpl[S <: Base[S], A](inStream: Stream[S, A])
     extends Stream[S, Pat[A]] {
 
-    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                                  ctx: Context[Out]): Stream[Out, Pat[A]] = {
-      val inStreamOut = inStream.copyStream[Out]()
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Pat[A]] = {
+      val inStreamOut = c(inStream)
       new StreamImpl[Out, A](inStream = inStreamOut)
     }
 

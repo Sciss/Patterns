@@ -113,8 +113,8 @@ object LoopWithIndexImpl extends StreamFactory {
 
     // ---- impl ----
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, A] = {
+    private[patterns] final def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                            (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
       ???
 //      val idOut           = txOut.newId()
 //      val nStreamOut      = nStream.copyStream[Out]()

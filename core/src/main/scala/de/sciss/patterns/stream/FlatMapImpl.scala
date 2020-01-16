@@ -84,8 +84,8 @@ object FlatMapImpl extends StreamFactory {
 
     // ---- impl ----
 
-    private[patterns] final def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                               ctx: Context[Out]): Stream[Out, A] = {
+    private[patterns] final def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                            (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
       ???
 //      val innerStreamOut  = innerStream.copyStream[Out]()
 //      val itStreamOut     = itStream   .copyStream[Out]()

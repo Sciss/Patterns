@@ -61,15 +61,11 @@ object MapItStream extends StreamFactory {
                                            )
     extends AdvanceItStream[S, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
       val idOut           = txOut.newId()
-      val outerStreamOut  = outerStream.copyStream[Out]()
-      val inStreamOut     = {
-        val i = inStream()
-        val iOut = if (i == null) null else i.copyStream[Out]()
-        txOut.newVar[Stream[Out, A]](idOut, iOut)
-      }
+      val outerStreamOut  = c(outerStream)
+      val inStreamOut     = c.copyVar(idOut, inStream)
       val hasInOut        = txOut.newBooleanVar(idOut, hasIn())
       val hasNextOut      = txOut.newBooleanVar(idOut, _hasNext())
       val validOut        = txOut.newIntVar    (idOut, valid())

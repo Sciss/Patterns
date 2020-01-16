@@ -43,8 +43,8 @@ object IndexItStream extends StreamFactory {
   private final class Impl[S <: Base[S]](id: S#Id, val token: Int, iteration: S#Var[Int], _hasNext: S#Var[Boolean])
     extends AdvanceItStream[S, Int] {
 
-    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                                  ctx: Context[Out]): Stream[Out, Int] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Int] = {
       val idOut         = txOut.newId()
       val iterationOut  = txOut.newIntVar     (idOut, iteration())
       val hasNextOut    = txOut.newBooleanVar (idOut, _hasNext())

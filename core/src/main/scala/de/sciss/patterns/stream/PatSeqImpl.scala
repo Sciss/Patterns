@@ -45,8 +45,8 @@ object PatSeqImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
-    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                                  ctx: Context[Out]): Stream[Out, A] = {
+    private[patterns] override def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                               (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
       val idOut     = txOut.newId()
       val countOut  = txOut.newIntVar(idOut, count())
       new StreamImpl[Out, A](id = idOut, xs = xs, count = countOut)

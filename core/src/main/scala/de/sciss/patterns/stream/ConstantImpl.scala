@@ -33,8 +33,8 @@ object ConstantImpl extends StreamFactory {
   private final class StreamImpl[S <: Base[S], A](elem: A) extends Stream[S, A] {
     override def toString = s"Stream.constant($elem)@${hashCode().toHexString}"
 
-    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                                  ctx: Context[Out]): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
       val elemOut = elem
       new StreamImpl[Out, A](elemOut) // we could even write `this.asInstanceOf[Stream[Out, A]]` but it's ugly
     }

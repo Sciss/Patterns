@@ -52,11 +52,11 @@ object BindImpl extends StreamFactory {
   )
     extends Stream[S, Event] {
 
-    private[patterns] override def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                                  ctx: Context[Out]): Stream[Out, Event] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Event] = {
       val idOut        = txOut.newId()
       val mapEOut: Map[String, Stream[Out, Any]] = mapE.map {
-        case (key, value) => key -> value.copyStream[Out]()
+        case (key, value) => key -> c(value)
       }
 
       val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())

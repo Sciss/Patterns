@@ -58,17 +58,13 @@ object UpdatedAllImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
       val idOut          = txOut.newId()
-      val inStreamOut    = inStream   .copyStream[Out]()
-      val idxStreamOut   = idxStream  .copyStream[Out]()
-      val elemStreamOut  = elemStream .copyStream[Out]()
-      val stateOut       = {
-        val s = state()
-        val sOut = if (s == null) null else s.copyStream[Out]()
-        txOut.newVar[Stream[Out, A]](idOut, sOut)
-      }
+      val inStreamOut    = c(inStream  )
+      val idxStreamOut   = c(idxStream )
+      val elemStreamOut  = c(elemStream)
+      val stateOut       = c.copyVar(idOut, state)
       val validOut       = txOut.newBooleanVar(idOut, valid())
 
       new StreamImpl[Out, A1, A](id = idOut, inStream = inStreamOut, idxStream = idxStreamOut, elemStream = elemStreamOut,

@@ -59,16 +59,12 @@ object FlattenImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
       val idOut           = txOut.newId()
-      val inStreamOut     = inStream.copyStream[Out]()
+      val inStreamOut     = c(inStream)
       val hasInnerOut     = txOut.newBooleanVar(idOut, hasInner())
-      val innerStreamOut  = {
-        val i     = innerStream()
-        val iOut  = if (i == null) null else i.copyStream[Out]()
-        txOut.newVar[Stream[Out, A]](idOut, iOut)
-      }
+      val innerStreamOut  = c.copyVar(idOut, innerStream)
       val hasNextOut      = txOut.newBooleanVar(idOut, _hasNext())
       val validOut        = txOut.newBooleanVar(idOut, valid())
 

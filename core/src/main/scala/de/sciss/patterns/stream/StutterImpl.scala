@@ -60,11 +60,11 @@ object StutterImpl extends StreamFactory {
                                                  )
     extends Stream[S, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
       val idOut       = txOut.newId()
-      val inStreamOut = inStream.copyStream[Out]()
-      val nStreamOut  = nStream .copyStream[Out]()
+      val inStreamOut = c(inStream)
+      val nStreamOut  = c(nStream )
       val stateOut    = PatElem.copyVar[Out, A](idOut, state())
       val remainOut   = txOut.newIntVar    (idOut, remain())
       val validOut    = txOut.newBooleanVar(idOut, valid())

@@ -46,10 +46,10 @@ object CatImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, A] = {
-      val aStreamOut  = aStream.copyStream[Out]()
-      val bStreamOut  = bStream.copyStream[Out]()
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+      val aStreamOut  = c(aStream)
+      val bStreamOut  = c(bStream)
       new StreamImpl[Out, A1, A2, A](aStream = aStreamOut, bStream = bStreamOut, widen = widen)
     }
 

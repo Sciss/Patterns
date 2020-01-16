@@ -56,10 +56,10 @@ object ChooseImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
       val idOut       = txOut.newId()
-      val inStreamOut = inStream.copyStream[Out]()
+      val inStreamOut = c(inStream)
       val choiceOut   = PatElem.copyVar[Out, A](idOut, choice())
       val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
       val validOut    = txOut.newBooleanVar(idOut, valid())

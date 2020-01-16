@@ -44,10 +44,10 @@ object FormatImpl extends StreamFactory {
   )
     extends Stream[S, String] {
 
-    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
-                                                         ctx: Context[Out]): Stream[Out, String] = {
-      val sStreamOut     = sStream.copyStream[Out]()
-      val argStreamsOut  = argStreams.map(_.copyStream[Out]())
+    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
+                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, String] = {
+      val sStreamOut     = c(sStream)
+      val argStreamsOut  = argStreams.map(c(_))
       new StreamImpl[Out](sStream = sStreamOut, argStreams = argStreamsOut)
     }
 
