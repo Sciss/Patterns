@@ -45,18 +45,18 @@ object PatMapImpl extends StreamFactory {
       _hasNext = _hasNext, valid = valid)
   }
 
-//  private final class StreamCopy[S <: Base[S], A1, A](tx0: S#Tx,
-//                                                      id          : S#Id,
-//                                                      outer       : Pat[Pat[A1]],
-//                                                      token       : Int,
-//                                                      mapStream   : S#Var[Pat[A]],
-//                                                      _hasNext    : S#Var[Boolean],
-//                                                      valid       : S#Var[Boolean],
-//                                                      protected val innerStream : Stream[S, A],
-//                                                      protected val itStream    : Stream[S, A1]
-//                                                     )
-//    extends StreamImpl[S, A1, A](tx0, id, outer = outer, token = token, mapStream = mapStream,
-//      _hasNext = _hasNext, valid = valid)
+  private final class StreamCopy[S <: Base[S], A1, A](tx0: S#Tx,
+                                                      id          : S#Id,
+                                                      outer       : Pat[Pat[A1]],
+                                                      token       : Int,
+                                                      mapStream   : S#Var[Pat[A]],
+                                                      _hasNext    : S#Var[Boolean],
+                                                      valid       : S#Var[Boolean],
+                                                      protected val innerStream : Stream[S, A],
+                                                      protected val itStream    : Stream[S, A1]
+                                                     )
+    extends StreamImpl[S, A1, A](tx0, id, outer = outer, token = token, mapStream = mapStream,
+      _hasNext = _hasNext, valid = valid)
 
   private final class StreamNew [S <: Base[S], A1, A](ctx0: Context[S], tx0: S#Tx,
                                                       id          : S#Id,
@@ -118,16 +118,15 @@ object PatMapImpl extends StreamFactory {
 
     private[patterns] final def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
                                                             (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Pat[A]] = {
-      ???
-//      val idOut           = txOut.newId()
-//      val mapStreamOut    = txOut.newVar[Pat[A]](idOut, mapStream())
-//      val hasNextOut      = txOut.newBooleanVar(idOut, _hasNext())
-//      val validOut        = txOut.newBooleanVar(idOut, valid())
-//      val innerStreamOut  = innerStream .copyStream[Out]()
-//      val itStreamOut     = itStream    .copyStream[Out]()
-//
-//      new StreamCopy[Out, A1, A](txOut, id = idOut, outer = outer, token = token, mapStream = mapStreamOut,
-//        _hasNext = hasNextOut, valid = validOut, innerStream = innerStreamOut, itStream = itStreamOut)
+      val idOut           = txOut.newId()
+      val mapStreamOut    = txOut.newVar[Pat[A]](idOut, mapStream())
+      val hasNextOut      = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut        = txOut.newBooleanVar(idOut, valid())
+      val innerStreamOut  = c(innerStream)
+      val itStreamOut     = c(itStream   )
+
+      new StreamCopy[Out, A1, A](txOut, id = idOut, outer = outer, token = token, mapStream = mapStreamOut,
+        _hasNext = hasNextOut, valid = validOut, innerStream = innerStreamOut, itStream = itStreamOut)
     }
 
     final protected val mapItStreams = tx0.newInMemorySet[ItStream[S, A1]]
