@@ -82,8 +82,8 @@ object BrownImpl extends StreamFactory {
       val hiStreamOut   = hiStream  .copyStream[Out]()
       val stepStreamOut = stepStream.copyStream[Out]()
       val stateOut      = PatElem.copyVar[Out, A](idOut, state())
-      val hasNextOut    = txOut.newBooleanVar(idOut, false)
-      val validOut      = txOut.newBooleanVar(idOut, false)
+      val hasNextOut    = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut      = txOut.newBooleanVar(idOut, valid())
       val rOut          = r.copy[Out]()
 
       new StreamImpl[Out, A1, A2, A](id = idOut, loStream = loStreamOut, hiStream = hiStreamOut, stepStream = stepStreamOut,

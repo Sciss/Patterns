@@ -98,9 +98,7 @@ object FoldLeftImpl extends StreamFactory {
     private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
       if (!valid()) {
         valid()      = true
-        // $COVERAGE-OFF$
         logStream("FoldLeft.iterator.validate()")
-        // $COVERAGE-ON$
         val _outer        = outerStream.toVector
         val innerRewrite  = _outer.foldLeft(z) { (y: Pat[A], x: Pat[B]) =>
           val t = new Transform {
@@ -132,9 +130,7 @@ object FoldLeftImpl extends StreamFactory {
       if (!hasNext) Stream.exhausted()
       val s = result()
       val res = s.next()
-      // $COVERAGE-OFF$
       logStream(s"FoldLeft.iterator.next() = $res")
-      // $COVERAGE-ON$
       res
     }
   }

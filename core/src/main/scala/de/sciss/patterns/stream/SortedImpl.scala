@@ -62,7 +62,7 @@ object SortedImpl extends StreamFactory {
         val sOut = if (s == null) null else s.copyStream[Out]()
         txOut.newVar[Stream[Out, A]](idOut, sOut)
       }
-      val validOut        = txOut.newBooleanVar(idOut, false)
+      val validOut        = txOut.newBooleanVar(idOut, valid())
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, sortedStream = sortedStreamOut, valid = validOut)(ord)
     }
 

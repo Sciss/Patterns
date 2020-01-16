@@ -49,7 +49,7 @@ object LengthImpl extends StreamFactory {
                                                          ctx: Context[Out]): Stream[Out, Int] = {
       val idOut       = txOut.newId()
       val inStreamOut = inStream.copyStream[Out]()
-    val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, _hasNext = hasNextOut)
     }
 

@@ -202,16 +202,12 @@ private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Co
     val source              = sources.head
     val res0: Stream[S, _]  = source.mkItStream()(this, tx)
     val res                 = res0.asInstanceOf[Stream[S, A]]
-    // $COVERAGE-OFF$
     logStream(s"Context.mkItStream($token) = $res")
-    // $COVERAGE-ON$
     res
   }
 
   def registerItStream[A](it: ItStream[S, A])(implicit tx: S#Tx): Unit = {
-    // $COVERAGE-OFF$
     logStream(s"Context.registerItStream($it)")
-    // $COVERAGE-ON$
     val token               = it.token
     val sources             = tokenMap.get(token).get
     val source: ItStreamSource[S, _] = sources.head

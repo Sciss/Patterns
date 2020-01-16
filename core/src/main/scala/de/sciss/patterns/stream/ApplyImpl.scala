@@ -67,8 +67,8 @@ object ApplyImpl extends StreamFactory {
         if (s == null) null else s.copyStream[Out]()
       }
       val stateOut      = txOut.newVar        (idOut, stateOutV)
-      val hasNextOut    = txOut.newBooleanVar (idOut, false)
-      val validOut      = txOut.newBooleanVar (idOut, false)
+      val hasNextOut    = txOut.newBooleanVar (idOut, _hasNext())
+      val validOut      = txOut.newBooleanVar (idOut, valid())
 
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, idxStream = idxStreamOut,
         valid = validOut, _hasNext = hasNextOut, state = stateOut)
