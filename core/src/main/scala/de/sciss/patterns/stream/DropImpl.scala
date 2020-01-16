@@ -53,6 +53,18 @@ object DropImpl extends StreamFactory {
   )
     extends TruncateLikeStreamImpl[S, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut         = txOut.newId()
+      val inStreamOut   = inStream  .copyStream[Out]()
+      val lenStreamOut  = lenStream .copyStream[Out]()
+      val hasNextOut    = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut      = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, lenStream = lenStreamOut,
+        _hasNext = hasNextOut, valid = validOut)
+    }
+
     protected def typeId: Int = DropImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

@@ -28,7 +28,7 @@ object PatMapImpl extends StreamFactory {
     val _hasNext      = tx.newBooleanVar(id, false)
     val valid         = tx.newBooleanVar(id, false)
 
-    new StreamNew[S, A1, A](ctx, tx, id = id, outer = outer, tokenId = it.token, mapStream = mapStream,
+    new StreamNew[S, A1, A](ctx, tx, id = id, outer = outer, token = it.token, mapStream = mapStream,
       _hasNext = _hasNext, valid = valid, inner = inner)
   }
 
@@ -41,20 +41,33 @@ object PatMapImpl extends StreamFactory {
     val _hasNext      = tx.readBooleanVar(id, in)
     val valid         = tx.readBooleanVar(id, in)
 
-    new StreamRead[S, Any, Any](ctx, tx, in, access, id = id, outer = outer, tokenId = tokenId, mapStream = mapStream,
+    new StreamRead[S, Any, Any](ctx, tx, in, access, id = id, outer = outer, token = tokenId, mapStream = mapStream,
       _hasNext = _hasNext, valid = valid)
   }
+
+  private final class StreamCopy[S <: Base[S], A1, A](tx0: S#Tx,
+                                                      id          : S#Id,
+                                                      outer       : Pat[Pat[A1]],
+                                                      token       : Int,
+                                                      mapStream   : S#Var[Pat[A]],
+                                                      _hasNext    : S#Var[Boolean],
+                                                      valid       : S#Var[Boolean],
+                                                      protected val innerStream : Stream[S, A],
+                                                      protected val itStream    : Stream[S, A1]
+                                                     )
+    extends StreamImpl[S, A1, A](tx0, id, outer = outer, token = token, mapStream = mapStream,
+      _hasNext = _hasNext, valid = valid)
 
   private final class StreamNew [S <: Base[S], A1, A](ctx0: Context[S], tx0: S#Tx,
                                                       id          : S#Id,
                                                       outer       : Pat[Pat[A1]],
-                                                      tokenId     : Int,
+                                                      token       : Int,
                                                       mapStream   : S#Var[Pat[A]],
                                                       _hasNext    : S#Var[Boolean],
                                                       valid       : S#Var[Boolean],
                                                       inner       : Pat[A]
                                                      )
-    extends StreamImpl[S, A1, A](tx0, id, outer = outer, token = tokenId, mapStream = mapStream,
+    extends StreamImpl[S, A1, A](tx0, id, outer = outer, token = token, mapStream = mapStream,
       _hasNext = _hasNext, valid = valid) {
 
     protected val innerStream : Stream[S, A]  =
@@ -66,12 +79,12 @@ object PatMapImpl extends StreamFactory {
   private final class StreamRead[S <: Base[S], A1, A](ctx0: Context[S], tx0: S#Tx, in0: DataInput, access0: S#Acc,
                                                       id          : S#Id,
                                                       outer       : Pat[Pat[A1]],
-                                                      tokenId     : Int,
+                                                      token       : Int,
                                                       mapStream   : S#Var[Pat[A]],
                                                       _hasNext    : S#Var[Boolean],
                                                       valid       : S#Var[Boolean]
                                                      )
-    extends StreamImpl[S, A1, A](tx0, id, outer = outer, token = tokenId, mapStream = mapStream,
+    extends StreamImpl[S, A1, A](tx0, id, outer = outer, token = token, mapStream = mapStream,
       _hasNext = _hasNext, valid = valid) {
 
     protected val (innerStream: Stream[S, A], itStream: Stream[S, A1]) = {
@@ -102,6 +115,19 @@ object PatMapImpl extends StreamFactory {
     protected val itStream    : Stream[S, A1]
 
     // ---- impl ----
+
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, Pat[A]] = {
+      val idOut           = txOut.newId()
+      val mapStreamOut    = txOut.newVar[Pat[A]](idOut, mapStream())
+      val hasNextOut      = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut        = txOut.newBooleanVar(idOut, valid())
+      val innerStreamOut  = innerStream .copyStream[Out]()
+      val itStreamOut     = itStream    .copyStream[Out]()
+
+      new StreamCopy[Out, A1, A](txOut, id = idOut, outer = outer, token = token, mapStream = mapStreamOut,
+        _hasNext = hasNextOut, valid = validOut, innerStream = innerStreamOut, itStream = itStreamOut)
+    }
 
     final protected val mapItStreams = tx0.newInMemorySet[ItStream[S, A1]]
 

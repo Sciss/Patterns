@@ -27,7 +27,6 @@ object FormatImpl extends StreamFactory {
     import pat._
     val sStream     = s.expand[S]
     val argStreams  = args.iterator.map(_.expand[S]).toVector
-
     new StreamImpl[S](sStream = sStream, argStreams = argStreams)
   }
 
@@ -44,6 +43,13 @@ object FormatImpl extends StreamFactory {
                                                 argStreams: Vec[Stream[S, Any]]
   )
     extends Stream[S, String] {
+
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, String] = {
+      val sStreamOut     = sStream.copyStream[Out]()
+      val argStreamsOut  = argStreams.map(_.copyStream[Out]())
+      new StreamImpl[Out](sStream = sStreamOut, argStreams = argStreamsOut)
+    }
 
     protected def typeId: Int = FormatImpl.typeId
 

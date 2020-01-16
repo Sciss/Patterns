@@ -30,7 +30,6 @@ object ChooseImpl extends StreamFactory {
     val _hasNext  = tx.newBooleanVar(id, false)
     val valid     = tx.newBooleanVar(id, false)
     val r         = ctx.mkRandom(pat.ref)
-
     new StreamImpl[S, A](id = id, inStream = inStream, choice = choice, _hasNext = _hasNext, valid = valid)(r)
   }
 
@@ -56,6 +55,20 @@ object ChooseImpl extends StreamFactory {
     implicit val r: TxnRandom[S]
   )
     extends Stream[S, A] {
+
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut       = txOut.newId()
+      val inStreamOut = inStream.copyStream[Out]()
+      val choiceOut   = PatElem.copyVar[Out, A](idOut, choice())
+      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut    = txOut.newBooleanVar(idOut, valid())
+      val rOut          = {
+        // ctx.mkRandom(ref)
+        TxnRandom[Out]()
+      }  // XXX TODO --- huh! should we be able to copy the internal RNG state?
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, choice = choiceOut, _hasNext = hasNextOut, valid = validOut)(rOut)
+    }
 
     protected def typeId: Int = ChooseImpl.typeId
 

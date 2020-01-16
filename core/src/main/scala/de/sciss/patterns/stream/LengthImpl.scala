@@ -26,7 +26,6 @@ object LengthImpl extends StreamFactory {
     val id        = tx.newId()
     val inStream  = in.expand[S]
     val _hasNext  = tx.newBooleanVar(id, true)
-
     new StreamImpl[S, A](id = id, inStream = inStream, _hasNext = _hasNext)
   }
 
@@ -45,6 +44,14 @@ object LengthImpl extends StreamFactory {
                                                    _hasNext: S#Var[Boolean]
   )
     extends Stream[S, Int] {
+
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, Int] = {
+      val idOut       = txOut.newId()
+      val inStreamOut = inStream.copyStream[Out]()
+    val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, _hasNext = hasNextOut)
+    }
 
     protected def typeId: Int = LengthImpl.typeId
 

@@ -60,6 +60,19 @@ object UpdatedImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut         = txOut.newId()
+      val inStreamOut   = inStream  .copyStream[Out]()
+      val idxStreamOut  = idxStream .copyStream[Out]()
+      val takeRemOut    = txOut.newIntVar(idOut, takeRem())
+      val hasNextOut    = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut      = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out, A1, A](id = idOut, inStream = inStreamOut, idxStream = idxStreamOut, takeRem = takeRemOut,
+        _hasNext = hasNextOut, valid = validOut, elem = elem)
+    }
+
     protected def typeId: Int = UpdatedImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

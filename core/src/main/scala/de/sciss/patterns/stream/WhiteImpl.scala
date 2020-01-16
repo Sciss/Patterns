@@ -62,6 +62,23 @@ object WhiteImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut       = txOut.newId()
+      val loStreamOut = loStream.copyStream[Out]()
+      val hiStreamOut = hiStream.copyStream[Out]()
+      val stateOut    = PatElem.copyVar[Out, A](idOut, state())
+      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut    = txOut.newBooleanVar(idOut, valid())
+      val rOut          = {
+        // ctx.mkRandom(ref)
+        TxnRandom[Out]()
+      }  // XXX TODO --- huh! should we be able to copy the internal RNG state?
+
+      new StreamImpl[Out, A](id = idOut, loStream = loStreamOut, hiStream = hiStreamOut, state = stateOut, _hasNext = hasNextOut,
+        valid = validOut)(rOut, num)
+    }
+
     protected def typeId: Int = WhiteImpl.typeId
 
     def dispose()(implicit tx: S#Tx): Unit = {

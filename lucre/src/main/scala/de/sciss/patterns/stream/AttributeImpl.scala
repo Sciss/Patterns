@@ -54,6 +54,15 @@ object AttributeImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut       = txOut.newId()
+      val nextOut     = PatElem.copyVar[Out, A](idOut, _next())
+      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut    = txOut.newBooleanVar(idOut, valid())
+      new StreamImpl[Out, A](id = idOut, key = key, _next = nextOut, _hasNext = hasNextOut, valid = validOut)(ex)
+    }
+
     protected def typeId: Int = AttributeImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

@@ -28,7 +28,6 @@ object UnaryOpImpl extends StreamFactory {
     import pat._
     val aStream     = a.expand[S]
     val state       = op.prepare(ref)
-
     new StreamImpl[S, A1, A, op.State](op = op, state = state, aStream = aStream)
   }
 
@@ -47,6 +46,13 @@ object UnaryOpImpl extends StreamFactory {
     aStream: Stream[S, A1]
   )
     extends Stream[S, A] {
+
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val aStreamOut     = aStream.copyStream[Out]()
+      val stateOut       = op.copyState[S, Out](state)
+      new StreamImpl[Out, A1, A, op.State](op = op, state = stateOut, aStream = aStreamOut)
+    }
 
     protected def typeId: Int = UnaryOpImpl.typeId
 

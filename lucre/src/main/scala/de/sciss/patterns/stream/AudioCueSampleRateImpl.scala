@@ -36,6 +36,12 @@ object AudioCueSampleRateImpl extends StreamFactory {
   private final class StreamImpl[S <: Base[S]](inStream: Stream[S, graph.AudioCue])
     extends AudioCueStreamImpl[S, Double](inStream) {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, Double] = {
+      val inStreamOut = inStream.copyStream[Out]()
+      new StreamImpl[Out](inStream = inStreamOut)
+    }
+
     protected def typeId: Int = AudioCueSampleRateImpl.typeId
 
     protected def mapCue(cue: proc.AudioCue): Double = cue.sampleRate

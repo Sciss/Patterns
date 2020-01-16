@@ -63,6 +63,18 @@ object LinExpImpl extends StreamFactory {
                                                          )
     extends ScaleLikeStreamImpl[S, A1, A2, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val inStreamOut    = inStream   .copyStream[Out]()
+      val inLoStreamOut  = inLoStream .copyStream[Out]()
+      val inHiStreamOut  = inHiStream .copyStream[Out]()
+      val outLoStreamOut = outLoStream.copyStream[Out]()
+      val outHiStreamOut = outHiStream.copyStream[Out]()
+
+      new StreamImpl[Out, A1, A2, A](inStream = inStreamOut, inLoStream = inLoStreamOut, inHiStream = inHiStreamOut,
+        outLoStream = outLoStreamOut, outHiStream = outHiStreamOut)(widen, num)
+    }
+
     protected def typeId: Int = LinExpImpl.typeId
 
     // math.pow(outHigh / outLow, (in - inLow) / (inHigh - inLow)) * outLow

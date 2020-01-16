@@ -57,6 +57,19 @@ object GroupedImpl extends StreamFactory {
   )
     extends Stream[S, Pat[A]] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, Pat[A]] = {
+      val idOut           = txOut.newId()
+      val inStreamOut     = inStream  .copyStream[Out]()
+      val sizeStreamOut   = sizeStream.copyStream[Out]()
+      val innerStreamOut  = txOut.newVar[Pat[A]](idOut, innerStream())
+      val hasNextOut      = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut        = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, sizeStream = sizeStreamOut,
+        innerStream = innerStreamOut, _hasNext = hasNextOut, valid = validOut)
+    }
+
     protected def typeId: Int = GroupedImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

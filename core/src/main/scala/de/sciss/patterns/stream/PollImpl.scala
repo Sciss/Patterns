@@ -26,7 +26,6 @@ object PollImpl extends StreamFactory {
     val inStream    = in    .expand[S]
     val gateStream  = gate  .expand[S]
     val labelStream = label .expand[S]
-
     new StreamImpl[S, A](inStream = inStream, gateStream = gateStream, labelStream = labelStream)
   }
 
@@ -45,6 +44,14 @@ object PollImpl extends StreamFactory {
                                                    labelStream : Stream[S, String]
   )
     extends Stream[S, A] {
+
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val inStreamOut    = inStream   .copyStream[Out]()
+      val gateStreamOut  = gateStream .copyStream[Out]()
+      val labelStreamOut = labelStream.copyStream[Out]()
+      new StreamImpl[Out, A](inStream = inStreamOut, gateStream = gateStreamOut, labelStream = labelStreamOut)
+    }
 
     protected def typeId: Int = PollImpl.typeId
 

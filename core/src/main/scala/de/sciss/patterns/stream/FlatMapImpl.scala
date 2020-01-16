@@ -60,6 +60,14 @@ object FlatMapImpl extends StreamFactory {
     }
   }
 
+  private final class StreamCopy[S <: Base[S], A1, A](tx0: S#Tx,
+                                                      outer       : Pat[Pat[A1]],
+                                                      token       : Int,
+                                                      protected val innerStream : Stream[S, A],
+                                                      protected val itStream    : Stream[S, A1]
+                                                     )
+    extends StreamImpl[S, A1, A](tx0, outer, token)
+
   private abstract class StreamImpl[S <: Base[S], A1, A](tx0: S#Tx,
                                                           outer            : Pat[Pat[A1]],
                                                           final val token: Int
@@ -75,6 +83,14 @@ object FlatMapImpl extends StreamFactory {
     protected val itStream    : Stream[S, A1]
 
     // ---- impl ----
+
+    private[patterns] final def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                               ctx: Context[Out]): Stream[Out, A] = {
+      val innerStreamOut  = innerStream.copyStream[Out]()
+      val itStreamOut     = itStream   .copyStream[Out]()
+      new StreamCopy[Out, A1, A](txOut, outer = outer, token = token,
+        innerStream = innerStreamOut, itStream = itStreamOut)
+    }
 
     final protected val mapItStreams = tx0.newInMemorySet[ItStream[S, A1]]
 

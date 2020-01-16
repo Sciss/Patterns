@@ -76,6 +76,22 @@ object CombinationsImpl extends StreamFactory {
   )
     extends Stream[S, Pat[A]] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, Pat[A]] = {
+      val idOut       = txOut.newId()
+      val inStreamOut = inStream.copyStream[Out]()
+      val nStreamOut  = nStream .copyStream[Out]()
+      val elementsOut = txOut.newVar[Vec[A]]  (idOut, elements())(PatElem.vecSerializer)
+      val countsOut   = txOut.newVar[Vec[Int]](idOut, counts())
+      val numbersOut  = txOut.newVar[Vec[Int]](idOut, numbers())
+      val offsetsOut  = txOut.newVar[Vec[Int]](idOut, offsets())
+      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut    = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, nStream = nStreamOut, elements = elementsOut, counts = countsOut,
+        numbers = numbersOut, offsets = offsetsOut, _hasNext = hasNextOut, valid = validOut)
+    }
+
     protected def typeId: Int = CombinationsImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

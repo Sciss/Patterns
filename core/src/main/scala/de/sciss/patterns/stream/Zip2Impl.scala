@@ -25,7 +25,6 @@ object Zip2Impl extends StreamFactory {
     import pat._
     val aStream     = a.expand(ctx, tx)
     val bStream     = b.expand(ctx, tx)
-
     new StreamImpl[S, A1, A2](aStream = aStream, bStream = bStream)
   }
 
@@ -43,6 +42,13 @@ object Zip2Impl extends StreamFactory {
                                                         val bStream: Stream[S, A2]
   )
     extends Stream[S, (A1, A2)] {
+
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, (A1, A2)] = {
+      val aStreamOut = aStream.copyStream[Out]()
+      val bStreamOut = bStream.copyStream[Out]()
+      new StreamImpl[Out, A1, A2](aStream = aStreamOut, bStream = bStreamOut)
+    }
 
     protected def typeId: Int = Zip2Impl.typeId
 

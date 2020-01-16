@@ -58,6 +58,18 @@ object SumImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut       = txOut.newId()
+      val inStreamOut = inStream.copyStream[Out]()
+      val stateOut    = PatElem.copyVar[Out, A](idOut, state())
+      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut    = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, state = stateOut,
+        _hasNext = hasNextOut, valid = validOut)(num)
+    }
+
     protected def typeId: Int = SumImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

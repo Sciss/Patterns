@@ -62,6 +62,20 @@ object IndexOfSliceImpl extends StreamFactory {
   )
     extends Stream[S, Int] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, Int] = {
+      val idOut         = txOut.newId()
+      val inStreamOut   = inStream  .copyStream[Out]()
+      val subStreamOut  = subStream .copyStream[Out]()
+      val fromStreamOut = fromStream.copyStream[Out]()
+      val fromValueOut  = txOut.newIntVar    (idOut, fromValue())
+      val hasNextOut    = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut      = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out, A1, A2](id = idOut, inStream = inStreamOut, subStream = subStreamOut, fromStream = fromStreamOut,
+        fromValue = fromValueOut, _hasNext = hasNextOut, valid = validOut)
+    }
+
     protected def typeId: Int = IndexOfSliceImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

@@ -63,6 +63,18 @@ object FolderCollectImpl extends StreamFactory {
                                                  )
     extends Stream[S, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut       = txOut.newId()
+      val indexOut    = txOut.newIntVar    (idOut, index())
+      val stateOut    = PatElem.copyVar[Out, A](idOut, state())
+      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut    = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out, A](id = idOut, key = key, index = indexOut, state = stateOut,
+        _hasNext = hasNextOut, valid = validOut, ex = ex)
+    }
+
     protected def typeId: Int = AudioCueNumFramesImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

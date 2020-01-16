@@ -57,6 +57,25 @@ object ParImpl extends StreamFactory {
                                               ) extends Stream[S, Event] {
     protected def typeId: Int = ParImpl.typeId
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, Event] = {
+      val idOut       = txOut.newId()
+      val inStreamOut = inStream.copyStream[Out]()
+      val pqOut       = {
+        val sl = SkipList.Map.empty[Out, TimeRef, Stream[Out, Event]]
+        pq.iterator.foreach {
+          case (key, value) =>
+            sl.put(key, value.copyStream[Out]())
+        }
+        sl
+      }
+      val elemOut     = txOut.newVar[Event](idOut, elem())
+      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut    = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out](id = idOut, inStream = inStreamOut, pq = pqOut, elem = elemOut, _hasNext = hasNextOut, valid = validOut)
+    }
+
     protected def writeData(out: DataOutput): Unit = {
       id       .write(out)
       inStream .write(out)

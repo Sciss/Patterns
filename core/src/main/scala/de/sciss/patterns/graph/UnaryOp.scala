@@ -26,11 +26,11 @@ object UnaryOp {
   sealed abstract class Op[A1, A2] extends ProductWithAdjuncts {
     type State[S <: Base[S]]
     
-//    protected def opId: Int
-    
     def readState   [S <: Base[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): State[S]
     def writeState  [S <: Base[S]](s: State[S], out: DataOutput): Unit
     def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit
+
+    def copyState[S <: Base[S], Out <: Base[Out]](s: State[S])(implicit tx: S#Tx, txOut: Out#Tx): State[Out]
 
     def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S]
 
@@ -40,9 +40,7 @@ object UnaryOp {
 
     def name: String
 
-    // $COVERAGE-OFF$
     override def toString: String = name
-    // $COVERAGE-ON$
   }
 
   abstract class PureOp[A1, A2] extends Op[A1, A2] {
@@ -51,6 +49,8 @@ object UnaryOp {
     final def readState   [S <: Base[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): State[S] = ()
     final def writeState  [S <: Base[S]](s: State[S], out: DataOutput): Unit = ()
     final def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit = ()
+
+    final def copyState[S <: Base[S], Out <: Base[Out]](s: State[S])(implicit tx: S#Tx, txOut: Out#Tx): Unit = ()
 
     final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S] = ()
 
@@ -70,6 +70,11 @@ object UnaryOp {
 
     final def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit =
       s.dispose()
+
+    def copyState[S <: Base[S], Out <: Base[Out]](s: TxnRandom[S])(implicit tx: S#Tx, txOut: Out#Tx): TxnRandom[Out] = {
+      // XXX TODO --- huh! should we be able to copy the internal RNG state?
+      TxnRandom[Out]()
+    }
 
     final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S] = ctx.mkRandom(ref)
   }

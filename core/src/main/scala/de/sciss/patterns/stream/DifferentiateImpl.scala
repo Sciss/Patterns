@@ -63,6 +63,19 @@ object DifferentiateImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut       = txOut.newId()
+      val inStreamOut = inStream.copyStream[Out]()
+      val x1Out       = PatElem.copyVar[Out, A](idOut, x1())
+      val stateOut    = PatElem.copyVar[Out, A](idOut, state())
+      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut    = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, x1 = x1Out, state = stateOut, _hasNext = hasNextOut,
+        valid = validOut)(num)
+    }
+
     protected def typeId: Int = DifferentiateImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

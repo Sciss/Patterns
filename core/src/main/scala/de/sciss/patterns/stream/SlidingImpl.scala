@@ -69,6 +69,22 @@ object SlidingImpl extends StreamFactory {
   ) 
     extends Stream[S, Pat[A]] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, Pat[A]] = {
+      val idOut           = txOut.newId()
+      val inStreamOut     = inStream  .copyStream[Out]()
+      val sizeStreamOut   = sizeStream.copyStream[Out]()
+      val stepStreamOut   = stepStream.copyStream[Out]()
+      val innerStreamOut  = txOut.newVar[Pat[A]](idOut, innerStream())
+      val hasStepOut      = txOut.newBooleanVar(idOut, hasStep())
+      val bufOut          = txOut.newVar[Vec[A]](idOut, buf())(PatElem.vecSerializer)
+      val hasNextOut      = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut        = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, sizeStream = sizeStreamOut, stepStream = stepStreamOut,
+        innerStream = innerStreamOut, hasStep = hasStepOut, buf = bufOut, _hasNext = hasNextOut, valid = validOut)
+    }
+
     protected def typeId: Int = SlidingImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

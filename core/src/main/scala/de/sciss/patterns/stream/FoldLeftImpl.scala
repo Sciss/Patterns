@@ -59,6 +59,21 @@ object FoldLeftImpl extends StreamFactory {
                                                     )
     extends Stream[S, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut          = txOut.newId()
+      val outerStreamOut = outerStream.copyStream[Out]()
+      val resultOut      = {
+        val r = result()
+        val rOut = if (r == null) null else r.copyStream[Out]()
+        txOut.newVar[Stream[Out, A]](idOut, rOut)
+      }
+      val validOut       = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out, B, A](id = idOut, outerStream = outerStreamOut, z = z,
+        inTokenId = inTokenId, carryTokenId = carryTokenId, inner = inner, result = resultOut, valid = validOut)
+    }
+
     protected def typeId: Int = FoldLeftImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

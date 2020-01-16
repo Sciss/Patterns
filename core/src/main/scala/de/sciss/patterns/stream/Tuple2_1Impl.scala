@@ -36,6 +36,12 @@ object Tuple2_1Impl extends StreamFactory {
   private final class StreamImpl[S <: Base[S], A, A1](tupStream: Stream[S, (A, A1)])
     extends Stream[S, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val tupStreamOut = tupStream.copyStream[Out]()
+      new StreamImpl[Out, A, A1](tupStream = tupStreamOut)
+    }
+
     protected def typeId: Int = Tuple2_1Impl.typeId
 
     protected def writeData(out: DataOutput): Unit =

@@ -36,6 +36,12 @@ object AudioCueNumChannelsImpl extends StreamFactory {
   private final class StreamImpl[S <: Base[S]](inStream: Stream[S, graph.AudioCue])
     extends AudioCueStreamImpl[S, Int](inStream) {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, Int] = {
+      val inStreamOut = inStream.copyStream[Out]()
+      new StreamImpl[Out](inStream = inStreamOut)
+    }
+
     protected def typeId: Int = AudioCueNumChannelsImpl.typeId
 
     protected def mapCue(cue: proc.AudioCue): Int = cue.numChannels

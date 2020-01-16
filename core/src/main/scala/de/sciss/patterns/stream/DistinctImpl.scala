@@ -59,6 +59,19 @@ object DistinctImpl extends StreamFactory {
                                                    valid   : S#Var[Boolean]
   ) extends Stream[S, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut       = txOut.newId()
+      val inStreamOut = inStream.copyStream[Out]()
+      val seenOut     = txOut.newVar[Set[A]](idOut, seen())(PatElem.setSerializer)
+      val nextOut     = PatElem.copyVar[Out, A](idOut, _next())
+      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut    = txOut.newBooleanVar(idOut, valid())
+
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, seen = seenOut, _next = nextOut, _hasNext = hasNextOut,
+        valid = validOut)
+    }
+
     protected def typeId: Int = DistinctImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

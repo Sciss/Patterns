@@ -24,7 +24,6 @@ object ItImpl extends StreamFactory {
   def expand[S <: Base[S], A](pat: It[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
     import pat._
     val refStream = ctx.mkItStream(token)
-
     new StreamImpl[S, A](refStream = refStream)
   }
 
@@ -37,6 +36,12 @@ object ItImpl extends StreamFactory {
 
   private final class StreamImpl[S <: Base[S], A](refStream: Stream[S, A])
     extends Stream[S, A] {
+
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val refStreamOut = refStream.copyStream[Out]()
+      new StreamImpl[Out, A](refStream = refStreamOut)
+    }
 
     protected def typeId: Int = ItImpl.typeId
 

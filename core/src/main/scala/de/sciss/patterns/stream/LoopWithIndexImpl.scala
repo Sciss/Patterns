@@ -32,7 +32,7 @@ object LoopWithIndexImpl extends StreamFactory {
     val _hasNext    = tx.newBooleanVar(id, false)
     val valid       = tx.newBooleanVar(id, false)
 
-    new StreamNew[S, A](ctx, tx, id = id, nStream = nStream, tokenId = it.token,
+    new StreamNew[S, A](ctx, tx, id = id, nStream = nStream, token = it.token,
       nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid, inner = inner)
   }
 
@@ -46,21 +46,34 @@ object LoopWithIndexImpl extends StreamFactory {
     val _hasNext    = tx.readBooleanVar(id, in)
     val valid       = tx.readBooleanVar(id, in)
 
-    new StreamRead[S, Any](ctx, tx, in, access, id = id, nStream = nStream, tokenId = tokenId,
+    new StreamRead[S, Any](ctx, tx, in, access, id = id, nStream = nStream, token = tokenId,
       nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid)
   }
 
-  private final class StreamNew[S <: Base[S], A](ctx0: Context[S], tx0: S#Tx,
-                                                   id         : S#Id,
-                                                   nStream    : Stream[S, Int],
-                                                   tokenId    : Int,
-                                                   nValue     : S#Var[Int],
-                                                   iteration  : S#Var[Int],
-                                                   _hasNext   : S#Var[Boolean],
-                                                   valid      : S#Var[Boolean],
-                                                   inner      : Pat[A]
+  private final class StreamCopy[S <: Base[S], A](tx0: S#Tx,
+                                                  id         : S#Id,
+                                                  nStream    : Stream[S, Int],
+                                                  token      : Int,
+                                                  nValue     : S#Var[Int],
+                                                  iteration  : S#Var[Int],
+                                                  _hasNext   : S#Var[Boolean],
+                                                  valid      : S#Var[Boolean],
+                                                  protected val innerStream: Stream[S, A],
                                                  )
-    extends StreamImpl[S, A](tx0, id = id, nStream = nStream, token = tokenId,
+    extends StreamImpl[S, A](tx0, id = id, nStream = nStream, token = token,
+      nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid)
+
+  private final class StreamNew[S <: Base[S], A](ctx0: Context[S], tx0: S#Tx,
+                                                 id         : S#Id,
+                                                 nStream    : Stream[S, Int],
+                                                 token      : Int,
+                                                 nValue     : S#Var[Int],
+                                                 iteration  : S#Var[Int],
+                                                 _hasNext   : S#Var[Boolean],
+                                                 valid      : S#Var[Boolean],
+                                                 inner      : Pat[A]
+                                                 )
+    extends StreamImpl[S, A](tx0, id = id, nStream = nStream, token = token,
       nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid) {
 
     protected val innerStream: Stream[S, A] =
@@ -70,13 +83,13 @@ object LoopWithIndexImpl extends StreamFactory {
   private final class StreamRead[S <: Base[S], A](ctx0: Context[S], tx0: S#Tx, in0: DataInput, access0: S#Acc,
                                                   id         : S#Id,
                                                   nStream    : Stream[S, Int],
-                                                  tokenId    : Int,
+                                                  token      : Int,
                                                   nValue     : S#Var[Int],
                                                   iteration  : S#Var[Int],
                                                   _hasNext   : S#Var[Boolean],
                                                   valid      : S#Var[Boolean]
                                                  )
-    extends StreamImpl[S, A](tx0, id = id, nStream = nStream, token = tokenId,
+    extends StreamImpl[S, A](tx0, id = id, nStream = nStream, token = token,
       nValue = nValue, iteration = iteration, _hasNext = _hasNext, valid = valid) {
 
     protected val innerStream: Stream[S, A] =
@@ -99,6 +112,21 @@ object LoopWithIndexImpl extends StreamFactory {
     protected val innerStream: Stream[S, A]
 
     // ---- impl ----
+
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut           = txOut.newId()
+      val nStreamOut      = nStream.copyStream[Out]()
+      val nValueOut       = txOut.newIntVar(idOut, nValue())
+      val iterationOut    = txOut.newIntVar(idOut, iteration())
+      val hasNextOut      = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut        = txOut.newBooleanVar(idOut, valid())
+      val innerStreamOut  = innerStream.copyStream[Out]()
+
+      new StreamCopy[Out, A](txOut, id = idOut, nStream = nStreamOut, token = token,
+        nValue = nValueOut, iteration = iterationOut, _hasNext = hasNextOut,
+        valid = validOut, innerStream = innerStreamOut)
+    }
 
     final protected val itStreams = tx0.newInMemorySet[ItStream[S, Int]]
 

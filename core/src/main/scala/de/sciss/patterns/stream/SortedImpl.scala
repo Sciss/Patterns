@@ -29,7 +29,6 @@ object SortedImpl extends StreamFactory {
     val inStream      = in.expand(ctx, tx)
     val sortedStream  = tx.newVar[Stream[S, A]](id, null)
     val valid         = tx.newBooleanVar(id, false)
-
     new StreamImpl[S, A](id = id, inStream = inStream, sortedStream = sortedStream, valid = valid)(ord)
   }
 
@@ -53,7 +52,20 @@ object SortedImpl extends StreamFactory {
     implicit ord: ScalarOrd[A]
   )
     extends Stream[S, A] {
-    
+
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut           = txOut.newId()
+      val inStreamOut     = inStream.copyStream[Out]()
+      val sortedStreamOut = {
+        val s = sortedStream()
+        val sOut = if (s == null) null else s.copyStream[Out]()
+        txOut.newVar[Stream[Out, A]](idOut, sOut)
+      }
+      val validOut        = txOut.newBooleanVar(idOut, false)
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, sortedStream = sortedStreamOut, valid = validOut)(ord)
+    }
+
     protected def typeId: Int = SortedImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {

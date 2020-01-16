@@ -26,7 +26,6 @@ object IndicesImpl extends StreamFactory {
     val id        = tx.newId()
     val inStream  = in.expand[S]
     val count     = tx.newIntVar(id, 0)
-
     new StreamImpl[S, A](id = id, inStream = inStream, count = count)
   }
 
@@ -45,6 +44,14 @@ object IndicesImpl extends StreamFactory {
                                                    count   : S#Var[Int]
   )
     extends Stream[S, Int] {
+
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, Int] = {
+      val idOut       = txOut.newId()
+      val inStreamOut = inStream.copyStream[Out]()
+      val countOut    = txOut.newIntVar(idOut, count())
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, count = countOut)
+    }
 
     protected def typeId: Int = IndicesImpl.typeId
 

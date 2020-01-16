@@ -64,6 +64,23 @@ object ShuffleImpl extends StreamFactory {
   )
     extends Stream[S, A] {
 
+    private[patterns] def copyStream[Out <: Base[Out]]()(implicit tx: S#Tx, txOut: Out#Tx,
+                                                         ctx: Context[Out]): Stream[Out, A] = {
+      val idOut       = txOut.newId()
+      val inStreamOut = inStream.copyStream[Out]()
+      val countOut    = txOut.newIntVar(idOut, count())
+      val shuffledOut = txOut.newVar[Vec[A]](idOut, shuffled())(PatElem.vecSerializer)
+      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
+      val validOut    = txOut.newBooleanVar(idOut, valid())
+      val rOut          = {
+        // ctx.mkRandom(ref)
+        TxnRandom[Out]()
+      }  // XXX TODO --- huh! should we be able to copy the internal RNG state?
+
+      new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, count = countOut, shuffled = shuffledOut,
+        _hasNext = hasNextOut, valid = validOut)(rOut)
+    }
+
     protected def typeId: Int = ShuffleImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = {
