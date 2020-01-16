@@ -84,10 +84,7 @@ object BrownImpl extends StreamFactory {
       val stateOut      = PatElem.copyVar[Out, A](idOut, state())
       val hasNextOut    = txOut.newBooleanVar(idOut, false)
       val validOut      = txOut.newBooleanVar(idOut, false)
-      val rOut          = {
-        // ctx.mkRandom(ref)
-        TxnRandom[Out]()
-      }  // XXX TODO --- huh! should we be able to copy the internal RNG state?
+      val rOut          = r.copy[Out]()
 
       new StreamImpl[Out, A1, A2, A](id = idOut, loStream = loStreamOut, hiStream = hiStreamOut, stepStream = stepStreamOut,
         state = stateOut, _hasNext = hasNextOut,

@@ -71,10 +71,8 @@ object UnaryOp {
     final def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit =
       s.dispose()
 
-    def copyState[S <: Base[S], Out <: Base[Out]](s: TxnRandom[S])(implicit tx: S#Tx, txOut: Out#Tx): TxnRandom[Out] = {
-      // XXX TODO --- huh! should we be able to copy the internal RNG state?
-      TxnRandom[Out]()
-    }
+    def copyState[S <: Base[S], Out <: Base[Out]](s: TxnRandom[S])(implicit tx: S#Tx, txOut: Out#Tx): TxnRandom[Out] =
+      s.copy[Out]()
 
     final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S] = ctx.mkRandom(ref)
   }
