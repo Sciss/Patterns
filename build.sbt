@@ -42,8 +42,8 @@ lazy val commonSettings = Seq(
 lazy val agpl = "AGPL v3+" -> url("http://www.gnu.org/licenses/agpl-3.0.txt")
 
 lazy val root = project.in(file("."))
-  .aggregate(core, lucre)
-  .dependsOn(core, lucre)
+  .aggregate(core, lucre, macros)
+//  .dependsOn(core, lucre)
   .settings(commonSettings)
   .settings(
     name := baseName
@@ -120,3 +120,15 @@ lazy val lucre = project.in(file("lucre"))
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)
   )
 
+lazy val macros = project.in(file("macros"))
+  .dependsOn(lucre)
+  .settings(commonSettings)
+  .settings(
+    name := s"$baseName-macros",
+    description := s"Macro support for $baseName",
+    scalacOptions += "-Yrangepos",  // this is needed to extract source code
+    libraryDependencies ++= Seq(
+      "de.sciss" %% "soundprocesses-compiler" % deps.lucre.soundProcesses
+    ),
+    mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-macros" % mimaVersion)
+  )

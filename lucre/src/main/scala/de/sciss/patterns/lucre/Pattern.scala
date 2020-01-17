@@ -42,6 +42,8 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
 
   type Repr[~ <: Sys[~]] = Pattern[~]
 
+  def apply[S <: Sys[S]]()(implicit tx: S#Tx): Var[S] = newVar[S](empty)
+
   def tryParse(value: Any): Option[Pat[_]] = value match {
     case x: Pat[_]  => Some(x)
     case _          => None
