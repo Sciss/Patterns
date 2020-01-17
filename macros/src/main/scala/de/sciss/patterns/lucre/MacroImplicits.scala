@@ -20,13 +20,18 @@ import de.sciss.patterns.lucre.impl.Macros
 import scala.language.experimental.macros
 
 /** Enables implicits extensions
-  * to assign `Pat[_]`s to a `Pattern.Var` object from a standard IDE,
+  * to assign `Pat[_]`s to a `Pattern.Var` or `Stream` object from a standard IDE,
   * compiling these objects correctly for storage in the workspace,
   * and preserving the corresponding source code.
   */
 object MacroImplicits {
-  implicit final class PatternMacroOps[S <: Sys[S]](/* private[lucre] */ val `this`: Pattern.Var[S]) extends AnyVal {
-    def setGraph(body: Pat[_])(implicit tx: S#Tx): Unit =
+  implicit final class PatternMacroOps[S <: Sys[S]](val `this`: Pattern.Var[S]) extends AnyVal {
+    def setGraph(body: Pat[Any])(implicit tx: S#Tx): Unit =
       macro Macros.patternGraphWithSource[S]
+  }
+
+  implicit final class StreamMacroOps[S <: Sys[S]](val `this`: Stream[S]) extends AnyVal {
+    def setGraph(body: Pat[Any])(implicit tx: S#Tx): Unit =
+      macro Macros.streamGraphWithSource[S]
   }
 }
