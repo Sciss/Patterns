@@ -97,6 +97,9 @@ final class StreamSerializer[S <: Base[S], A]()(implicit ctx: Context[S])
         case UpdatedAllImpl   .typeId => UpdatedAllImpl
         case WhiteImpl        .typeId => WhiteImpl
         case Zip2Impl         .typeId => Zip2Impl
+        case _ =>
+          StreamSerializer.factoryMap.getOrElse(typeId,
+            throw new IllegalArgumentException(s"Unknown stream type 0x${typeId.toHexString.toUpperCase}"))
       }
       val any: Stream[S, Any] = f.readIdentified(in, access)
       any.asInstanceOf[Stream[S, A]]
