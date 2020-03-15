@@ -4,9 +4,10 @@ import de.sciss.file._
 import de.sciss.lucre.stm.Durable
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.synth.proc.SoundProcesses
-import org.scalatest.{Outcome, fixture}
+import org.scalatest.Outcome
+import org.scalatest.flatspec.FixtureAnyFlatSpec
 
-trait DurableSpec extends fixture.FlatSpec {
+trait DurableSpec extends FixtureAnyFlatSpec {
   type S = Durable
   type FixtureParam = S
 

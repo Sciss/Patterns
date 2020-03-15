@@ -5,7 +5,7 @@ import de.sciss.lucre.stm
 import de.sciss.lucre.stm.InMemory
 import de.sciss.patterns.graph.Ops._
 import de.sciss.patterns.{Graph, graph}
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 class AttrSpec extends DurableSpec with Matchers {
   "Primitive attributes" should "work" in { implicit sys =>

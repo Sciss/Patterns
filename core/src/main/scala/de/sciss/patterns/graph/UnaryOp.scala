@@ -20,8 +20,6 @@ import de.sciss.lucre.stm.{Base, TxnRandom}
 import de.sciss.patterns.stream.UnaryOpImpl
 import de.sciss.serial.{DataInput, DataOutput}
 
-import scala.language.higherKinds
-
 object UnaryOp {
   sealed abstract class Op[A1, A2] extends ProductWithAdjuncts {
     type State[S <: Base[S]]

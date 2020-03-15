@@ -20,8 +20,6 @@ import de.sciss.lucre.stm.Base
 import de.sciss.patterns.stream.BinaryOpImpl
 import de.sciss.serial.{DataInput, DataOutput}
 
-import scala.language.higherKinds
-
 object BinaryOp {
   sealed abstract class Op[A1, A2] extends ProductWithAdjuncts {
     type State[S <: Base[S]]

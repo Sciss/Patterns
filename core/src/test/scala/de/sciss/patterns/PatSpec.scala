@@ -1,9 +1,10 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.stm.Plain
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-trait PatSpec extends FlatSpec with Matchers {
+trait PatSpec extends AnyFlatSpec with Matchers {
   type S = Plain
 
   implicit val ctx: Context[Plain] = Context()

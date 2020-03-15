@@ -21,8 +21,6 @@ import de.sciss.patterns.graph.BinaryOp
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
 
-import scala.language.higherKinds
-
 object BinaryOpImpl extends StreamFactory {
   final val typeId = 0x42696E61 // "Bina"
 

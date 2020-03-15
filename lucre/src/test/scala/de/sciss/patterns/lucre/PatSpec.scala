@@ -3,11 +3,12 @@ package de.sciss.patterns.lucre
 import de.sciss.lucre.stm.InMemory
 import de.sciss.patterns
 import de.sciss.patterns.{Pat, Stream => PStream}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.stm.InTxn
 
-trait PatSpec extends FlatSpec with Matchers {
+trait PatSpec extends AnyFlatSpec with Matchers {
   type S = InMemory
   implicit val cursor: S = InMemory()
   implicit val ctx: patterns.Context[S] = cursor.step { implicit tx =>

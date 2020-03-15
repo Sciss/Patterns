@@ -2,7 +2,7 @@ package de.sciss.patterns.lucre
 
 import de.sciss.patterns.{Graph, Pat, RonTuplePure, graph}
 import de.sciss.serial.{DataInput, DataOutput}
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 class SerializationSpec extends DurableSpec with Matchers {
   "A Pattern object" should "be serializable" in { cursor =>

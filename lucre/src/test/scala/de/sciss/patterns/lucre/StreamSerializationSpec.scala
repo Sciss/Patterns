@@ -4,7 +4,7 @@ import de.sciss.lucre.adjunct.Adjunct.WidenToDouble
 import de.sciss.lucre.stm.Plain
 import de.sciss.patterns
 import de.sciss.patterns.{Stream => PStream, Context => _, _}
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 class StreamSerializationSpec extends DurableSpec with Matchers {
   def verify[A](thunk: => Pat[A])(implicit sys: S): Unit = {

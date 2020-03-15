@@ -1,7 +1,7 @@
 # Patterns
 
 [![Build Status](https://travis-ci.org/Sciss/Patterns.svg?branch=master)](https://travis-ci.org/Sciss/Patterns)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.sciss/patterns_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.sciss/patterns_2.12)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.sciss/patterns_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.sciss/patterns_2.13)
 
 ## statement
 
@@ -22,7 +22,7 @@ To link to it:
 
     libraryDependencies += "de.sciss" %% "patterns" % v
 
-The current version `v` is `"0.17.1"`.
+The current version `v` is `"0.18.0"`.
 
 There are two sub-modules which can be linked to separately:
 

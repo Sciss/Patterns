@@ -1,8 +1,9 @@
 package de.sciss.patterns
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class EventSpec extends FlatSpec with Matchers {
+class EventSpec extends AnyFlatSpec with Matchers {
   "An event" should "yield correct default values" in {
     val evt     = Event(Map("dur" -> 0.5))
     val stretch = Event.stretch(evt)

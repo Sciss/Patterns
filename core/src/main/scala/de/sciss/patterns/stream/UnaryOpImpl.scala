@@ -19,8 +19,6 @@ import de.sciss.patterns.graph.UnaryOp
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
 
-import scala.language.higherKinds
-
 object UnaryOpImpl extends StreamFactory {
   final val typeId = 0x556E6172 // "Unar"
 

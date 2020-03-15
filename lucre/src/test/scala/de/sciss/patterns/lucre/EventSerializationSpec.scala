@@ -2,7 +2,7 @@ package de.sciss.patterns
 package lucre
 
 import de.sciss.patterns.graph.Constant
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 class EventSerializationSpec extends DurableSpec with Matchers {
   "Event" should "be serializable" in { implicit sys =>
