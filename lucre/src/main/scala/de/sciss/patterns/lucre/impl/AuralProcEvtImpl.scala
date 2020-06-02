@@ -27,12 +27,13 @@ import de.sciss.synth.proc.{AuralContext, Runner, TimeRef, UGenGraphBuilder => U
 /** Extends the standard aural proc implementation by injecting scalar values and
   * others (audio-cues) directly from an event value, typically coming from a pattern.
   */
+@deprecated("Should use standard AuralProc and runWith", since = "0.19.1")
 final class AuralProcEvtImpl[S <: Sys[S]](evt: Event)(implicit context: AuralContext[S])
   extends AuralProcImpl.Impl[S](Runner.emptyAttr /* XXX TODO: evt.map*/ ) {
 
   override def requestInput[Res](in: UGB.Input { type Value = Res }, st: UGB.Requester[S])
                                 (implicit tx: S#Tx): Res = in match {
-    case i: UGB.Input.Scalar if evt.contains(i.name) =>
+    case i: UGB.Input.Scalar if evt.contains(i.name) => // COVERED (IExpr)
       val valueOpt    = AuralPatternAttribute.getScalarValue(evt = evt, key = i.name)
       val found: Int  = valueOpt.fold(-1)(_.numChannels)
 
@@ -44,7 +45,7 @@ final class AuralProcEvtImpl[S <: Sys[S]](evt: Event)(implicit context: AuralCon
       val res = if (found >= 0) found else if (reqNum >= 0) reqNum else defNum
       UGB.Input.Scalar.Value(res)
 
-    case i: UGB.Input.Stream if evt.contains(i.name) =>
+    case i: UGB.Input.Stream if evt.contains(i.name) => // COVERED (IExpr)
       val value0 = evt.get(i.name) match {
         case Some(AudioCue(peer)) =>
           val spec = peer.spec
@@ -72,7 +73,7 @@ final class AuralProcEvtImpl[S <: Sys[S]](evt: Event)(implicit context: AuralCon
 //      val async     = res0.numSamples > UGB.Input.Buffer.AsyncThreshold   // XXX TODO - that threshold should be configurable
 //      if (async == res0.async) res0 else res0.copy(async = async)
 
-    case i: UGB.Input.Attribute if evt.contains(i.name) =>
+    case i: UGB.Input.Attribute if evt.contains(i.name) => // COVERED (ExprLike)
       val opt = evt.map.get(i.name)
       UGB.Input.Attribute.Value(opt)
 
