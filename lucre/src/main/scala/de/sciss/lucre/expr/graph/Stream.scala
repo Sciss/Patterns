@@ -218,12 +218,12 @@ object Stream {
     def changed: IChangeEvent[S, Seq[A]] = this
 
     private def make()(implicit tx: S#Tx): Seq[A] = {
-      val st  = in.value
       val nV  = n .value
       if (nV <= 0) return Nil
 
       val b   = ISeq.newBuilder[A]
       b.sizeHint(nV)
+      val st  = in.value
       st.peer.foreach { obj =>
         val p = obj.peer()
         var i = 0

@@ -52,6 +52,7 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
   def mkRunner[S <: SSys[S]](obj: Pattern[S])(implicit tx: S#Tx, universe: Universe[S]): Runner[S] =
     BasicAuralRunnerImpl(obj)
 
+  // initializes the entire library
   override def init(): Unit = {
     super.init()
     _init
@@ -65,6 +66,7 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
     Stream                .init()
 
     Runner.addFactory(Pattern)
+    expr.graph.Pattern.init()
 
     PStream.addFactory(stream.AttributeImpl          )
     PStream.addFactory(stream.AudioCueNumChannelsImpl)
