@@ -78,4 +78,5 @@ object AudioCue extends Obj.Adjunct[AudioCue] with Adjunct.Factory {
     override def productPrefix: String = s"AudioCue$$SampleRate"
   }
 }
+@deprecated("Should not need a wrapper, complicates EventAsRunnerMap", since = "0.19.1")
 final case class AudioCue(peer: proc.AudioCue) // extends Obj

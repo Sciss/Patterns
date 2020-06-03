@@ -23,14 +23,14 @@ import de.sciss.lucre.stm.{Disposable, DummySerializerFactory, Obj, TxnLike}
 import de.sciss.lucre.synth.Sys
 import de.sciss.patterns
 import de.sciss.patterns.lucre.AuralPatternObj.ElemHandle
-import de.sciss.patterns.lucre.impl.AuralProcEvtImpl
+import de.sciss.patterns.lucre.impl.EventAsRunnerMap
 import de.sciss.patterns.{Event, Pat}
 import de.sciss.serial.Serializer
 import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.UGenSource.Vec
 import de.sciss.synth.proc.impl.AuralScheduledBase
 import de.sciss.synth.proc.impl.AuralTimelineBase.spanToPoint
-import de.sciss.synth.proc.{AuralContext, AuralObj, Proc, Runner, TimeRef, logAural => logA}
+import de.sciss.synth.proc.{AuralContext, AuralObj, Runner, TimeRef, logAural => logA}
 
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
@@ -334,10 +334,8 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](objH: stm.Source[S#T
     */
   protected def mkView(vid: Unit, span: SpanLike, m: Model)(implicit tx: S#Tx): ElemHandle = {
     val (evt, playObj) = m
-    val childView = playObj match {
-      case p: Proc[S] => new AuralProcEvtImpl[S](evt).init(p)
-      case _          => AuralObj(playObj)
-    }
+    val attr: Runner.Attr[S] = new EventAsRunnerMap(evt)
+    val childView = AuralObj(playObj, attr = attr)
     val h         = ElemHandle[S, Elem](span, childView)
     logA(s"pattern - mkView: $span, $childView")
 //    viewMap.put(tid, h)
