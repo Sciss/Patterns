@@ -89,6 +89,6 @@ final class AuralPatternObj[S <: Sys[S], I1 <: stm.Sys[I1]](objH: stm.Source[S#T
   protected def streamHasNext(st: St)(implicit tx: S#Tx): Boolean =
     st._1.hasNext(st._2, iSys(tx))
 
-  protected def streamNext(st: (patterns.Stream[I1, Any], Context[S, I1]))(implicit tx: S#Tx): Any =
+  protected def streamNext(st: St)(implicit tx: S#Tx): Any =
     st._1.next()(st._2, iSys(tx))
 }
