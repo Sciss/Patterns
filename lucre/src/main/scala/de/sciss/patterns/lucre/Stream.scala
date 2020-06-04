@@ -56,6 +56,7 @@ object Stream extends Obj.Type with Runner.Factory {
 
   private lazy val _init: Unit = {
 //    Code  .init()
+    AuralStreamObj.init()
     Runner.addFactory(Stream)
     expr.graph.Stream.init()
   }
