@@ -6,7 +6,7 @@
 ## statement
 
 Patterns is a library that brings SuperCollider style patterns to Scala, and ultimately
-to [SoundProcesses](https://git.iem.at/sciss/SoundProcesses)). Patterns are descriptions of streams,
+to [SoundProcesses](https://git.iem.at/sciss/SoundProcesses). Patterns are descriptions of streams,
 streams are stateful iterators, here implemented with an optional transactional layer.
 
 This project is (C)opyright 2017&ndash;2020 by Hanns Holger Rutz. All rights reserved. This project is released under 
