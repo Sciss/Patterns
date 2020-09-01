@@ -181,7 +181,7 @@ object RonTuplePure {
 
     //    Zip(Seq(Pseq(ptrnOut), Pseq(durs)))
     log("makePart - durs", durs)
-    (ptrnOut, Pat(durs.map(_ * 0.02): _*))
+    (ptrnOut, Pat(durs.map(_ * 0.2): _*))
   }
 
   // ---------------------------------------------------------------------------------
@@ -243,7 +243,7 @@ object RonTuplePure {
     val post    = pattern.grouped(stutter).stutter(stutter).flatten
     val pre     = Constant(rest).take(stutter)
     val ptrnOut = (pre ++ post).loop()
-    (ptrnOut, durs * 0.02)
+    (ptrnOut, durs * 0.2)
   }
 
   def mkGraph[Tx](): Pat[Event] = {
@@ -251,18 +251,20 @@ object RonTuplePure {
     def mkNotes(in: Pat[Int]): Pat[Double] = in * 2.4 + 4.0
 
     val baseBind: Bind.Map = Map(
-      "proc"    -> "sine4",
+      "play"    -> "sine4",
       "octave"  -> 5,
       "detune"  -> White(-2.0, 2.0),
       "dr"      -> 0.1,
       "stretch" -> 1
     )
 
+    val tempo = 1.0/3
+
     def catPat(cantus: Pat[Int]): Pat[Event] = {
       val map = baseBind ++ Bind.Map(
         "note"  -> mkNotes(cantus),
         "rest"  -> (cantus sig_== -100),
-        "dur"   -> 0.2,
+        "dur"   -> 0.2 / tempo,
         "db"    -> -45,
         "pan"   -> 0,
         "out"   -> White(0, 23),
