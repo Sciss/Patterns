@@ -14,39 +14,39 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.graph.Poll
 import de.sciss.serial.{DataInput, DataOutput}
 
 object PollImpl extends StreamFactory {
   final val typeId = 0x506F6C6C // "Poll"
 
-  def expand[S <: Base[S], A](pat: Poll[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], A](pat: Poll[A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
-    val inStream    = in    .expand[S]
-    val gateStream  = gate  .expand[S]
-    val labelStream = label .expand[S]
-    new StreamImpl[S, A](inStream = inStream, gateStream = gateStream, labelStream = labelStream)
+    val inStream    = in    .expand[T]
+    val gateStream  = gate  .expand[T]
+    val labelStream = label .expand[T]
+    new StreamImpl[T, A](inStream = inStream, gateStream = gateStream, labelStream = labelStream)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val inStream    = Stream.read[S, Any    ](in, access)
-    val gateStream  = Stream.read[S, Boolean](in, access)
-    val labelStream = Stream.read[S, String ](in, access)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val inStream    = Stream.read[T, Any    ](in)
+    val gateStream  = Stream.read[T, Boolean](in)
+    val labelStream = Stream.read[T, String ](in)
 
-    new StreamImpl[S, Any](inStream = inStream, gateStream = gateStream, labelStream = labelStream)
+    new StreamImpl[T, Any](inStream = inStream, gateStream = gateStream, labelStream = labelStream)
   }
 
-  private final class StreamImpl[S <: Base[S], A](
-                                                   inStream    : Stream[S, A],
-                                                   gateStream  : Stream[S, Boolean],
-                                                   labelStream : Stream[S, String]
+  private final class StreamImpl[T <: Exec[T], A](
+                                                   inStream    : Stream[T, A],
+                                                   gateStream  : Stream[T, Boolean],
+                                                   labelStream : Stream[T, String]
   )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val inStreamOut    = c(inStream   )
       val gateStreamOut  = c(gateStream )
       val labelStreamOut = c(labelStream)
@@ -61,21 +61,21 @@ object PollImpl extends StreamFactory {
       labelStream .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       inStream    .dispose()
       gateStream  .dispose()
       labelStream .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = {
+    def reset()(implicit tx: T): Unit = {
       inStream    .reset()
       gateStream  .reset()
       labelStream .reset()
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = inStream.hasNext
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = inStream.hasNext
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next()(implicit ctx: Context[T], tx: T): A = {
       val res = inStream.next()
       if (gateStream.hasNext && labelStream.hasNext) {
         val gateValue   = gateStream  .next()

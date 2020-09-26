@@ -16,10 +16,9 @@ package impl
 
 import java.util
 
-import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Adjunct, Exec, Ident, ProductWithAdjuncts, Var}
 import de.sciss.patterns.graph.Constant
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{ConstFormat, DataInput, DataOutput}
 
 import scala.annotation.switch
 import scala.collection.immutable.{IndexedSeq => Vec}
@@ -34,14 +33,14 @@ object PatElem {
     var count = 0
   }
 
-  def makeVar[S <: Base[S], A](id: S#Id)(implicit tx: S#Tx): S#Var[A] =
-    tx.newVar[A](id, null.asInstanceOf[A])(serializer)
+  def makeVar[T <: Exec[T], A](id: Ident[T])(implicit tx: T): Var[T, A] =
+    id.newVar[A](null.asInstanceOf[A])(tx, format)
 
-  def readVar[S <: Base[S], A](id: S#Id, in: DataInput)(implicit tx: S#Tx): S#Var[A] =
-    tx.readVar[A](id, in)(serializer)
+  def readVar[T <: Exec[T], A](id: Ident[T], in: DataInput): Var[T, A] =
+    id.readVar[A](in)(format)
 
-  def copyVar[S <: Base[S], A](id: S#Id, value: A)(implicit tx: S#Tx): S#Var[A] =
-    tx.newVar[A](id, value)(serializer)
+  def copyVar[T <: Exec[T], A](id: Ident[T], value: A)(implicit tx: T): Var[T, A] =
+    id.newVar[A](value)(tx, format)
 
   def read[A](in: DataInput): A = read(in, null).asInstanceOf[A]
 
@@ -270,16 +269,16 @@ object PatElem {
     ref
   }
 
-  implicit def serializer   [A]: ImmutableSerializer[A]       = Ser   .asInstanceOf[ImmutableSerializer[A]]
-  implicit def vecSerializer[A]: ImmutableSerializer[Vec[A]]  = VecSer.asInstanceOf[ImmutableSerializer[Vec[A]]]
-  implicit def setSerializer[A]: ImmutableSerializer[Set[A]]  = SetSer.asInstanceOf[ImmutableSerializer[Set[A]]]
+  implicit def format   [A]: ConstFormat[A]       = Ser   .asInstanceOf[ConstFormat[A]]
+  implicit def vecFormat[A]: ConstFormat[Vec[A]]  = VecSer.asInstanceOf[ConstFormat[Vec[A]]]
+  implicit def setFormat[A]: ConstFormat[Set[A]]  = SetSer.asInstanceOf[ConstFormat[Set[A]]]
 
-  private object Ser extends ImmutableSerializer[Any] {
+  private object Ser extends ConstFormat[Any] {
     def write(v: Any, out: DataOutput): Unit  = PatElem.write(v, out)
     def read          (in: DataInput ): Any   = PatElem.read(in)
   }
 
-  private abstract class CollectionSer[That <: Iterable[Any]] extends ImmutableSerializer[That] {
+  private abstract class CollectionSer[That <: Iterable[Any]] extends ConstFormat[That] {
     def newBuilder: mutable.Builder[Any, That]
     def empty: That
 

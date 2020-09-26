@@ -14,14 +14,14 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.IndexOfSliceImpl
 
 final case class IndexOfSlice[A1, A2](in: Pat[A1], sub: Pat[A2], from: Pat[Int]) extends Pattern[Int] {
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, Int] =
     IndexOfSliceImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Int] = {
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[Int] = {
     val inT   = t(in)
     val subT  = t(sub)
     val fromT = t(from)

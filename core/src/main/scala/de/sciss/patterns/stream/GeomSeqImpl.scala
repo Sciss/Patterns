@@ -14,9 +14,8 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.adjunct.Adjunct
-import de.sciss.lucre.adjunct.Adjunct.{Num, Widen2}
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Adjunct, Exec, Ident, Var}
+import de.sciss.lucre.Adjunct.{Num, Widen2}
 import de.sciss.patterns.graph.GeomSeq
 import de.sciss.patterns.impl.PatElem
 import de.sciss.patterns.stream.impl.SeriesLikeStreamImpl
@@ -25,56 +24,56 @@ import de.sciss.serial.DataInput
 object GeomSeqImpl extends StreamFactory {
   final val typeId = 0x47656F6D // "Geom"
 
-  def expand[S <: Base[S], A1, A2, A](pat: GeomSeq[A1, A2, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], A1, A2, A](pat: GeomSeq[A1, A2, A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
 
     val id          = tx.newId()
-    val startStream = start .expand[S]
-    val stepStream  = factor  .expand[S]
-    val state       = PatElem.makeVar[S, A](id)
-    val _hasNext    = tx.newBooleanVar(id, false)
-    val valid       = tx.newBooleanVar(id, false)
+    val startStream = start .expand[T]
+    val stepStream  = factor  .expand[T]
+    val state       = PatElem.makeVar[T, A](id)
+    val _hasNext    = id.newBooleanVar(false)
+    val valid       = id.newBooleanVar(false)
 
-    new StreamImpl[S, A1, A2, A](id = id, startStream = startStream, stepStream = stepStream, state = state,
+    new StreamImpl[T, A1, A2, A](id = id, startStream = startStream, stepStream = stepStream, state = state,
       _hasNext = _hasNext, valid = valid)(num, widen)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id          = tx.readId(in, access)
-    val startStream = Stream.read[S, Any](in, access)
-    val stepStream  = Stream.read[S, Any](in, access)
-    val state       = PatElem.readVar[S, Any](id, in)
-    val _hasNext    = tx.readBooleanVar(id, in)
-    val valid       = tx.readBooleanVar(id, in)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id          = tx.readId(in)
+    val startStream = Stream.read[T, Any](in)
+    val stepStream  = Stream.read[T, Any](in)
+    val state       = PatElem.readVar[T, Any](id, in)
+    val _hasNext    = id.readBooleanVar(in)
+    val valid       = id.readBooleanVar(in)
     val num         = Adjunct.readT[Num[Any]](in)
     val widen       = Adjunct.readT[Widen2[Any, Any, Any]](in)
 
-    new StreamImpl[S, Any, Any, Any](id = id, startStream = startStream, stepStream = stepStream, state = state,
+    new StreamImpl[T, Any, Any, Any](id = id, startStream = startStream, stepStream = stepStream, state = state,
       _hasNext = _hasNext, valid = valid)(num, widen)
   }
 
-  private final class StreamImpl[S <: Base[S], A1, A2, A](
-                                                           protected val id          : S#Id,
-                                                           protected val startStream : Stream[S, A1],
-                                                           protected val stepStream  : Stream[S, A2],
-                                                           protected val state       : S#Var[A],
-                                                           protected val _hasNext    : S#Var[Boolean],
-                                                           protected val valid       : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], A1, A2, A](
+                                                           protected val id          : Ident[T],
+                                                           protected val startStream : Stream[T, A1],
+                                                           protected val stepStream  : Stream[T, A2],
+                                                           protected val state       : Var[T, A],
+                                                           protected val _hasNext    : Var[T, Boolean],
+                                                           protected val valid       : Var[T, Boolean]
   )(
     implicit protected val num: Num[A],
     protected val widen: Widen2[A1, A2, A]
   )
-    extends SeriesLikeStreamImpl[S, A1, A2, A] {
+    extends SeriesLikeStreamImpl[T, A1, A2, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val idOut           = txOut.newId()
       val startStreamOut  = c(startStream)
       val stepStreamOut   = c(stepStream )
       val stateOut        = PatElem.copyVar[Out, A](idOut, state())
-      val hasNextOut      = txOut.newBooleanVar(idOut, _hasNext())
-      val validOut        = txOut.newBooleanVar(idOut, valid())
+      val hasNextOut      = idOut.newBooleanVar(_hasNext())
+      val validOut        = idOut.newBooleanVar(valid())
 
       new StreamImpl[Out, A1, A2, A](id = idOut, startStream = startStreamOut, stepStream = stepStreamOut, state = stateOut,
         _hasNext = hasNextOut, valid = validOut)(num, widen)
@@ -82,6 +81,6 @@ object GeomSeqImpl extends StreamFactory {
 
     protected def typeId: Int = GeomSeqImpl.typeId
 
-    protected def op(a: A, b: A): A = num.+(a, b)
+    protected def op(a: A, b: A): A = num.plus(a, b)
   }
 }

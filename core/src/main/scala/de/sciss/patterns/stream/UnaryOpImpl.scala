@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.graph.UnaryOp
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -22,33 +22,33 @@ import de.sciss.serial.{DataInput, DataOutput}
 object UnaryOpImpl extends StreamFactory {
   final val typeId = 0x556E6172 // "Unar"
 
-  def expand[S <: Base[S], A1, A](pat: UnaryOp[A1, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], A1, A](pat: UnaryOp[A1, A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
-    val aStream     = a.expand[S]
+    val aStream     = a.expand[T]
     val state       = op.prepare(ref)
-    new StreamImpl[S, A1, A, op.State](op = op, state = state, aStream = aStream)
+    new StreamImpl[T, A1, A, op.State](op = op, state = state, aStream = aStream)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
     val op          = PatElem.read[UnaryOp.Op[Any, Any]](in)
-    val state       = op.readState(in, access)
-    val aStream     = Stream.read[S, Pat[Any]](in, access)
+    val state       = op.readState(in)
+    val aStream     = Stream.read[T, Pat[Any]](in)
 
-    new StreamImpl[S, Any, Any, op.State](op = op, state = state, aStream = aStream)
+    new StreamImpl[T, Any, Any, op.State](op = op, state = state, aStream = aStream)
   }
 
-  private final class StreamImpl[S <: Base[S], A1, A, St[~ <: Base[~]]](
-    op: UnaryOp.Op[A1, A] { type State[~ <: Base[~]] = St[~] },
-    state: St[S],
-    aStream: Stream[S, A1]
+  private final class StreamImpl[T <: Exec[T], A1, A, St[~ <: Exec[~]]](
+    op: UnaryOp.Op[A1, A] { type State[~ <: Exec[~]] = St[~] },
+    state: St[T],
+    aStream: Stream[T, A1]
   )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val aStreamOut     = c(aStream)
-      val stateOut       = op.copyState[S, Out](state)
+      val stateOut       = op.copyState[T, Out](state)
       new StreamImpl[Out, A1, A, op.State](op = op, state = stateOut, aStream = aStreamOut)
     }
 
@@ -56,22 +56,22 @@ object UnaryOpImpl extends StreamFactory {
 
     protected def writeData(out: DataOutput): Unit = {
       PatElem.write(op, out)
-      op.writeState[S](state, out)
+      op.writeState[T](state, out)
       aStream .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       op.disposeState(state)
       aStream .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit =
+    def reset()(implicit tx: T): Unit =
       aStream.reset()
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean =
       aStream.hasNext
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next()(implicit ctx: Context[T], tx: T): A = {
       val aVal = aStream.next()
       op.next(aVal)(state, tx)
     }

@@ -14,30 +14,30 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.serial.DataInput
 import de.sciss.synth.proc
 
 object AudioCueNumChannelsImpl extends StreamFactory {
   final val typeId = 0x41436E63 // "ACnc"
 
-  def expand[S <: Base[S], A](pat: graph.AudioCue.NumChannels)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = {
+  def expand[T <: Exec[T], A](pat: graph.AudioCue.NumChannels)(implicit ctx: Context[T], tx: T): Stream[T, Int] = {
     import pat._
-    val inStream = in.expand[S]
-    new StreamImpl[S](inStream = inStream)
+    val inStream = in.expand[T]
+    new StreamImpl[T](inStream = inStream)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val inStream  = Stream.read[S, graph.AudioCue](in, access)
-    new StreamImpl[S](inStream = inStream)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val inStream  = Stream.read[T, graph.AudioCue](in)
+    new StreamImpl[T](inStream = inStream)
   }
 
-  private final class StreamImpl[S <: Base[S]](inStream: Stream[S, graph.AudioCue])
-    extends AudioCueStreamImpl[S, Int](inStream) {
+  private final class StreamImpl[T <: Exec[T]](inStream: Stream[T, graph.AudioCue])
+    extends AudioCueStreamImpl[T, Int](inStream) {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Int] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, Int] = {
       val inStreamOut = c(inStream)
       new StreamImpl[Out](inStream = inStreamOut)
     }

@@ -15,29 +15,29 @@ package de.sciss.patterns
 package stream
 package impl
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 
-abstract class TruncateLikeStreamImpl[S <: Base[S], A]
-  extends Stream[S, A] {
+abstract class TruncateLikeStreamImpl[T <: Exec[T], A]
+  extends Stream[T, A] {
 
   // ---- abstract ----
 
-  protected def id        : S#Id
-  protected def inStream  : Stream[S, A]
-  protected def lenStream : Stream[S, Int]
-  protected def _hasNext  : S#Var[Boolean]
-  protected def valid     : S#Var[Boolean]
+  protected def id        : Ident[T]
+  protected def inStream  : Stream[T, A]
+  protected def lenStream : Stream[T, Int]
+  protected def _hasNext  : Var[T, Boolean]
+  protected def valid     : Var[T, Boolean]
 
-  protected def validateWithLen(n: Int)(implicit ctx: Context[S], tx: S#Tx): Boolean
+  protected def validateWithLen(n: Int)(implicit ctx: Context[T], tx: T): Boolean
 
   // ---- impl ----
 
-  final def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+  final def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
     lenStream .reset()
     inStream  .reset()
   }
 
-  private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+  private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
     val lhn = lenStream.hasNext
     if (lhn) {
       val lenVal = math.max(0, lenStream.next())
@@ -47,7 +47,7 @@ abstract class TruncateLikeStreamImpl[S <: Base[S], A]
     }
   }
 
-  final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+  final def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
     validate()
     _hasNext()
   }

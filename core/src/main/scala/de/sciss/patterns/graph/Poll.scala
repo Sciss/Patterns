@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.PollImpl
 
 /** A pattern that prints snapshots of its input to the console.
@@ -32,10 +32,10 @@ import de.sciss.patterns.stream.PollImpl
 final case class Poll[A](in: Pat[A], gate: Pat[Boolean], label: Pat[String] = "poll")
   extends Pattern[A] {
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
     PollImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] = {
     val inT     = t(in)
     val gateT   = t(gate)
     val labelT  = t(label)

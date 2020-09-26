@@ -1,7 +1,7 @@
 package de.sciss.patterns.lucre.tests
 
-import de.sciss.lucre.stm.Cursor
-import de.sciss.lucre.synth.Sys
+import de.sciss.lucre.Cursor
+import de.sciss.lucre.synth.Txn
 import de.sciss.patterns.graph._
 import de.sciss.patterns.lucre.Pattern
 import de.sciss.patterns.{Event, Graph}
@@ -11,13 +11,13 @@ import de.sciss.synth.proc.{AuralContext, Transport, Proc => PProc}
 object EventStreamPlayerTest extends AuralTestLike.Factory {
   def main(args: Array[String]): Unit = init(args)
 
-  protected def run[S <: Sys[S]](name: String)(implicit cursor: Cursor[S]): Unit =
-    new EventStreamPlayerTest[S]
+  protected def run[T <: Txn[T]](name: String)(implicit cursor: Cursor[T]): Unit =
+    new EventStreamPlayerTest[T]
 }
-class EventStreamPlayerTest[S <: Sys[S]](implicit cursor: Cursor[S])
-  extends AuralTestLike[S] {
+class EventStreamPlayerTest[T <: Txn[T]](implicit cursor: Cursor[T])
+  extends AuralTestLike[T] {
 
-  protected def run()(implicit context: AuralContext[S]): Unit = {
+  protected def run()(implicit context: AuralContext[T]): Unit = {
     val pat     = Graph {
       val dur   = Brown(2.0, 6.0, 1.0).reciprocal
       val freq  = Brown(70, 120, 2).midiCps
@@ -31,8 +31,8 @@ class EventStreamPlayerTest[S <: Sys[S]](implicit cursor: Cursor[S])
 
     val patH = cursor.step { implicit tx =>
 //      implicit val system: S = tx.system
-      val patObj: Pattern[S] = Pattern.newConst[S](pat)
-      val procObj     = PProc[S]()
+      val patObj: Pattern[T] = Pattern.newConst[T](pat)
+      val procObj     = PProc[T]()
       procObj.graph() = SynthGraph {
         import de.sciss.synth._
         import de.sciss.synth.proc.graph.Duration
@@ -48,7 +48,7 @@ class EventStreamPlayerTest[S <: Sys[S]](implicit cursor: Cursor[S])
     }
 
     cursor.step { implicit tx =>
-      val t = Transport[S](context)
+      val t = Transport[T](context)
       val patObj = patH()
       t.addObject(patObj)
       t.play()

@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.graph.Combinations
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -25,35 +25,35 @@ import scala.collection.mutable
 object CombinationsImpl extends StreamFactory {
   final val typeId = 0x436F6D62 // "Comb"
 
-  def expand[S <: Base[S], A](pat: Combinations[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = {
+  def expand[T <: Exec[T], A](pat: Combinations[A])(implicit ctx: Context[T], tx: T): Stream[T, Pat[A]] = {
     import pat._
     val id        = tx.newId()
-    val inStream  = in.expand[S]
-    val nStream   = n .expand[S]
-    val elements  = tx.newVar[Vec[A]]  (id, Vector.empty)(PatElem.vecSerializer)
-    val counts    = tx.newVar[Vec[Int]](id, Vector.empty)
-    val numbers   = tx.newVar[Vec[Int]](id, Vector.empty)
-    val offsets   = tx.newVar[Vec[Int]](id, Vector.empty)
-    val _hasNext  = tx.newBooleanVar(id, false)
-    val valid     = tx.newBooleanVar(id, false)
+    val inStream  = in.expand[T]
+    val nStream   = n .expand[T]
+    val elements  = id.newVar[Vec[A]]  (Vector.empty)(tx, PatElem.vecFormat)
+    val counts    = id.newVar[Vec[Int]](Vector.empty)
+    val numbers   = id.newVar[Vec[Int]](Vector.empty)
+    val offsets   = id.newVar[Vec[Int]](Vector.empty)
+    val _hasNext  = id.newBooleanVar(false)
+    val valid     = id.newBooleanVar(false)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, nStream = nStream, elements = elements, counts = counts,
+    new StreamImpl[T, A](id = id, inStream = inStream, nStream = nStream, elements = elements, counts = counts,
       numbers = numbers, offsets = offsets, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id        = tx.readId(in, access)
-    val inStream  = Stream.read[S, Any  ](in, access)
-    val nStream   = Stream.read[S, Int](in, access)
-    val elements  = tx.readVar[Vec[Any]]  (id, in)(PatElem.vecSerializer)
-    val counts    = tx.readVar[Vec[Int]](id, in)
-    val numbers   = tx.readVar[Vec[Int]](id, in)
-    val offsets   = tx.readVar[Vec[Int]](id, in)
-    val _hasNext  = tx.readBooleanVar(id, in)
-    val valid     = tx.readBooleanVar(id, in)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id        = tx.readId(in)
+    val inStream  = Stream.read[T, Any  ](in)
+    val nStream   = Stream.read[T, Int](in)
+    val elements  = id.readVar[Vec[Any]](in)(PatElem.vecFormat)
+    val counts    = id.readVar[Vec[Int]](in)
+    val numbers   = id.readVar[Vec[Int]](in)
+    val offsets   = id.readVar[Vec[Int]](in)
+    val _hasNext  = id.readBooleanVar(in)
+    val valid     = id.readBooleanVar(in)
 
-    new StreamImpl[S, Any](id = id, inStream = inStream, nStream = nStream, elements = elements, counts = counts,
+    new StreamImpl[T, Any](id = id, inStream = inStream, nStream = nStream, elements = elements, counts = counts,
       numbers = numbers, offsets = offsets, _hasNext = _hasNext, valid = valid)
   }
 
@@ -63,30 +63,30 @@ object CombinationsImpl extends StreamFactory {
   // generating all nums such that:
   // (1) nums(0) + .. + nums(length-1) = n
   // (2) 0 <= nums(i) <= cnts(i), where 0 <= i <= cnts.length-1
-  private final class StreamImpl[S <: Base[S], A](
-                                                   id      : S#Id,
-                                                   inStream: Stream[S, A],
-                                                   nStream : Stream[S, Int],
-                                                   elements: S#Var[Vec[A]],
-                                                   counts  : S#Var[Vec[Int]],
-                                                   numbers : S#Var[Vec[Int]],
-                                                   offsets : S#Var[Vec[Int]],
-                                                   _hasNext: S#Var[Boolean],
-                                                   valid   : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], A](
+                                                   id      : Ident[T],
+                                                   inStream: Stream[T, A],
+                                                   nStream : Stream[T, Int],
+                                                   elements: Var[T, Vec[A]],
+                                                   counts  : Var[T, Vec[Int]],
+                                                   numbers : Var[T, Vec[Int]],
+                                                   offsets : Var[T, Vec[Int]],
+                                                   _hasNext: Var[T, Boolean],
+                                                   valid   : Var[T, Boolean]
   )
-    extends Stream[S, Pat[A]] {
+    extends Stream[T, Pat[A]] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Pat[A]] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, Pat[A]] = {
       val idOut       = txOut.newId()
       val inStreamOut = c(inStream)
       val nStreamOut  = c(nStream )
-      val elementsOut = txOut.newVar[Vec[A]]  (idOut, elements())(PatElem.vecSerializer)
-      val countsOut   = txOut.newVar[Vec[Int]](idOut, counts())
-      val numbersOut  = txOut.newVar[Vec[Int]](idOut, numbers())
-      val offsetsOut  = txOut.newVar[Vec[Int]](idOut, offsets())
-      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
-      val validOut    = txOut.newBooleanVar(idOut, valid())
+      val elementsOut = idOut.newVar[Vec[A]]  (elements())(txOut, PatElem.vecFormat)
+      val countsOut   = idOut.newVar[Vec[Int]](counts())
+      val numbersOut  = idOut.newVar[Vec[Int]](numbers())
+      val offsetsOut  = idOut.newVar[Vec[Int]](offsets())
+      val hasNextOut  = idOut.newBooleanVar(_hasNext())
+      val validOut    = idOut.newBooleanVar(valid())
 
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, nStream = nStreamOut, elements = elementsOut, counts = countsOut,
         numbers = numbersOut, offsets = offsetsOut, _hasNext = hasNextOut, valid = validOut)
@@ -106,7 +106,7 @@ object CombinationsImpl extends StreamFactory {
       valid   .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id      .dispose()
       inStream.dispose()
       nStream .dispose()
@@ -118,17 +118,17 @@ object CombinationsImpl extends StreamFactory {
       valid   .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       inStream.reset()
       nStream .reset()
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+    def next()(implicit ctx: Context[T], tx: T): Pat[A] = {
       if (!hasNext) Stream.exhausted()
 
       /* Calculate this result. */
@@ -175,7 +175,7 @@ object CombinationsImpl extends StreamFactory {
     /* Rearranges seq to newSeq a0a0..a0a1..a1...ak..ak such that
      * seq.count(_ == aj) == counts(j)
      */
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       _hasNext() = nStream.hasNext
       if (!_hasNext()) return
 

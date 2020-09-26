@@ -13,14 +13,11 @@
 
 package de.sciss.patterns.lucre
 
-import de.sciss.lucre.event.Publisher
-import de.sciss.lucre.{expr, stm}
-import de.sciss.lucre.stm.{Obj, Sys}
-import de.sciss.lucre.synth.{Sys => SSys}
+import de.sciss.lucre.{Obj, Publisher, Ref, Txn, expr, synth}
 import de.sciss.patterns
 import de.sciss.patterns.Pat
 import de.sciss.patterns.lucre.impl.{StreamImpl => Impl}
-import de.sciss.serial.{DataInput, Serializer}
+import de.sciss.serial.{DataInput, TFormat}
 import de.sciss.synth.proc.impl.BasicAuralRunnerImpl
 import de.sciss.synth.proc.{Runner, Universe}
 
@@ -34,7 +31,7 @@ object Stream extends Obj.Type with Runner.Factory {
   def humanName   : String  = prefix
   def isSingleton : Boolean = false
 
-  type Repr[~ <: Sys[~]] = Stream[~]
+  type Repr[~ <: Txn[~]] = Stream[~]
 
   def tpe: Obj.Type = this
 
@@ -43,11 +40,11 @@ object Stream extends Obj.Type with Runner.Factory {
     case _          => None
   }
 
-  def mkRunner[S <: SSys[S]](obj: Stream[S])(implicit tx: S#Tx, universe: Universe[S]): Runner[S] =
+  def mkRunner[T <: synth.Txn[T]](obj: Stream[T])(implicit tx: T, universe: Universe[T]): Runner[T] =
     BasicAuralRunnerImpl(obj)
 
-  override def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Obj[S] =
-    Impl.readIdentifiedObj(in, access)
+  override def readIdentifiedObj[T <: Txn[T]](in: DataInput)(implicit tx: T): Obj[T] =
+    Impl.readIdentifiedObj(in)
 
   override def init(): Unit = {
     super.init()
@@ -64,22 +61,22 @@ object Stream extends Obj.Type with Runner.Factory {
 
   // ---- construction ----
 
-  def apply[S <: Sys[S]]()(implicit tx: S#Tx): Stream[S] = Impl()
+  def apply[T <: Txn[T]]()(implicit tx: T): Stream[T] = Impl()
 
-  def read[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S] = Impl.read(in, access)
+  def read[T <: Txn[T]](in: DataInput)(implicit tx: T): Stream[T] = Impl.read(in)
 
-  implicit def serializer[S <: Sys[S]]: Serializer[S#Tx, S#Acc, Stream[S]] = Impl.serializer[S]
+  implicit def serializer[T <: Txn[T]]: TFormat[T, Stream[T]] = Impl.format[T]
 
   // ---- events ----
 
-  sealed trait Update[S <: Sys[S]] {
-    def stream: Stream[S]
+  sealed trait Update[T <: Txn[T]] {
+    def stream: Stream[T]
   }
 
-  final case class PeerChange[S <: Sys[S]](stream: Stream[S]) extends Update[S]
+  final case class PeerChange[T <: Txn[T]](stream: Stream[T]) extends Update[T]
 }
-trait Stream[S <: Sys[S]] extends Obj[S] with Publisher[S, Stream.Update[S]] {
-  def peer: stm.Ref[S#Tx, patterns.Stream[S, Any]]
+trait Stream[T <: Txn[T]] extends Obj[T] with Publisher[T, Stream.Update[T]] {
+  def peer: Ref[T, patterns.Stream[T, Any]]
 
-  implicit def context: patterns.Context[S]
+  implicit def context: patterns.Context[T]
 }

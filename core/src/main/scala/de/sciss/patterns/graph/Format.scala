@@ -14,14 +14,14 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.FormatImpl
 
 final case class Format(s: Pat[String], args: Pat[_]*) extends Pattern[String] {
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, String] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, String] =
     FormatImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[String] = {
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[String] = {
     val sT    = t(s)
     val argsT = args.map(t(_))
     Format(sT, argsT: _*)

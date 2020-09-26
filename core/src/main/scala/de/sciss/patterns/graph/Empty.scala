@@ -14,12 +14,12 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.EmptyImpl
 
 final case class Empty() extends Pat[Nothing] { pat =>
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Nothing] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, Nothing] =
     EmptyImpl()
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Nothing] = this
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[Nothing] = this
 }

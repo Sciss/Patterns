@@ -14,11 +14,11 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.serial.DataInput
 
 trait StreamFactory {
   def typeId: Int
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Any]
+  def readIdentified[T <: Exec[T]](in: DataInput)(implicit ctx: Context[T], tx: T): Stream[T, Any]
 }

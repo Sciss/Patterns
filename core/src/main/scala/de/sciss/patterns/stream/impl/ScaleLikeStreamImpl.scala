@@ -15,12 +15,12 @@ package de.sciss.patterns
 package stream
 package impl
 
-import de.sciss.lucre.adjunct.Adjunct
-import de.sciss.lucre.adjunct.Adjunct.Widen2
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Adjunct
+import de.sciss.lucre.Adjunct.Widen2
+import de.sciss.lucre.Exec
 import de.sciss.serial.DataOutput
 
-abstract class ScaleLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A] {
+abstract class ScaleLikeStreamImpl[T <: Exec[T], A1, A2, A] extends Stream[T, A] {
   // ---- abstract ----
 
   protected val widen: Widen2[A1, A2, A]
@@ -28,11 +28,11 @@ abstract class ScaleLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A]
 
   import widen._
 
-  protected def inStream   : Stream[S, A1]
-  protected def inLoStream : Stream[S, A1]
-  protected def inHiStream : Stream[S, A1]
-  protected def outLoStream: Stream[S, A2]
-  protected def outHiStream: Stream[S, A2]
+  protected def inStream   : Stream[T, A1]
+  protected def inLoStream : Stream[T, A1]
+  protected def inHiStream : Stream[T, A1]
+  protected def outLoStream: Stream[T, A2]
+  protected def outHiStream: Stream[T, A2]
 
   protected def calc(inVal: A, inLoVal: A, inHiVal: A, outLoVal: A, outHiVal: A): A
 
@@ -48,7 +48,7 @@ abstract class ScaleLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A]
     num        .write(out)
   }
 
-  final def dispose()(implicit tx: S#Tx): Unit = {
+  final def dispose()(implicit tx: T): Unit = {
     inStream   .dispose()
     inLoStream .dispose()
     inHiStream .dispose()
@@ -56,7 +56,7 @@ abstract class ScaleLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A]
     outHiStream.dispose()
   }
 
-  final def reset()(implicit tx: S#Tx): Unit = {
+  final def reset()(implicit tx: T): Unit = {
     inStream    .reset()
     inLoStream  .reset()
     inHiStream  .reset()
@@ -64,14 +64,14 @@ abstract class ScaleLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A]
     outHiStream .reset()
   }
 
-  final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
+  final def hasNext(implicit ctx: Context[T], tx: T): Boolean =
     inStream   .hasNext &&
     inLoStream .hasNext &&
     inHiStream .hasNext &&
     outLoStream.hasNext &&
     outHiStream.hasNext
 
-  final def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+  final def next()(implicit ctx: Context[T], tx: T): A = {
     if (!hasNext) Stream.exhausted()
     val inVal     = widen1(inStream    .next())
     val inLoVal   = widen1(inLoStream  .next())

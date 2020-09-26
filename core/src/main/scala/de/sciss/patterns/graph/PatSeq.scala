@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.PatSeqImpl
 
 final case class PatSeq[A](elems: A*) extends Pattern[A] {
@@ -27,10 +27,10 @@ final case class PatSeq[A](elems: A*) extends Pattern[A] {
 
   override def toString: String = simpleString
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
     PatSeqImpl(elems)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] = {
     val elemsT: Seq[_] = elems.map {
       case e: Pat[_]  => t(e)
       case e          => e

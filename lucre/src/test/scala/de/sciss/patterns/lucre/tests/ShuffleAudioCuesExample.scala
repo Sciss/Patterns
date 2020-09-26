@@ -1,10 +1,8 @@
 package de.sciss.patterns.lucre.tests
 
 import de.sciss.file._
-import de.sciss.lucre.expr.StringObj
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.Cursor
-import de.sciss.lucre.synth.Sys
+import de.sciss.lucre.{Cursor, StringObj, Folder => LFolder}
+import de.sciss.lucre.synth.Txn
 import de.sciss.patterns.graph.Ops._
 import de.sciss.patterns.graph._
 import de.sciss.patterns.lucre.Pattern
@@ -16,13 +14,13 @@ import de.sciss.synth.proc.{AuralContext, ObjKeys, Transport, AudioCue => PAudio
 object ShuffleAudioCuesExample extends AuralTestLike.Factory {
   def main(args: Array[String]): Unit = init(args)
 
-  protected def run[S <: Sys[S]](name: String)(implicit cursor: Cursor[S]): Unit =
-    new ShuffleAudioCuesExample[S]
+  protected def run[T <: Txn[T]](name: String)(implicit cursor: Cursor[T]): Unit =
+    new ShuffleAudioCuesExample[T]
 }
-class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
-  extends AuralTestLike[S] {
+class ShuffleAudioCuesExample[T <: Txn[T]](implicit cursor: Cursor[T])
+  extends AuralTestLike[T] {
 
-  protected def run()(implicit context: AuralContext[S]): Unit = {
+  protected def run()(implicit context: AuralContext[T]): Unit = {
     val pat   = Graph {
       val f     = "folder".attr[Folder]
       val cues  = f.collect[AudioCue]
@@ -38,8 +36,8 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
 
     val patH = cursor.step { implicit tx =>
 //      implicit val system: S = tx.system
-      val patObj: Pattern[S] = Pattern.newConst[S](pat)
-      val procObj     = PProc[S]()
+      val patObj: Pattern[T] = Pattern.newConst[T](pat)
+      val procObj     = PProc[T]()
       procObj.graph() = SynthGraph {
         import de.sciss.synth._
         import de.sciss.synth.proc.graph
@@ -50,13 +48,13 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
         Out.ar(0, out)
       }
       patObj.attr.put("proc", procObj)
-      val fObj      = stm.Folder[S]
+      val fObj      = LFolder[T]()
       fObj.addLast(StringObj.newConst("Ignore"))
       val dirIn     = file("/data/projects/Maeanderungen/audio_work/edited")
       dirIn.children(_.name.startsWith("MT-24_HH_No")).sorted(File.NameOrdering).foreach { fIn =>
         val spec    = AudioFile.readSpec(fIn)
         val cueVal  = PAudioCue(fIn, spec, offset = 0L, gain = 1.0)
-        val cueObj  = PAudioCue.Obj.newConst[S](cueVal)
+        val cueObj  = PAudioCue.Obj.newConst[T](cueVal)
         fObj.addLast(cueObj)
       }
       patObj.attr.put("folder", fObj)
@@ -71,7 +69,7 @@ class ShuffleAudioCuesExample[S <: Sys[S]](implicit cursor: Cursor[S])
     }
 
     cursor.step { implicit tx =>
-      val t = Transport[S](context)
+      val t = Transport[T](context)
       val patObj = patH()
       t.addObject(patObj)
       t.play()

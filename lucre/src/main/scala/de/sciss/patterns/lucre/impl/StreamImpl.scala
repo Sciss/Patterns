@@ -13,58 +13,58 @@
 
 package de.sciss.patterns.lucre.impl
 
-import de.sciss.lucre.event.Targets
-import de.sciss.lucre.stm.impl.ObjSerializer
-import de.sciss.lucre.stm.{Copy, Elem, NoSys, Obj, Sys}
-import de.sciss.lucre.{stm, event => evt}
+import de.sciss.lucre.Event.Targets
+import de.sciss.lucre.impl.{GeneratorEvent, ObjFormat, SingleEventNode}
+import de.sciss.lucre.synth.AnyTxn
+import de.sciss.lucre.{Copy, Elem, Obj, Pull, Ref, Txn, Var}
 import de.sciss.patterns
 import de.sciss.patterns.lucre.{Context, Stream}
 import de.sciss.patterns.{Stream => PStream}
-import de.sciss.serial.{DataInput, DataOutput, Serializer}
+import de.sciss.serial.{DataInput, DataOutput, TFormat}
 
 object StreamImpl {
   private final val SER_VERSION = 0x5374  // "St"
 
-  def apply[S <: Sys[S]]()(implicit tx: S#Tx): Stream[S] = {
-    val s0 = patterns.stream.EmptyImpl[S]()
-    new New[S](s0, tx)
+  def apply[T <: Txn[T]]()(implicit tx: T): Stream[T] = {
+    val s0 = patterns.stream.EmptyImpl[T]()
+    new New[T](s0, tx)
   }
 
-  def read[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S] =
-    serializer[S].read(in, access)
+  def read[T <: Txn[T]](in: DataInput)(implicit tx: T): Stream[T] =
+    format[T].readT(in)
 
-  def serializer[S <: Sys[S]]: Serializer[S#Tx, S#Acc, Stream[S]] = anySer.asInstanceOf[Ser[S]]
+  def format[T <: Txn[T]]: TFormat[T, Stream[T]] = anyFmt.asInstanceOf[Fmt[T]]
 
-  private val anySer = new Ser[NoSys]
+  private val anyFmt = new Fmt[AnyTxn]
 
-  private class Ser[S <: Sys[S]] extends ObjSerializer[S, Stream[S]] {
+  private class Fmt[T <: Txn[T]] extends ObjFormat[T, Stream[T]] {
     def tpe: Obj.Type = Stream
   }
 
-  def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S] = {
-    val targets = Targets.read(in, access)
-    new Read(in, access, targets, tx)
+  def readIdentifiedObj[T <: Txn[T]](in: DataInput)(implicit tx: T): Stream[T] = {
+    val targets = Targets.read(in)
+    new Read(in, targets, tx)
   }
 
-  private sealed trait Impl[S <: Sys[S]]
-    extends Stream[S] with evt.impl.SingleNode[S, Stream.Update[S]] with stm.Ref[S#Tx, PStream[S, Any]] {
+  private sealed trait Impl[T <: Txn[T]]
+    extends Stream[T] with SingleEventNode[T, Stream.Update[T]] with Ref[T, PStream[T, Any]] {
     stream =>
 
     // ---- abstract ----
 
-    implicit override def context: Context.Persistent[S]
+    implicit override def context: Context.Persistent[T]
 
-    protected def ref: S#Var[PStream[S, Any]]
+    protected def ref: Var[T, PStream[T, Any]]
 
     // ---- impl ----
 
     final def tpe: Obj.Type = Stream
 
-    final def peer: stm.Ref[S#Tx, PStream[S, Any]] = this
+    final def peer: Ref[T, PStream[T, Any]] = this
 
-    def apply()(implicit tx: S#Tx): PStream[S, Any] = ref()
+    def apply()(implicit tx: T): PStream[T, Any] = ref()
 
-    def update(v: PStream[S, Any])(implicit tx: S#Tx): Unit = {
+    def update(v: PStream[T, Any])(implicit tx: T): Unit = {
       val before = ref()
       if (before != v) {
         ref() = v
@@ -72,31 +72,37 @@ object StreamImpl {
       }
     }
 
-    def copy[Out <: Sys[Out]]()(implicit tx: S#Tx, txOut: Out#Tx, context: Copy[S, Out]): Elem[Out] = {
+    def swap(value: PStream[T, Any])(implicit tx: T): PStream[T, Any] = {
+      val before = apply()
+      update(value)
+      before
+    }
+
+    def copy[Out <: Txn[Out]]()(implicit tx: T, txOut: Out, context: Copy[T, Out]): Elem[Out] = {
       new Impl[Out] { out =>
-        protected val targets: Targets[Out] = Targets[Out]
+        protected val targets: Targets[Out] = Targets[Out]()
         implicit val context: Context.Persistent[Out] = stream.context.copy[Out]()
-        protected val ref: Out#Var[PStream[Out, Any]] = {
-          implicit val cpy: PStream.Copy[S, Out] = PStream.Copy[S, Out]
+        protected val ref: Var[Out, PStream[Out, Any]] = {
+          implicit val cpy: PStream.Copy[T, Out] = PStream.Copy[T, Out]
           val peerOut = cpy(stream.peer())
-          txOut.newVar[PStream[Out, Any]](targets.id, peerOut)
+          targets.id.newVar[PStream[Out, Any]](peerOut)
         }
         connect()
       }
     }
 
-    final   def connect   ()(implicit tx: S#Tx): this.type  = this
-    private def disconnect()(implicit tx: S#Tx): Unit       = ()
+    final   def connect   ()(implicit tx: T): this.type  = this
+    private def disconnect()(implicit tx: T): Unit       = ()
 
     object changed extends Changed
-      with evt.impl.Generator[S, Stream.Update[S]]
-      // with evt.impl.Root[S, Stream.Update[S]]
-      // extends evt.impl.EventImpl[S, Stream.Update[S], Stream[S]]
+      with GeneratorEvent[T, Stream.Update[T]]
+      // with evt.impl.Root[T, Stream.Update[T]]
+      // extends evt.impl.EventImpl[T, Stream.Update[T], Stream[T]]
     {
 
       // final val slot = 4
 
-      def pullUpdate(pull: evt.Pull[S])(implicit tx: S#Tx): Option[Stream.Update[S]] =
+      def pullUpdate(pull: Pull[T])(implicit tx: T): Option[Stream.Update[T]] =
         Some(pull.resolve)
     }
 
@@ -106,7 +112,7 @@ object StreamImpl {
       ref     .write(out)
     }
 
-    final protected def disposeData()(implicit tx: S#Tx): Unit = {
+    final protected def disposeData()(implicit tx: T): Unit = {
       disconnect()
       context.dispose()
       ref.dispose()
@@ -115,29 +121,30 @@ object StreamImpl {
     override def toString: String = s"Stream$id"
   }
 
-  private final class New[S <: Sys[S]](s0: PStream[S, Any], tx0: S#Tx) extends Impl[S] {
-    protected val targets: Targets[S] = evt.Targets[S](tx0)
+  private final class New[T <: Txn[T]](s0: PStream[T, Any], tx0: T) extends Impl[T] {
+    protected val targets: Targets[T] = Targets[T]()(tx0)
 
-    implicit val context: Context.Persistent[S] = Context.persistent(id)(tx0)
+    implicit val context: Context.Persistent[T] = Context.persistent(id)(tx0)
 
-    protected val ref: S#Var[PStream[S, Any]] =
-      tx0.newVar(targets.id, s0)
+    protected val ref: Var[T, PStream[T, Any]] = {
+      implicit val tx: T = tx0
+      targets.id.newVar(s0)
+    }
 
     connect()(tx0)
   }
 
-  private final class Read[S <: Sys[S]](in: DataInput, access: S#Acc, protected val targets: evt.Targets[S],
-                                        tx0: S#Tx)
-    extends Impl[S] {
+  private final class Read[T <: Txn[T]](in: DataInput, protected val targets: Targets[T], tx0: T)
+    extends Impl[T] {
 
     {
       val serVer = in.readShort()
       if (serVer != SER_VERSION) sys.error(s"Incompatible serialized (found $serVer, required $SER_VERSION)")
     }
 
-    implicit val context: Context.Persistent[S] = Context.readPersistent(in, access)(tx0)
+    implicit val context: Context.Persistent[T] = Context.readPersistent(in)(tx0)
 
-    protected val ref: S#Var[PStream[S, Any]] =
-      tx0.readVar(targets.id, in)
+    protected val ref: Var[T, PStream[T, Any]] =
+      targets.id.readVar(in)
   }
 }

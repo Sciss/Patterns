@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.graph.Gate
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -24,50 +24,50 @@ import scala.annotation.tailrec
 object GateImpl extends StreamFactory {
   final val typeId = 0x47617465 // "Gate"
 
-  def expand[S <: Base[S], A](pat: Gate[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], A](pat: Gate[A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
     val id          = tx.newId()
-    val inStream    = in  .expand[S]
-    val gateStream  = gate.expand[S]
-    val _next       = PatElem.makeVar[S, A](id)
-    val _hasNext    = tx.newBooleanVar(id, false)
-    val valid       = tx.newBooleanVar(id, false)
+    val inStream    = in  .expand[T]
+    val gateStream  = gate.expand[T]
+    val _next       = PatElem.makeVar[T, A](id)
+    val _hasNext    = id.newBooleanVar(false)
+    val valid       = id.newBooleanVar(false)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, gateStream = gateStream, _next = _next,
+    new StreamImpl[T, A](id = id, inStream = inStream, gateStream = gateStream, _next = _next,
       _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id          = tx.readId(in, access)
-    val inStream    = Stream.read[S, Any    ](in, access)
-    val gateStream  = Stream.read[S, Boolean](in, access)
-    val _next       = PatElem.readVar[S, Any](id, in)
-    val _hasNext    = tx.readBooleanVar(id, in)
-    val valid       = tx.readBooleanVar(id, in)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id          = tx.readId(in)
+    val inStream    = Stream.read[T, Any    ](in)
+    val gateStream  = Stream.read[T, Boolean](in)
+    val _next       = PatElem.readVar[T, Any](id, in)
+    val _hasNext    = id.readBooleanVar(in)
+    val valid       = id.readBooleanVar(in)
 
-    new StreamImpl[S, Any](id = id, inStream = inStream, gateStream = gateStream, _next = _next,
+    new StreamImpl[T, Any](id = id, inStream = inStream, gateStream = gateStream, _next = _next,
       _hasNext = _hasNext, valid = valid)
   }
 
-  private final class StreamImpl[S <: Base[S], A](
-                                                   private[this] val id        : S#Id,
-                                                   private[this] val inStream  : Stream[S, A],
-                                                   private[this] val gateStream: Stream[S, Boolean],
-                                                   private[this] val _next     : S#Var[A],
-                                                   private[this] val _hasNext  : S#Var[Boolean],
-                                                   private[this] val valid     : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], A](
+                                                   private[this] val id        : Ident[T],
+                                                   private[this] val inStream  : Stream[T, A],
+                                                   private[this] val gateStream: Stream[T, Boolean],
+                                                   private[this] val _next     : Var[T, A],
+                                                   private[this] val _hasNext  : Var[T, Boolean],
+                                                   private[this] val valid     : Var[T, Boolean]
   )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val idOut         = txOut.newId()
       val inStreamOut   = c(inStream)
       val gateStreamOut = c(gateStream)
       val nextOut       = PatElem.copyVar[Out, A](idOut, _next())
-      val hasNextOut    = txOut.newBooleanVar(idOut, _hasNext())
-      val validOut      = txOut.newBooleanVar(idOut, valid())
+      val hasNextOut    = idOut.newBooleanVar(_hasNext())
+      val validOut      = idOut.newBooleanVar(valid())
 
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, gateStream = gateStreamOut, _next = nextOut,
         _hasNext = hasNextOut, valid = validOut)
@@ -84,7 +84,7 @@ object GateImpl extends StreamFactory {
       valid     .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id        .dispose()
       inStream  .dispose()
       gateStream.dispose()
@@ -93,17 +93,17 @@ object GateImpl extends StreamFactory {
       valid     .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       inStream  .reset()
       gateStream.reset()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       advance()
     }
 
     @tailrec
-    private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
+    private def advance()(implicit ctx: Context[T], tx: T): Unit = {
       if (inStream.hasNext) {
         val inVal = inStream.next()
         if (gateStream.hasNext) {
@@ -122,12 +122,12 @@ object GateImpl extends StreamFactory {
       }
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next()(implicit ctx: Context[T], tx: T): A = {
       if (!hasNext) Stream.exhausted()
       val res = _next()
       advance()

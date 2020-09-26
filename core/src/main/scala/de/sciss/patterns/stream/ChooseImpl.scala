@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.{Base, TxnRandom}
+import de.sciss.lucre.{Exec, Ident, RandomObj, Var}
 import de.sciss.patterns.graph.Choose
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -22,47 +22,47 @@ import de.sciss.serial.{DataInput, DataOutput}
 object ChooseImpl extends StreamFactory {
   final val typeId = 0x43686F6F // "Choo"
 
-  def expand[S <: Base[S], A](pat: Choose[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], A](pat: Choose[A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
     val id        = tx.newId()
-    val inStream  = in.expand[S]
-    val choice    = PatElem.makeVar[S, A](id)
-    val _hasNext  = tx.newBooleanVar(id, false)
-    val valid     = tx.newBooleanVar(id, false)
+    val inStream  = in.expand[T]
+    val choice    = PatElem.makeVar[T, A](id)
+    val _hasNext  = id.newBooleanVar(false)
+    val valid     = id.newBooleanVar(false)
     val r         = ctx.mkRandom(pat.ref)
-    new StreamImpl[S, A](id = id, inStream = inStream, choice = choice, _hasNext = _hasNext, valid = valid)(r)
+    new StreamImpl[T, A](id = id, inStream = inStream, choice = choice, _hasNext = _hasNext, valid = valid)(r)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id        = tx.readId(in, access)
-    val inStream  = Stream.read[S, Any](in, access)
-    val choice    = PatElem.readVar[S, Any](id, in)
-    val _hasNext  = tx.readBooleanVar(id, in)
-    val valid     = tx.readBooleanVar(id, in)
-    val r         = TxnRandom.read[S](in, access)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id        = tx.readId(in)
+    val inStream  = Stream.read[T, Any](in)
+    val choice    = PatElem.readVar[T, Any](id, in)
+    val _hasNext  = id.readBooleanVar(in)
+    val valid     = id.readBooleanVar(in)
+    val r         = RandomObj.read[T](in)
 
-    new StreamImpl[S, Any](id = id, inStream = inStream, choice = choice, _hasNext = _hasNext, valid = valid)(r)
+    new StreamImpl[T, Any](id = id, inStream = inStream, choice = choice, _hasNext = _hasNext, valid = valid)(r)
   }
 
-  private final class StreamImpl[S <: Base[S], A](
-                                                   id      : S#Id,
-                                                   inStream: Stream[S, A],
-                                                   choice  : S#Var[A],
-                                                   _hasNext: S#Var[Boolean],
-                                                   valid   : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], A](
+                                                   id      : Ident[T],
+                                                   inStream: Stream[T, A],
+                                                   choice  : Var[T, A],
+                                                   _hasNext: Var[T, Boolean],
+                                                   valid   : Var[T, Boolean]
   ) (
-    implicit val r: TxnRandom[S]
+    implicit val r: RandomObj[T]
   )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val idOut       = txOut.newId()
       val inStreamOut = c(inStream)
       val choiceOut   = PatElem.copyVar[Out, A](idOut, choice())
-      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
-      val validOut    = txOut.newBooleanVar(idOut, valid())
+      val hasNextOut  = idOut.newBooleanVar(_hasNext())
+      val validOut    = idOut.newBooleanVar(valid())
       val rOut        = r.copy[Out]()
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, choice = choiceOut, _hasNext = hasNextOut, valid = validOut)(rOut)
     }
@@ -78,7 +78,7 @@ object ChooseImpl extends StreamFactory {
       r       .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id      .dispose()
       inStream.dispose()
       choice  .dispose()
@@ -87,11 +87,11 @@ object ChooseImpl extends StreamFactory {
       r       .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       inStream.reset()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       val vec   = inStream.toVector
       if (vec.nonEmpty) {
         val idx     = r.nextInt(vec.size)
@@ -102,12 +102,12 @@ object ChooseImpl extends StreamFactory {
       }
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next()(implicit ctx: Context[T], tx: T): A = {
       if (!hasNext) Stream.exhausted()
       val res = choice()
       _hasNext() = false

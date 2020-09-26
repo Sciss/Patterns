@@ -14,27 +14,27 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
 
 object ConstantImpl extends StreamFactory {
   final val typeId = 0x436F6E73 // "Cons"
 
-  def apply[S <: Base[S], A](elem: A): Stream[S, A] =
-    new StreamImpl[S, A](elem)
+  def apply[T <: Exec[T], A](elem: A): Stream[T, A] =
+    new StreamImpl[T, A](elem)
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
     val elem = PatElem.read[Any](in)
-    new StreamImpl[S, Any](elem)
+    new StreamImpl[T, Any](elem)
   }
 
-  private final class StreamImpl[S <: Base[S], A](elem: A) extends Stream[S, A] {
+  private final class StreamImpl[T <: Exec[T], A](elem: A) extends Stream[T, A] {
     override def toString = s"Stream.constant($elem)@${hashCode().toHexString}"
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val elemOut = elem
       new StreamImpl[Out, A](elemOut) // we could even write `this.asInstanceOf[Stream[Out, A]]` but it's ugly
     }
@@ -44,11 +44,11 @@ object ConstantImpl extends StreamFactory {
     protected def writeData(out: DataOutput): Unit =
       PatElem.write(elem, out)
 
-    def dispose()(implicit tx: S#Tx): Unit = ()
+    def dispose()(implicit tx: T): Unit = ()
 
-    def reset()(implicit tx: S#Tx): Unit = ()
+    def reset()(implicit tx: T): Unit = ()
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = true
-    def next ()(implicit ctx: Context[S], tx: S#Tx): A       = elem
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = true
+    def next ()(implicit ctx: Context[T], tx: T): A       = elem
   }
 }

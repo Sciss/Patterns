@@ -14,9 +14,9 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.adjunct.Adjunct.ScalarOrd
-import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Adjunct.ScalarOrd
+import de.sciss.lucre.{Adjunct, ProductWithAdjuncts}
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.SortedImpl
 
 final case class Sorted[A](in: Pat[A])(implicit val ord: ScalarOrd[A])
@@ -24,10 +24,10 @@ final case class Sorted[A](in: Pat[A])(implicit val ord: ScalarOrd[A])
 
   override def adjuncts: List[Adjunct] = ord :: Nil
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
     SortedImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] = {
     val inT = t(in)
     if (inT eq in) this else copy(in = inT)
   }

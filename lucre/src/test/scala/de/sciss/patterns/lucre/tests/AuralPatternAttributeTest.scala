@@ -1,8 +1,7 @@
 package de.sciss.patterns.lucre.tests
 
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.Cursor
-import de.sciss.lucre.synth.Sys
+import de.sciss.lucre.Cursor
+import de.sciss.lucre.synth.Txn
 import de.sciss.patterns.Graph
 import de.sciss.patterns.lucre.Pattern
 import de.sciss.synth
@@ -11,13 +10,13 @@ import de.sciss.synth.proc.AuralContext
 object AuralPatternAttributeTest extends AuralTestLike.Factory {
   def main(args: Array[String]): Unit = init(args)
 
-  def run[S <: Sys[S]](name: String)(implicit cursor: Cursor[S]): Unit =
-    new AuralPatternAttributeTest[S](name)
+  def run[T <: Txn[T]](name: String)(implicit cursor: Cursor[T]): Unit =
+    new AuralPatternAttributeTest[T](name)
 }
-class AuralPatternAttributeTest[S <: Sys[S]](name: String)(implicit cursor: stm.Cursor[S]) extends AuralTestLike[S] {
-  protected def run()(implicit context: AuralContext[S]): Unit = test1()
+class AuralPatternAttributeTest[T <: Txn[T]](name: String)(implicit cursor: Cursor[T]) extends AuralTestLike[T] {
+  protected def run()(implicit context: AuralContext[T]): Unit = test1()
 
-  def test1()(implicit context: AuralContext[S]): Unit = {
+  def test1()(implicit context: AuralContext[T]): Unit = {
     println("----test1----")
     println(
       """
@@ -44,7 +43,7 @@ class AuralPatternAttributeTest[S <: Sys[S]](name: String)(implicit cursor: stm.
         Out.ar(0, Pan2.ar(osc))
       }
 
-      val pat = Pattern.newConst[S](patVal)
+      val pat = Pattern.newConst[T](patVal)
 //      pat.graph() = patVal
       _view.obj.attr.put("pitch", pat)
 

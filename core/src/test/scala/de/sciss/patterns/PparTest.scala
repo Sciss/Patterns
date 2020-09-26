@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.Plain
+import de.sciss.lucre.Plain
 import graph._
 
 object PparTest extends App {

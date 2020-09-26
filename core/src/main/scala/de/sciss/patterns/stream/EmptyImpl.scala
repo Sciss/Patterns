@@ -14,37 +14,37 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.serial.{DataInput, DataOutput}
 
 object EmptyImpl extends StreamFactory {
   final val typeId = 0x456D7074 // "Empt"
 
-  def apply[S <: Base[S]]()(implicit tx: S#Tx): Stream[S, Nothing] =
-    new StreamImpl[S]
+  def apply[T <: Exec[T]]()(implicit tx: T): Stream[T, Nothing] =
+    new StreamImpl[T]
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] =
-    new StreamImpl[S]
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] =
+    new StreamImpl[T]
 
-  private final class StreamImpl[S <: Base[S]]
-    extends Stream[S, Nothing] {
+  private final class StreamImpl[T <: Exec[T]]
+    extends Stream[T, Nothing] {
 
     protected def typeId: Int = EmptyImpl.typeId
 
     protected def writeData(out: DataOutput): Unit = ()
 
-    def dispose()(implicit tx: S#Tx): Unit = ()
+    def dispose()(implicit tx: T): Unit = ()
 
-    def reset()(implicit tx: S#Tx): Unit = ()
+    def reset()(implicit tx: T): Unit = ()
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = false
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = false
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): Nothing =
+    def next()(implicit ctx: Context[T], tx: T): Nothing =
       Stream.exhausted()
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Nothing] =
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, Nothing] =
       EmptyImpl[Out]()
   }
 }

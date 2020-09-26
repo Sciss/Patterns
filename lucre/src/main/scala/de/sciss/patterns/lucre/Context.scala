@@ -13,8 +13,7 @@
 
 package de.sciss.patterns.lucre
 
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Disposable, Random, Sys, TxnRandom}
+import de.sciss.lucre.{Disposable, Ident, Random, RandomObj, Source, Txn, Var, Obj => LObj}
 import de.sciss.patterns
 import de.sciss.patterns.graph.It
 import de.sciss.patterns.{ContextLike, Obj, Pat}
@@ -23,31 +22,31 @@ import de.sciss.serial.{DataInput, DataOutput, Writable}
 import scala.concurrent.stm.TxnLocal
 
 object Context {
-  def apply[S <: stm.Sys[S]](implicit system: S, tx: S#Tx): patterns.Context[S] =
-    new SingleImpl[S, system.I](system, tx)
+  def apply[T <: Txn[T]](implicit tx: T): patterns.Context[T] =
+    new SingleImpl[T, tx.I](tx, tx.inMemoryBridge)
 
-  def dual[S <: stm.Sys[S]](pat: Pattern[S])(implicit system: S, tx: S#Tx): Context[S, system.I] =
-    new DualImpl[S, system.I](system, tx, tx.newHandle(pat))
+  def dual[T <: Txn[T], I <: Txn[I]](pat: Pattern[T])(implicit tx: T, bridge: T => I): Context[T, I] =
+    new DualImpl[T, I](tx, tx.newHandle(pat), bridge)
 
-  def persistent[S <: stm.Sys[S]](id: S#Id)(implicit tx: S#Tx): Persistent[S] = {
-    val seedRnd = TxnRandom[S]()
-    val tokenId = tx.newIntVar(id, 1000000000) // 0x40000000
-    new PersistentImpl[S](id, seedRnd, tokenId, tx)
+  def persistent[T <: Txn[T]](id: Ident[T])(implicit tx: T): Persistent[T] = {
+    val seedRnd = RandomObj[T]()
+    val tokenId = id.newIntVar(1000000000) // 0x40000000
+    new PersistentImpl[T](id, seedRnd, tokenId, tx)
   }
 
   private final val COOKIE = 0x5043 // "PC"
 
-  trait Persistent[S <: stm.Sys[S]] extends patterns.Context[S] with Writable with Disposable[S#Tx] {
-    def copy[Out <: stm.Sys[Out]]()(implicit tx: S#Tx, txOut: Out#Tx): Persistent[Out]
+  trait Persistent[T <: Txn[T]] extends patterns.Context[T] with Writable with Disposable[T] {
+    def copy[Out <: Txn[Out]]()(implicit tx: T, txOut: Out): Persistent[Out]
   }
 
-  def readPersistent[S <: stm.Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Persistent[S] = {
-    val id      = tx.readId(in, access)
+  def readPersistent[T <: Txn[T]](in: DataInput)(implicit tx: T): Persistent[T] = {
+    val id      = tx.readId(in)
     val cookie  = in.readShort()
     require (cookie == COOKIE, s"Unexpected cookie (found ${cookie.toHexString} not ${COOKIE.toHexString})")
-    val seedRnd = TxnRandom.read[S](in, access)
-    val tokenId = tx.readIntVar(id, in)
-    new PersistentImpl[S](id, seedRnd, tokenId, tx)
+    val seedRnd = RandomObj.read[T](in)
+    val tokenId = id.readIntVar(in)
+    new PersistentImpl[T](id, seedRnd, tokenId, tx)
   }
 
   object Attribute {
@@ -68,7 +67,7 @@ object Context {
 
     override def productPrefix = "Context.Attribute"
 
-    def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Value = {
+    def extract[T <: Txn[T]](obj: LObj[T])(implicit tx: T): Value = {
       val peer = ex.extract(obj)
       Attribute.Value(peer)
     }
@@ -76,66 +75,59 @@ object Context {
     def none: Value = Attribute.Value(None)
   }
 
-  private abstract class Impl[S <: stm.Sys[S], I1 <: stm.Sys[I1]](tx0: S#Tx)
-    extends ContextLike[S](tx0) {
+  private abstract class Impl[T <: Txn[T], I1 <: Txn[I1]](tx0: T)
+    extends ContextLike[T](tx0) {
 
-    protected def i(tx: S#Tx): I1#Tx
+    protected def bridge: T => I1
 
-    protected def seedRnd: Random[I1#Tx]
-    protected def tokenId: I1#Var[Int]
+    protected def seedRnd: Random[I1]
+    protected def tokenId: Var[I1, Int]
 
-    protected final def nextSeed()(implicit tx: S#Tx): Long = {
-      implicit val itx: I1#Tx = i(tx)
+    protected final def nextSeed()(implicit tx: T): Long = {
+      implicit val itx: I1 = bridge(tx)
       seedRnd.nextLong()
     }
 
-    protected final def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S] =
-      TxnRandom[S](seed)
+    protected final def mkRandomWithSeed(seed: Long)(implicit tx: T): RandomObj[T] =
+      RandomObj[T](seed)
 
-    def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit = {
-      implicit val itx: I1#Tx = i(tx)
+    def setRandomSeed(n: Long)(implicit tx: T): Unit = {
+      implicit val itx: I1 = bridge(tx)
       seedRnd.setSeed(n)
     }
 
-    final def allocToken[A]()(implicit tx: S#Tx): It[A] = {
-      implicit val itx: I1#Tx = i(tx)
+    final def allocToken[A]()(implicit tx: T): It[A] = {
+      implicit val itx: I1 = bridge(tx)
       val res = tokenId()
       tokenId() = res + 1
       It(res)
     }
   }
 
-  private abstract class NewImpl[S <: stm.Sys[S], I1 <: stm.Sys[I1]](id: I1#Id, tx0: S#Tx)
-    extends Impl[S, I1](tx0) {
+  private abstract class NewImpl[T <: Txn[T], I <: Txn[I]](id: Ident[I], tx0: T)
+    extends Impl[T, I](tx0) {
 
-    protected def i(tx: S#Tx): I1#Tx
-
-//    private[this] val id: I1#Id = i(tx0).newId()
-
-    protected final val seedRnd = Random[I1](id)(i(tx0))
-    protected final val tokenId = i(tx0).newIntVar(id, 1000000000) // 0x40000000
+    protected final val seedRnd = RandomObj[I]()(bridge(tx0))
+    protected final val tokenId = id.newIntVar(1000000000)(bridge(tx0)) // 0x40000000
   }
 
-  private final class SingleImpl[S <: stm.Sys[S], I1 <: stm.Sys[I1]](system: S { type I = I1 }, tx0: S#Tx)
-    extends NewImpl[S, I1](system.inMemoryTx(tx0).newId(), tx0) {
+  private final class SingleImpl[T <: Txn[T], I1 <: Txn[I1]](tx0: T, val bridge: T => I1)
+    extends NewImpl[T, I1](bridge(tx0).newId(), tx0)
 
-    protected def i(tx: S#Tx): I1#Tx = system.inMemoryTx(tx)
-  }
+  private final class PersistentImpl[T <: Txn[T]](id: Ident[T],
+                                                   protected val seedRnd: RandomObj[T],
+                                                   protected val tokenId: Var[T, Int],
+                                                   tx0: T)
+    extends Impl[T, T](tx0) with Persistent[T] {
 
-  private final class PersistentImpl[S <: stm.Sys[S]](id: S#Id,
-                                                      protected val seedRnd: TxnRandom[S],
-                                                      protected val tokenId: S#Var[Int],
-                                                      tx0: S#Tx)
-    extends Impl[S, S](tx0) with Persistent[S] {
-
-    def copy[Out <: stm.Sys[Out]]()(implicit tx: S#Tx, txOut: Out#Tx): Persistent[Out] = {
+    def copy[Out <: Txn[Out]]()(implicit tx: T, txOut: Out): Persistent[Out] = {
       val idOut       = txOut.newId()
       val seedRndOut  = seedRnd.copy[Out]()
-      val tokenIdOut  = txOut.newIntVar(idOut, tokenId())
+      val tokenIdOut  = idOut.newIntVar(tokenId())
       new PersistentImpl[Out](idOut, seedRndOut, tokenIdOut, txOut)
     }
 
-    protected def i(tx: S#Tx): S#Tx = tx
+    protected val bridge: T => T = tx => tx
 
     def write(out: DataOutput): Unit = {
       id.write(out)
@@ -144,44 +136,43 @@ object Context {
       tokenId.write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       seedRnd.dispose()
       tokenId.dispose()
     }
   }
 
-  private final class DualImpl[S <: stm.Sys[S], I1 <: stm.Sys[I1]](system: S { type I = I1 }, tx0: S#Tx,
-                                                                   patH: stm.Source[S#Tx, Pattern[S]])
-    extends NewImpl[I1, I1](system.inMemoryTx(tx0).newId(), system.inMemoryTx(tx0)) with Context[S, I1] {
+  private final class DualImpl[T <: Txn[T], I <: Txn[I]](tx0: T, patH: Source[T, Pattern[T]], bridgeT: T => I)
+    extends NewImpl[I, I](bridgeT(tx0).newId(), bridgeT(tx0)) with Context[T, I] {
 
-    protected def i(tx: I1#Tx): I1#Tx = tx
+    protected val bridge: I => I = tx => tx
 
-    def pattern(implicit tx: S#Tx): Pattern[S] = patH()
+    def pattern(implicit tx: T): Pattern[T] = patH()
 
-    private[this] val outer = TxnLocal[S#Tx]()
+    private[this] val outer = TxnLocal[T]()
 
-    def expandDual[A](pat: Pat[A])(implicit tx: S#Tx): patterns.Stream[I1, A] = {
+    def expandDual[A](pat: Pat[A])(implicit tx: T): patterns.Stream[I, A] = {
       outer.set(tx)(tx.peer)
-      expand[A](pat)(system.inMemoryTx(tx))
+      expand[A](pat)(bridgeT(tx))
     }
 
-    def hasNext[A](s: patterns.Stream[I1, A])(implicit tx: S#Tx): Boolean = {
+    def hasNext[A](s: patterns.Stream[I, A])(implicit tx: T): Boolean = {
       outer.set(tx)(tx.peer)
-      s.hasNext(this, system.inMemoryTx(tx))
+      s.hasNext(this, bridgeT(tx))
     }
 
-    def next[A](s: patterns.Stream[I1, A])(implicit tx: S#Tx): A = {
+    def next[A](s: patterns.Stream[I, A])(implicit tx: T): A = {
       outer.set(tx)(tx.peer)
-      s.next()(this, system.inMemoryTx(tx))
+      s.next()(this, bridgeT(tx))
     }
 
-    override def requestInput[V](input: patterns.Context.Input { type Value = V })(implicit tx: I1#Tx): V =
+    override def requestInput[V](input: patterns.Context.Input { type Value = V })(implicit tx: I): V =
       input match {
         case a @ Context.Attribute(name) =>
-          implicit val tx1: S#Tx = outer.get(tx.peer)
+          implicit val tx1: T = outer.get(tx.peer)
           val p = pattern
           val res = p.attr.get(name) match {
-            case Some(value)  => a.extract[S](value)
+            case Some(value)  => a.extract[T](value)
             case None         => a.none
           }
           res
@@ -190,14 +181,11 @@ object Context {
       }
   }
 }
-trait Context[S <: Sys[S], T <: Sys[T]] extends patterns.Context[T] {
-//  implicit def cursor: stm.Cursor[S]
+trait Context[T <: Txn[T], I <: Txn[I]] extends patterns.Context[I] {
 
-//  def pattern(implicit tx: S#Tx): Pattern[S]
+  def expandDual[A](pat: Pat[A])(implicit tx: T): patterns.Stream[I, A]
 
-  def expandDual[A](pat: Pat[A])(implicit tx: S#Tx): patterns.Stream[T, A]
+  def hasNext[A](s: patterns.Stream[I, A])(implicit tx: T): Boolean
 
-  def hasNext[A](s: patterns.Stream[T, A])(implicit tx: S#Tx): Boolean
-
-  def next[A](s: patterns.Stream[T, A])(implicit tx: S#Tx): A
+  def next[A](s: patterns.Stream[I, A])(implicit tx: T): A
 }

@@ -14,9 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Base, Sys}
+import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts, Txn, Folder => LFolder, Obj => LObj}
 import de.sciss.patterns.stream.FolderCollectImpl
 import de.sciss.serial.DataInput
 
@@ -25,14 +23,14 @@ object Folder extends Obj.Adjunct[Folder] with Adjunct.Factory {
 
   final val id = 0x480
 
-  //  type Repr[S <: Sys[S]] = stm.Folder[S]
+  //  type Repr[T <: Txn[T]] = stm.Folder[T]
 
   implicit def tpe: Obj.Adjunct[Folder] = this
 
   override def readIdentifiedAdjunct(in: DataInput): Adjunct = this
 
-  def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[Folder] = obj match {
-    case _: stm.Folder[S] => Some(Folder())
+  def extract[T <: Txn[T]](obj: LObj[T])(implicit tx: T): Option[Folder] = obj match {
+    case _: LFolder[T] => Some(Folder())
     case _ => None
   }
 
@@ -41,10 +39,10 @@ object Folder extends Obj.Adjunct[Folder] with Adjunct.Factory {
 
     override def adjuncts: List[Adjunct] = ex :: Nil
 
-    def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+    def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
       FolderCollectImpl.expand(this)
 
-    def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+    def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] = {
       this
 //      val inT = t(in)
 //      if (inT.eq(in)) this else copy(in = inT)
@@ -57,9 +55,9 @@ final case class Folder() /* (key: Pat[String]) */ /* extends Pattern[Obj] */ /*
 //  def collect[A](implicit tpe: Obj.Type[A]): Pat[A] =
 //    Folder.Collect[A](this)
 
-//  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Obj] = ...
+//  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, Obj] = ...
 //
-//  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Obj] = {
+//  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[Obj] = {
 //    val keyT = t(key)
 //    if (keyT.eq(key)) this else copy(key = keyT)
 //  }

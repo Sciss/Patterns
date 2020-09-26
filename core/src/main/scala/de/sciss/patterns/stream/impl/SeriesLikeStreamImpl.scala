@@ -15,18 +15,18 @@ package de.sciss.patterns
 package stream
 package impl
 
-import de.sciss.lucre.adjunct.Adjunct.{Num, Widen2}
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Adjunct.{Num, Widen2}
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.serial.DataOutput
 
-abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A] {
+abstract class SeriesLikeStreamImpl[T <: Exec[T], A1, A2, A] extends Stream[T, A] {
 
-  protected val id          : S#Id
-  protected val startStream : Stream[S, A1]
-  protected val stepStream  : Stream[S, A2]
-  protected val state       : S#Var[A]
-  protected val _hasNext    : S#Var[Boolean]
-  protected val valid       : S#Var[Boolean]
+  protected val id          : Ident[T]
+  protected val startStream : Stream[T, A1]
+  protected val stepStream  : Stream[T, A2]
+  protected val state       : Var[T, A]
+  protected val _hasNext    : Var[T, Boolean]
+  protected val valid       : Var[T, Boolean]
 
   implicit protected val widen: Widen2[A1, A2, A]
   implicit protected val num  : Num[A]
@@ -48,7 +48,7 @@ abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A
     widen       .write(out)
   }
 
-  final def dispose()(implicit tx: S#Tx): Unit = {
+  final def dispose()(implicit tx: T): Unit = {
     id         .dispose()
     startStream.dispose()
     stepStream .dispose()
@@ -57,17 +57,17 @@ abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A
     valid      .dispose()
   }
 
-  final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+  final def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
     validate()
     _hasNext()
   }
 
-  final def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+  final def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
     startStream .reset()
     stepStream  .reset()
   }
 
-  private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+  private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
 //      count()     = 0
     _hasNext()  = startStream.hasNext // && lengthStream.hasNext
     if (_hasNext()) {
@@ -76,7 +76,7 @@ abstract class SeriesLikeStreamImpl[S <: Base[S], A1, A2, A] extends Stream[S, A
     }
   }
 
-  final def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+  final def next()(implicit ctx: Context[T], tx: T): A = {
     if (!hasNext) Stream.exhausted()
     val res = state()
 //    val c   = count() + 1

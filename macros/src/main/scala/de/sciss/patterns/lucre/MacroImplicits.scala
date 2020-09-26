@@ -13,7 +13,7 @@
 
 package de.sciss.patterns.lucre
 
-import de.sciss.lucre.stm.Sys
+import de.sciss.lucre.Txn
 import de.sciss.patterns.Pat
 import de.sciss.patterns.lucre.impl.Macros
 
@@ -25,13 +25,13 @@ import scala.language.experimental.macros
   * and preserving the corresponding source code.
   */
 object MacroImplicits {
-  implicit final class PatternMacroOps[S <: Sys[S]](val `this`: Pattern.Var[S]) extends AnyVal {
-    def setGraph(body: Pat[Any])(implicit tx: S#Tx): Unit =
-      macro Macros.patternGraphWithSource[S]
+  implicit final class PatternMacroOps[T <: Txn[T]](val `this`: Pattern.Var[T]) extends AnyVal {
+    def setGraph(body: Pat[Any])(implicit tx: T): Unit =
+      macro Macros.patternGraphWithSource[T]
   }
 
-  implicit final class StreamMacroOps[S <: Sys[S]](val `this`: Stream[S]) extends AnyVal {
-    def setGraph(body: Pat[Any])(implicit tx: S#Tx): Unit =
-      macro Macros.streamGraphWithSource[S]
+  implicit final class StreamMacroOps[T <: Txn[T]](val `this`: Stream[T]) extends AnyVal {
+    def setGraph(body: Pat[Any])(implicit tx: T): Unit =
+      macro Macros.streamGraphWithSource[T]
   }
 }

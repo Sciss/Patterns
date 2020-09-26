@@ -1,5 +1,5 @@
 /*
- *  StreamSerializer.scala
+ *  StreamFormat.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2020 Hanns Holger Rutz. All rights reserved.
@@ -14,13 +14,13 @@
 package de.sciss.patterns
 package impl
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.StreamFactory
-import de.sciss.serial.{DataInput, DataOutput, Serializer}
+import de.sciss.serial.{DataInput, DataOutput, TFormat}
 
 import scala.annotation.switch
 
-object StreamSerializer {
+object StreamFormat {
   private final val sync = new AnyRef
 
   @volatile private var factoryMap = Map.empty[Int, StreamFactory]
@@ -35,10 +35,10 @@ object StreamSerializer {
     }
   }
 }
-final class StreamSerializer[S <: Base[S], A]()(implicit ctx: Context[S])
-  extends Serializer[S#Tx, S#Acc, Stream[S, A]] {
+final class StreamFormat[T <: Exec[T], A]()(implicit ctx: Context[T])
+  extends TFormat[T, Stream[T, A]] {
 
-  def read(in: DataInput, access: S#Acc)(implicit tx: S#Tx): Stream[S, A] = {
+  def readT(in: DataInput)(implicit tx: T): Stream[T, A] = {
     val typeId = in.readInt()
     if (typeId == 0) null else {
       import stream._
@@ -98,14 +98,14 @@ final class StreamSerializer[S <: Base[S], A]()(implicit ctx: Context[S])
         case WhiteImpl        .typeId => WhiteImpl
         case Zip2Impl         .typeId => Zip2Impl
         case _ =>
-          StreamSerializer.factoryMap.getOrElse(typeId,
+          StreamFormat.factoryMap.getOrElse(typeId,
             throw new IllegalArgumentException(s"Unknown stream type 0x${typeId.toHexString.toUpperCase}"))
       }
-      val any: Stream[S, Any] = f.readIdentified(in, access)
-      any.asInstanceOf[Stream[S, A]]
+      val any: Stream[T, Any] = f.readIdentified(in)
+      any.asInstanceOf[Stream[T, A]]
     }
   }
 
-  def write(v: Stream[S, A], out: DataOutput): Unit =
+  def write(v: Stream[T, A], out: DataOutput): Unit =
     if (v == null) out.writeInt(0) else v.write(out)
 }

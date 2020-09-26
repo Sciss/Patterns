@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.graph.Sliding
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -24,62 +24,62 @@ import scala.collection.immutable.{IndexedSeq => Vec}
 object SlidingImpl extends StreamFactory {
   final val typeId = 0x536C6964 // "Slid"
 
-  def expand[S <: Base[S], A](pat: Sliding[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = {
+  def expand[T <: Exec[T], A](pat: Sliding[A])(implicit ctx: Context[T], tx: T): Stream[T, Pat[A]] = {
     import pat._
     val id          = tx.newId()
-    val inStream    = in  .expand[S]
-    val sizeStream  = size.expand[S]
-    val stepStream  = step.expand[S]
-    val innerStream = tx.newVar[Pat[A]](id, null)
-    val hasStep     = tx.newBooleanVar(id, true)
-    val buf         = tx.newVar[Vec[A]](id, Vector.empty)(PatElem.vecSerializer)
-    val _hasNext    = tx.newBooleanVar(id, false)
-    val valid       = tx.newBooleanVar(id, false)
+    val inStream    = in  .expand[T]
+    val sizeStream  = size.expand[T]
+    val stepStream  = step.expand[T]
+    val innerStream = id.newVar[Pat[A]](null)
+    val hasStep     = id.newBooleanVar(true)
+    val buf         = id.newVar[Vec[A]](Vector.empty)(tx, PatElem.vecFormat)
+    val _hasNext    = id.newBooleanVar(false)
+    val valid       = id.newBooleanVar(false)
     
-    new StreamImpl[S, A](id = id, inStream = inStream, sizeStream = sizeStream, stepStream = stepStream,
+    new StreamImpl[T, A](id = id, inStream = inStream, sizeStream = sizeStream, stepStream = stepStream,
       innerStream = innerStream, hasStep = hasStep, buf = buf, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id          = tx.readId(in, access)
-    val inStream    = Stream.read[S, Any  ](in, access)
-    val sizeStream  = Stream.read[S, Int](in, access)
-    val stepStream  = Stream.read[S, Int](in, access)
-    val innerStream = tx.readVar[Pat[Any]](id, in)
-    val hasStep     = tx.readBooleanVar(id, in)
-    val buf         = tx.readVar[Vec[Any]](id, in)(PatElem.vecSerializer)
-    val _hasNext    = tx.readBooleanVar(id, in)
-    val valid       = tx.readBooleanVar(id, in)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id          = tx.readId(in)
+    val inStream    = Stream.read[T, Any  ](in)
+    val sizeStream  = Stream.read[T, Int](in)
+    val stepStream  = Stream.read[T, Int](in)
+    val innerStream = id.readVar[Pat[Any]](in)
+    val hasStep     = id.readBooleanVar(in)
+    val buf         = id.readVar[Vec[Any]](in)(PatElem.vecFormat)
+    val _hasNext    = id.readBooleanVar(in)
+    val valid       = id.readBooleanVar(in)
 
-    new StreamImpl[S, Any](id = id, inStream = inStream, sizeStream = sizeStream, stepStream = stepStream,
+    new StreamImpl[T, Any](id = id, inStream = inStream, sizeStream = sizeStream, stepStream = stepStream,
       innerStream = innerStream, hasStep = hasStep, buf = buf, _hasNext = _hasNext, valid = valid)
   }
 
-  private final class StreamImpl[S <: Base[S], A](
-                                                   val id          : S#Id,
-                                                   val inStream    : Stream[S, A],
-                                                   val sizeStream  : Stream[S, Int],
-                                                   val stepStream  : Stream[S, Int],
-                                                   val innerStream : S#Var[Pat[A]],
-                                                   val hasStep     : S#Var[Boolean],
-                                                   val buf         : S#Var[Vec[A]],
-                                                   val _hasNext    : S#Var[Boolean],
-                                                   val valid       : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], A](
+                                                   val id          : Ident[T],
+                                                   val inStream    : Stream[T, A],
+                                                   val sizeStream  : Stream[T, Int],
+                                                   val stepStream  : Stream[T, Int],
+                                                   val innerStream : Var[T, Pat[A]],
+                                                   val hasStep     : Var[T, Boolean],
+                                                   val buf         : Var[T, Vec[A]],
+                                                   val _hasNext    : Var[T, Boolean],
+                                                   val valid       : Var[T, Boolean]
   ) 
-    extends Stream[S, Pat[A]] {
+    extends Stream[T, Pat[A]] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Pat[A]] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, Pat[A]] = {
       val idOut           = txOut.newId()
       val inStreamOut     = c(inStream  )
       val sizeStreamOut   = c(sizeStream)
       val stepStreamOut   = c(stepStream)
-      val innerStreamOut  = txOut.newVar[Pat[A]](idOut, innerStream())
-      val hasStepOut      = txOut.newBooleanVar(idOut, hasStep())
-      val bufOut          = txOut.newVar[Vec[A]](idOut, buf())(PatElem.vecSerializer)
-      val hasNextOut      = txOut.newBooleanVar(idOut, _hasNext())
-      val validOut        = txOut.newBooleanVar(idOut, valid())
+      val innerStreamOut  = idOut.newVar[Pat[A]](innerStream())
+      val hasStepOut      = idOut.newBooleanVar(hasStep())
+      val bufOut          = idOut.newVar[Vec[A]](buf())(txOut, PatElem.vecFormat)
+      val hasNextOut      = idOut.newBooleanVar(_hasNext())
+      val validOut        = idOut.newBooleanVar(valid())
 
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, sizeStream = sizeStreamOut, stepStream = stepStreamOut,
         innerStream = innerStreamOut, hasStep = hasStepOut, buf = bufOut, _hasNext = hasNextOut, valid = validOut)
@@ -99,7 +99,7 @@ object SlidingImpl extends StreamFactory {
       valid       .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id          .dispose()
       inStream    .dispose()
       sizeStream  .dispose()
@@ -111,19 +111,19 @@ object SlidingImpl extends StreamFactory {
       valid       .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       inStream  .reset()
       sizeStream.reset()
       stepStream.reset()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       hasStep()  = true
       buf()      = Vector.empty
       advance()
     }
 
-    private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
+    private def advance()(implicit ctx: Context[T], tx: T): Unit = {
       val shn     = hasStep() && sizeStream.hasNext && inStream.hasNext
       _hasNext()  = shn
       if (shn) {
@@ -141,7 +141,7 @@ object SlidingImpl extends StreamFactory {
           i += 1
         }
         val vecNew    = b.result()
-        val inner     = Pat(vecNew: _*) // Stream[S, A](vecNew: _*)
+        val inner     = Pat(vecNew: _*) // Stream[T, A](vecNew: _*)
         innerStream() = inner
         val ihn       = sizeVal > 0
         _hasNext()    = ihn
@@ -161,12 +161,12 @@ object SlidingImpl extends StreamFactory {
       }
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+    def next()(implicit ctx: Context[T], tx: T): Pat[A] = {
       if (!hasNext) Stream.exhausted()
       val res = innerStream()
       advance()

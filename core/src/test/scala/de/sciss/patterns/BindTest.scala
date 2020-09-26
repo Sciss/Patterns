@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.Plain
+import de.sciss.lucre.Plain
 import de.sciss.patterns.graph._
 
 object BindTest extends App {

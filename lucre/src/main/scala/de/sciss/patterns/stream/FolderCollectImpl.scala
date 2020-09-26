@@ -14,9 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.adjunct.Adjunct
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Base, Sys}
+import de.sciss.lucre.{Adjunct, Exec, Ident, Txn, Var, Folder => LFolder, Obj => LObj}
 import de.sciss.patterns.impl.PatElem
 import de.sciss.patterns.lucre.{Context => LContext}
 import de.sciss.serial.{DataInput, DataOutput}
@@ -26,50 +24,50 @@ import scala.annotation.tailrec
 object FolderCollectImpl extends StreamFactory {
   final val typeId = 0x466C436C // "FlCl"
 
-  def expand[S <: Base[S], A](pat: graph.Folder.Collect[A])
-                             (implicit ctx: Context[S], tx: S#Tx, ex: Obj.Adjunct[A]): Stream[S, A] = {
+  def expand[T <: Exec[T], A](pat: graph.Folder.Collect[A])
+                             (implicit ctx: Context[T], tx: T, ex: Obj.Adjunct[A]): Stream[T, A] = {
     import pat.key
     val id        = tx.newId()
-    val index     = tx.newIntVar    (id, 0)
-    val state     = PatElem.makeVar[S, A](id)
-    val _hasNext  = tx.newBooleanVar(id, false)
-    val valid     = tx.newBooleanVar(id, false)
+    val index     = id.newIntVar(0)
+    val state     = PatElem.makeVar[T, A](id)
+    val _hasNext  = id.newBooleanVar(false)
+    val valid     = id.newBooleanVar(false)
 
-    new StreamImpl[S, A](id = id, key = key, index = index, state = state,
+    new StreamImpl[T, A](id = id, key = key, index = index, state = state,
       _hasNext = _hasNext, valid = valid, ex = ex)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id        = tx.readId(in, access)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id        = tx.readId(in)
     val key       = in.readUTF()
-    val index     = tx.readIntVar           (id, in)
-    val state     = PatElem.readVar[S, Any] (id, in)
-    val _hasNext  = tx.readBooleanVar       (id, in)
-    val valid     = tx.readBooleanVar       (id, in)
+    val index     = id.readIntVar           (in)
+    val state     = PatElem.readVar[T, Any] (id, in)
+    val _hasNext  = id.readBooleanVar       (in)
+    val valid     = id.readBooleanVar       (in)
     val ex        = Adjunct.readT[Obj.Adjunct[Any]](in)
 
-    new StreamImpl[S, Any](id = id, key = key, index = index, state = state,
+    new StreamImpl[T, Any](id = id, key = key, index = index, state = state,
       _hasNext = _hasNext, valid = valid, ex = ex)
   }
 
-  private final class StreamImpl[S <: Base[S], A](id       : S#Id,
+  private final class StreamImpl[T <: Exec[T], A](id       : Ident[T],
                                                   key      : String,
-                                                  index    : S#Var[Int    ],
-                                                  state    : S#Var[A      ],
-                                                  _hasNext : S#Var[Boolean],
-                                                  valid    : S#Var[Boolean],
+                                                  index    : Var[T, Int    ],
+                                                  state    : Var[T, A      ],
+                                                  _hasNext : Var[T, Boolean],
+                                                  valid    : Var[T, Boolean],
                                                   ex       : Obj.Adjunct[A]
                                                  )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val idOut       = txOut.newId()
-      val indexOut    = txOut.newIntVar    (idOut, index())
+      val indexOut    = idOut.newIntVar(index())
       val stateOut    = PatElem.copyVar[Out, A](idOut, state())
-      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
-      val validOut    = txOut.newBooleanVar(idOut, valid())
+      val hasNextOut  = idOut.newBooleanVar(_hasNext())
+      val validOut    = idOut.newBooleanVar(valid())
 
       new StreamImpl[Out, A](id = idOut, key = key, index = indexOut, state = stateOut,
         _hasNext = hasNextOut, valid = validOut, ex = ex)
@@ -87,7 +85,7 @@ object FolderCollectImpl extends StreamFactory {
       ex        .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id        .dispose()
       index     .dispose()
       state     .dispose()
@@ -95,26 +93,26 @@ object FolderCollectImpl extends StreamFactory {
       valid     .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       index() = 0
 //      keyStream.reset()
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       _hasNext()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       advance()
     }
 
-    private[this] val txRef = new ThreadLocal[S#Tx]
+    private[this] val txRef = new ThreadLocal[T]
 
     private object Extractor extends Obj.Extractor[A] {
-      def extract[T <: Sys[T]](obj: stm.Obj[T])(implicit tx: T#Tx): Option[A] = obj match {
-        case f: stm.Folder[T] =>
-          val tx1: S#Tx = txRef.get
+      def extract[T1 <: Txn[T1]](obj: LObj[T1])(implicit tx: T1): Option[A] = obj match {
+        case f: LFolder[T1] =>
+          val tx1: T = txRef.get
           val sz  = f.size
 
           @tailrec
@@ -141,7 +139,7 @@ object FolderCollectImpl extends StreamFactory {
     }
 
 //    @tailrec
-    private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
+    private def advance()(implicit ctx: Context[T], tx: T): Unit = {
 //      val i = index()
 //      val hasKey = (i >= 0) || {
 //        val khn = keyStream.hasNext
@@ -170,7 +168,7 @@ object FolderCollectImpl extends StreamFactory {
 //      }
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next()(implicit ctx: Context[T], tx: T): A = {
       if (!hasNext) Stream.exhausted()
       val res = state()
       advance()

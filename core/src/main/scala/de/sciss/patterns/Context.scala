@@ -13,42 +13,42 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.{Base, Plain, Random, TxnRandom}
+import de.sciss.lucre.{Exec, Plain, RandomObj}
 import de.sciss.patterns.graph.It
-import de.sciss.patterns.impl.StreamSerializer
+import de.sciss.patterns.impl.StreamFormat
 import de.sciss.patterns.stream.{ItStream, ItStreamSource}
-import de.sciss.serial.Serializer
+import de.sciss.serial.TFormat
 
 import scala.util.control.ControlThrowable
 
-trait Context[S <: Base[S]] {
+trait Context[T <: Exec[T]] {
   /** This method should be called by an `ItStream` when it is expanded (new).
     * Looks up the `ItStreamSource` for the token, and invokes its own `mkItStream`.
     */
-  def mkItStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A]
+  def mkItStream[A](token: Int)(implicit tx: T): Stream[T, A]
 
   /** This method should be called by an `ItStream` after it has been
     * read in de-serialization.
     * Looks up the `ItStreamSource` for `it.token`, and invokes its own `registerItStream`.
     */
-  def registerItStream[A](it: ItStream[S, A])(implicit tx: S#Tx): Unit
+  def registerItStream[A](it: ItStream[T, A])(implicit tx: T): Unit
 
-  def withItSource[A, B](source: ItStreamSource[S, A])(thunk: => B)(implicit tx: S#Tx): B
+  def withItSource[A, B](source: ItStreamSource[T, A])(thunk: => B)(implicit tx: T): B
 
-  def withItSources[B](sources: ItStreamSource[S, _]*)(thunk: => B)(implicit tx: S#Tx): B
+  def withItSources[B](sources: ItStreamSource[T, _]*)(thunk: => B)(implicit tx: T): B
 
   /** Creates a new pseudo-random number generator. */
-  def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: S#Tx): TxnRandom[S]
+  def mkRandom(ref: AnyRef /* seed: Long = -1L */)(implicit tx: T): RandomObj[T]
 
-  def setRandomSeed(n: Long)(implicit tx: S#Tx): Unit
+  def setRandomSeed(n: Long)(implicit tx: T): Unit
 
-  def allocToken[A]()(implicit tx: S#Tx): It[A]
+  def allocToken[A]()(implicit tx: T): It[A]
 
-  def expand[A](pat: Pat[A])(implicit tx: S#Tx): Stream[S, A]
+  def expand[A](pat: Pat[A])(implicit tx: T): Stream[T, A]
 
-  def requestInput[V](input: Context.Input { type Value = V })(implicit tx: S#Tx): V
+  def requestInput[V](input: Context.Input { type Value = V })(implicit tx: T): V
 
-  implicit def streamSerializer[A]: Serializer[S#Tx, S#Acc, Stream[S, A]]
+  implicit def streamFormat[A]: TFormat[T, Stream[T, A]]
 }
 
 object Context {
@@ -114,11 +114,12 @@ object Context {
 
   private final class PlainImpl extends ContextLike[Plain](Plain.instance) {
     type S = Plain
+    type T = Plain
 
     // A random number generator used for producing _seed_ values when creating a new RNG.
     private[this] lazy val seedRnd = {
-      val id: Plain.Id = Plain.instance.newId()
-      Random[Plain](id)
+//      val id: Plain.Id = Plain.instance.newId()
+      RandomObj[Plain]()
     }
 
     // Note: tokens are allocated first by the graph builder, these start at zero.
@@ -127,14 +128,14 @@ object Context {
     // We use a decimal readable value for easier debugging.
     private[this] var tokenId = 1000000000 // approx. 0x40000000
 
-    protected def nextSeed()(implicit tx: S#Tx): Long = seedRnd.nextLong()
+    protected def nextSeed()(implicit tx: T): Long = seedRnd.nextLong()
 
-    def setRandomSeed(n: Long)(implicit tx: S#Tx): scala.Unit = seedRnd.setSeed(n)
+    def setRandomSeed(n: Long)(implicit tx: T): scala.Unit = seedRnd.setSeed(n)
 
-    def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S] =
-      TxnRandom[S](seed)
+    def mkRandomWithSeed(seed: Long)(implicit tx: T): RandomObj[T] =
+      RandomObj[T](seed)
 
-    def allocToken[A]()(implicit tx: S#Tx): It[A] = {
+    def allocToken[A]()(implicit tx: T): It[A] = {
       // stream expansion is single threaded, so we can
       // simply mutate the counter here.
       val res = tokenId
@@ -144,34 +145,34 @@ object Context {
   }
 }
 
-private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Context[S] {
-//  protected final def i(tx: S#Tx): I1#Tx = system.inMemoryTx(tx)
+private[patterns] abstract class ContextLike[T <: Exec[T]](tx0: T) extends Context[T] {
+//  protected final def i(tx: T): I1 = system.inMemoryTx(tx)
 //
 //  protected final val id: I1#Id = i(tx0).newId()
 
-  private[this] val streamSer = new StreamSerializer[S, Any]()(this)
+  private[this] val streamSer = new StreamFormat[T, Any]()(this)
 
-  private[this] val tokenMap  = tx0.newInMemoryMap[Int, List[ItStreamSource[S, _]]]
+  private[this] val tokenMap  = tx0.newInMemoryMap[Int, List[ItStreamSource[T, _]]]
   private[this] val seedMap   = tx0.newInMemoryMap[AnyRef, Long]
 
   // ---- abstract ----
 
-  def expand[A](pat: Pat[A])(implicit tx: S#Tx): Stream[S, A] = pat.expand(this, tx)
+  def expand[A](pat: Pat[A])(implicit tx: T): Stream[T, A] = pat.expand(this, tx)
 
-  protected def nextSeed()(implicit tx: S#Tx): Long
+  protected def nextSeed()(implicit tx: T): Long
 
-  protected def mkRandomWithSeed(seed: Long)(implicit tx: S#Tx): TxnRandom[S]
+  protected def mkRandomWithSeed(seed: Long)(implicit tx: T): RandomObj[T]
 
   // ---- impl ----
 
   /** Default implementation just throws `MissingIn` */
-  def requestInput[V](input: Context.Input { type Value = V })(implicit tx: S#Tx): V =
+  def requestInput[V](input: Context.Input { type Value = V })(implicit tx: T): V =
     throw Context.MissingIn(input)
 
-  final def streamSerializer[A]: Serializer[S#Tx, S#Acc, Stream[S, A]] =
-    streamSer.asInstanceOf[StreamSerializer[S, A]]
+  final def streamFormat[A]: TFormat[T, Stream[T, A]] =
+    streamSer.asInstanceOf[StreamFormat[T, A]]
 
-  def withItSource[A, B](source: ItStreamSource[S, A])(thunk: => B)(implicit tx: S#Tx): B = {
+  def withItSource[A, B](source: ItStreamSource[T, A])(thunk: => B)(implicit tx: T): B = {
     val token   = source.token
     val list0   = tokenMap.get(token).getOrElse(Nil)
     val list1   = source :: list0
@@ -183,7 +184,7 @@ private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Co
     }
   }
 
-  def withItSources[B](sources: ItStreamSource[S, _]*)(thunk: => B)(implicit tx: S#Tx): B = {
+  def withItSources[B](sources: ItStreamSource[T, _]*)(thunk: => B)(implicit tx: T): B = {
     sources.foreach { source =>
       val token = source.token
       val list0 = tokenMap.get(token).getOrElse(Nil)
@@ -201,24 +202,24 @@ private[patterns] abstract class ContextLike[S <: Base[S]](tx0: S#Tx) extends Co
     }
   }
 
-  def mkItStream[A](token: Int)(implicit tx: S#Tx): Stream[S, A] = {
+  def mkItStream[A](token: Int)(implicit tx: T): Stream[T, A] = {
     val sources             = tokenMap.get(token).get
     val source              = sources.head
-    val res0: Stream[S, _]  = source.mkItStream()(this, tx)
-    val res                 = res0.asInstanceOf[Stream[S, A]]
+    val res0: Stream[T, _]  = source.mkItStream()(this, tx)
+    val res                 = res0.asInstanceOf[Stream[T, A]]
     logStream(s"Context.mkItStream($token) = $res")
     res
   }
 
-  def registerItStream[A](it: ItStream[S, A])(implicit tx: S#Tx): Unit = {
+  def registerItStream[A](it: ItStream[T, A])(implicit tx: T): Unit = {
     logStream(s"Context.registerItStream($it)")
     val token               = it.token
     val sources             = tokenMap.get(token).get
-    val source: ItStreamSource[S, _] = sources.head
-    source.asInstanceOf[ItStreamSource[S, A]].registerItStream(it)
+    val source: ItStreamSource[T, _] = sources.head
+    source.asInstanceOf[ItStreamSource[T, A]].registerItStream(it)
   }
 
-  def mkRandom(ref: AnyRef)(implicit tx: S#Tx): TxnRandom[S] = {
+  def mkRandom(ref: AnyRef)(implicit tx: T): RandomObj[T] = {
     val seed = seedMap.get(ref).getOrElse {
       val res = nextSeed()
       seedMap.put(ref, res)

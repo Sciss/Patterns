@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.graph.Flatten
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -23,50 +23,50 @@ import scala.annotation.tailrec
 object FlattenImpl extends StreamFactory {
   final val typeId = 0x466C6174 // "Flat"
 
-  def expand[S <: Base[S], A](pat: Flatten[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], A](pat: Flatten[A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
     val id          = tx.newId()
-    val inStream    = in.expand[S]
-    val hasInner    = tx.newBooleanVar(id, false)
-    val innerStream = tx.newVar[Stream[S, A]](id, null)
-    val _hasNext    = tx.newBooleanVar(id, false)
-    val valid       = tx.newBooleanVar(id, false)
+    val inStream    = in.expand[T]
+    val hasInner    = id.newBooleanVar(false)
+    val innerStream = id.newVar[Stream[T, A]](null)
+    val _hasNext    = id.newBooleanVar(false)
+    val valid       = id.newBooleanVar(false)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, hasInner = hasInner, innerStream = innerStream,
+    new StreamImpl[T, A](id = id, inStream = inStream, hasInner = hasInner, innerStream = innerStream,
       _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id          = tx.readId(in, access)
-    val inStream    = Stream.read[S, Pat[Any]](in, access)
-    val hasInner    = tx.readBooleanVar(id, in)
-    val innerStream = tx.readVar[Stream[S, Any]](id, in)
-    val _hasNext    = tx.readBooleanVar(id, in)
-    val valid       = tx.readBooleanVar(id, in)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id          = tx.readId(in)
+    val inStream    = Stream.read[T, Pat[Any]](in)
+    val hasInner    = id.readBooleanVar(in)
+    val innerStream = id.readVar[Stream[T, Any]](in)
+    val _hasNext    = id.readBooleanVar(in)
+    val valid       = id.readBooleanVar(in)
 
-    new StreamImpl[S, Any](id = id, inStream = inStream, hasInner = hasInner, innerStream = innerStream,
+    new StreamImpl[T, Any](id = id, inStream = inStream, hasInner = hasInner, innerStream = innerStream,
       _hasNext = _hasNext, valid = valid)
   }
 
-  private final class StreamImpl[S <: Base[S], A](
-                                                   id          : S#Id,
-                                                   inStream    : Stream[S, Pat[A]],
-                                                   hasInner    : S#Var[Boolean],
-                                                   innerStream : S#Var[Stream[S, A]],
-                                                   _hasNext    : S#Var[Boolean],
-                                                   valid       : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], A](
+                                                   id          : Ident[T],
+                                                   inStream    : Stream[T, Pat[A]],
+                                                   hasInner    : Var[T, Boolean],
+                                                   innerStream : Var[T, Stream[T, A]],
+                                                   _hasNext    : Var[T, Boolean],
+                                                   valid       : Var[T, Boolean]
   )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val idOut           = txOut.newId()
       val inStreamOut     = c(inStream)
-      val hasInnerOut     = txOut.newBooleanVar(idOut, hasInner())
+      val hasInnerOut     = idOut.newBooleanVar(hasInner())
       val innerStreamOut  = c.copyVar(idOut, innerStream)
-      val hasNextOut      = txOut.newBooleanVar(idOut, _hasNext())
-      val validOut        = txOut.newBooleanVar(idOut, valid())
+      val hasNextOut      = idOut.newBooleanVar(_hasNext())
+      val validOut        = idOut.newBooleanVar(valid())
 
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, hasInner = hasInnerOut, innerStream = innerStreamOut,
         _hasNext = hasNextOut, valid = validOut)
@@ -83,7 +83,7 @@ object FlattenImpl extends StreamFactory {
       valid       .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id          .dispose()
       inStream    .dispose()
       hasInner    .dispose()
@@ -92,17 +92,17 @@ object FlattenImpl extends StreamFactory {
       valid       .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       inStream.reset()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       hasInner()  = false
       advance()
     }
 
     @tailrec
-    private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
+    private def advance()(implicit ctx: Context[T], tx: T): Unit = {
       if (hasInner()) {
         hasInner() = innerStream().hasNext
       }
@@ -119,12 +119,12 @@ object FlattenImpl extends StreamFactory {
       }
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next()(implicit ctx: Context[T], tx: T): A = {
       if (!hasNext) Stream.exhausted()
       val res = innerStream().next()
       advance()

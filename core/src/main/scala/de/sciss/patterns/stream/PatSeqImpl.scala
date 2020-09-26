@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -23,32 +23,32 @@ import scala.collection.immutable.{IndexedSeq => Vec}
 object PatSeqImpl extends StreamFactory {
   final val typeId = 0x53657120 // "Seq "
 
-  def apply[S <: Base[S], A](elem: Seq[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def apply[T <: Exec[T], A](elem: Seq[A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     val id    = tx.newId()
     val xs    = elem.toIndexedSeq
-    val count = tx.newIntVar(id, 0)
-    new StreamImpl[S, A](id = id, xs = xs, count = count)
+    val count = id.newIntVar(0)
+    new StreamImpl[T, A](id = id, xs = xs, count = count)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id    = tx.readId(in, access)
-    val xs    = PatElem.vecSerializer[Any].read(in)
-    val count = tx.readIntVar(id, in)
-    new StreamImpl[S, Any](id = id, xs = xs, count = count)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id    = tx.readId(in)
+    val xs    = PatElem.vecFormat[Any].read(in)
+    val count = id.readIntVar(in)
+    new StreamImpl[T, Any](id = id, xs = xs, count = count)
   }
 
-  private final class StreamImpl[S <: Base[S], A](
-    id    : S#Id,
+  private final class StreamImpl[T <: Exec[T], A](
+    id    : Ident[T],
     xs    : Vec[A],
-    count : S#Var[Int]
+    count : Var[T, Int]
   )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] override def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                               (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] override def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                               (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val idOut     = txOut.newId()
-      val countOut  = txOut.newIntVar(idOut, count())
+      val countOut  = idOut.newIntVar(count())
       new StreamImpl[Out, A](id = idOut, xs = xs, count = countOut)
     }
 
@@ -56,11 +56,11 @@ object PatSeqImpl extends StreamFactory {
 
     protected def writeData(out: DataOutput): Unit = {
       id.write(out)
-      PatElem.vecSerializer[A].write(xs, out)
+      PatElem.vecFormat[A].write(xs, out)
       count.write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id    .dispose()
       count .dispose()
     }
@@ -70,12 +70,12 @@ object PatSeqImpl extends StreamFactory {
 
     override def toString = s"$simpleString; count = $count"
 
-    def reset()(implicit tx: S#Tx): Unit =
+    def reset()(implicit tx: T): Unit =
       count() = 0
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = count() < xs.size
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = count() < xs.size
 
-    def next ()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next ()(implicit ctx: Context[T], tx: T): A = {
       if (!hasNext) Stream.exhausted()
       val i = count()
       count() = i + 1

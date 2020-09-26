@@ -14,16 +14,16 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.ConstantImpl
 
 final case class Constant[A](value: A) extends Pat[A] {
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
     ConstantImpl(value)
 
   // $COVERAGE-OFF$
   override def toString: String = value.toString
   // $COVERAGE-ON$
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = this
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] = this
 }

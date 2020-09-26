@@ -14,72 +14,72 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.impl.PatElem
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{ConstFormat, DataInput, DataOutput}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
 object SortWithItStream extends StreamFactory {
   final val typeId = 0x53574974 // "SWIt"
 
-  def expand[S <: Base[S], A](token: Int)(implicit ctx: Context[S], tx: S#Tx): SortWithItStream[S, A] = {
+  def expand[T <: Exec[T], A](token: Int)(implicit ctx: Context[T], tx: T): SortWithItStream[T, A] = {
     val id        = tx.newId()
     val pairIn    = {
-      implicit val vec: ImmutableSerializer[Vec[A]] = PatElem.vecSerializer[A]
-      tx.newVar[(Vec[A], Vec[A])](id, (Vector.empty, Vector.empty))
+      implicit val vec: ConstFormat[Vec[A]] = PatElem.vecFormat[A]
+      id.newVar[(Vec[A], Vec[A])]((Vector.empty, Vector.empty))
     }
-    val count     = tx.newIntVar(id, 0)
-    val hasZ      = tx.newBooleanVar(id, false)
-    val _hasNext  = tx.newBooleanVar(id, false)
-    val valid     = tx.newBooleanVar(id, false)
+    val count     = id.newIntVar(0)
+    val hasZ      = id.newBooleanVar(false)
+    val _hasNext  = id.newBooleanVar(false)
+    val valid     = id.newBooleanVar(false)
 
-    new Impl[S, A](id = id, token = token, pairIn = pairIn, count = count, hasZ = hasZ,
+    new Impl[T, A](id = id, token = token, pairIn = pairIn, count = count, hasZ = hasZ,
       _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id        = tx.readId(in, access)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id        = tx.readId(in)
     val token     = in.readInt()
     val pairIn    = {
-      implicit val vec: ImmutableSerializer[Vec[Any]] = PatElem.vecSerializer[Any]
-      tx.readVar[(Vec[Any], Vec[Any])](id, in)
+      implicit val vec: ConstFormat[Vec[Any]] = PatElem.vecFormat[Any]
+      id.readVar[(Vec[Any], Vec[Any])](in)
     }
-    val count     = tx.readIntVar(id, in)
-    val hasZ      = tx.readBooleanVar(id, in)
-    val _hasNext  = tx.readBooleanVar(id, in)
-    val valid     = tx.readBooleanVar(id, in)
+    val count     = id.readIntVar(in)
+    val hasZ      = id.readBooleanVar(in)
+    val _hasNext  = id.readBooleanVar(in)
+    val valid     = id.readBooleanVar(in)
 
-    val res = new Impl[S, Any](id = id, token = token, pairIn = pairIn, count = count, hasZ = hasZ,
+    val res = new Impl[T, Any](id = id, token = token, pairIn = pairIn, count = count, hasZ = hasZ,
       _hasNext = _hasNext, valid = valid)
     ctx.registerItStream(res)
     res
   }
 
 
-  private final class Impl[S <: Base[S], A](
-                                            id        : S#Id,
+  private final class Impl[T <: Exec[T], A](
+                                            id        : Ident[T],
                                             val token : Int,
-                                            pairIn    : S#Var[(Vec[A], Vec[A])],
-                                            count     : S#Var[Int],
-                                            hasZ      : S#Var[Boolean],
-                                            _hasNext  : S#Var[Boolean],
-                                            valid     : S#Var[Boolean]
+                                            pairIn    : Var[T, (Vec[A], Vec[A])],
+                                            count     : Var[T, Int],
+                                            hasZ      : Var[T, Boolean],
+                                            _hasNext  : Var[T, Boolean],
+                                            valid     : Var[T, Boolean]
                                            )
-    extends SortWithItStream[S, A] {
+    extends SortWithItStream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, (A, A)] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, (A, A)] = {
       val idOut     = txOut.newId()
       val pairInOut = {
-        implicit val vec: ImmutableSerializer[Vec[A]] = PatElem.vecSerializer[A]
-        txOut.newVar[(Vec[A], Vec[A])](idOut, pairIn())
+        implicit val vec: ConstFormat[Vec[A]] = PatElem.vecFormat[A]
+        idOut.newVar[(Vec[A], Vec[A])](pairIn())
       }
-      val countOut    = txOut.newIntVar     (idOut, count())
-      val hasZOut     = txOut.newBooleanVar (idOut, hasZ())
-      val hasNextOut  = txOut.newBooleanVar (idOut, _hasNext())
-      val validOut    = txOut.newBooleanVar (idOut, valid())
+      val countOut    = idOut.newIntVar    (count())
+      val hasZOut     = idOut.newBooleanVar(hasZ())
+      val hasNextOut  = idOut.newBooleanVar(_hasNext())
+      val validOut    = idOut.newBooleanVar(valid())
 
       new Impl[Out, A](id = idOut, token = token, pairIn = pairInOut, count = countOut, hasZ = hasZOut,
         _hasNext = hasNextOut, valid = validOut)
@@ -97,7 +97,7 @@ object SortWithItStream extends StreamFactory {
       valid   .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id      .dispose()
       pairIn  .dispose()
       count   .dispose()
@@ -106,14 +106,14 @@ object SortWithItStream extends StreamFactory {
       valid   .dispose()
     }
 
-    def advance(x: Vec[A], y: Vec[A])(implicit tx: S#Tx): Unit = {
+    def advance(x: Vec[A], y: Vec[A])(implicit tx: T): Unit = {
       pairIn() = (x, y)
       count()     = 0
       hasZ()     = true
       calcHasNext()
     }
 
-    private def calcHasNext()(implicit tx: S#Tx): Unit = {
+    private def calcHasNext()(implicit tx: T): Unit = {
       if (hasZ()) {
         val (x, y) = pairIn()
         val sz      = math.min(x.size, y.size)
@@ -124,7 +124,7 @@ object SortWithItStream extends StreamFactory {
       }
     }
 
-    private def validate()(implicit tx: S#Tx): Unit =
+    private def validate()(implicit tx: T): Unit =
       if (!valid()) {
         valid()    = true
   //      _hasZ()     = false
@@ -132,19 +132,19 @@ object SortWithItStream extends StreamFactory {
         calcHasNext()
       }
 
-  //  def resetOuter()(implicit tx: S#Tx): Unit = {
+  //  def resetOuter()(implicit tx: T): Unit = {
   //    _valid() = false
   //  }
 
-    def reset()(implicit tx: S#Tx): Unit =
+    def reset()(implicit tx: T): Unit =
       valid() = false
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       hasZ() && _hasNext()
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): (A, A) = {
+    def next()(implicit ctx: Context[T], tx: T): (A, A) = {
       if (!hasNext) Stream.exhausted()
       val (x, y)  = pairIn()
       val sz      = math.min(x.size, y.size)
@@ -160,6 +160,6 @@ object SortWithItStream extends StreamFactory {
     }
   }
 }
-trait SortWithItStream[S <: Base[S], A] extends ItStream[S, (A, A)] {
-  def advance(x: Vec[A], y: Vec[A])(implicit tx: S#Tx): Unit
+trait SortWithItStream[T <: Exec[T], A] extends ItStream[T, (A, A)] {
+  def advance(x: Vec[A], y: Vec[A])(implicit tx: T): Unit
 }

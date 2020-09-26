@@ -13,10 +13,10 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 
 trait Transform {
-  final def apply[S <: Base[S], A](in: Pat[A])(implicit ctx: Context[S], tx: S#Tx): Pat[A] =
+  final def apply[T <: Exec[T], A](in: Pat[A])(implicit ctx: Context[T], tx: T): Pat[A] =
     applyOne(in).transform(this)
 
   protected def applyOne[A](in: Pat[A]): Pat[A]

@@ -13,29 +13,29 @@
 
 package de.sciss.patterns.stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.{Context, Stream, graph}
 import de.sciss.serial.DataOutput
 import de.sciss.synth.proc
 
-abstract class AudioCueStreamImpl[S <: Base[S], A](inStream: Stream[S, graph.AudioCue])
-  extends Stream[S, A] {
+abstract class AudioCueStreamImpl[T <: Exec[T], A](inStream: Stream[T, graph.AudioCue])
+  extends Stream[T, A] {
 
   protected def mapCue(cue: proc.AudioCue): A
 
   final protected def writeData(out: DataOutput): Unit =
     inStream.write(out)
 
-  final def dispose()(implicit tx: S#Tx): Unit =
+  final def dispose()(implicit tx: T): Unit =
     inStream.dispose()
 
-  final def reset()(implicit tx: S#Tx): Unit =
+  final def reset()(implicit tx: T): Unit =
     inStream.reset()
 
-  final def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
+  final def hasNext(implicit ctx: Context[T], tx: T): Boolean =
     inStream.hasNext
 
-  final def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+  final def next()(implicit ctx: Context[T], tx: T): A = {
     val cue = inStream.next()
     mapCue(cue.peer)
   }

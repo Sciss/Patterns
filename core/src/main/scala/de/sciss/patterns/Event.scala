@@ -14,12 +14,12 @@
 package de.sciss.patterns
 
 import de.sciss.patterns.impl.PatElem
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 object Event {
   final val empty = Event(Map.empty)
 
-  implicit object serializer extends ImmutableSerializer[Event] {
+  implicit object format extends ConstFormat[Event] {
     def read(in: DataInput): Event = {
       val b = Map.newBuilder[String, Any]
       var sz = in.readInt()

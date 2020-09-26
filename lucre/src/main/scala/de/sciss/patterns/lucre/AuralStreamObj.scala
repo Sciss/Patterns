@@ -14,10 +14,9 @@
 package de.sciss.patterns.lucre
 
 import de.sciss.lucre.data.SkipOctree
-import de.sciss.lucre.geom.LongSpace
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.Obj
-import de.sciss.lucre.synth.Sys
+import de.sciss.lucre.geom.{LongPoint2DLike, LongSquare}
+import de.sciss.lucre.synth.Txn
+import de.sciss.lucre.{Obj, Source, Txn => LTxn}
 import de.sciss.patterns.lucre.impl.AuralStreamLikeObj
 import de.sciss.span.SpanLike
 import de.sciss.synth.UGenSource.Vec
@@ -26,52 +25,49 @@ import de.sciss.synth.proc.{AuralContext, AuralObj, Runner}
 object AuralStreamObj extends AuralObj.Factory {
   def tpe: Obj.Type = Stream
 
-  type Repr[~ <: stm.Sys[~]] = Stream[~]
+  type Repr[~ <: LTxn[~]] = Stream[~]
 
   private[this] lazy val _init: Unit = AuralObj.addFactory(this)
 
   def init(): Unit = _init
 
-  def apply[S <: Sys[S]](st: Stream[S], attr: Runner.Attr[S]
-                        )(implicit tx: S#Tx, context: AuralContext[S]): AuralObj[S] = {
-    val system  = tx.system
+  def apply[T <: Txn[T]](st: Stream[T], attr: Runner.Attr[T]
+                        )(implicit tx: T, context: AuralContext[T]): AuralObj[T] = {
     // XXX TODO --- pass on `attr`
-    val res     = prepare[S, system.I](st)(tx, system, context)
+    val res = prepare[T, tx.I](st)(tx, tx.inMemoryBridge, context)
     res.init(st)
   }
 
-  private def prepare[S <: Sys[S], I1 <: stm.Sys[I1]](value: Stream[S])
-                                                     (implicit tx: S#Tx, system: S { type I = I1 },
-                                                      context: AuralContext[S]): AuralStreamObj[S, I1] = {
-    val tree = AuralStreamLikeObj.mkTree[S, I1]()
-    implicit val iSys: S#Tx => I1#Tx = system.inMemoryTx
-    new AuralStreamObj[S, I1](tx.newHandle(value), tree)
+  private def prepare[T <: Txn[T], I1 <: LTxn[I1]](value: Stream[T])
+                                                     (implicit tx: T, iSys: T => I1,
+                                                      context: AuralContext[T]): AuralStreamObj[T, I1] = {
+    val tree = AuralStreamLikeObj.mkTree[T, I1]()
+    new AuralStreamObj[T, I1](tx.newHandle(value), tree)
   }
 }
-final class AuralStreamObj[S <: Sys[S], I1 <: stm.Sys[I1]](objH: stm.Source[S#Tx, Stream[S]],
-                                                            tree: SkipOctree[I1, LongSpace.TwoDim, (SpanLike, Vec[AuralObj[S]])]
+final class AuralStreamObj[T <: Txn[T], I1 <: LTxn[I1]](objH: Source[T, Stream[T]],
+                                                            tree: SkipOctree[I1, LongPoint2DLike, LongSquare, (SpanLike, Vec[AuralObj[T]])]
                                                            )
-                                                           (implicit context: AuralContext[S],
-                                                            system: S { type I = I1 },
-                                                            protected val iSys: S#Tx => I1#Tx)
-  extends AuralStreamLikeObj[S, S, I1, Stream[S]](objH, tree) {
+                                                           (implicit context: AuralContext[T],
+                                                            protected val iSys: T => I1)
+  extends AuralStreamLikeObj[T, I1, Stream[T]](objH, tree) {
   attr =>
 
   def tpe: Obj.Type = Stream
 
-  protected type St = Stream[S]
+  protected type St = Stream[T]
 
-  def init(st: Stream[S])(implicit tx: S#Tx): this.type = {
+  def init(st: Stream[T])(implicit tx: T): this.type = {
     this
   }
 
-  protected def disposeStream(st: St)(implicit tx: S#Tx): Unit = ()
+  protected def disposeStream(st: St)(implicit tx: T): Unit = ()
 
-  protected def makeStream(stObj: Stream[S])(implicit tx: S#Tx): St = stObj
+  protected def makeStream(stObj: Stream[T])(implicit tx: T): St = stObj
 
-  protected def streamHasNext(st: Stream[S])(implicit tx: S#Tx): Boolean =
+  protected def streamHasNext(st: Stream[T])(implicit tx: T): Boolean =
     st.peer().hasNext(st.context, tx)
 
-  protected def streamNext(st: Stream[S])(implicit tx: S#Tx): Any =
+  protected def streamNext(st: Stream[T])(implicit tx: T): Any =
     st.peer().next()(st.context, tx)
 }

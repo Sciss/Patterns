@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.Plain
+import de.sciss.lucre.Plain
 import de.sciss.synth.swing.Plotting.Implicits._
 
 import scala.swing.Swing

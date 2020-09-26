@@ -14,58 +14,58 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.graph.UpdatedAll
 import de.sciss.serial.{DataInput, DataOutput}
 
 object UpdatedAllImpl extends StreamFactory {
   final val typeId = 0x5570416C // "UpAl"
 
-  def expand[S <: Base[S], A1, A >: A1](pat: UpdatedAll[A1, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], A1, A >: A1](pat: UpdatedAll[A1, A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
     val id          = tx.newId()
     val inStream    = in  .expand(ctx, tx)
     val idxStream   = idx .expand(ctx, tx)
     val elemStream  = elem.expand(ctx, tx)
-    val state       = tx.newVar[Stream[S, A]](id, null)
-    val valid       = tx.newBooleanVar(id, false)
+    val state       = id.newVar[Stream[T, A]](null)
+    val valid       = id.newBooleanVar(false)
     
-    new StreamImpl[S, A1, A](id = id, inStream = inStream, idxStream = idxStream, elemStream = elemStream,
+    new StreamImpl[T, A1, A](id = id, inStream = inStream, idxStream = idxStream, elemStream = elemStream,
       state = state, valid = valid)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id          = tx.readId(in, access)
-    val inStream    = Stream.read[S, Any](in, access)
-    val idxStream   = Stream.read[S, Int](in, access)
-    val elemStream  = Stream.read[S, Any](in, access)
-    val state       = tx.readVar[Stream[S, Any]](id, in)
-    val valid       = tx.readBooleanVar(id, in)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id          = tx.readId(in)
+    val inStream    = Stream.read[T, Any](in)
+    val idxStream   = Stream.read[T, Int](in)
+    val elemStream  = Stream.read[T, Any](in)
+    val state       = id.readVar[Stream[T, Any]](in)
+    val valid       = id.readBooleanVar(in)
 
-    new StreamImpl[S, Any, Any](id = id, inStream = inStream, idxStream = idxStream, elemStream = elemStream,
+    new StreamImpl[T, Any, Any](id = id, inStream = inStream, idxStream = idxStream, elemStream = elemStream,
       state = state, valid = valid)
   }
 
 
-  private final class StreamImpl[S <: Base[S], A1, A >: A1](
-                                                             id        : S#Id,
-                                                             inStream  : Stream[S, A1],
-                                                             idxStream : Stream[S, Int],
-                                                             elemStream: Stream[S, A],
-                                                             state     : S#Var[Stream[S, A]],
-                                                             valid     : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], A1, A >: A1](
+                                                             id        : Ident[T],
+                                                             inStream  : Stream[T, A1],
+                                                             idxStream : Stream[T, Int],
+                                                             elemStream: Stream[T, A],
+                                                             state     : Var[T, Stream[T, A]],
+                                                             valid     : Var[T, Boolean]
   )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val idOut          = txOut.newId()
       val inStreamOut    = c(inStream  )
       val idxStreamOut   = c(idxStream )
       val elemStreamOut  = c(elemStream)
       val stateOut       = c.copyVar(idOut, state)
-      val validOut       = txOut.newBooleanVar(idOut, valid())
+      val validOut       = idOut.newBooleanVar(valid())
 
       new StreamImpl[Out, A1, A](id = idOut, inStream = inStreamOut, idxStream = idxStreamOut, elemStream = elemStreamOut,
         state = stateOut, valid = validOut)
@@ -82,7 +82,7 @@ object UpdatedAllImpl extends StreamFactory {
       valid     .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id        .dispose()
       inStream  .dispose()
       idxStream .dispose()
@@ -91,13 +91,13 @@ object UpdatedAllImpl extends StreamFactory {
       valid     .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       inStream  .reset()
       idxStream .reset()
       elemStream.reset()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       //      DEBUG += 1
       //      if (DEBUG == 7106) {
       //        println("BOO")
@@ -118,12 +118,12 @@ object UpdatedAllImpl extends StreamFactory {
       state()     = _state
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       state().hasNext
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next()(implicit ctx: Context[T], tx: T): A = {
       if (!hasNext) Stream.exhausted()
       state().next()
     }

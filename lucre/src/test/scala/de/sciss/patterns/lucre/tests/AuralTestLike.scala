@@ -1,9 +1,8 @@
 package de.sciss.patterns.lucre.tests
 
-import de.sciss.lucre.expr.DoubleObj
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.store.BerkeleyDB
-import de.sciss.lucre.synth.{Server, Sys}
+import de.sciss.lucre.{Cursor, DoubleObj}
+import de.sciss.lucre.store.BerkeleyDB
+import de.sciss.lucre.synth.{Server, Txn}
 import de.sciss.patterns.lucre.Pattern
 import de.sciss.synth.SynthGraph
 import de.sciss.synth.proc.{AuralContext, AuralObj, Confluent, Durable, Proc, SoundProcesses, SynthGraphObj, TimeRef, Timeline, Universe, showAuralLog, showTransportLog}
@@ -14,7 +13,7 @@ object AuralTestLike {
   trait Factory {
     val confluent = false /* true */  // currently test4 has a problem with event-variables in confluent
 
-    protected def run[S <: Sys[S]](name: String)(implicit cursor: stm.Cursor[S]): Unit
+    protected def run[T <: Txn[T]](name: String)(implicit cursor: Cursor[T]): Unit
 
     def init(args: Array[String]): Unit = {
       SoundProcesses.init()
@@ -23,24 +22,24 @@ object AuralTestLike {
       val name = args.headOption.getOrElse("?")
 
       if (confluent) {
-        type S  = Confluent
+        type T  = Confluent.Txn
         val sys = Confluent(BerkeleyDB.tmp())
         val (_, cursor) = sys.cursorRoot(_ => ())(implicit tx => _ => sys.newCursor())
-        run[S](name)(cursor)
+        run[T](name)(cursor)
 
       } else {
-        type S  = Durable
+        type T  = Durable.Txn
         val sys = Durable(BerkeleyDB.tmp())
-        val cursor: stm.Cursor[S] = sys
-        run[S](name)(cursor)
+        val cursor: Cursor[T] = sys
+        run[T](name)(cursor)
       }
     }
   }
 }
-abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
+abstract class AuralTestLike[T <: Txn[T]](implicit cursor: Cursor[T]) {
   // ---- abstract ----
 
-  protected def run()(implicit context: AuralContext[S]): Unit
+  protected def run()(implicit context: AuralContext[T]): Unit
 
   // ---- impl ----
 
@@ -48,7 +47,7 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
   showTransportLog  = true
   // de.sciss.lucre.synth.showLog = true
 
-  implicit val universe: Universe[S] = cursor.step { implicit tx => Universe.dummy }
+  implicit val universe: Universe[T] = cursor.step { implicit tx => Universe.dummy }
 
   cursor.step { implicit tx =>
     val as = universe.auralSystem
@@ -63,15 +62,15 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
     }
 
     s.peer.dumpOSC()
-    implicit val context: AuralContext[S] = cursor.step { implicit tx =>
-      AuralContext[S](s)
+    implicit val context: AuralContext[T] = cursor.step { implicit tx =>
+      AuralContext[T](s)
     }
 
     run()
   }
 
-  final def after(secs: Double, latency: Boolean = false)(code: S#Tx => Unit)
-                 (implicit context: AuralContext[S]): Unit = {
+  final def after(secs: Double, latency: Boolean = false)(code: T => Unit)
+                 (implicit context: AuralContext[T]): Unit = {
     val t = new Thread {
       override def run(): Unit = {
         Thread.sleep((secs * 1000).toLong)
@@ -88,48 +87,48 @@ abstract class AuralTestLike[S <: Sys[S]](implicit cursor: stm.Cursor[S]) {
     }
   }
 
-  final def quit()(implicit tx: S#Tx): Unit =
+  final def quit()(implicit tx: T): Unit =
     tx.afterCommit {
       Thread.sleep(1000)  // have to wait a bit for scsynth to quit
       scala.sys.exit()
     }
 
-  final def procV(graph: => Unit)(implicit tx: S#Tx, context: AuralContext[S]): AuralObj.Proc[S] = {
+  final def procV(graph: => Unit)(implicit tx: T, context: AuralContext[T]): AuralObj.Proc[T] = {
     val pObj  = proc(graph)
     val _view = AuralObj.Proc(pObj)
     _view
   }
 
-  final def proc(graph: => Unit)(implicit tx: S#Tx): Proc[S] = {
-    val p = Proc[S]
+  final def proc(graph: => Unit)(implicit tx: T): Proc[T] = {
+    val p = Proc[T]()
     val g = SynthGraph {
       graph
     }
-    p.graph() = SynthGraphObj.newConst[S](g)
+    p.graph() = SynthGraphObj.newConst[T](g)
     p // Obj(Proc.Elem(p))
   }
 
-  final def timelineV()(implicit tx: S#Tx, context: AuralContext[S]): AuralObj.Timeline[S] = {
+  final def timelineV()(implicit tx: T, context: AuralContext[T]): AuralObj.Timeline[T] = {
     val tlObj = timeline()
     val _view = AuralObj.Timeline(tlObj)
     _view
   }
 
-  final def timeline()(implicit tx: S#Tx): Timeline.Modifiable[S] = {
-    val tl    = Timeline[S]
+  final def timeline()(implicit tx: T): Timeline.Modifiable[T] = {
+    val tl = Timeline[T]()
     tl // Obj(Timeline.Elem(tl))
   }
 
   final def frame  (secs  : Double): Long   = (secs  * TimeRef.SampleRate).toLong
   final def seconds(frames: Long  ): Double = frames / TimeRef.SampleRate
 
-  final def putDouble(proc: Proc[S], key: String, value: Double)(implicit tx: S#Tx): Unit = {
+  final def putDouble(proc: Proc[T], key: String, value: Double)(implicit tx: T): Unit = {
     // val imp = ExprImplicits[S]
     // import imp._
-    proc.attr.put(key, value: DoubleObj[S])
+    proc.attr.put(key, value: DoubleObj[T])
   }
 
-  final def stopAndQuit(delay: Double = 4.0)(implicit context: AuralContext[S]): Unit =
+  final def stopAndQuit(delay: Double = 4.0)(implicit context: AuralContext[T]): Unit =
     after(delay) { implicit tx =>
       universe.auralSystem.stop()
       quit()

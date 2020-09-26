@@ -1,8 +1,8 @@
 package de.sciss.patterns
 
 import de.sciss.kollflitz
-import de.sciss.lucre.adjunct.Adjunct.{Num, ScalarEq}
-import de.sciss.lucre.stm.Plain
+import de.sciss.lucre.Adjunct.{Num, ScalarEq}
+import de.sciss.lucre.Plain
 import de.sciss.patterns.graph._
 
 object RonTuplePure {

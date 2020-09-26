@@ -14,12 +14,12 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 
-trait ItStreamSource[S <: Base[S], A] {
+trait ItStreamSource[T <: Exec[T], A] {
   def token: Int
 
-  def mkItStream()(implicit ctx: Context[S], tx: S#Tx): ItStream[S, A]
+  def mkItStream()(implicit ctx: Context[T], tx: T): ItStream[T, A]
 
-  def registerItStream(stream: ItStream[S, A])(implicit tx: S#Tx): Unit
+  def registerItStream(stream: ItStream[T, A])(implicit tx: T): Unit
 }

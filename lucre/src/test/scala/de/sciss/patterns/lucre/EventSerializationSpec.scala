@@ -9,7 +9,7 @@ class EventSerializationSpec extends DurableSpec with Matchers {
     sys.step { implicit tx =>
       val e = Event(Map("dur" -> Pat(1.0, 2.0, 3.0), "blah" -> Constant(-1)))
       val id = tx.newId()
-      val vr = tx.newVar(id, e)
+      val vr = id.newVar(e)
       val eo = vr()
       assert(e === eo)
     }

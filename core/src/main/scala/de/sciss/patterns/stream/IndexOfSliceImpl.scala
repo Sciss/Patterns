@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.graph.IndexOfSlice
 import de.sciss.serial.{DataInput, DataOutput}
 
@@ -23,54 +23,54 @@ import scala.collection.mutable
 object IndexOfSliceImpl extends StreamFactory {
   final val typeId = 0x4978536C // "IxSl"
 
-  def expand[S <: Base[S], A1, A2](pat: IndexOfSlice[A1, A2])(implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = {
+  def expand[T <: Exec[T], A1, A2](pat: IndexOfSlice[A1, A2])(implicit ctx: Context[T], tx: T): Stream[T, Int] = {
     import pat._
     val id          = tx.newId()
-    val inStream    = in  .expand[S]
-    val subStream   = sub .expand[S]
-    val fromStream  = from.expand[S]
-    val fromValue   = tx.newIntVar    (id, 0    )
-    val _hasNext    = tx.newBooleanVar(id, false)
-    val valid       = tx.newBooleanVar(id, false)
+    val inStream    = in  .expand[T]
+    val subStream   = sub .expand[T]
+    val fromStream  = from.expand[T]
+    val fromValue   = id.newIntVar(0)
+    val _hasNext    = id.newBooleanVar(false)
+    val valid       = id.newBooleanVar(false)
 
-    new StreamImpl[S, A1, A2](id = id, inStream = inStream, subStream = subStream, fromStream = fromStream,
+    new StreamImpl[T, A1, A2](id = id, inStream = inStream, subStream = subStream, fromStream = fromStream,
       fromValue = fromValue, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id          = tx.readId(in, access)
-    val inStream    = Stream.read[S, Any](in, access)
-    val subStream   = Stream.read[S, Any](in, access)
-    val fromStream  = Stream.read[S, Int](in, access)
-    val fromValue   = tx.readIntVar    (id, in)
-    val _hasNext    = tx.readBooleanVar(id, in)
-    val valid       = tx.readBooleanVar(id, in)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id          = tx.readId(in)
+    val inStream    = Stream.read[T, Any](in)
+    val subStream   = Stream.read[T, Any](in)
+    val fromStream  = Stream.read[T, Int](in)
+    val fromValue   = id.readIntVar(in)
+    val _hasNext    = id.readBooleanVar(in)
+    val valid       = id.readBooleanVar(in)
 
-    new StreamImpl[S, Any, Any](id = id, inStream = inStream, subStream = subStream, fromStream = fromStream,
+    new StreamImpl[T, Any, Any](id = id, inStream = inStream, subStream = subStream, fromStream = fromStream,
       fromValue = fromValue, _hasNext = _hasNext, valid = valid)
   }
 
-  private final class StreamImpl[S <: Base[S], A1, A2](
-                                                        id        : S#Id,
-                                                        inStream  : Stream[S, A1],
-                                                        subStream : Stream[S, A2],
-                                                        fromStream: Stream[S, Int],
-                                                        fromValue : S#Var[Int],
-                                                        _hasNext  : S#Var[Boolean],
-                                                        valid     : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], A1, A2](
+                                                        id        : Ident[T],
+                                                        inStream  : Stream[T, A1],
+                                                        subStream : Stream[T, A2],
+                                                        fromStream: Stream[T, Int],
+                                                        fromValue : Var[T, Int],
+                                                        _hasNext  : Var[T, Boolean],
+                                                        valid     : Var[T, Boolean]
   )
-    extends Stream[S, Int] {
+    extends Stream[T, Int] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Int] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, Int] = {
       val idOut         = txOut.newId()
       val inStreamOut   = c(inStream  )
       val subStreamOut  = c(subStream )
       val fromStreamOut = c(fromStream)
-      val fromValueOut  = txOut.newIntVar    (idOut, fromValue())
-      val hasNextOut    = txOut.newBooleanVar(idOut, _hasNext())
-      val validOut      = txOut.newBooleanVar(idOut, valid())
+      val fromValueOut  = idOut.newIntVar(fromValue())
+      val hasNextOut    = idOut.newBooleanVar(_hasNext())
+      val validOut      = idOut.newBooleanVar(valid())
 
       new StreamImpl[Out, A1, A2](id = idOut, inStream = inStreamOut, subStream = subStreamOut, fromStream = fromStreamOut,
         fromValue = fromValueOut, _hasNext = hasNextOut, valid = validOut)
@@ -88,7 +88,7 @@ object IndexOfSliceImpl extends StreamFactory {
       valid     .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id        .dispose()
       inStream  .dispose()
       subStream .dispose()
@@ -98,13 +98,13 @@ object IndexOfSliceImpl extends StreamFactory {
       valid     .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       inStream  .reset()
       subStream .reset()
       fromStream.reset()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       val hn = fromStream.hasNext
       _hasNext() = hn
       if (hn) {
@@ -113,12 +113,12 @@ object IndexOfSliceImpl extends StreamFactory {
       }
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): Int = {
+    def next()(implicit ctx: Context[T], tx: T): Int = {
       validate()
       if (!_hasNext()) Stream.exhausted()
       _hasNext()      = false   // there is only one run through

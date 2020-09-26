@@ -14,8 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Adjunct, Exec, ProductWithAdjuncts}
 import de.sciss.patterns.stream.AttributeImpl
 
 object Attribute {
@@ -33,10 +32,10 @@ final case class Attribute[A](key: String, default: Option[Pat[A]])(implicit val
 
   override def adjuncts: List[Adjunct] = ex :: Nil
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
     AttributeImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] =
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] =
     default.fold(this) { defaultV =>
       val defaultVT = t(defaultV)
       if (defaultVT.eq(defaultV)) this else copy(key = key, default = Some(defaultVT))

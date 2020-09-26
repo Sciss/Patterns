@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.graph.Stutter
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -24,50 +24,50 @@ import scala.annotation.tailrec
 object StutterImpl extends StreamFactory {
   final val typeId = 0x53747574 // "Stut"
 
-  def expand[S <: Base[S], A](pat: Stutter[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], A](pat: Stutter[A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
     val id        = tx.newId()
-    val inStream  = in.expand[S]
-    val nStream   = n .expand[S]
-    val state     = PatElem.makeVar[S, A](id)
-    val remain    = tx.newIntVar    (id, 0)
-    val valid     = tx.newBooleanVar(id, false)
+    val inStream  = in.expand[T]
+    val nStream   = n .expand[T]
+    val state     = PatElem.makeVar[T, A](id)
+    val remain    = id.newIntVar(0)
+    val valid     = id.newBooleanVar(false)
 
-    new StreamImpl[S, A](id = id, inStream = inStream, nStream = nStream, state = state, remain = remain,
+    new StreamImpl[T, A](id = id, inStream = inStream, nStream = nStream, state = state, remain = remain,
       valid = valid)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id        = tx.readId(in, access)
-    val inStream  = Stream.read[S, Any  ](in, access)
-    val nStream   = Stream.read[S, Int](in, access)
-    val state     = PatElem.readVar[S, Any](id, in)
-    val remain    = tx.readIntVar    (id, in)
-    val valid     = tx.readBooleanVar(id, in)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id        = tx.readId(in)
+    val inStream  = Stream.read[T, Any  ](in)
+    val nStream   = Stream.read[T, Int](in)
+    val state     = PatElem.readVar[T, Any](id, in)
+    val remain    = id.readIntVar(in)
+    val valid     = id.readBooleanVar(in)
 
-    new StreamImpl[S, Any](id = id, inStream = inStream, nStream = nStream, state = state, remain = remain,
+    new StreamImpl[T, Any](id = id, inStream = inStream, nStream = nStream, state = state, remain = remain,
       valid = valid)
   }
 
-  private final class StreamImpl[S <: Base[S], A](
-                                                   protected val id        : S#Id,
-                                                   protected val inStream  : Stream[S, A],
-                                                   protected val nStream   : Stream[S, Int],
-                                                   protected val state     : S#Var[A],
-                                                   protected val remain    : S#Var[Int],
-                                                   protected val valid     : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], A](
+                                                   protected val id        : Ident[T],
+                                                   protected val inStream  : Stream[T, A],
+                                                   protected val nStream   : Stream[T, Int],
+                                                   protected val state     : Var[T, A],
+                                                   protected val remain    : Var[T, Int],
+                                                   protected val valid     : Var[T, Boolean]
                                                  )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val idOut       = txOut.newId()
       val inStreamOut = c(inStream)
       val nStreamOut  = c(nStream )
       val stateOut    = PatElem.copyVar[Out, A](idOut, state())
-      val remainOut   = txOut.newIntVar    (idOut, remain())
-      val validOut    = txOut.newBooleanVar(idOut, valid())
+      val remainOut   = idOut.newIntVar(remain())
+      val validOut    = idOut.newBooleanVar(valid())
 
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, nStream = nStreamOut, state = stateOut,
         remain = remainOut, valid = validOut)
@@ -75,17 +75,17 @@ object StutterImpl extends StreamFactory {
 
     protected def typeId: Int = StutterImpl.typeId
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       inStream.reset()
       nStream .reset()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       advance()
     }
 
     @tailrec
-    private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit = {
+    private def advance()(implicit ctx: Context[T], tx: T): Unit = {
       val nhn = nStream.hasNext
       if (nhn) {
         val nVal = math.max(0, nStream.next())
@@ -107,12 +107,12 @@ object StutterImpl extends StreamFactory {
       }
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       remain() > 0
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next()(implicit ctx: Context[T], tx: T): A = {
       if (!hasNext) Stream.exhausted()
       val res = state()
       val n1 = remain() - 1
@@ -130,7 +130,7 @@ object StutterImpl extends StreamFactory {
       valid   .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id      .dispose()
       inStream.dispose()
       nStream .dispose()

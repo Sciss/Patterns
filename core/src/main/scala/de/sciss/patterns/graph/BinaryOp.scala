@@ -14,25 +14,25 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.adjunct.Adjunct.{Num, NumDouble, NumFrac, NumInt, Ord, Widen2}
-import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Adjunct.{Num, NumDouble, NumFrac, NumInt, Ord, Widen2}
+import de.sciss.lucre.{Adjunct, ProductWithAdjuncts}
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.BinaryOpImpl
 import de.sciss.serial.{DataInput, DataOutput}
 
 object BinaryOp {
   sealed abstract class Op[A1, A2] extends ProductWithAdjuncts {
-    type State[S <: Base[S]]
+    type State[T <: Exec[T]]
 
-    def readState   [S <: Base[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): State[S]
-    def writeState  [S <: Base[S]](s: State[S], out: DataOutput): Unit
-    def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit
+    def readState   [T <: Exec[T]](in: DataInput)(implicit tx: T): State[T]
+    def writeState  [T <: Exec[T]](s: State[T], out: DataOutput): Unit
+    def disposeState[T <: Exec[T]](s: State[T])(implicit tx: T): Unit
 
-    def copyState[S <: Base[S], Out <: Base[Out]](s: State[S])(implicit tx: S#Tx, txOut: Out#Tx): State[Out]
+    def copyState[T <: Exec[T], Out <: Exec[Out]](s: State[T])(implicit tx: T, txOut: Out): State[Out]
 
-    def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S]
+    def prepare[T <: Exec[T]](ref: AnyRef)(implicit ctx: Context[T], tx: T): State[T]
 
-    def next[S <: Base[S]](a: A1, b: A1)(implicit state: State[S], tx: S#Tx): A2
+    def next[T <: Exec[T]](a: A1, b: A1)(implicit state: State[T], tx: T): A2
 
     override final def productPrefix = s"BinaryOp$$$name"
 
@@ -42,17 +42,17 @@ object BinaryOp {
   }
 
   abstract class PureOp[A1, A2] extends Op[A1, A2] {
-    final type State[S <: Base[S]] = Unit
+    final type State[T <: Exec[T]] = Unit
 
-    final def readState   [S <: Base[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): State[S] = ()
-    final def writeState  [S <: Base[S]](s: State[S], out: DataOutput): Unit = ()
-    final def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit = ()
+    final def readState   [T <: Exec[T]](in: DataInput)(implicit tx: T): State[T] = ()
+    final def writeState  [T <: Exec[T]](s: State[T], out: DataOutput): Unit = ()
+    final def disposeState[T <: Exec[T]](s: State[T])(implicit tx: T): Unit = ()
 
-    def copyState[S <: Base[S], Out <: Base[Out]](s: State[S])(implicit tx: S#Tx, txOut: Out#Tx): State[Out] = ()
+    def copyState[T <: Exec[T], Out <: Exec[Out]](s: State[T])(implicit tx: T, txOut: Out): State[Out] = ()
 
-    final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S] = ()
+    final def prepare[T <: Exec[T]](ref: AnyRef)(implicit ctx: Context[T], tx: T): State[T] = ()
 
-    def next[S <: Base[S]](a: A1, b: A1)(implicit state: State[S], tx: S#Tx): A2 = apply(a, b)
+    def next[T <: Exec[T]](a: A1, b: A1)(implicit state: State[T], tx: T): A2 = apply(a, b)
 
     def apply(a: A1, b: A1): A2
   }
@@ -60,32 +60,32 @@ object BinaryOp {
   // ---- (Num, Num) -> Num ----
 
   final case class Plus[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.+(a, b)
+    def apply(a: A, b: A)     : A         = num.plus(a, b)
     def name                  : String    = "Plus"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
 
   final case class Minus[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.-(a, b)
+    def apply(a: A, b: A)     : A         = num.minus(a, b)
     def name                  : String    = "Minus"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
 
   final case class Times[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.*(a, b)
+    def apply(a: A, b: A)     : A         = num.times(a, b)
     def name                  : String    = "Times"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
 
   /** Division, _not_ integer division */
   final case class Div[A]()(implicit num: NumFrac[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num./(a, b)
+    def apply(a: A, b: A)     : A         = num.div(a, b)
     def name                  : String    = "Div"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
 
   final case class ModJ[A]()(implicit num: Num[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.%(a, b)
+    def apply(a: A, b: A)     : A         = num.rem(a, b)
     def name                  : String    = "ModJ"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
@@ -128,14 +128,14 @@ object BinaryOp {
 
   /** Less than or equal */
   final case class Leq[A, B]()(implicit ord: Ord[A] { type Boolean = B }) extends PureOp[A, B] {
-    def apply(a: A, b: A)     : B           = ord.leq(a, b)
+    def apply(a: A, b: A)     : B           = ord.lteq(a, b)
     def name                  : String      = "Leq"
     override def adjuncts: List[Adjunct]   = ord :: Nil
   }
 
   /** Greater than or equal */
   final case class Geq[A, B]()(implicit ord: Ord[A] { type Boolean = B }) extends PureOp[A, B] {
-    def apply(a: A, b: A)     : B           = ord.geq(a, b)
+    def apply(a: A, b: A)     : B           = ord.gteq(a, b)
     def name                  : String      = "Geq"
     override def adjuncts: List[Adjunct]   = ord :: Nil
   }
@@ -155,19 +155,19 @@ object BinaryOp {
   }
 
   final case class BitAnd[A]()(implicit num: NumInt[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.&(a, b)
+    def apply(a: A, b: A)     : A         = num.and(a, b)
     def name                  : String    = "BitAnd"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
 
   final case class BitOr[A]()(implicit num: NumInt[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.|(a, b)
+    def apply(a: A, b: A)     : A         = num.or(a, b)
     def name                  : String    = "BitOr"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
 
   final case class BitXor[A]()(implicit num: NumInt[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.^(a, b)
+    def apply(a: A, b: A)     : A         = num.xor(a, b)
     def name                  : String    = "BitXor"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
@@ -227,19 +227,19 @@ object BinaryOp {
   }
 
   final case class LeftShift[A]()(implicit num: NumInt[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.<<(a, b)
+    def apply(a: A, b: A)     : A         = num.shiftLeft(a, b)
     def name                  : String    = "LeftShift"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
 
   final case class RightShift[A]()(implicit num: NumInt[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.>>(a, b)
+    def apply(a: A, b: A)     : A         = num.shiftRight(a, b)
     def name                  : String    = "RightShift"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
 
   final case class UnsignedRightShift[A]()(implicit num: NumInt[A]) extends PureOp[A, A] {
-    def apply(a: A, b: A)     : A         = num.>>>(a, b)
+    def apply(a: A, b: A)     : A         = num.unsignedShiftRight(a, b)
     def name                  : String    = "UnsignedRightShift"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
@@ -314,10 +314,10 @@ final case class BinaryOp[A1, A2, A3, A](op: BinaryOp.Op[A3, A], a: Pat[A1], b: 
 
   override def adjuncts: List[Adjunct] = widen :: Nil
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
     BinaryOpImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] = {
     val aT = t(a)
     val bT = t(b)
     if (aT.eq(a) && bT.eq(b)) this else copy(a = aT, b = bT)

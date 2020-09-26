@@ -15,7 +15,7 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.data.SkipList
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.graph.Par
 import de.sciss.patterns.impl.TimeRef
 import de.sciss.serial.{DataInput, DataOutput}
@@ -23,42 +23,42 @@ import de.sciss.serial.{DataInput, DataOutput}
 object ParImpl extends StreamFactory {
   final val typeId = 0x50617220 // "Par "
 
-  def expand[S <: Base[S]](pat: Par)(implicit ctx: Context[S], tx: S#Tx): Stream[S, Event] = {
+  def expand[T <: Exec[T]](pat: Par)(implicit ctx: Context[T], tx: T): Stream[T, Event] = {
     import pat._
     val id          = tx.newId()
-    val inStream    = in.expand[S]
-    val pq          = SkipList.Map.empty[S, TimeRef, Stream[S, Event]]
-    val elem        = tx.newVar[Event](id, Event.empty)
-    val _hasNext    = tx.newBooleanVar(id, false)
-    val valid       = tx.newBooleanVar(id, false)
+    val inStream    = in.expand[T]
+    val pq          = SkipList.Map.empty[T, TimeRef, Stream[T, Event]]
+    val elem        = id.newVar[Event](Event.empty)
+    val _hasNext    = id.newBooleanVar(false)
+    val valid       = id.newBooleanVar(false)
 
-    new StreamImpl[S](id = id, inStream = inStream, pq = pq, elem = elem, _hasNext = _hasNext, valid = valid)
+    new StreamImpl[T](id = id, inStream = inStream, pq = pq, elem = elem, _hasNext = _hasNext, valid = valid)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id          = tx.readId(in, access)
-    val inStream    = Stream.read[S, Pat[Event]](in, access)
-    val pq          = SkipList.Map.read[S, TimeRef, Stream[S, Event]](in, access)
-    val elem        = tx.readVar[Event](id, in)
-    val _hasNext    = tx.readBooleanVar(id, in)
-    val valid       = tx.readBooleanVar(id, in)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id          = tx.readId(in)
+    val inStream    = Stream.read[T, Pat[Event]](in)
+    val pq          = SkipList.Map.read[T, TimeRef, Stream[T, Event]](in)
+    val elem        = id.readVar[Event](in)
+    val _hasNext    = id.readBooleanVar(in)
+    val valid       = id.readBooleanVar(in)
 
-    new StreamImpl[S](id = id, inStream = inStream, pq = pq, elem = elem, _hasNext = _hasNext, valid = valid)
+    new StreamImpl[T](id = id, inStream = inStream, pq = pq, elem = elem, _hasNext = _hasNext, valid = valid)
   }
 
-  private final class StreamImpl[S <: Base[S]](
-                                               id       : S#Id,
-                                               inStream : Stream[S, Pat[Event]],
-                                               pq       : SkipList.Map[S, TimeRef, Stream[S, Event]],
-                                               elem     : S#Var[Event],
-                                               _hasNext : S#Var[Boolean],
-                                               valid    : S#Var[Boolean]
-                                              ) extends Stream[S, Event] {
+  private final class StreamImpl[T <: Exec[T]](
+                                               id       : Ident[T],
+                                               inStream : Stream[T, Pat[Event]],
+                                               pq       : SkipList.Map[T, TimeRef, Stream[T, Event]],
+                                               elem     : Var[T, Event],
+                                               _hasNext : Var[T, Boolean],
+                                               valid    : Var[T, Boolean]
+                                              ) extends Stream[T, Event] {
     protected def typeId: Int = ParImpl.typeId
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Event] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, Event] = {
       val idOut       = txOut.newId()
       val inStreamOut = c(inStream)
       import c.context
@@ -70,9 +70,9 @@ object ParImpl extends StreamFactory {
         }
         sl
       }
-      val elemOut     = txOut.newVar[Event](idOut, elem())
-      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
-      val validOut    = txOut.newBooleanVar(idOut, valid())
+      val elemOut     = idOut.newVar[Event](elem())
+      val hasNextOut  = idOut.newBooleanVar(_hasNext())
+      val validOut    = idOut.newBooleanVar(valid())
 
       new StreamImpl[Out](id = idOut, inStream = inStreamOut, pq = pqOut, elem = elemOut, _hasNext = hasNextOut, valid = validOut)
     }
@@ -86,7 +86,7 @@ object ParImpl extends StreamFactory {
       valid    .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id       .dispose()
       inStream .dispose()
       pq       .dispose()
@@ -95,17 +95,17 @@ object ParImpl extends StreamFactory {
       valid    .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       inStream.reset()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       pq.clear()
       var refCnt = 0
       val _in = inStream
       while (_in.hasNext) {
         val pat = _in.next()
-        val it = pat.expand[S]
+        val it = pat.expand[T]
         if (it.hasNext) {
           pq.put(new TimeRef(refCnt), it)
           refCnt += 1
@@ -115,7 +115,7 @@ object ParImpl extends StreamFactory {
       advance()
     }
 
-    private def advance()(implicit ctx: Context[S], tx: S#Tx): Unit =
+    private def advance()(implicit ctx: Context[T], tx: T): Unit =
       if (pq.nonEmpty) {
         val (ref, it) = pq.head
         pq.remove(ref)
@@ -138,12 +138,12 @@ object ParImpl extends StreamFactory {
         _hasNext() = false
       }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): Event = {
+    def next()(implicit ctx: Context[T], tx: T): Event = {
       if (!hasNext) Stream.exhausted()
       val res = elem()
       advance()

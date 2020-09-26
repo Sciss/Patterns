@@ -14,9 +14,9 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.adjunct.Adjunct.{Num, Widen2}
-import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Adjunct.{Num, Widen2}
+import de.sciss.lucre.{Adjunct, ProductWithAdjuncts}
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.GeomSeqImpl
 
 final case class GeomSeq[A1, A2, A](start: Pat[A1], factor: Pat[A2] /* , length: Pat.Int = Int.MaxValue */)
@@ -25,10 +25,10 @@ final case class GeomSeq[A1, A2, A](start: Pat[A1], factor: Pat[A2] /* , length:
 
   override def adjuncts: List[Adjunct] = widen :: num :: Nil
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
     GeomSeqImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] = {
     val startT = t(start)
     val stepT  = t(factor )
     if (startT.eq(start) && stepT.eq(factor)) this else copy(start = startT, factor = stepT)

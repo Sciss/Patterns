@@ -13,10 +13,10 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.graph.{Constant, LoopWithIndex, PatSeq}
 import de.sciss.patterns.impl.PatElem
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 object Pat {
 //  def Int    (elems: scala.Int*    ): Pat[Int]      = apply[Int    ](elems: _*)
@@ -44,13 +44,13 @@ object Pat {
     Constant(Pat(0)).take(n).foldLeft(in)((y, _) => fun(y))
   }
 
-  def read[A](in: DataInput): Pat[A] = serializer[A].read(in)
+  def read[A](in: DataInput): Pat[A] = format[A].read(in)
 
-  def write[A](pat: Pat[A], out: DataOutput): Unit = serializer[A].write(pat, out)
+  def write[A](pat: Pat[A], out: DataOutput): Unit = format[A].write(pat, out)
 
-  implicit def serializer[A]: ImmutableSerializer[Pat[A]] = anySer.asInstanceOf[ImmutableSerializer[Pat[A]]]
+  implicit def format[A]: ConstFormat[Pat[A]] = anyFmt.asInstanceOf[ConstFormat[Pat[A]]]
 
-  private object anySer extends ImmutableSerializer[Pat[_]] {
+  private object anyFmt extends ConstFormat[Pat[_]] {
     private final val SER_VERSION = 0x5347
 
     def write(v: Pat[_], out: DataOutput): Unit = {
@@ -98,9 +98,9 @@ object Pat {
 trait Pat[+A] extends Product {
 //  Pat.COUNT += 1
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A]
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A]
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A]
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A]
 }
 
 /** A pattern is a pattern element (`Pat`) that caches it's iterator expansion. */

@@ -14,9 +14,9 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
-import de.sciss.lucre.adjunct.Adjunct.Widen2
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Adjunct, ProductWithAdjuncts}
+import de.sciss.lucre.Adjunct.Widen2
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.CatImpl
 
 final case class Cat[A1, A2, A](a: Pat[A1], b: Pat[A2])
@@ -25,10 +25,10 @@ final case class Cat[A1, A2, A](a: Pat[A1], b: Pat[A2])
 
   override def adjuncts: List[Adjunct] = widen :: Nil
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
     CatImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] = {
     val aT = t(a)
     val bT = t(b)
     if (aT.eq(a) && bT.eq(b)) this else copy(a = aT, b = bT)

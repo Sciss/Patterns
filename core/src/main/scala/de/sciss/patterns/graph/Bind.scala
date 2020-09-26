@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.BindImpl
 
 object Bind {
@@ -24,10 +24,10 @@ object Bind {
   def apply(map: Map): Bind = Bind(map.toSeq: _*)
 }
 final case class Bind(entries: (String, Pat[_])*) extends Pattern[Event] {
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Event] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, Event] =
     BindImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Event] = {
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[Event] = {
     val entriesT = entries.map { case (key, value) => key -> t(value) }
     Bind(entriesT: _*)
   }

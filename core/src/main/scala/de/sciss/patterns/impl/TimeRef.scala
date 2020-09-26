@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package impl
 
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 object TimeRef {
   implicit object ord extends Ordering[TimeRef] {
@@ -24,7 +24,7 @@ object TimeRef {
       }
   }
 
-  implicit object ser extends ImmutableSerializer[TimeRef] {
+  implicit object ser extends ConstFormat[TimeRef] {
     def write(ref: TimeRef, out: DataOutput): Unit = {
       out.writeInt    (ref.id   )
       out.writeDouble (ref.time )

@@ -14,42 +14,42 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.graph.Indices
 import de.sciss.serial.{DataInput, DataOutput}
 
 object IndicesImpl extends StreamFactory {
   final val typeId = 0x496E6469 // "Indi"
 
-  def expand[S <: Base[S], A](pat: Indices[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] = {
+  def expand[T <: Exec[T], A](pat: Indices[A])(implicit ctx: Context[T], tx: T): Stream[T, Int] = {
     import pat._
     val id        = tx.newId()
-    val inStream  = in.expand[S]
-    val count     = tx.newIntVar(id, 0)
-    new StreamImpl[S, A](id = id, inStream = inStream, count = count)
+    val inStream  = in.expand[T]
+    val count     = id.newIntVar(0)
+    new StreamImpl[T, A](id = id, inStream = inStream, count = count)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id        = tx.readId(in, access)
-    val inStream  = Stream.read[S, Any](in, access)
-    val count     = tx.readIntVar(id, in)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id        = tx.readId(in)
+    val inStream  = Stream.read[T, Any](in)
+    val count     = id.readIntVar(in)
 
-    new StreamImpl[S, Any](id = id, inStream = inStream, count = count)
+    new StreamImpl[T, Any](id = id, inStream = inStream, count = count)
   }
 
-  private final class StreamImpl[S <: Base[S], A](
-                                                   id      : S#Id,
-                                                   inStream: Stream[S, A],
-                                                   count   : S#Var[Int]
+  private final class StreamImpl[T <: Exec[T], A](
+                                                   id      : Ident[T],
+                                                   inStream: Stream[T, A],
+                                                   count   : Var[T, Int]
   )
-    extends Stream[S, Int] {
+    extends Stream[T, Int] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Int] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, Int] = {
       val idOut       = txOut.newId()
       val inStreamOut = c(inStream)
-      val countOut    = txOut.newIntVar(idOut, count())
+      val countOut    = idOut.newIntVar(count())
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, count = countOut)
     }
 
@@ -61,21 +61,21 @@ object IndicesImpl extends StreamFactory {
       count   .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id      .dispose()
       inStream.dispose()
       count   .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = {
+    def reset()(implicit tx: T): Unit = {
       inStream.reset()
       count() = 0
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean =
       inStream.hasNext
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): Int = {
+    def next()(implicit ctx: Context[T], tx: T): Int = {
       val res = count()
       inStream.next()
       count() = res + 1

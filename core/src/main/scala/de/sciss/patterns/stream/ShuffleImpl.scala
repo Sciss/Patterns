@@ -14,7 +14,7 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.{Base, TxnRandom}
+import de.sciss.lucre.{Exec, Ident, RandomObj, Var}
 import de.sciss.patterns.graph.Shuffle
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
@@ -24,54 +24,54 @@ import scala.collection.immutable.{IndexedSeq => Vec}
 object ShuffleImpl extends StreamFactory {
   final val typeId = 0x53687566 // "Shuf"
 
-  def expand[S <: Base[S], A](pat: Shuffle[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], A](pat: Shuffle[A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
     val id        = tx.newId()
     val inStream  = in.expand(ctx, tx)
-    val count     = tx.newIntVar(id, 0)
-    val shuffled  = tx.newVar[Vec[A]](id, Vector.empty)(PatElem.vecSerializer)
-    val _hasNext  = tx.newBooleanVar(id, false)
-    val valid     = tx.newBooleanVar(id, false)
+    val count     = id.newIntVar(0)
+    val shuffled  = id.newVar[Vec[A]](Vector.empty)(tx, PatElem.vecFormat)
+    val _hasNext  = id.newBooleanVar(false)
+    val valid     = id.newBooleanVar(false)
     val r         = ctx.mkRandom(ref)
     
-    new StreamImpl[S, A](id = id, inStream = inStream, count = count, shuffled = shuffled, 
+    new StreamImpl[T, A](id = id, inStream = inStream, count = count, shuffled = shuffled,
       _hasNext = _hasNext, valid = valid)(r)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id        = tx.readId(in, access)
-    val inStream  = Stream.read[S, Any](in, access)
-    val count     = tx.readIntVar(id, in)
-    val shuffled  = tx.readVar[Vec[Any]](id, in)(PatElem.vecSerializer)
-    val _hasNext  = tx.readBooleanVar(id, in)
-    val valid     = tx.readBooleanVar(id, in)
-    val r         = TxnRandom.read[S](in, access)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id        = tx.readId(in)
+    val inStream  = Stream.read[T, Any](in)
+    val count     = id.readIntVar(in)
+    val shuffled  = id.readVar[Vec[Any]](in)(PatElem.vecFormat)
+    val _hasNext  = id.readBooleanVar(in)
+    val valid     = id.readBooleanVar(in)
+    val r         = RandomObj.read[T](in)
 
-    new StreamImpl[S, Any](id = id, inStream = inStream, count = count, shuffled = shuffled,
+    new StreamImpl[T, Any](id = id, inStream = inStream, count = count, shuffled = shuffled,
       _hasNext = _hasNext, valid = valid)(r)
   }
 
-  private final class StreamImpl[S <: Base[S], A](
-                                                   id      : S#Id,
-                                                   inStream: Stream[S, A],
-                                                   count   : S#Var[Int],
-                                                   shuffled: S#Var[Vec[A]],
-                                                   _hasNext: S#Var[Boolean],
-                                                   valid   : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], A](
+                                                   id      : Ident[T],
+                                                   inStream: Stream[T, A],
+                                                   count   : Var[T, Int],
+                                                   shuffled: Var[T, Vec[A]],
+                                                   _hasNext: Var[T, Boolean],
+                                                   valid   : Var[T, Boolean]
   ) (
-    implicit r: TxnRandom[S]
+    implicit r: RandomObj[T]
   )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val idOut       = txOut.newId()
       val inStreamOut = c(inStream)
-      val countOut    = txOut.newIntVar(idOut, count())
-      val shuffledOut = txOut.newVar[Vec[A]](idOut, shuffled())(PatElem.vecSerializer)
-      val hasNextOut  = txOut.newBooleanVar(idOut, _hasNext())
-      val validOut    = txOut.newBooleanVar(idOut, valid())
+      val countOut    = idOut.newIntVar(count())
+      val shuffledOut = idOut.newVar[Vec[A]](shuffled())(txOut, PatElem.vecFormat)
+      val hasNextOut  = idOut.newBooleanVar(_hasNext())
+      val validOut    = idOut.newBooleanVar(valid())
       val rOut        = r.copy[Out]()
 
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, count = countOut, shuffled = shuffledOut,
@@ -90,7 +90,7 @@ object ShuffleImpl extends StreamFactory {
       r       .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id      .dispose()
       inStream.dispose()
       count   .dispose()
@@ -99,11 +99,11 @@ object ShuffleImpl extends StreamFactory {
       valid   .dispose()
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       inStream.reset()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       count()   = 0
       var rem   = inStream.toVector
       val b     = Vector.newBuilder[A]
@@ -120,12 +120,12 @@ object ShuffleImpl extends StreamFactory {
       _hasNext()  = vec.nonEmpty
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       _hasNext()
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next()(implicit ctx: Context[T], tx: T): A = {
       if (!hasNext) Stream.exhausted()
       val vec = shuffled()
       val c   = count()

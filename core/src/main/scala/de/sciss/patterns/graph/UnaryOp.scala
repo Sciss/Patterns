@@ -14,25 +14,25 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.adjunct.Adjunct.{Num, NumBool, NumDouble, NumFrac, NumInt, ToNum, Widen, WidenToDouble}
-import de.sciss.lucre.adjunct.{Adjunct, ProductWithAdjuncts}
-import de.sciss.lucre.stm.{Base, TxnRandom}
+import de.sciss.lucre.Adjunct.{Num, NumBool, NumDouble, NumFrac, NumInt, ToNum, Widen, WidenToDouble}
+import de.sciss.lucre.{Adjunct, ProductWithAdjuncts}
+import de.sciss.lucre.{Exec, RandomObj}
 import de.sciss.patterns.stream.UnaryOpImpl
 import de.sciss.serial.{DataInput, DataOutput}
 
 object UnaryOp {
   sealed abstract class Op[A1, A2] extends ProductWithAdjuncts {
-    type State[S <: Base[S]]
+    type State[T <: Exec[T]]
     
-    def readState   [S <: Base[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): State[S]
-    def writeState  [S <: Base[S]](s: State[S], out: DataOutput): Unit
-    def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit
+    def readState   [T <: Exec[T]](in: DataInput)(implicit tx: T): State[T]
+    def writeState  [T <: Exec[T]](s: State[T], out: DataOutput): Unit
+    def disposeState[T <: Exec[T]](s: State[T])(implicit tx: T): Unit
 
-    def copyState[S <: Base[S], Out <: Base[Out]](s: State[S])(implicit tx: S#Tx, txOut: Out#Tx): State[Out]
+    def copyState[T <: Exec[T], Out <: Exec[Out]](s: State[T])(implicit tx: T, txOut: Out): State[Out]
 
-    def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S]
+    def prepare[T <: Exec[T]](ref: AnyRef)(implicit ctx: Context[T], tx: T): State[T]
 
-    def next[S <: Base[S]](a: A1)(implicit state: State[S], tx: S#Tx): A2
+    def next[T <: Exec[T]](a: A1)(implicit state: State[T], tx: T): A2
 
     override final def productPrefix = s"UnaryOp$$$name"
 
@@ -42,37 +42,37 @@ object UnaryOp {
   }
 
   abstract class PureOp[A1, A2] extends Op[A1, A2] {
-    final type State[S <: Base[S]] = Unit
+    final type State[T <: Exec[T]] = Unit
 
-    final def readState   [S <: Base[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): State[S] = ()
-    final def writeState  [S <: Base[S]](s: State[S], out: DataOutput): Unit = ()
-    final def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit = ()
+    final def readState   [T <: Exec[T]](in: DataInput)(implicit tx: T): State[T] = ()
+    final def writeState  [T <: Exec[T]](s: State[T], out: DataOutput): Unit = ()
+    final def disposeState[T <: Exec[T]](s: State[T])(implicit tx: T): Unit = ()
 
-    final def copyState[S <: Base[S], Out <: Base[Out]](s: State[S])(implicit tx: S#Tx, txOut: Out#Tx): Unit = ()
+    final def copyState[T <: Exec[T], Out <: Exec[Out]](s: State[T])(implicit tx: T, txOut: Out): Unit = ()
 
-    final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S] = ()
+    final def prepare[T <: Exec[T]](ref: AnyRef)(implicit ctx: Context[T], tx: T): State[T] = ()
 
-    def next[S <: Base[S]](a: A1)(implicit state: State[S], tx: S#Tx): A2 = apply(a)
+    def next[T <: Exec[T]](a: A1)(implicit state: State[T], tx: T): A2 = apply(a)
 
     def apply(a: A1): A2
   }
 
   abstract class RandomOp[A1, A2] extends Op[A1, A2] {
-    final type State[S <: Base[S]] = TxnRandom[S]
+    final type State[T <: Exec[T]] = RandomObj[T]
 
-    final def readState[S <: Base[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): State[S] =
-      TxnRandom.read(in, access)
+    final def readState[T <: Exec[T]](in: DataInput)(implicit tx: T): State[T] =
+      RandomObj.read(in)
     
-    final def writeState[S <: Base[S]](s: State[S], out: DataOutput): Unit =
+    final def writeState[T <: Exec[T]](s: State[T], out: DataOutput): Unit =
       s.write(out)
 
-    final def disposeState[S <: Base[S]](s: State[S])(implicit tx: S#Tx): Unit =
+    final def disposeState[T <: Exec[T]](s: State[T])(implicit tx: T): Unit =
       s.dispose()
 
-    def copyState[S <: Base[S], Out <: Base[Out]](s: TxnRandom[S])(implicit tx: S#Tx, txOut: Out#Tx): TxnRandom[Out] =
+    def copyState[T <: Exec[T], Out <: Exec[Out]](s: RandomObj[T])(implicit tx: T, txOut: Out): RandomObj[Out] =
       s.copy[Out]()
 
-    final def prepare[S <: Base[S]](ref: AnyRef)(implicit ctx: Context[S], tx: S#Tx): State[S] = ctx.mkRandom(ref)
+    final def prepare[T <: Exec[T]](ref: AnyRef)(implicit ctx: Context[T], tx: T): State[T] = ctx.mkRandom(ref)
   }
 
   // ---- analogous to UGens ----
@@ -84,13 +84,13 @@ object UnaryOp {
   }
 
   final case class Not[A]()(implicit num: NumBool[A]) extends PureOp[A, A] {
-    def apply(a: A)           : A         = num.unary_!(a)
+    def apply(a: A)           : A         = num.negate(a)
     def name                  : String    = "Not"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
 
   final case class BitNot[A]()(implicit num: NumInt[A]) extends PureOp[A, A] {
-    def apply(a: A)           : A         = num.unary_~(a)
+    def apply(a: A)           : A         = num.not(a)
     def name                  : String    = "BitNot"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
@@ -288,13 +288,13 @@ object UnaryOp {
   }
 
   final case class Rand[A]()(implicit num: Num[A]) extends RandomOp[A, A] {
-    def next[S <: Base[S]](a: A)(implicit state: TxnRandom[S], tx: S#Tx): A = num.rand(a)
+    def next[T <: Exec[T]](a: A)(implicit state: RandomObj[T], tx: T): A = num.rand(a)
     def name                  : String    = "Rand"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
 
   final case class Rand2[A]()(implicit num: Num[A]) extends RandomOp[A, A] {
-    def next[S <: Base[S]](a: A)(implicit state: TxnRandom[S], tx: S#Tx): A = num.rand2(a)
+    def next[T <: Exec[T]](a: A)(implicit state: RandomObj[T], tx: T): A = num.rand2(a)
     def name                  : String    = "Rand2"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
@@ -308,7 +308,7 @@ object UnaryOp {
   // Softclip
 
   final case class Coin[A, B]()(implicit num: NumDouble[A] { type Boolean = B }) extends RandomOp[A, B] {
-    def next[S <: Base[S]](a: A)(implicit state: TxnRandom[S], tx: S#Tx): B = num.coin(a)
+    def next[T <: Exec[T]](a: A)(implicit state: RandomObj[T], tx: T): B = num.coin(a)
     def name                  : String    = "Coin"
     override def adjuncts: List[Adjunct] = num :: Nil
   }
@@ -325,10 +325,10 @@ object UnaryOp {
 final case class UnaryOp[A1, A](op: UnaryOp.Op[A1, A], a: Pat[A1])
   extends Pattern[A] { pat =>
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
     UnaryOpImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] = {
     val aT = t(a)
     if (aT.eq(a)) this else copy(a = aT)
   }

@@ -1,8 +1,7 @@
 package de.sciss.patterns.lucre.tests
 
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.Cursor
-import de.sciss.lucre.synth.Sys
+import de.sciss.lucre.Cursor
+import de.sciss.lucre.synth.Txn
 import de.sciss.patterns.Graph
 import de.sciss.patterns.lucre.Pattern
 import de.sciss.span.Span
@@ -12,13 +11,13 @@ import de.sciss.synth.proc.AuralContext
 object PatternOnTimelineTest extends AuralTestLike.Factory {
   def main(args: Array[String]): Unit = init(args)
 
-  def run[S <: Sys[S]](name: String)(implicit cursor: Cursor[S]): Unit =
-    new PatternOnTimelineTest[S](name)
+  def run[T <: Txn[T]](name: String)(implicit cursor: Cursor[T]): Unit =
+    new PatternOnTimelineTest[T](name)
 }
-class PatternOnTimelineTest[S <: Sys[S]](name: String)(implicit cursor: stm.Cursor[S]) extends AuralTestLike[S] {
-  protected def run()(implicit context: AuralContext[S]): Unit = test1()
+class PatternOnTimelineTest[T <: Txn[T]](name: String)(implicit cursor: Cursor[T]) extends AuralTestLike[T] {
+  protected def run()(implicit context: AuralContext[T]): Unit = test1()
 
-  def test1()(implicit context: AuralContext[S]): Unit = {
+  def test1()(implicit context: AuralContext[T]): Unit = {
     println("----pat on tl----")
     println(
       """
@@ -50,7 +49,7 @@ class PatternOnTimelineTest[S <: Sys[S]](name: String)(implicit cursor: stm.Curs
         Out.ar(0, osc)
       }
 
-      val pat = Pattern.newConst[S](patVal)
+      val pat = Pattern.newConst[T](patVal)
       //      pat.graph() = patVal
       pat.attr.put("play", p)
 

@@ -1,7 +1,7 @@
 package de.sciss.patterns.lucre
 
-import de.sciss.lucre.adjunct.Adjunct.WidenToDouble
-import de.sciss.lucre.stm.Plain
+import de.sciss.lucre.Adjunct.WidenToDouble
+import de.sciss.lucre.Plain
 import de.sciss.patterns
 import de.sciss.patterns.{Stream => PStream, Context => _, _}
 import org.scalatest.matchers.should.Matchers
@@ -28,16 +28,16 @@ class StreamSerializationSpec extends DurableSpec with Matchers {
       c.expand(p).toIterator.take(10).toList
     }
 
-    implicit val c: patterns.Context[S] = sys.step { implicit tx =>
+    implicit val c: patterns.Context[T] = sys.step { implicit tx =>
 //      val pat = Pattern.empty[S]
-      Context[S] // (pat)
+      Context[T] // (pat)
     }
 
     val stH = sys.step { implicit tx =>
       c.setRandomSeed(seed)
-      val st: PStream[S, A] = c.expand(p)
+      val st: PStream[T, A] = c.expand(p)
       val id = tx.newId()
-      tx.newVar(id, st)
+      id.newVar(st)
     }
 
     val trans = List(3, 3, 3, 1).flatMap { n =>

@@ -14,7 +14,7 @@
 package de.sciss.patterns.lucre
 package impl
 
-import de.sciss.lucre.synth.Sys
+import de.sciss.lucre.synth.Txn
 import de.sciss.patterns.Event
 import de.sciss.synth.proc.impl.AuralProcImpl
 import de.sciss.synth.proc.{AuralContext, Runner}
@@ -24,8 +24,8 @@ import de.sciss.synth.proc.{AuralContext, Runner}
   * others (audio-cues) directly from an event value, typically coming from a pattern.
   */
 @deprecated("Should use standard AuralProc and runWith", since = "0.19.1")
-final class AuralProcEvtImpl[S <: Sys[S]](evt: Event)(implicit context: AuralContext[S])
-  extends AuralProcImpl.Impl[S](Runner.emptyAttr /* XXX TODO: evt.map*/ ) {
+final class AuralProcEvtImpl[T <: Txn[T]](evt: Event)(implicit context: AuralContext[T])
+  extends AuralProcImpl.Impl[T](Runner.emptyAttr /* XXX TODO: evt.map*/ ) {
 
   throw new IllegalStateException("No longer supported")
 }

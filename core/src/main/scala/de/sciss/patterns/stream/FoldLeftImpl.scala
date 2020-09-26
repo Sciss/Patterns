@@ -14,57 +14,57 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.patterns.graph.{FoldLeft, It}
 import de.sciss.serial.{DataInput, DataOutput}
 
 object FoldLeftImpl extends StreamFactory {
   final val typeId = 0x466F6C4C // "FolL"
 
-  def expand[S <: Base[S], B, A](pat: FoldLeft[B, A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], B, A](pat: FoldLeft[B, A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
     val id          = tx.newId()
-    val outerStream = outer.expand[S]
-    val result      = tx.newVar[Stream[S, A]](id, null)
-    val valid       = tx.newBooleanVar(id, false)
+    val outerStream = outer.expand[T]
+    val result      = id.newVar[Stream[T, A]](null)
+    val valid       = id.newBooleanVar(false)
 
-    new StreamImpl[S, B, A](id = id, outerStream = outerStream, z = z,
+    new StreamImpl[T, B, A](id = id, outerStream = outerStream, z = z,
       inTokenId = itIn.token, carryTokenId = itCarry.token, inner = inner, result = result, valid = valid)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id          = tx.readId(in, access)
-    val outerStream = Stream.read[S, Pat[Any]](in, access)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id          = tx.readId(in)
+    val outerStream = Stream.read[T, Pat[Any]](in)
     val z           = Pat.read[Any](in)
     val inTokenId   = in.readInt()
     val carryTokenId= in.readInt()
     val inner       = Pat.read[Any](in)
-    val result      = tx.readVar[Stream[S, Any]](id, in)
-    val valid       = tx.readBooleanVar(id, in)
+    val result      = id.readVar[Stream[T, Any]](in)
+    val valid       = id.readBooleanVar(in)
 
-    new StreamImpl[S, Any, Any](id = id, outerStream = outerStream, z = z,
+    new StreamImpl[T, Any, Any](id = id, outerStream = outerStream, z = z,
       inTokenId = inTokenId, carryTokenId = carryTokenId, inner = inner, result = result, valid = valid)
   }
 
-  private final class StreamImpl[S <: Base[S], B, A](
-                                                    id          : S#Id,
-                                                    outerStream : Stream[S, Pat[B]],
-                                                    z           : Pat[A],
-                                                    inTokenId   : Int,
-                                                    carryTokenId: Int,
-                                                    inner       : Pat[A],
-                                                    result      : S#Var[Stream[S, A]],
-                                                    valid       : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], B, A](
+                                                      id          : Ident[T],
+                                                      outerStream : Stream[T, Pat[B]],
+                                                      z           : Pat[A],
+                                                      inTokenId   : Int,
+                                                      carryTokenId: Int,
+                                                      inner       : Pat[A],
+                                                      result      : Var[T, Stream[T, A]],
+                                                      valid       : Var[T, Boolean]
                                                     )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val idOut          = txOut.newId()
       val outerStreamOut = c(outerStream)
       val resultOut      = c.copyVar(idOut, result)
-      val validOut       = txOut.newBooleanVar(idOut, valid())
+      val validOut       = idOut.newBooleanVar(valid())
 
       new StreamImpl[Out, B, A](id = idOut, outerStream = outerStreamOut, z = z,
         inTokenId = inTokenId, carryTokenId = carryTokenId, inner = inner, result = resultOut, valid = validOut)
@@ -75,7 +75,7 @@ object FoldLeftImpl extends StreamFactory {
     protected def writeData(out: DataOutput): Unit = {
       id          .write(out)
       outerStream .write(out)
-      val patS = Pat.serializer[A]
+      val patS = Pat.format[A]
       patS.write(z, out)
       out.writeInt(inTokenId   )
       out.writeInt(carryTokenId)
@@ -84,14 +84,14 @@ object FoldLeftImpl extends StreamFactory {
       valid       .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id          .dispose()
       outerStream .dispose()
       result      .dispose()
       valid       .dispose()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit =
+    private def validate()(implicit ctx: Context[T], tx: T): Unit =
       if (!valid()) {
         valid()      = true
         logStream("FoldLeft.iterator.validate()")
@@ -107,22 +107,22 @@ object FoldLeftImpl extends StreamFactory {
           t(inner)
         }
 
-        val res   = innerRewrite.expand[S]
+        val res   = innerRewrite.expand[T]
         result() = res
       }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid()) {
+    def reset()(implicit tx: T): Unit = if (valid()) {
       valid() = false
       outerStream.reset()
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       val s = result()
       s.hasNext
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next()(implicit ctx: Context[T], tx: T): A = {
       if (!hasNext) Stream.exhausted()
       val s = result()
       val res = s.next()

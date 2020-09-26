@@ -14,38 +14,38 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.graph.Format
-import de.sciss.serial.{DataInput, DataOutput, Serializer, Writer}
+import de.sciss.serial.{DataInput, DataOutput, TFormat, Writer}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
 object FormatImpl extends StreamFactory {
   final val typeId = 0x466F726D // "Form"
 
-  def expand[S <: Base[S]](pat: Format)(implicit ctx: Context[S], tx: S#Tx): Stream[S, String] = {
+  def expand[T <: Exec[T]](pat: Format)(implicit ctx: Context[T], tx: T): Stream[T, String] = {
     import pat._
-    val sStream     = s.expand[S]
-    val argStreams  = args.iterator.map(_.expand[S]).toVector
-    new StreamImpl[S](sStream = sStream, argStreams = argStreams)
+    val sStream     = s.expand[T]
+    val argStreams  = args.iterator.map(_.expand[T]).toVector
+    new StreamImpl[T](sStream = sStream, argStreams = argStreams)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val sStream     = Stream.read[S, String](in, access)
-    val argStreams  = Serializer.indexedSeq[S#Tx, S#Acc, Stream[S, Any]].read(in, access)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val sStream     = Stream.read[T, String](in)
+    val argStreams  = TFormat.vec[T, Stream[T, Any]].readT(in)
 
-    new StreamImpl[S](sStream = sStream, argStreams = argStreams)
+    new StreamImpl[T](sStream = sStream, argStreams = argStreams)
   }
 
-  private final class StreamImpl[S <: Base[S]](
-                                                sStream   : Stream[S, String],
-                                                argStreams: Vec[Stream[S, Any]]
+  private final class StreamImpl[T <: Exec[T]](
+                                                sStream   : Stream[T, String],
+                                                argStreams: Vec[Stream[T, Any]]
   )
-    extends Stream[S, String] {
+    extends Stream[T, String] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, String] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, String] = {
       val sStreamOut     = c(sStream)
       val argStreamsOut  = argStreams.map(c(_))
       new StreamImpl[Out](sStream = sStreamOut, argStreams = argStreamsOut)
@@ -55,23 +55,23 @@ object FormatImpl extends StreamFactory {
 
     protected def writeData(out: DataOutput): Unit = {
       sStream.write(out)
-      Writer.indexedSeq[Stream[S, Any]].write(argStreams, out)
+      Writer.indexedSeq[Stream[T, Any]].write(argStreams, out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       sStream.dispose()
       argStreams.foreach(_.dispose())
     }
 
-    def reset()(implicit tx: S#Tx): Unit = {
+    def reset()(implicit tx: T): Unit = {
       sStream.reset()
       argStreams.foreach(_.reset())
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean =
       sStream.hasNext && argStreams.forall(_.hasNext)
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): String = {
+    def next()(implicit ctx: Context[T], tx: T): String = {
       val sVal      = sStream.next()
       val argValues = argStreams.map(_.next())
       sVal.format(argValues: _*)

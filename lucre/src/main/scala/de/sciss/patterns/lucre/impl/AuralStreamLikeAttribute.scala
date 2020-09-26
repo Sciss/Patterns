@@ -13,15 +13,14 @@
 
 package de.sciss.patterns.lucre.impl
 
+import de.sciss.lucre.Txn.peer
 import de.sciss.lucre.data.SkipList
-import de.sciss.lucre.event.impl.ObservableImpl
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.TxnLike.peer
-import de.sciss.lucre.stm.{DummySerializerFactory, Obj, TxnLike}
-import de.sciss.lucre.synth.Sys
+import de.sciss.lucre.impl.{DummyTFormat, ObservableImpl}
+import de.sciss.lucre.synth.Txn
+import de.sciss.lucre.{Obj, Source, Txn => LTxn}
 import de.sciss.patterns.Event
 import de.sciss.patterns.lucre.impl.AuralStreamLikeAttribute.ViewImpl
-import de.sciss.serial.Serializer
+import de.sciss.serial.TFormat
 import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.proc.Runner.{State, Stopped}
 import de.sciss.synth.proc.impl.AuralScheduledBase
@@ -31,17 +30,15 @@ import scala.annotation.tailrec
 import scala.concurrent.stm.Ref
 
 object AuralStreamLikeAttribute {
-  def mkTree[S <: Sys[S], I1 <: stm.Sys[I1]]()(implicit tx: S#Tx, system: S { type I = I1 }): SkipList.Map[I1, Long, View[S]] = {
-    implicit val iSys: S#Tx => I1#Tx = system.inMemoryTx
-    implicit val itx: I1#Tx = iSys(tx)
-    implicit val dummyKeySer: Serializer[I1#Tx, I1#Acc, View[S]] =
-      DummySerializerFactory[I1].dummySerializer
+  def mkTree[T <: Txn[T], I <: LTxn[I]]()(implicit tx: T, iSys: T => I): SkipList.Map[I, Long, View[T]] = {
+    implicit val itx: I = iSys(tx)
+    implicit val dummyKeyFmt: TFormat[I, View[T]] = DummyTFormat.apply[I, View[T]]
 
-    val tree = SkipList.Map.empty[I1, Long, View[S]]
+    val tree = SkipList.Map.empty[I, Long, View[T]]
     tree
   }
 
-  trait View[S <: Sys[S]] extends ObjViewBase[S, AuralAttribute.Target[S]] {
+  trait View[T <: Txn[T]] extends ObjViewBase[T, AuralAttribute.Target[T]] {
     def span  : Span
     def value : AuralAttribute.Scalar
     def start : Long = span.start
@@ -70,59 +67,59 @@ object AuralStreamLikeAttribute {
     case _          => None
   }
 
-  private final class ViewImpl[S <: Sys[S], R <: Obj[S]](aa: AuralAttribute[S] { type Repr = R },
+  private final class ViewImpl[T <: Txn[T], R <: Obj[T]](aa: AuralAttribute[T] { type Repr = R },
                                                          val value: AuralAttribute.Scalar, val span: Span, val tpe: Obj.Type)
-    extends View[S] with ObservableImpl[S, Runner.State] {
+    extends View[T] with ObservableImpl[T, Runner.State] {
 
     private[this] final val stateRef = Ref[State](Stopped)
 
     type Repr = R
 
-    def obj(implicit tx: S#Tx): Repr = aa.obj
+    def obj(implicit tx: T): Repr = aa.obj
 
     override def toString = s"AuralStreamLikeAttribute.View($value, $span)"
 
-    def prepare(timeRef: TimeRef.Option)(implicit tx: S#Tx): Unit =
+    def prepare(timeRef: TimeRef.Option)(implicit tx: T): Unit =
       state = Runner.Prepared
 
-    def run(timeRef: TimeRef.Option, target: AuralAttribute.Target[S])(implicit tx: S#Tx): Unit = {
+    def run(timeRef: TimeRef.Option, target: AuralAttribute.Target[T])(implicit tx: T): Unit = {
       target.put(aa, value)
       state = Runner.Running
     }
 
-    def stop()(implicit tx: S#Tx): Unit =
+    def stop()(implicit tx: T): Unit =
       state = Runner.Stopped
 
-    def dispose()(implicit tx: S#Tx): Unit = ()
+    def dispose()(implicit tx: T): Unit = ()
 
-    def state(implicit tx: S#Tx): State = stateRef()
+    def state(implicit tx: T): State = stateRef()
 
-    protected def state_=(value: State)(implicit tx: S#Tx): Unit = {
+    protected def state_=(value: State)(implicit tx: T): Unit = {
       val prev = stateRef.swap(value)
       if (value != prev) fire(value)
     }
   }
 }
-abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj[S]](val key: String,
-                                                                  objH: stm.Source[S#Tx, R],
-                                                                  observer: AuralAttribute.Observer[S],
-                                                                  tree: SkipList.Map[I1, Long, AuralStreamLikeAttribute.View[S]])
-                                                                 (implicit protected val context: AuralContext[S],
-                                                                  protected val iSys: S#Tx => I1#Tx)
-  extends AuralScheduledBase[S, AuralAttribute.Target[S], AuralStreamLikeAttribute.View[S]]
-    with AuralAttribute[S] {
+abstract class AuralStreamLikeAttribute[T <: Txn[T], I1 <: LTxn[I1], R <: Obj[T]](val key: String,
+                                                                  objH: Source[T, R],
+                                                                  observer: AuralAttribute.Observer[T],
+                                                                  tree: SkipList.Map[I1, Long, AuralStreamLikeAttribute.View[T]])
+                                                                 (implicit protected val context: AuralContext[T],
+                                                                  protected val iSys: T => I1)
+  extends AuralScheduledBase[T, AuralAttribute.Target[T], AuralStreamLikeAttribute.View[T]]
+    with AuralAttribute[T] {
   attr =>
 
-  import TxnLike.peer
+  import LTxn.peer
 
   type Repr = R
 
-  final def obj(implicit tx: S#Tx): Repr = objH()
+  final def obj(implicit tx: T): Repr = objH()
 
   type ViewId     = Unit
-  type Elem       = AuralStreamLikeAttribute.View[S]
-  type ElemHandle = Elem // AuralGraphemeBase.ElemHandle[S, Elem]
-  type Target     = AuralAttribute.Target[S]
+  type Elem       = AuralStreamLikeAttribute.View[T]
+  type ElemHandle = Elem // AuralGraphemeBase.ElemHandle[T, Elem]
+  type Target     = AuralAttribute.Target[T]
   type Model      = Elem // AuralAttribute.Scalar
 
   private[this] val prefChansNumRef = Ref(-2)   // -2 = cache invalid. across contents of `prefChansElemRef`
@@ -131,10 +128,10 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
 
   protected type St
 
-  private[this] val streamRef = Ref.make[St]
+  private[this] val streamRef = Ref.make[St]()
 
-  private def nextElemFromStream(time: Long)(implicit tx: S#Tx): Option[Elem] = {
-    implicit val itx: I1#Tx = iSys(tx)
+  private def nextElemFromStream(time: Long)(implicit tx: T): Option[Elem] = {
+    implicit val itx: I1 = iSys(tx)
     val stream = streamRef()(tx.peer)
     if (stream == null) return None
 
@@ -154,7 +151,7 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
               } else {
                 val numFrames = (TimeRef.SampleRate * delta).toLong
                 val span      = Span(time, time + numFrames)
-                val view      = new ViewImpl[S, Repr](attr, v, span, tpe)
+                val view      = new ViewImpl[T, Repr](attr, v, span, tpe)
                 tree.put(time, view)
                 // println(s"-> $view")
                 Some(view)
@@ -173,17 +170,17 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
     loop(0)
   }
 
-  protected def makeStream(r: Repr)(implicit tx: S#Tx): St
+  protected def makeStream(r: Repr)(implicit tx: T): St
 
-  protected def disposeStream(st: St)(implicit tx: S#Tx): Unit
+  protected def disposeStream(st: St)(implicit tx: T): Unit
 
-  protected def streamHasNext(st: St)(implicit tx: S#Tx): Boolean
+  protected def streamHasNext(st: St)(implicit tx: T): Boolean
 
-  protected def streamNext(st: St)(implicit tx: S#Tx): Any
+  protected def streamNext(st: St)(implicit tx: T): Any
 
-  protected final def setRepr(r: Repr)(implicit tx: S#Tx): Boolean = {
+  protected final def setRepr(r: Repr)(implicit tx: T): Boolean = {
     // println("setGraph")
-    implicit val itx: I1#Tx = iSys(tx)
+    implicit val itx: I1 = iSys(tx)
     val _pr = playingRef()(tx.peer)
     _pr.foreach(elemRemoved(_, elemPlays = true))
     //    viewTree.iterator(iSys(tx)).toList.foreach { case (_, entry) =>
@@ -195,7 +192,7 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
     tree.clear()
 
     //    import context.universe.cursor
-//    implicit val _ctx: Ctx = patterns.lucre.Context.dual[S](objH()) // (system, system, itx) // InMemory()
+//    implicit val _ctx: Ctx = patterns.lucre.Context.dual[T](objH()) // (system, system, itx) // InMemory()
 //    patContext.update(_ctx)(tx.peer)
     val stream: St = makeStream(r) // _ctx.expandDual(g) // g.expand[I1]
     streamRef.update(stream)(tx.peer)
@@ -214,10 +211,10 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
     !isEmpty
   }
 
-  final def preferredNumChannels(implicit tx: S#Tx): Int =
+  final def preferredNumChannels(implicit tx: T): Int =
     prefChansNumRef()
 
-//  def init(pat: Repr)(implicit tx: S#Tx): this.type = {
+//  def init(pat: Repr)(implicit tx: T): this.type = {
 //    val graph0 = pat.value
 //    setPattern(graph0)
 //    patObserver = pat.changed.react { implicit tx => upd =>
@@ -246,7 +243,7 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
     */
   @tailrec
   protected final def processPrepare(spanP: Span, timeRef: TimeRef, initial: Boolean)
-                                    (implicit tx: S#Tx): Iterator[PrepareResult] = {
+                                    (implicit tx: T): Iterator[PrepareResult] = {
     val start0 = math.max(0L, spanP.start)
     tree.floor(start0)(iSys(tx)) match {
       case Some((_, view0)) =>
@@ -271,7 +268,7 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
             }
 
           def next(): (Unit, SpanLike, Elem) = {
-            if (!_hasNext) Iterator.empty.next
+            if (!_hasNext) Iterator.empty.next()
             val res = _next
             advance()
             ((), res.span, res)
@@ -288,7 +285,7 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
     }
   }
 
-  protected final def viewEventAfter(offset: Long)(implicit tx: S#Tx): Long =
+  protected final def viewEventAfter(offset: Long)(implicit tx: T): Long =
     tree.ceil(offset + 1)(iSys(tx)).fold(Long.MaxValue)(_._1)
 
   /** Report the next interesting frame greater than the given frame for which
@@ -296,7 +293,7 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
     * If no such event exists, the method must return `Long.MaxValue`.
     */
   @tailrec
-  protected final def modelEventAfter(offset: Long)(implicit tx: S#Tx): Long = {
+  protected final def modelEventAfter(offset: Long)(implicit tx: T): Long = {
     val offsetC = math.max(-1L, offset)
     tree.floor(offsetC + 1)(iSys(tx)) match {
       case Some((time0, pred0)) =>
@@ -327,20 +324,20 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
     }
   }
 
-  protected final def processPlay(timeRef: TimeRef, target: Target)(implicit tx: S#Tx): Unit = {
-    implicit val itx: I1#Tx = iSys(tx)
+  protected final def processPlay(timeRef: TimeRef, target: Target)(implicit tx: T): Unit = {
+    implicit val itx: I1 = iSys(tx)
     tree.floor(timeRef.offset).foreach { case (_, entry) =>
       playEntry(entry, timeRef = timeRef, target = target)
     }
   }
 
   private def playEntry(entry: Elem, timeRef: TimeRef, target: Target)
-                       (implicit tx: S#Tx): Unit = {
+                       (implicit tx: T): Unit = {
     val childTime = timeRef.child(entry.span)
     playView(entry, childTime, target)
   }
 
-  protected final def processEvent(play: IPlaying, timeRef: TimeRef)(implicit tx: S#Tx): Unit = {
+  protected final def processEvent(play: IPlaying, timeRef: TimeRef)(implicit tx: T): Unit = {
     val start = timeRef.offset
     val entry = tree.get(start)(iSys(tx))
       .getOrElse(throw new IllegalStateException(s"No element at event ${timeRef.offset}"))
@@ -349,18 +346,18 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
 
   protected final def elemFromHandle(h: ElemHandle): Elem = h // .view
 
-  protected final def mkView(vid: Unit, span: SpanLike, obj: Model)(implicit tx: S#Tx): ElemHandle = obj
+  protected final def mkView(vid: Unit, span: SpanLike, obj: Model)(implicit tx: T): ElemHandle = obj
 
   protected final def checkReschedule(h: ElemHandle, currentOffset: Long, oldTarget: Long, elemPlays: Boolean)
-                               (implicit tx: S#Tx): Boolean =
+                               (implicit tx: T): Boolean =
     !elemPlays && {
       // reschedule if the span has a start and that start is greater than the current frame,
       // and elem.start == oldTarget
       h.start > currentOffset && h.start == oldTarget
     }
 
-  protected final def playView(h: ElemHandle, timeRef: TimeRef.Option, target: AuralAttribute.Target[S])
-                        (implicit tx: S#Tx): Unit = {
+  protected final def playView(h: ElemHandle, timeRef: TimeRef.Option, target: AuralAttribute.Target[T])
+                        (implicit tx: T): Unit = {
     val view = elemFromHandle(h)
     // logA(s"grapheme - playView: $view - $timeRef")
     stopViews()
@@ -368,11 +365,11 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
     playingRef() = Some(h)
   }
 
-  protected final def stopView(h: ElemHandle)(implicit tx: S#Tx): Unit =
+  protected final def stopView(h: ElemHandle)(implicit tx: T): Unit =
     if (playingRef().contains(h))
       stopViews()
 
-  protected final def stopViews()(implicit tx: S#Tx): Unit =
+  protected final def stopViews()(implicit tx: T): Unit =
     playingRef.swap(None).foreach { h =>
       val view = elemFromHandle(h)
       // logA(s"aural - stopView: $view")
@@ -381,8 +378,8 @@ abstract class AuralStreamLikeAttribute[S <: Sys[S], I1 <: stm.Sys[I1], R <: Obj
       removeView(h)
     }
 
-  private final def removeView(h: ElemHandle)(implicit tx: S#Tx): Unit = {
-    implicit val itx: I1#Tx = iSys(tx)
+  private final def removeView(h: ElemHandle)(implicit tx: T): Unit = {
+    implicit val itx: I1 = iSys(tx)
     val start = h.start
     tree.remove(start)
     // println(s"removeView($h)")

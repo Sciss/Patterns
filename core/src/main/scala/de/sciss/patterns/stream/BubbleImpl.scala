@@ -14,30 +14,30 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.graph.Bubble
 import de.sciss.serial.{DataInput, DataOutput}
 
 object BubbleImpl extends StreamFactory {
   final val typeId = 0x42756262 // "Bubb"
 
-  def expand[S <: Base[S], A](pat: Bubble[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = {
+  def expand[T <: Exec[T], A](pat: Bubble[A])(implicit ctx: Context[T], tx: T): Stream[T, Pat[A]] = {
     import pat._
-    val inStream = in.expand[S]
-    new StreamImpl[S, A](inStream = inStream)
+    val inStream = in.expand[T]
+    new StreamImpl[T, A](inStream = inStream)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val inStream = Stream.read[S, Any](in, access)
-    new StreamImpl[S, Any](inStream = inStream)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val inStream = Stream.read[T, Any](in)
+    new StreamImpl[T, Any](inStream = inStream)
   }
 
-  private final class StreamImpl[S <: Base[S], A](inStream: Stream[S, A])
-    extends Stream[S, Pat[A]] {
+  private final class StreamImpl[T <: Exec[T], A](inStream: Stream[T, A])
+    extends Stream[T, Pat[A]] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, Pat[A]] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, Pat[A]] = {
       val inStreamOut = c(inStream)
       new StreamImpl[Out, A](inStream = inStreamOut)
     }
@@ -47,17 +47,17 @@ object BubbleImpl extends StreamFactory {
     protected def writeData(out: DataOutput): Unit =
       inStream.write(out)
 
-    def dispose()(implicit tx: S#Tx): Unit =
+    def dispose()(implicit tx: T): Unit =
       inStream.dispose()
 
-    def reset()(implicit tx: S#Tx): Unit =
+    def reset()(implicit tx: T): Unit =
       inStream.reset()
 
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean =
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean =
       inStream.hasNext
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+    def next()(implicit ctx: Context[T], tx: T): Pat[A] = {
       val inVal = inStream.next()
       Pat(inVal)
     }

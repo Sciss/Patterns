@@ -19,7 +19,7 @@
 //final case class Filter[A](outer: Pat[Pat[A]], it: It[A], inner: Pat[Boolean])
 //  extends Pattern[Pat[A]] {
 //
-//  def iterator[Tx](implicit ctx: Context[S], tx: S#Tx): Stream[S, Pat[A]] = {
+//  def iterator[Tx](implicit ctx: Context[T], tx: T): Stream[T, Pat[A]] = {
 //    logStream("Filter.iterator")
 //    new StreamImpl(tx)
 //  }
@@ -30,10 +30,10 @@
 //    if (outerT.eq(outer) && innerT.eq(inner)) this else copy(outer = outerT, inner = innerT)
 //  }
 //
-//  private final class StreamImpl[S <: Base[S]](tx0: S#Tx)(implicit ctx: Context[S]) extends Stream[S, Pat[A]] {
+//  private final class StreamImpl[T <: Exec[T]](tx0: T)(implicit ctx: Context[T]) extends Stream[T, Pat[A]] {
 //    @transient final private[this] lazy val ref = new AnyRef
 //
-//    private def mkItStream(implicit tx: S#Tx): Stream[S, A] = {
+//    private def mkItStream(implicit tx: T): Stream[T, A] = {
 //      val res = new MapItStream(outer, tx)
 //      ctx.addStream(ref, res)
 //      res
@@ -41,43 +41,43 @@
 //
 //    ctx.provideOuterStream(it.token, mkItStream(_))(tx0)
 //
-//    private[this] val innerStream: Stream[S, Boolean] = inner.expand(ctx, tx0)
+//    private[this] val innerStream: Stream[T, Boolean] = inner.expand(ctx, tx0)
 //
 //    // because `inner` is not guaranteed to depend on `It`, we must
 //    // pro-active create one instance of the it-stream which is used
 //    // as an additional constraint to determine `hasNext`!
 //    private[this] val itStream      = mkItStream(tx0)
 //
-//    private[this] val mapStream     = ctx.newVar[Pat[A]](null) // Stream[S, T#Out[Tx]]](null)
+//    private[this] val mapStream     = ctx.newVar[Pat[A]](null) // Stream[T, T#Out[Tx]]](null)
 //    private[this] val _valid        = ctx.newVar(false)
 //    private[this] val _hasNext      = ctx.newVar(false)
 //
-//    private def validate()(implicit tx: S#Tx): Unit =
+//    private def validate()(implicit tx: T): Unit =
 //      if (!_valid()) {
 //        logStream("Filter.iterator.validate()")
 //        _valid() = true
 //        buildNext() // advance()
 //      }
 //
-//    def reset()(implicit tx: S#Tx): Unit = {
+//    def reset()(implicit tx: T): Unit = {
 //      logStream("Filter.iterator.reset()")
 //      _valid() = false
 //      ctx.getStreams(ref).foreach {
-//        case m: MapItStream[S, _] => m.resetOuter()
+//        case m: MapItStream[T, _] => m.resetOuter()
 //        // case _ =>
 //      }
 //    }
 //
-//    private def advance()(implicit tx: S#Tx): Unit = {
+//    private def advance()(implicit tx: T): Unit = {
 //      ctx.getStreams(ref).foreach {
-//        case m: MapItStream[S, _] => m.advance()
+//        case m: MapItStream[T, _] => m.advance()
 //        // case _ =>
 //      }
 //      innerStream.reset()
 //      buildNext()
 //    }
 //
-//    private def buildNext()(implicit tx: S#Tx): Unit = {
+//    private def buildNext()(implicit tx: T): Unit = {
 //      val hn = itStream.hasNext && innerStream.hasNext
 //      _hasNext() = hn
 //      if (hn) {
@@ -92,18 +92,18 @@
 //          ... // b += innerStream.next()
 //          i += 1
 //        }
-//        val inner   = Stream[S, A](b.result: _*)
+//        val inner   = Stream[T, A](b.result: _*)
 //        mapStream() = ... // inner
 //        _hasNext()  = inner.hasNext
 //      }
 //    }
 //
-//    def hasNext(implicit tx: S#Tx): Boolean = {
+//    def hasNext(implicit tx: T): Boolean = {
 //      validate()
 //      _hasNext()
 //    }
 //
-//    def next()(implicit tx: S#Tx): Pat[A] = {
+//    def next()(implicit tx: T): Pat[A] = {
 //      validate()
 //      if (!_hasNext()) Stream.exhausted()
 //      val res = mapStream()

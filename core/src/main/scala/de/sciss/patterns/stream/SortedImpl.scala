@@ -14,51 +14,50 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.adjunct.Adjunct
-import de.sciss.lucre.adjunct.Adjunct.ScalarOrd
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.{Adjunct, Exec, Ident, Var}
+import de.sciss.lucre.Adjunct.ScalarOrd
 import de.sciss.patterns.graph.Sorted
 import de.sciss.serial.{DataInput, DataOutput}
 
 object SortedImpl extends StreamFactory {
   final val typeId = 0x536F7274 // "Sort"
 
-  def expand[S <: Base[S], A](pat: Sorted[A])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], A](pat: Sorted[A])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
     val id            = tx.newId()
     val inStream      = in.expand(ctx, tx)
-    val sortedStream  = tx.newVar[Stream[S, A]](id, null)
-    val valid         = tx.newBooleanVar(id, false)
-    new StreamImpl[S, A](id = id, inStream = inStream, sortedStream = sortedStream, valid = valid)(ord)
+    val sortedStream  = id.newVar[Stream[T, A]](null)
+    val valid         = id.newBooleanVar(false)
+    new StreamImpl[T, A](id = id, inStream = inStream, sortedStream = sortedStream, valid = valid)(ord)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val id            = tx.readId(in, access)
-    val inStream      = Stream.read[S, Any](in, access)
-    val sortedStream  = tx.readVar[Stream[S, Any]](id, in)
-    val valid         = tx.readBooleanVar(id, in)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val id            = tx.readId(in)
+    val inStream      = Stream.read[T, Any](in)
+    val sortedStream  = id.readVar[Stream[T, Any]](in)
+    val valid         = id.readBooleanVar(in)
     val ord           = Adjunct.readT[ScalarOrd[Any]](in)
 
-    new StreamImpl[S, Any](id = id, inStream = inStream, sortedStream = sortedStream, valid = valid)(ord)
+    new StreamImpl[T, Any](id = id, inStream = inStream, sortedStream = sortedStream, valid = valid)(ord)
   }
 
-  private final class StreamImpl[S <: Base[S], A](
-                                                   id          : S#Id,
-                                                   inStream    : Stream[S, A],
-                                                   sortedStream: S#Var[Stream[S, A]],
-                                                   valid       : S#Var[Boolean]
+  private final class StreamImpl[T <: Exec[T], A](
+                                                   id          : Ident[T],
+                                                   inStream    : Stream[T, A],
+                                                   sortedStream: Var[T, Stream[T, A]],
+                                                   valid       : Var[T, Boolean]
   )(
     implicit ord: ScalarOrd[A]
   )
-    extends Stream[S, A] {
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val idOut           = txOut.newId()
       val inStreamOut     = c(inStream)
       val sortedStreamOut = c.copyVar(idOut, sortedStream)
-      val validOut        = txOut.newBooleanVar(idOut, valid())
+      val validOut        = idOut.newBooleanVar(valid())
       new StreamImpl[Out, A](id = idOut, inStream = inStreamOut, sortedStream = sortedStreamOut, valid = validOut)(ord)
     }
 
@@ -72,28 +71,28 @@ object SortedImpl extends StreamFactory {
       ord         .write(out)
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       id          .dispose()
       inStream    .dispose()
       sortedStream.dispose()
       valid       .dispose()
     }
 
-    private def validate()(implicit ctx: Context[S], tx: S#Tx): Unit = if (!valid.swap(true)) {
+    private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       val xs          = inStream.toList
       sortedStream()  = Stream(xs.sortWith(ord.lt): _*)
     }
 
-    def reset()(implicit tx: S#Tx): Unit = if (valid.swap(false)) {
+    def reset()(implicit tx: T): Unit = if (valid.swap(false)) {
       inStream.reset()
     }
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean = {
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean = {
       validate()
       sortedStream().hasNext
     }
 
-    def next()(implicit ctx: Context[S], tx: S#Tx): A = {
+    def next()(implicit ctx: Context[T], tx: T): A = {
       validate()
       sortedStream().next()
     }

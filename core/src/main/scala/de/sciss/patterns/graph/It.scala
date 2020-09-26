@@ -14,17 +14,17 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.ItImpl
 
 /** A glue element to make `map` and `flatMap` work. */
 final case class It[A](token: Int) extends Pattern[A] { pat =>
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
     ItImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = this
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] = this
 
-  def replaceIn[S <: Base[S], B](inner: Pat[B])(implicit ctx: Context[S], tx: S#Tx): (It[A], Pat[B]) = {
+  def replaceIn[T <: Exec[T], B](inner: Pat[B])(implicit ctx: Context[T], tx: T): (It[A], Pat[B]) = {
     val itT = ctx.allocToken[A]()
     val t = new Transform {
       def applyOne[X](in: Pat[X]): Pat[X] = in match {

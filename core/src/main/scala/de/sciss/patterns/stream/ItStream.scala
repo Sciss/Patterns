@@ -14,14 +14,14 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 
-trait ItStream[S <: Base[S], +A] extends Stream[S, A] {
+trait ItStream[T <: Exec[T], +A] extends Stream[T, A] {
   def token: Int
 }
 
-trait AdvanceItStream[S <: Base[S], +A] extends ItStream[S, A] {
-  def resetOuter()(implicit tx: S#Tx): Unit
+trait AdvanceItStream[T <: Exec[T], +A] extends ItStream[T, A] {
+  def resetOuter()(implicit tx: T): Unit
 
-  def advance()(implicit ctx: Context[S], tx: S#Tx): Unit
+  def advance()(implicit ctx: Context[T], tx: T): Unit
 }

@@ -1,24 +1,24 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "0.20.0"
-lazy val mimaVersion        = "0.20.0"
+lazy val projectVersion     = "1.0.0-SNAPSHOT"
+lazy val mimaVersion        = "1.0.0"
 
 val deps = new {
   val core = new {
-    val lucre               = "3.17.0"
-    val numbers             = "0.2.0"
-    val optional            = "1.0.0"
-    val serial              = "1.1.2"
+    val lucre               = "4.0.0-SNAPSHOT"
+    val numbers             = "0.2.1"
+    val optional            = "1.0.1"
+    val serial              = "2.0.0-SNAPSHOT"
   }
   val lucre = new {
-    val soundProcesses      = "3.35.3"
+    val soundProcesses      = "4.0.0-SNAPSHOT"
   }
   val test = new {
-    val kollFlitz           = "0.2.3"
-    val scalaCollider       = "1.28.5"
-    val scalaColliderSwing  = "1.41.7"
-    val scalaTest           = "3.1.2"
-    val ugens               = "1.19.6"
+    val kollFlitz           = "0.2.4"
+    val scalaCollider       = "2.0.0-SNAPSHOT"
+    val scalaColliderSwing  = "2.0.0-SNAPSHOT"
+    val scalaTest           = "3.2.2"
+    val ugens               = "1.19.8"
   }
 }
 
@@ -27,8 +27,8 @@ lazy val commonSettings = Seq(
   organization        := "de.sciss",
   description         := "Translating SuperCollider's patterns to Scala",
   homepage            := Some(url(s"https://git.iem.at/sciss/$baseName")),
-  scalaVersion        := "2.13.1",
-  crossScalaVersions  := Seq("2.13.1", "2.12.11"),
+  scalaVersion        := "2.13.3",
+  crossScalaVersions  := Seq("2.13.3", "2.12.12"),
   licenses            := Seq(agpl),
   scalacOptions      ++= Seq(
     "-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xlint", "-Xsource:2.13"
@@ -93,6 +93,7 @@ lazy val core = project.in(file("core"))
       "de.sciss"      %% "serial"                       % deps.core.serial,
       "de.sciss"      %% "lucre-adjunct"                % deps.core.lucre,
       "de.sciss"      %% "lucre-data"                   % deps.core.lucre,
+      "de.sciss"      %% "lucre-core"                   % deps.core.lucre,
       "de.sciss"      %% "kollflitz"                    % deps.test.kollFlitz           % Test,
       "de.sciss"      %% "scalacollider"                % deps.test.scalaCollider       % Test,
       "de.sciss"      %% "scalacolliderswing-plotting"  % deps.test.scalaColliderSwing  % Test,

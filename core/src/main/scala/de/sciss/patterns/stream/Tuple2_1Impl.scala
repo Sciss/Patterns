@@ -14,30 +14,30 @@
 package de.sciss.patterns
 package stream
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.graph.Tuple2_1
 import de.sciss.serial.{DataInput, DataOutput}
 
 object Tuple2_1Impl extends StreamFactory {
   final val typeId = 0x54325F31 // "T2_1"
 
-  def expand[S <: Base[S], A, A1](pat: Tuple2_1[A, A1])(implicit ctx: Context[S], tx: S#Tx): Stream[S, A] = {
+  def expand[T <: Exec[T], A, A1](pat: Tuple2_1[A, A1])(implicit ctx: Context[T], tx: T): Stream[T, A] = {
     import pat._
-    val tupStream = in.expand[S]
-    new StreamImpl[S, A, A1](tupStream = tupStream)
+    val tupStream = in.expand[T]
+    new StreamImpl[T, A, A1](tupStream = tupStream)
   }
 
-  def readIdentified[S <: Base[S]](in: DataInput, access: S#Acc)
-                                  (implicit ctx: Context[S], tx: S#Tx): Stream[S, Any] = {
-    val tupStream = Stream.read[S, (Any, Any)](in, access)
-    new StreamImpl[S, Any, Any](tupStream = tupStream)
+  def readIdentified[T <: Exec[T]](in: DataInput)
+                                  (implicit ctx: Context[T], tx: T): Stream[T, Any] = {
+    val tupStream = Stream.read[T, (Any, Any)](in)
+    new StreamImpl[T, Any, Any](tupStream = tupStream)
   }
 
-  private final class StreamImpl[S <: Base[S], A, A1](tupStream: Stream[S, (A, A1)])
-    extends Stream[S, A] {
+  private final class StreamImpl[T <: Exec[T], A, A1](tupStream: Stream[T, (A, A1)])
+    extends Stream[T, A] {
 
-    private[patterns] def copyStream[Out <: Base[Out]](c: Stream.Copy[S, Out])
-                                                      (implicit tx: S#Tx, txOut: Out#Tx): Stream[Out, A] = {
+    private[patterns] def copyStream[Out <: Exec[Out]](c: Stream.Copy[T, Out])
+                                                      (implicit tx: T, txOut: Out): Stream[Out, A] = {
       val tupStreamOut = c(tupStream)
       new StreamImpl[Out, A, A1](tupStream = tupStreamOut)
     }
@@ -47,12 +47,12 @@ object Tuple2_1Impl extends StreamFactory {
     protected def writeData(out: DataOutput): Unit =
       tupStream.write(out)
 
-    def dispose()(implicit tx: S#Tx): Unit =
+    def dispose()(implicit tx: T): Unit =
       tupStream.dispose()
 
-    def reset()(implicit tx: S#Tx): Unit = tupStream.reset()
+    def reset()(implicit tx: T): Unit = tupStream.reset()
 
-    def hasNext(implicit ctx: Context[S], tx: S#Tx): Boolean  = tupStream.hasNext
-    def next ()(implicit ctx: Context[S], tx: S#Tx): A        = tupStream.next()._1
+    def hasNext(implicit ctx: Context[T], tx: T): Boolean  = tupStream.hasNext
+    def next ()(implicit ctx: Context[T], tx: T): A        = tupStream.next()._1
   }
 }

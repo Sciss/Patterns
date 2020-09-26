@@ -13,11 +13,8 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.adjunct.Adjunct.Factory
-import de.sciss.lucre.adjunct.{Adjunct => _Adjunct}
-import de.sciss.lucre.expr.{BooleanObj, DoubleObj, IntObj, LongObj, StringObj}
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.Sys
+import de.sciss.lucre.Adjunct.Factory
+import de.sciss.lucre.{BooleanObj, DoubleObj, IntObj, LongObj, StringObj, Txn, Adjunct => _Adjunct, Obj => LObj}
 import de.sciss.patterns.graph.{AudioCue, Folder}
 import de.sciss.serial.DataInput
 
@@ -38,11 +35,11 @@ object Obj {
     implicit object Int extends Adjunct[scala.Int] with Factory {
       final val id = 0x400
 
-      def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Int] = obj match {
-        case i: IntObj    [S] => Some(i.value)
-        case d: DoubleObj [S] => Some(d.value.toInt)
-        case b: BooleanObj[S] => Some(if (b.value) 1 else 0)
-        case n: LongObj   [S] => Some(n.value.toInt)
+      def extract[T <: Txn[T]](obj: LObj[T])(implicit tx: T): Option[scala.Int] = obj match {
+        case i: IntObj    [T] => Some(i.value)
+        case d: DoubleObj [T] => Some(d.value.toInt)
+        case b: BooleanObj[T] => Some(if (b.value) 1 else 0)
+        case n: LongObj   [T] => Some(n.value.toInt)
         case _                => None
       }
 
@@ -52,11 +49,11 @@ object Obj {
     implicit object Double extends Adjunct[scala.Double] with Factory {
       final val id = 0x402
 
-      def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Double] = obj match {
-        case d: DoubleObj [S] => Some(d.value)
-        case i: IntObj    [S] => Some(i.value.toDouble)
-        case b: BooleanObj[S] => Some(if (b.value) 1.0 else 0.0)
-        case n: LongObj   [S] => Some(n.value.toDouble)
+      def extract[T <: Txn[T]](obj: LObj[T])(implicit tx: T): Option[scala.Double] = obj match {
+        case d: DoubleObj [T] => Some(d.value)
+        case i: IntObj    [T] => Some(i.value.toDouble)
+        case b: BooleanObj[T] => Some(if (b.value) 1.0 else 0.0)
+        case n: LongObj   [T] => Some(n.value.toDouble)
         case _                => None
       }
 
@@ -66,11 +63,11 @@ object Obj {
     implicit object Boolean extends Adjunct[scala.Boolean] with Factory {
       final val id = 0x404
 
-      def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Boolean] = obj match {
-        case b: BooleanObj[S] => Some(b.value)
-        case i: IntObj    [S] => Some(i.value != 0)
-        case d: DoubleObj [S] => Some(d.value != 0.0)
-        case n: LongObj   [S] => Some(n.value != 0L)
+      def extract[T <: Txn[T]](obj: LObj[T])(implicit tx: T): Option[scala.Boolean] = obj match {
+        case b: BooleanObj[T] => Some(b.value)
+        case i: IntObj    [T] => Some(i.value != 0)
+        case d: DoubleObj [T] => Some(d.value != 0.0)
+        case n: LongObj   [T] => Some(n.value != 0L)
         case _                => None
       }
 
@@ -80,11 +77,11 @@ object Obj {
     implicit object Long extends Adjunct[scala.Long] with Factory {
       final val id = 0x406
 
-      def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[scala.Long] = obj match {
-        case n: LongObj   [S] => Some(n.value)
-        case i: IntObj    [S] => Some(i.value.toLong)
-        case d: DoubleObj [S] => Some(d.value.toLong)
-        case b: BooleanObj[S] => Some(if (b.value) 1L else 0L)
+      def extract[T <: Txn[T]](obj: LObj[T])(implicit tx: T): Option[scala.Long] = obj match {
+        case n: LongObj   [T] => Some(n.value)
+        case i: IntObj    [T] => Some(i.value.toLong)
+        case d: DoubleObj [T] => Some(d.value.toLong)
+        case b: BooleanObj[T] => Some(if (b.value) 1L else 0L)
         case _                => None
       }
 
@@ -94,12 +91,12 @@ object Obj {
     implicit object String extends Adjunct[java.lang.String] with Factory {
       final val id = 0x410
 
-      def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[java.lang.String] = obj match {
-        case s: StringObj [S] => Some(s.value)
-        case i: IntObj    [S] => Some(i.value.toString)
-        case d: DoubleObj [S] => Some(d.value.toString)
-        case b: BooleanObj[S] => Some(b.value.toString)
-        case n: LongObj   [S] => Some(n.value.toString)
+      def extract[T <: Txn[T]](obj: LObj[T])(implicit tx: T): Option[java.lang.String] = obj match {
+        case s: StringObj [T] => Some(s.value)
+        case i: IntObj    [T] => Some(i.value.toString)
+        case d: DoubleObj [T] => Some(d.value.toString)
+        case b: BooleanObj[T] => Some(b.value.toString)
+        case n: LongObj   [T] => Some(n.value.toString)
         case _                => None
       }
 
@@ -111,9 +108,9 @@ object Obj {
   trait Extractor[+A] {
 //    def typeId: Int
 
-//    type Repr[S <: Sys[S]] <: stm.Obj[S]
+//    type Repr[T <: Txn[T]] <: LObj[T]
 
-    def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[A]
+    def extract[T <: Txn[T]](obj: LObj[T])(implicit tx: T): Option[A]
   }
 
   trait Adjunct[A] extends Extractor[A] with _Adjunct

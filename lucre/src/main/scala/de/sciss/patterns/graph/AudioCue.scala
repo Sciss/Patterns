@@ -14,9 +14,7 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.adjunct.Adjunct
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Base, Sys}
+import de.sciss.lucre.{Adjunct, Exec, Txn, Obj => LObj}
 import de.sciss.patterns.stream.{AudioCueNumChannelsImpl, AudioCueNumFramesImpl, AudioCueSampleRateImpl}
 import de.sciss.serial.DataInput
 import de.sciss.synth.proc
@@ -24,7 +22,7 @@ import de.sciss.synth.proc
 object AudioCue extends Obj.Adjunct[AudioCue] with Adjunct.Factory {
 //  def typeId: Int = proc.AudioCue.typeId
 
-//  type Repr[S <: Sys[S]] = proc.AudioCue.Obj[S]
+//  type Repr[T <: Txn[T]] = proc.AudioCue.Obj[T]
 
   final val id: Int = 0x481
 
@@ -32,21 +30,21 @@ object AudioCue extends Obj.Adjunct[AudioCue] with Adjunct.Factory {
 
   override def readIdentifiedAdjunct(in: DataInput): Adjunct = this
 
-  def extract[S <: Sys[S]](obj: stm.Obj[S])(implicit tx: S#Tx): Option[AudioCue] = obj match {
-    case ao: proc.AudioCue.Obj[S] => Some(AudioCue(ao.value))
+  def extract[T <: Txn[T]](obj: LObj[T])(implicit tx: T): Option[AudioCue] = obj match {
+    case ao: proc.AudioCue.Obj[T] => Some(AudioCue(ao.value))
     case _                        => None
   }
 
-//  def translate[S <: Sys[S]](obj: proc.AudioCue.Obj[S])(implicit tx: S#Tx): AudioCue = {
+//  def translate[T <: Txn[T]](obj: proc.AudioCue.Obj[T])(implicit tx: T): AudioCue = {
 //    val peer = obj.value
 //    AudioCue(peer)
 //  }
 
   final case class NumFrames(in: Pat[AudioCue]) extends Pattern[Long] {
-    def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Long] =
+    def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, Long] =
       AudioCueNumFramesImpl.expand(this)
 
-    def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Long] = {
+    def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[Long] = {
       val inT = t(in)
       if (inT.eq(in)) this else copy(in = inT)
     }
@@ -55,10 +53,10 @@ object AudioCue extends Obj.Adjunct[AudioCue] with Adjunct.Factory {
   }
 
   final case class NumChannels(in: Pat[AudioCue]) extends Pattern[Int] {
-    def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Int] =
+    def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, Int] =
       AudioCueNumChannelsImpl.expand(this)
 
-    def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Int] = {
+    def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[Int] = {
       val inT = t(in)
       if (inT.eq(in)) this else copy(in = inT)
     }
@@ -67,10 +65,10 @@ object AudioCue extends Obj.Adjunct[AudioCue] with Adjunct.Factory {
   }
 
   final case class SampleRate(in: Pat[AudioCue]) extends Pattern[Double] {
-    def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, Double] =
+    def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, Double] =
       AudioCueSampleRateImpl.expand(this)
 
-    def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[Double] = {
+    def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[Double] = {
       val inT = t(in)
       if (inT.eq(in)) this else copy(in = inT)
     }

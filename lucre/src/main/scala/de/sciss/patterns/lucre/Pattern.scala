@@ -13,15 +13,13 @@
 
 package de.sciss.patterns.lucre
 
-import de.sciss.lucre.event.{Dummy, Event, EventLike, Targets}
-import de.sciss.lucre.expr.Expr
-import de.sciss.lucre.stm.{Copy, Elem, Sys}
-import de.sciss.lucre.synth.{Sys => SSys}
-import de.sciss.lucre.{expr, stm}
+import de.sciss.lucre.Event.Targets
+import de.sciss.lucre.impl.{DummyEvent, ExprTypeImpl}
+import de.sciss.lucre.{Copy, Elem, Event, EventLike, Expr, Ident, Txn, expr, synth, Obj => LObj, Var => LVar}
 import de.sciss.model.Change
 import de.sciss.patterns
-import de.sciss.patterns.{Graph, Pat, Stream => PStream, stream}
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.patterns.{Graph, Pat, stream, Stream => PStream}
+import de.sciss.serial.{ConstFormat, DataInput, DataOutput}
 import de.sciss.synth.proc
 import de.sciss.synth.proc.Code.{Example, Import}
 import de.sciss.synth.proc.impl.{BasicAuralRunnerImpl, CodeImpl}
@@ -30,7 +28,7 @@ import de.sciss.synth.proc.{Runner, Universe}
 import scala.collection.immutable.{IndexedSeq => Vec, Seq => ISeq}
 import scala.concurrent.Future
 
-object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Factory {
+object Pattern extends ExprTypeImpl[Pat[_], Pattern] with Runner.Factory {
   final val typeId = 300
 
   /** Source code of the graph function. */
@@ -40,16 +38,16 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
   def humanName   : String  = prefix
   def isSingleton : Boolean = false
 
-  type Repr[~ <: Sys[~]] = Pattern[~]
+  type Repr[~ <: Txn[~]] = Pattern[~]
 
-  def apply[S <: Sys[S]]()(implicit tx: S#Tx): Var[S] = newVar[S](empty)
+  def apply[T <: Txn[T]]()(implicit tx: T): Var[T] = newVar[T](empty)
 
   def tryParse(value: Any): Option[Pat[_]] = value match {
     case x: Pat[_]  => Some(x)
     case _          => None
   }
 
-  def mkRunner[S <: SSys[S]](obj: Pattern[S])(implicit tx: S#Tx, universe: Universe[S]): Runner[S] =
+  def mkRunner[T <: synth.Txn[T]](obj: Pattern[T])(implicit tx: T, universe: Universe[T]): Runner[T] =
     BasicAuralRunnerImpl(obj)
 
   // initializes the entire library
@@ -75,21 +73,21 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
     PStream.addFactory(stream.FolderCollectImpl      )
   }
 
-  protected def mkConst[S <: Sys[S]](id: S#Id, value: A)(implicit tx: S#Tx): Const[S] =
-    new _Const[S](id, value)
+  protected def mkConst[T <: Txn[T]](id: Ident[T], value: A)(implicit tx: T): Const[T] =
+    new _Const[T](id, value)
 
-  protected def mkVar[S <: Sys[S]](targets: Targets[S], vr: S#Var[_Ex[S]], connect: Boolean)
-                                  (implicit tx: S#Tx): Var[S] = {
-    val res = new _Var[S](targets, vr)
+  protected def mkVar[T <: Txn[T]](targets: Targets[T], vr: LVar[T, E[T]], connect: Boolean)
+                                  (implicit tx: T): Var[T] = {
+    val res = new _Var[T](targets, vr)
     if (connect) res.connect()
     res
   }
 
-  private final class _Const[S <: Sys[S]](val id: S#Id, val constValue: A)
-    extends ConstImpl[S] with Pattern[S]
+  private final class _Const[T <: Txn[T]](val id: Ident[T], val constValue: A)
+    extends ConstImpl[T] with Pattern[T]
 
-  private final class _Var[S <: Sys[S]](val targets: Targets[S], val ref: S#Var[_Ex[S]])
-    extends VarImpl[S] with Pattern[S]
+  private final class _Var[T <: Txn[T]](val targets: Targets[T], val ref: LVar[T, E[T]])
+    extends VarImpl[T] with Pattern[T]
 
   // ---- Code ----
 
@@ -175,37 +173,37 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
 
   // --------------------
 
-  val valueSerializer: ImmutableSerializer[Pat[_]] = Pat.serializer[Any]
+  val valueFormat: ConstFormat[Pat[_]] = Pat.format[Any]
 
   private final val emptyCookie = 4
 
-  override protected def readCookie[S <: Sys[S]](in: DataInput, access: S#Acc, cookie: Byte)
-                                                (implicit tx: S#Tx): _Ex[S] =
+  override protected def readCookie[T <: Txn[T]](in: DataInput, cookie: Byte)
+                                                (implicit tx: T): E[T] =
     cookie match {
       case `emptyCookie` =>
-        val id = tx.readId(in, access)
+        val id = tx.readId(in)
         new Predefined(id, cookie)
       case _ =>
-        super.readCookie(in, access, cookie)
+        super.readCookie(in, cookie)
     }
 
   private val emptyPat = Pat()
 
-  def empty[S <: Sys[S]](implicit tx: S#Tx): _Ex[S] = apply(emptyCookie)
+  def empty[T <: Txn[T]](implicit tx: T): E[T] = apply(emptyCookie)
 
-  private def apply[S <: Sys[S]](cookie: Int)(implicit tx: S#Tx): _Ex[S] = {
+  private def apply[T <: Txn[T]](cookie: Int)(implicit tx: T): E[T] = {
     val id = tx.newId()
     new Predefined(id, cookie)
   }
 
-  private final class Predefined[S <: Sys[S]](val id: S#Id, cookie: Int)
-    extends Pattern[S] with Expr.Const[S, Pat[_]] {
+  private final class Predefined[T <: Txn[T]](val id: Ident[T], cookie: Int)
+    extends Pattern[T] with Expr.Const[T, Pat[_]] {
 
-    def event(slot: Int): Event[S, Any] = throw new UnsupportedOperationException
+    def event(slot: Int): Event[T, Any] = throw new UnsupportedOperationException
 
-    def tpe: stm.Obj.Type = Pattern
+    def tpe: LObj.Type = Pattern
 
-    def copy[Out <: Sys[Out]]()(implicit tx: S#Tx, txOut: Out#Tx, context: Copy[S, Out]): Elem[Out] =
+    def copy[Out <: Txn[Out]]()(implicit tx: T, txOut: Out, context: Copy[T, Out]): Elem[Out] =
       new Predefined(txOut.newId(), cookie) // .connect()
 
     def write(out: DataOutput): Unit = {
@@ -214,15 +212,15 @@ object Pattern extends expr.impl.ExprTypeImpl[Pat[_], Pattern] with Runner.Facto
       id.write(out)
     }
 
-    def value(implicit tx: S#Tx): Pat[_] = constValue
+    def value(implicit tx: T): Pat[_] = constValue
 
-    def changed: EventLike[S, Change[Pat[_]]] = Dummy[S, Change[Pat[_]]]
+    def changed: EventLike[T, Change[Pat[_]]] = DummyEvent[T, Change[Pat[_]]]
 
-    def dispose()(implicit tx: S#Tx): Unit = ()
+    def dispose()(implicit tx: T): Unit = ()
 
     def constValue: Pat[_] = cookie match {
       case `emptyCookie` => emptyPat
     }
   }
 }
-trait Pattern[S <: Sys[S]] extends Expr[S, Pat[_]]
+trait Pattern[T <: Txn[T]] extends Expr[T, Pat[_]]

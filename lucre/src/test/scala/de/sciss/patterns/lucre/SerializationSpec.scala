@@ -16,7 +16,7 @@ class SerializationSpec extends DurableSpec with Matchers {
       //      Constant[IntTop](1)
     }
     val fH = cursor.step { implicit tx =>
-      val f = Pattern.newVar[S](g)
+      val f = Pattern.newVar[T](g)
 //      f.graph() = g
       tx.newHandle(f) // -> g.sources.size
     }
@@ -33,9 +33,9 @@ class SerializationSpec extends DurableSpec with Matchers {
 
   def roundTrip(g: Pat[_]): Pat[_] = {
     val out = DataOutput()
-    Pattern.valueSerializer.write(g, out)
+    Pattern.valueFormat.write(g, out)
     val in = DataInput(out.toByteArray)
-    Pattern.valueSerializer.read(in)
+    Pattern.valueFormat.read(in)
   }
 
   "Another Pattern object" should "be serializable" in { _ =>

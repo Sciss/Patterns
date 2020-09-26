@@ -14,15 +14,15 @@
 package de.sciss.patterns
 package graph
 
-import de.sciss.lucre.stm.Base
+import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.DropImpl
 
 final case class Drop[A](in: Pat[A], length: Pat[Int]) extends Pattern[A] {
 
-  def expand[S <: Base[S]](implicit ctx: Context[S], tx: S#Tx): Stream[S, A] =
+  def expand[T <: Exec[T]](implicit ctx: Context[T], tx: T): Stream[T, A] =
     DropImpl.expand(this)
 
-  def transform[S <: Base[S]](t: Transform)(implicit ctx: Context[S], tx: S#Tx): Pat[A] = {
+  def transform[T <: Exec[T]](t: Transform)(implicit ctx: Context[T], tx: T): Pat[A] = {
     val inT     = t(in)
     val lengthT = t(length)
     if (inT.eq(in) && lengthT.eq(length)) this else copy(in = inT, length = lengthT)

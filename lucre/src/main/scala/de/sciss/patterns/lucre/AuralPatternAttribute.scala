@@ -14,9 +14,8 @@
 package de.sciss.patterns.lucre
 
 import de.sciss.lucre.data.SkipList
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Disposable, Obj}
-import de.sciss.lucre.synth.Sys
+import de.sciss.lucre.synth.Txn
+import de.sciss.lucre.{Disposable, Obj, Source, Txn => LTxn}
 import de.sciss.patterns
 import de.sciss.patterns.lucre.impl.AuralStreamLikeAttribute
 import de.sciss.patterns.lucre.impl.AuralStreamLikeAttribute.View
@@ -27,7 +26,7 @@ import de.sciss.synth.proc.{AuralAttribute, AuralContext}
 
  */
 object AuralPatternAttribute extends AuralAttribute.Factory {
-  type Repr[S <: stm.Sys[S]] = Pattern[S]
+  type Repr[T <: LTxn[T]] = Pattern[T]
 
   def tpe: Obj.Type = Pattern
 
@@ -35,58 +34,56 @@ object AuralPatternAttribute extends AuralAttribute.Factory {
 
   def init(): Unit = _init
 
-  def apply[S <: Sys[S]](key: String, pat: Pattern[S], observer: AuralAttribute.Observer[S])
-                        (implicit tx: S#Tx, context: AuralContext[S]): AuralAttribute[S] = {
-    val system  = tx.system
-    val res     = prepare[S, system.I](key, pat, observer)(tx, system, context) // IntelliJ highlight bug
+  def apply[T <: Txn[T]](key: String, pat: Pattern[T], observer: AuralAttribute.Observer[T])
+                        (implicit tx: T, context: AuralContext[T]): AuralAttribute[T] = {
+    val res = prepare[T, tx.I](key, pat, observer)(tx, tx.inMemoryBridge, context)
     res.init(pat)
   }
 
-  private def prepare[S <: Sys[S], I1 <: stm.Sys[I1]](key: String, value: Pattern[S],
-                                                      observer: AuralAttribute.Observer[S])
-                                                     (implicit tx: S#Tx, system: S { type I = I1 },
-                                                      context: AuralContext[S]): AuralPatternAttribute[S, I1] = {
-    implicit val iSys: S#Tx => I1#Tx = system.inMemoryTx
+  private def prepare[T <: Txn[T], I1 <: LTxn[I1]](key: String, value: Pattern[T],
+                                                      observer: AuralAttribute.Observer[T])
+                                                     (implicit tx: T, iSys: T => I1,
+                                                      context: AuralContext[T]): AuralPatternAttribute[T, I1] = {
+//    implicit val iSys: T => I1 = system.inMemoryTx
 
-    val tree = AuralStreamLikeAttribute.mkTree[S, I1]()
-    new AuralPatternAttribute[S, I1](key, tx.newHandle(value), observer, tree /* , viewMap */)
+    val tree = AuralStreamLikeAttribute.mkTree[T, I1]()
+    new AuralPatternAttribute[T, I1](key, tx.newHandle(value), observer, tree /* , viewMap */)
   }
 }
-final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](key: String,
-                                                                  objH: stm.Source[S#Tx, Pattern[S]],
-                                                                  observer: AuralAttribute.Observer[S],
-                                                                  tree: SkipList.Map[I1, Long, View[S]])
-                                                               (implicit context: AuralContext[S],
-                                                                system: S { type I = I1 },
-                                                                iSys: S#Tx => I1#Tx)
-  extends AuralStreamLikeAttribute[S, I1, Pattern[S]](key, objH, observer, tree)
-    with AuralAttribute[S] {
+final class AuralPatternAttribute[T <: Txn[T], I1 <: LTxn[I1]](key: String,
+                                                                  objH: Source[T, Pattern[T]],
+                                                                  observer: AuralAttribute.Observer[T],
+                                                                  tree: SkipList.Map[I1, Long, View[T]])
+                                                               (implicit context: AuralContext[T],
+                                                                iSys: T => I1)
+  extends AuralStreamLikeAttribute[T, I1, Pattern[T]](key, objH, observer, tree)
+    with AuralAttribute[T] {
   attr =>
 
   def tpe: Obj.Type = Pattern
 
-  private[this] var patObserver: Disposable[S#Tx] = _
+  private[this] var patObserver: Disposable[T] = _
 
-  protected type St = (patterns.Stream[I1, Any], patterns.lucre.Context[S, I1])
+  protected type St = (patterns.Stream[I1, Any], patterns.lucre.Context[T, I1])
 
-  protected def disposeStream(st: St)(implicit tx: S#Tx): Unit = {
-    implicit val itx: I1#Tx = iSys(tx)
+  protected def disposeStream(st: St)(implicit tx: T): Unit = {
+    implicit val itx: I1 = iSys(tx)
     st._1.dispose()
   }
 
-  protected def makeStream(patObj: Pattern[S])(implicit tx: S#Tx): St = {
-    val _ctx  = patterns.lucre.Context.dual[S](patObj)
+  protected def makeStream(patObj: Pattern[T])(implicit tx: T): St = {
+    val _ctx  = patterns.lucre.Context.dual[T, I1](patObj)
     val _st   = _ctx.expandDual(patObj.value) // g.expand[I1]
-    (_st, _ctx)
+    ??? // LUCRE4 (_st, _ctx)
   }
 
-  protected def streamHasNext(st: St)(implicit tx: S#Tx): Boolean =
+  protected def streamHasNext(st: St)(implicit tx: T): Boolean =
     st._1.hasNext(st._2, iSys(tx))
 
-  protected def streamNext(st: St)(implicit tx: S#Tx): Any =
+  protected def streamNext(st: St)(implicit tx: T): Any =
     st._1.next()(st._2, iSys(tx))
 
-  def init(pat: Pattern[S])(implicit tx: S#Tx): this.type = {
+  def init(pat: Pattern[T])(implicit tx: T): this.type = {
     val graph0 = pat.value
     setRepr(graph0)
     patObserver = pat.changed.react { implicit tx => upd =>
@@ -95,7 +92,7 @@ final class AuralPatternAttribute[S <: Sys[S], I1 <: stm.Sys[I1]](key: String,
     this
   }
 
-  override def dispose()(implicit tx: S#Tx): Unit = {
+  override def dispose()(implicit tx: T): Unit = {
     patObserver.dispose()
     super.dispose()
   }
