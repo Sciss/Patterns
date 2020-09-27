@@ -150,7 +150,7 @@ private[patterns] abstract class ContextLike[T <: Exec[T]](tx0: T) extends Conte
 //
 //  protected final val id: I1#Id = i(tx0).newId()
 
-  private[this] val streamSer = new StreamFormat[T, Any]()(this)
+  private[this] val streamFmt = new StreamFormat[T, Any]()(this)
 
   private[this] val tokenMap  = tx0.newInMemoryMap[Int, List[ItStreamSource[T, _]]]
   private[this] val seedMap   = tx0.newInMemoryMap[AnyRef, Long]
@@ -170,7 +170,7 @@ private[patterns] abstract class ContextLike[T <: Exec[T]](tx0: T) extends Conte
     throw Context.MissingIn(input)
 
   final def streamFormat[A]: TFormat[T, Stream[T, A]] =
-    streamSer.asInstanceOf[StreamFormat[T, A]]
+    streamFmt.asInstanceOf[StreamFormat[T, A]]
 
   def withItSource[A, B](source: ItStreamSource[T, A])(thunk: => B)(implicit tx: T): B = {
     val token   = source.token

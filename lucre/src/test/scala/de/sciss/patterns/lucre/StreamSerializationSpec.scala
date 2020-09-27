@@ -29,8 +29,7 @@ class StreamSerializationSpec extends DurableSpec with Matchers {
     }
 
     implicit val c: patterns.Context[T] = sys.step { implicit tx =>
-//      val pat = Pattern.empty[S]
-      Context[T] // (pat)
+      Context[T]()
     }
 
     val stH = sys.step { implicit tx =>

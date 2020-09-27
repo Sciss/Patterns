@@ -269,11 +269,11 @@ object PatElem {
     ref
   }
 
-  implicit def format   [A]: ConstFormat[A]       = Ser   .asInstanceOf[ConstFormat[A]]
-  implicit def vecFormat[A]: ConstFormat[Vec[A]]  = VecSer.asInstanceOf[ConstFormat[Vec[A]]]
-  implicit def setFormat[A]: ConstFormat[Set[A]]  = SetSer.asInstanceOf[ConstFormat[Set[A]]]
+  implicit def format   [A]: ConstFormat[A]       = Fmt   .asInstanceOf[ConstFormat[A]]
+  implicit def vecFormat[A]: ConstFormat[Vec[A]]  = VecFmt.asInstanceOf[ConstFormat[Vec[A]]]
+  implicit def setFormat[A]: ConstFormat[Set[A]]  = SetFmt.asInstanceOf[ConstFormat[Set[A]]]
 
-  private object Ser extends ConstFormat[Any] {
+  private object Fmt extends ConstFormat[Any] {
     def write(v: Any, out: DataOutput): Unit  = PatElem.write(v, out)
     def read          (in: DataInput ): Any   = PatElem.read(in)
   }
@@ -308,12 +308,12 @@ object PatElem {
     }
   }
 
-  private object VecSer extends CollectionSer[Vec[Any]] {
+  private object VecFmt extends CollectionSer[Vec[Any]] {
     def newBuilder: mutable.Builder[Any, Vec[Any]] = Vector.newBuilder
     def empty: Vec[Any] = Vector.empty
   }
 
-  private object SetSer extends CollectionSer[Set[Any]] {
+  private object SetFmt extends CollectionSer[Set[Any]] {
     def newBuilder: mutable.Builder[Any, Set[Any]] = Set.newBuilder
     def empty: Set[Any] = Set.empty
   }

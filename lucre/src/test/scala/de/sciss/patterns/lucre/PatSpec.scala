@@ -13,8 +13,7 @@ trait PatSpec extends AnyFlatSpec with Matchers {
   type T = InMemory.Txn
   implicit val cursor: S = InMemory()
   implicit val ctx: patterns.Context[T] = cursor.step { implicit tx =>
-//    val pat = Pattern.empty[S]
-    Context[T] // (pat)
+    Context[T]()
   }
 
   type Tx = InTxn

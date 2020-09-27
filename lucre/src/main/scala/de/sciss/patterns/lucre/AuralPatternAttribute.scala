@@ -50,13 +50,13 @@ object AuralPatternAttribute extends AuralAttribute.Factory {
     new AuralPatternAttribute[T, I1](key, tx.newHandle(value), observer, tree /* , viewMap */)
   }
 }
-final class AuralPatternAttribute[T <: Txn[T], I1 <: LTxn[I1]](key: String,
-                                                                  objH: Source[T, Pattern[T]],
-                                                                  observer: AuralAttribute.Observer[T],
-                                                                  tree: SkipList.Map[I1, Long, View[T]])
-                                                               (implicit context: AuralContext[T],
-                                                                iSys: T => I1)
-  extends AuralStreamLikeAttribute[T, I1, Pattern[T]](key, objH, observer, tree)
+final class AuralPatternAttribute[T <: Txn[T], I <: LTxn[I]](key: String,
+                                                             objH: Source[T, Pattern[T]],
+                                                             observer: AuralAttribute.Observer[T],
+                                                             tree: SkipList.Map[I, Long, View[T]])
+                                                            (implicit context: AuralContext[T],
+                                                                iSys: T => I)
+  extends AuralStreamLikeAttribute[T, I, Pattern[T]](key, objH, observer, tree)
     with AuralAttribute[T] {
   attr =>
 
@@ -64,17 +64,17 @@ final class AuralPatternAttribute[T <: Txn[T], I1 <: LTxn[I1]](key: String,
 
   private[this] var patObserver: Disposable[T] = _
 
-  protected type St = (patterns.Stream[I1, Any], patterns.lucre.Context[T, I1])
+  protected type St = (patterns.Stream[I, Any], patterns.lucre.Context[T, I])
 
   protected def disposeStream(st: St)(implicit tx: T): Unit = {
-    implicit val itx: I1 = iSys(tx)
+    implicit val itx: I = iSys(tx)
     st._1.dispose()
   }
 
   protected def makeStream(patObj: Pattern[T])(implicit tx: T): St = {
-    val _ctx  = patterns.lucre.Context.dual[T, I1](patObj)
-    val _st   = _ctx.expandDual(patObj.value) // g.expand[I1]
-    ??? // LUCRE4 (_st, _ctx)
+    val _ctx  = patterns.lucre.Context.dual[T, I](patObj)
+    val _st   = _ctx.expandDual(patObj.value)
+    (_st, _ctx)
   }
 
   protected def streamHasNext(st: St)(implicit tx: T): Boolean =

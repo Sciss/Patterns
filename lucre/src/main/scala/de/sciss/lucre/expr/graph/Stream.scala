@@ -131,7 +131,7 @@ object Stream {
     with Caching {
 
     // XXX TODO --- this is bloody annoying
-    implicit protected final val ctx: patterns.Context[T] = patterns.lucre.Context[T](tx0)
+    implicit protected final val ctx: patterns.Context[T] = patterns.lucre.Context[T]()(tx0)
 
     private[this] val ref: Ref[E] = Ref(lower(None)(tx0))
 
@@ -192,7 +192,7 @@ object Stream {
       with Caching {
 
     // XXX TODO --- this is bloody annoying
-    implicit private[this] val ctx: patterns.Context[T] = patterns.lucre.Context[T](tx0)
+    implicit private[this] val ctx: patterns.Context[T] = patterns.lucre.Context[T]()(tx0)
 
     private[this] val ref: Ref[Seq[A]] = Ref(Nil)
 

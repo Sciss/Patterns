@@ -22,7 +22,7 @@ import de.sciss.serial.{DataInput, DataOutput, Writable}
 import scala.concurrent.stm.TxnLocal
 
 object Context {
-  def apply[T <: Txn[T]](implicit tx: T): patterns.Context[T] =
+  def apply[T <: Txn[T]]()(implicit tx: T): patterns.Context[T] =
     new SingleImpl[T, tx.I](tx, tx.inMemoryBridge)
 
   def dual[T <: Txn[T], I <: Txn[I]](pat: Pattern[T])(implicit tx: T, bridge: T => I): Context[T, I] =
@@ -145,7 +145,7 @@ object Context {
   private final class DualImpl[T <: Txn[T], I <: Txn[I]](tx0: T, patH: Source[T, Pattern[T]], bridgeT: T => I)
     extends NewImpl[I, I](bridgeT(tx0).newId(), bridgeT(tx0)) with Context[T, I] {
 
-    protected val bridge: I => I = tx => tx
+    protected def bridge: I => I = tx => tx   // must be a `def` because of initialization order
 
     def pattern(implicit tx: T): Pattern[T] = patH()
 

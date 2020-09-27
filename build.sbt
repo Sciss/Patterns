@@ -8,15 +8,15 @@ val deps = new {
     val lucre               = "4.0.0-SNAPSHOT"
     val numbers             = "0.2.1"
     val optional            = "1.0.1"
-    val serial              = "2.0.0-SNAPSHOT"
+    val serial              = "2.0.0"
   }
   val lucre = new {
     val soundProcesses      = "4.0.0-SNAPSHOT"
   }
   val test = new {
     val kollFlitz           = "0.2.4"
-    val scalaCollider       = "2.0.0-SNAPSHOT"
-    val scalaColliderSwing  = "2.0.0-SNAPSHOT"
+    val scalaCollider       = "2.0.0"
+    val scalaColliderSwing  = "2.0.0"
     val scalaTest           = "3.2.2"
     val ugens               = "1.19.8"
   }

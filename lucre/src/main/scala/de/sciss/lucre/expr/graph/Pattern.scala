@@ -126,16 +126,17 @@ object Pattern {
     def toStream: ToStream = ToStream(pat)
   }
 
-  private final class ToStreamExpanded[T <: Txn[T]/*, I <: Sys[I]*/](patEx: IExpr[T, Pattern], tx0: T, system: Sys)
-                                                                (implicit protected val targets: ITargets[T])
+  private final class ToStreamExpanded[T <: Txn[T], I <: Txn[I]](patEx: IExpr[T, Pattern], tx0: T)
+                                                                (implicit protected val targets: ITargets[T],
+                                                                 bridge: T => I)
     extends ToStream.Repr[T] with IChangeEventImpl[T, Pattern] with Caching {
 
     private[this] val ref: Ref[RefVal] = Ref(mkRef(patEx.value(tx0))(tx0))
 
     patEx.changed.--->(this)(tx0)
 
-    private type CtxI   = LContext[T, tx0.I]
-    private type RefVal = Option[(PStream[tx0.I, Any], CtxI)]
+    private type CtxI   = LContext[T, I]
+    private type RefVal = Option[(PStream[I, Any], CtxI)]
 
     private def mkRef(pat: Pattern)(implicit tx: T): RefVal =
       pat.peer[T].map { lPat =>
@@ -146,7 +147,7 @@ object Pattern {
       }
 
     private def mkPatCtx(lPat: LPattern[T])(implicit tx: T): CtxI =
-      ??? // LUCRE4 LContext.dual(lPat)(tx)
+      LContext.dual[T, I](lPat)
 
     private[lucre] def pullChange(pull: IPull[T])(implicit tx: T, phase: IPull.Phase): Pattern = {
       val inV = pull.expr(patEx)
@@ -159,22 +160,22 @@ object Pattern {
 
     private def disposeRef(refVal: RefVal)(implicit tx: T): Unit =
       refVal.foreach { case (st, _) =>
-        st.dispose()(???) // LUCRE4 (tx.inMemoryBridge(tx)) // (system.inMemoryTx(tx))
+        st.dispose()(bridge(tx))
       }
 
     def reset()(implicit tx: T): Unit =
       ref().foreach { case (st, _) =>
-        st.reset()(???) // LUCRE4 (system.inMemoryTx(tx))
+        st.reset()(bridge(tx))
       }
 
     def hasNext(implicit /*ctx: Context[T],*/ tx: T): Boolean =
       ref().exists { case (st, ctx) =>
-        st.hasNext(ctx, ???) // LUCRE4 system.inMemoryTx(tx))
+        st.hasNext(ctx, bridge(tx))
       }
 
     def next()(implicit /*ctx: Context[T],*/ tx: T): Any = {
       val (st, ctx) = ref().get
-      st.next()(ctx, ???) // LUCRE4 system.inMemoryTx(tx))
+      st.next()(ctx, bridge(tx))
     }
 
     def initControl()(implicit tx: T): Unit = ()
@@ -382,7 +383,7 @@ object Pattern {
 
     protected def mkRepr[T <: Txn[T]](implicit ctx: Context[T], tx: T): Repr[T] = {
       import ctx.targets
-      new ToStreamExpanded[T](pat.expand[T], tx, tx.system)
+      new ToStreamExpanded[T, tx.I](pat.expand[T], tx)(targets, tx.inMemoryBridge)
     }
   }
 }
