@@ -15,8 +15,8 @@ val deps = new {
   }
   val test = new {
     val kollFlitz           = "0.2.4"
-    val scalaCollider       = "2.3.0"
-    val scalaColliderSwing  = "2.2.0"
+    val scalaCollider       = "2.4.0"
+    val scalaColliderSwing  = "2.3.0"
     val scalaTest           = "3.2.3"
     val ugens               = "1.20.0"
   }
