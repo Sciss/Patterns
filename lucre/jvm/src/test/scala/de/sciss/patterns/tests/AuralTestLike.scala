@@ -1,11 +1,13 @@
 package de.sciss.patterns.tests
 
+import de.sciss.log.Level
 import de.sciss.lucre.store.BerkeleyDB
 import de.sciss.lucre.synth.{Server, Txn}
 import de.sciss.lucre.{Cursor, DoubleObj}
 import de.sciss.patterns.lucre.Pattern
 import de.sciss.synth.SynthGraph
-import de.sciss.synth.proc.{AuralContext, AuralObj, Confluent, Durable, Proc, SoundProcesses, SynthGraphObj, TimeRef, Timeline, Universe, showAuralLog, showTransportLog}
+import de.sciss.synth.proc.{AuralContext, AuralObj, Confluent, Durable, Proc, SoundProcesses, TimeRef, Timeline, Universe}
+import de.sciss.synth.proc.SoundProcesses.{logAural, logTransport}
 
 import scala.concurrent.stm.Txn
 
@@ -43,8 +45,8 @@ abstract class AuralTestLike[T <: Txn[T]](implicit cursor: Cursor[T]) {
 
   // ---- impl ----
 
-  showAuralLog      = true
-  showTransportLog  = true
+  logAural    .level = Level.Debug
+  logTransport.level = Level.Debug
   // de.sciss.lucre.synth.showLog = true
 
   implicit val universe: Universe[T] = cursor.step { implicit tx => Universe.dummy }
@@ -104,7 +106,7 @@ abstract class AuralTestLike[T <: Txn[T]](implicit cursor: Cursor[T]) {
     val g = SynthGraph {
       graph
     }
-    p.graph() = SynthGraphObj.newConst[T](g)
+    p.graph() = Proc.GraphObj.newConst[T](g)
     p // Obj(Proc.Elem(p))
   }
 

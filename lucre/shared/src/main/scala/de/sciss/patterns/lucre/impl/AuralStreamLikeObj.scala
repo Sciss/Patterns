@@ -25,7 +25,8 @@ import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.UGenSource.Vec
 import de.sciss.synth.proc.impl.AuralScheduledBase
 import de.sciss.synth.proc.impl.AuralTimelineBase.spanToPoint
-import de.sciss.synth.proc.{AuralContext, AuralObj, Runner, TimeRef, logAural => logA}
+import de.sciss.synth.proc.{AuralContext, AuralObj, Runner, TimeRef}
+import de.sciss.synth.proc.SoundProcesses.{logAural => logA}
 
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
@@ -135,7 +136,7 @@ abstract class AuralStreamLikeObj[T <: Txn[T], I1 <: LTxn[I1], R <: Obj[T]](objH
       private[this] val patObj: Repr  = objH()
       private[this] var time  : Long  = streamPos.get(tx.peer)
 
-      logA(s"pattern processPrepare($spanP, $timeRef, $initial); time = $time")
+      logA.debug(s"pattern processPrepare($spanP, $timeRef, $initial); time = $time")
 
 //      implicit private[this] val itx: I1#Tx = streamSys(tx)
 
@@ -303,7 +304,7 @@ abstract class AuralStreamLikeObj[T <: Txn[T], I1 <: LTxn[I1], R <: Obj[T]](objH
     val attr: Runner.Attr[T] = new EventAsRunnerMap(evt)
     val childView = AuralObj(playObj, attr = attr)
     val h         = AuralStreamLikeObj.ElemHandle[T, Elem](span, childView)
-    logA(s"pattern - mkView: $span, $childView")
+    logA.debug(s"pattern - mkView: $span, $childView")
     //    viewMap.put(tid, h)
     tree.transformAt(spanToPoint(span)) { opt =>
       // import expr.IdentifierSerializer
@@ -325,7 +326,7 @@ abstract class AuralStreamLikeObj[T <: Txn[T], I1 <: LTxn[I1], R <: Obj[T]](objH
   protected final def playView(h: ElemHandle, timeRef: TimeRef.Option, target: Target)
                         (implicit tx: T): Unit = {
     val view = elemFromHandle(h)
-    logA(s"pattern - playView: $view - $timeRef (${hashCode().toHexString})")
+    logA.debug(s"pattern - playView: $view - $timeRef (${hashCode().toHexString})")
     view.run(timeRef, target)
     playingRef.add(h)
     //    viewPlaying(h)
@@ -351,7 +352,7 @@ abstract class AuralStreamLikeObj[T <: Txn[T], I1 <: LTxn[I1], R <: Obj[T]](objH
 
   protected final def stopView(h: ElemHandle)(implicit tx: T): Unit = {
     val view = elemFromHandle(h)
-    logA(s"pattern - stopView: $view (${hashCode().toHexString})")
+    logA.debug(s"pattern - stopView: $view (${hashCode().toHexString})")
     view.stop()
     view.dispose()
     playingRef.remove(h)

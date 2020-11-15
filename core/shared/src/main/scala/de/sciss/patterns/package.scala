@@ -28,36 +28,17 @@ package object patterns {
   implicit def patTuple2Ops[A, B] (p: Pat[(A, B)]): PatTuple2Ops[A, B]  = new PatTuple2Ops(p)
   implicit def seqToPatOps [A]    (xs: Seq[A])    : SeqToPatOps [A]     = new SeqToPatOps(xs)
 
-  //  implicit def const[A, T <: Top](x: A)(implicit tpe: T { type Out = A }): Elem[T] = Const(x)
-
   implicit def constIntPat        (x: Int           ): Pat[Int          ] = Constant[Int          ](x)
-//  implicit def constIntSeqPat     (xs: Seq[Int]     ): Pat[Seq[Int]     ] = Constant[Seq[Int]     ](xs)
   implicit def constDoublePat     (x: Double        ): Pat[Double       ] = Constant[Double       ](x)
-//  implicit def constDoubleSeqPat  (xs: Seq[Double]  ): Pat[Seq[Double]  ] = Constant[Seq[Double]  ](xs)
   implicit def constBooleanPat    (x: Boolean       ): Pat[Boolean      ] = Constant[Boolean      ](x)
-//  implicit def constBooleanSeqPat (xs: Seq[Boolean] ): Pat[Seq[Boolean] ] = Constant[Seq[Boolean] ](xs)
   implicit def constStringPat     (x: String        ): Pat[String       ] = Constant[String       ](x)
-
-//  // --- this one's a bit intrusive, should be keep it?
-//  implicit def patSeq[A, T](xs: Seq[A])(implicit lift: A => Pat[T]): Seq[Pat[T]] =
-//    xs.map(lift)
-
-//  implicit def seqPat[A, T](xs: Seq[A])(implicit lift: A => Pat[T]): Pat[Pat[T]] =
-//    Pat(xs.map(lift): _*)
-
-//  implicit def seqPat[A](xs: Seq[A]): Pat[A] = Pat(xs: _*)
 
   private lazy val logHeader = new SimpleDateFormat("[d MMM yyyy, HH:mm''ss.SSS] 'pattern' - ", Locale.US)
 
-//  var showGraphLog    = false
   var showStreamLog   = false
-//  var showControlLog  = false
 
   @elidable(CONFIG) private[patterns] def logStream(what: => String): Unit =
     if (showStreamLog) Console.out.println(s"${logHeader.format(new Date())}stream $what")
-
-//  @elidable(CONFIG) private[patterns] def logGraph(what: => String): Unit =
-//    if (showGraphLog) Console.out.println(s"${logHeader.format(new Date())}graph $what")
 
   /** A shortcut for `Bind` with time/value pairs. */
   def Output[A](delta: Pat[Double], value: Pat[A]): Pat[Event] =

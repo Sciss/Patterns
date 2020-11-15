@@ -214,7 +214,7 @@ object Pattern extends ExprTypeImpl[Pat[_], Pattern] with Runner.Factory {
 
     def value(implicit tx: T): Pat[_] = constValue
 
-    def changed: EventLike[T, Change[Pat[_]]] = DummyEvent[T, Change[Pat[_]]]
+    def changed: EventLike[T, Change[Pat[_]]] = DummyEvent()
 
     def dispose()(implicit tx: T): Unit = ()
 
