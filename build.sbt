@@ -1,18 +1,18 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "1.1.0-SNAPSHOT"
+lazy val projectVersion     = "1.1.0"
 lazy val mimaVersion        = "1.1.0"
 
 val deps = new {
   val core = new {
     val log                 = "0.1.1"
-    val lucre               = "4.2.0-SNAPSHOT"
+    val lucre               = "4.2.0"
     val numbers             = "0.2.1"
     val optional            = "1.0.1"
     val serial              = "2.0.0"
   }
   val lucre = new {
-    val soundProcesses      = "4.3.0-SNAPSHOT"
+    val soundProcesses      = "4.3.0"
   }
   val test = new {
     val kollFlitz           = "0.2.4"
@@ -141,6 +141,7 @@ lazy val lucre = crossProject(JVMPlatform, JSPlatform).in(file("lucre"))
 lazy val macros = project.in(file("macros"))
   .dependsOn(lucre.jvm)
   .settings(commonSettings)
+  .settings(commonJvmSettings)
   .settings(
     name := s"$baseName-macros",
     description := s"Macro support for $baseName",
