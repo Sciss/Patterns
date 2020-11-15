@@ -18,7 +18,7 @@ import de.sciss.patterns
 import de.sciss.patterns.graph.{It, Pat}
 import de.sciss.patterns.{ContextLike, Obj}
 import de.sciss.serial.{DataInput, DataOutput, Writable}
-import de.sciss.synth.proc.Pattern
+import de.sciss.proc.Pattern
 
 import scala.concurrent.stm.TxnLocal
 

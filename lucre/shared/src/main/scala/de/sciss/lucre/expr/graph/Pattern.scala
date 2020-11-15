@@ -24,7 +24,7 @@ import de.sciss.model.Change
 import de.sciss.patterns.lucre.{Context => LContext}
 import de.sciss.patterns.{Stream => PStream}
 import de.sciss.serial.{DataInput, TFormat}
-import de.sciss.synth.proc
+import de.sciss.proc
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.concurrent.stm.Ref

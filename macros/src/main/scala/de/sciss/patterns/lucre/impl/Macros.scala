@@ -17,8 +17,8 @@ package impl
 import de.sciss.patterns.Graph
 import de.sciss.lucre.Txn
 import de.sciss.patterns.graph.Pat
-import de.sciss.synth.proc.{Code, Pattern}
-import de.sciss.synth.proc.impl.Macros.mkSource
+import de.sciss.proc.{Code, Pattern}
+import de.sciss.proc.impl.Macros.mkSource
 
 import scala.reflect.macros.blackbox
 

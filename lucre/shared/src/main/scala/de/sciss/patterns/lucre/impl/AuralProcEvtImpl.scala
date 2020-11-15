@@ -16,8 +16,8 @@ package impl
 
 import de.sciss.lucre.synth.Txn
 import de.sciss.patterns.Event
-import de.sciss.synth.proc.impl.AuralProcImpl
-import de.sciss.synth.proc.{AuralContext, Runner}
+import de.sciss.proc.impl.AuralProcImpl
+import de.sciss.proc.{AuralContext, Runner}
 
 // XXX TODO remove in next major version
 /** Extends the standard aural proc implementation by injecting scalar values and

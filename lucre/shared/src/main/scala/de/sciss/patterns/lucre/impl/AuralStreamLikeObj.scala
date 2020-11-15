@@ -23,10 +23,10 @@ import de.sciss.patterns.Event
 import de.sciss.serial.TFormat
 import de.sciss.span.{Span, SpanLike}
 import de.sciss.synth.UGenSource.Vec
-import de.sciss.synth.proc.impl.AuralScheduledBase
-import de.sciss.synth.proc.impl.AuralTimelineBase.spanToPoint
-import de.sciss.synth.proc.{AuralContext, AuralObj, Runner, TimeRef}
-import de.sciss.synth.proc.SoundProcesses.{logAural => logA}
+import de.sciss.proc.impl.AuralScheduledBase
+import de.sciss.proc.impl.AuralTimelineBase.spanToPoint
+import de.sciss.proc.{AuralContext, AuralObj, Runner, TimeRef}
+import de.sciss.proc.SoundProcesses.{logAural => logA}
 
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator

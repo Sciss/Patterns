@@ -6,7 +6,7 @@ import de.sciss.patterns.PatImport._
 import de.sciss.patterns.graph._
 import de.sciss.patterns.{Event, Graph}
 import de.sciss.synth.SynthGraph
-import de.sciss.synth.proc.{AuralContext, Pattern, Transport, Proc => PProc}
+import de.sciss.proc.{AuralContext, Pattern, Transport, Proc => PProc}
 
 object EventStreamPlayerTest extends AuralTestLike.Factory {
   def main(args: Array[String]): Unit = init(args)

@@ -16,7 +16,7 @@ package stream
 
 import de.sciss.lucre.Exec
 import de.sciss.serial.DataInput
-import de.sciss.synth.proc
+import de.sciss.proc
 
 object AudioCueSampleRateImpl extends StreamFactory {
   final val typeId = 0x41437372 // "ACsr"

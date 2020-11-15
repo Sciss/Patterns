@@ -5,7 +5,7 @@ import de.sciss.lucre.synth.Txn
 import de.sciss.patterns.PatImport._
 import de.sciss.patterns.Graph
 import de.sciss.synth
-import de.sciss.synth.proc.{AuralContext, Pattern}
+import de.sciss.proc.{AuralContext, Pattern}
 
 object AuralPatternAttributeTest extends AuralTestLike.Factory {
   def main(args: Array[String]): Unit = init(args)

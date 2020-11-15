@@ -16,7 +16,7 @@ package de.sciss.patterns.stream
 import de.sciss.lucre.Exec
 import de.sciss.patterns.{Context, Stream, graph}
 import de.sciss.serial.DataOutput
-import de.sciss.synth.proc
+import de.sciss.proc
 
 abstract class AudioCueStreamImpl[T <: Exec[T], A](inStream: Stream[T, graph.AudioCue])
   extends Stream[T, A] {

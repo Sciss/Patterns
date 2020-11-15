@@ -3,7 +3,7 @@ package de.sciss.patterns.lucre
 import de.sciss.lucre.Txn
 import de.sciss.patterns
 import de.sciss.patterns.lucre.MacroImplicits._
-import de.sciss.synth.proc
+import de.sciss.proc
 
 trait MacroTest[T <: Txn[T]] {
   def make()(implicit tx: T): Unit = {

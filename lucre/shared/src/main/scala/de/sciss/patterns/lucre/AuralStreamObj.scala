@@ -20,7 +20,7 @@ import de.sciss.lucre.{Obj, Source, Txn => LTxn}
 import de.sciss.patterns.lucre.impl.AuralStreamLikeObj
 import de.sciss.span.SpanLike
 import de.sciss.synth.UGenSource.Vec
-import de.sciss.synth.proc.{AuralContext, AuralObj, Runner}
+import de.sciss.proc.{AuralContext, AuralObj, Runner}
 
 object AuralStreamObj extends AuralObj.Factory {
   def tpe: Obj.Type = Stream

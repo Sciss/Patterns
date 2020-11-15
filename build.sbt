@@ -42,7 +42,9 @@ lazy val commonSettings = Seq(
   },
   updateOptions       := updateOptions.value.withLatestSnapshots(false),
   parallelExecution in Test := false,
-  concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
+  concurrentRestrictions in Global ++= Seq(
+    Tags.limitAll(2), Tags.limit(Tags.Test, 1) // with cross-builds we otherwise get OutOfMemoryError
+  ),
 ) ++ publishSettings
 
 lazy val agpl = "AGPL v3+" -> url("http://www.gnu.org/licenses/agpl-3.0.txt")

@@ -22,9 +22,9 @@ import de.sciss.patterns.Event
 import de.sciss.patterns.lucre.impl.AuralStreamLikeAttribute.ViewImpl
 import de.sciss.serial.TFormat
 import de.sciss.span.{Span, SpanLike}
-import de.sciss.synth.proc.Runner.{State, Stopped}
-import de.sciss.synth.proc.impl.AuralScheduledBase
-import de.sciss.synth.proc.{AuralAttribute, AuralContext, ObjViewBase, Runner, TimeRef}
+import de.sciss.proc.Runner.{State, Stopped}
+import de.sciss.proc.impl.AuralScheduledBase
+import de.sciss.proc.{AuralAttribute, AuralContext, ObjViewBase, Runner, TimeRef}
 
 import scala.annotation.tailrec
 import scala.concurrent.stm.Ref

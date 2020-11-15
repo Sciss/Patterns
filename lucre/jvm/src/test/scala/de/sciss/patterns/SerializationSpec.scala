@@ -4,7 +4,7 @@ import de.sciss.patterns.PatImport._
 import de.sciss.patterns.graph.Pat
 import de.sciss.patterns.tests.RonTuplePure
 import de.sciss.serial.{DataInput, DataOutput}
-import de.sciss.synth.proc.Pattern
+import de.sciss.proc.Pattern
 import org.scalatest.matchers.should.Matchers
 
 class SerializationSpec extends DurableSpec with Matchers {

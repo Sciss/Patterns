@@ -6,7 +6,7 @@ import de.sciss.patterns.PatImport._
 import de.sciss.patterns.Graph
 import de.sciss.span.Span
 import de.sciss.synth
-import de.sciss.synth.proc.{AuralContext, Pattern}
+import de.sciss.proc.{AuralContext, Pattern}
 
 object PatternOnTimelineTest extends AuralTestLike.Factory {
   def main(args: Array[String]): Unit = init(args)

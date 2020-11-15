@@ -18,8 +18,8 @@ import de.sciss.patterns
 import de.sciss.patterns.graph.Pat
 import de.sciss.patterns.lucre.impl.{StreamImpl => Impl}
 import de.sciss.serial.{DataInput, TFormat}
-import de.sciss.synth.proc.impl.BasicAuralRunnerImpl
-import de.sciss.synth.proc.{Runner, Universe}
+import de.sciss.proc.impl.BasicAuralRunnerImpl
+import de.sciss.proc.{Runner, Universe}
 
 object Stream extends Obj.Type with Runner.Factory {
   final val typeId = 301

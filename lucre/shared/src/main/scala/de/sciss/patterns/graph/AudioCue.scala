@@ -17,7 +17,7 @@ package graph
 import de.sciss.lucre.{Adjunct, Exec, Txn, Obj => LObj}
 import de.sciss.patterns.stream.{AudioCueNumChannelsImpl, AudioCueNumFramesImpl, AudioCueSampleRateImpl}
 import de.sciss.serial.DataInput
-import de.sciss.synth.proc
+import de.sciss.proc
 
 object AudioCue extends Obj.Adjunct[AudioCue] with Adjunct.Factory {
 //  def typeId: Int = proc.AudioCue.typeId

@@ -11,20 +11,19 @@
  *  contact@sciss.de
  */
 
-package de.sciss.synth.proc
+package de.sciss.proc
 
 import de.sciss.lucre.Event.Targets
 import de.sciss.lucre.impl.{DummyEvent, ExprTypeImpl}
 import de.sciss.lucre.{Copy, Elem, Event, EventLike, Expr, Ident, Txn, expr, synth, Obj => LObj, Var => LVar}
 import de.sciss.model.Change
-import de.sciss.patterns
 import de.sciss.patterns.graph.Pat
 import de.sciss.patterns.lucre.{AuralPatternAttribute, AuralPatternObj, Stream}
 import de.sciss.patterns.{Graph, stream, Stream => PStream}
+import de.sciss.{patterns, proc}
+import de.sciss.proc.Code.{Example, Import}
+import de.sciss.proc.impl.{BasicAuralRunnerImpl, CodeImpl}
 import de.sciss.serial.{ConstFormat, DataInput, DataOutput}
-import de.sciss.synth.proc
-import de.sciss.synth.proc.Code.{Example, Import}
-import de.sciss.synth.proc.impl.{BasicAuralRunnerImpl, CodeImpl}
 
 import scala.collection.immutable.{IndexedSeq => Vec, Seq => ISeq}
 import scala.concurrent.Future
