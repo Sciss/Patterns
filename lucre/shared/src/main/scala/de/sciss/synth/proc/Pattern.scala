@@ -164,7 +164,7 @@ object Pattern extends ExprTypeImpl[Pat[_], Pattern] with Runner.Factory {
 
     def prelude : String =
       """object Main {
-        |  def __result__ : de.sciss.patterns.Pat[_] = {
+        |  def __result__ : de.sciss.patterns.graph.Pat[_] = {
         |""".stripMargin
 
     def postlude: String = "\n  }\n}\n"
