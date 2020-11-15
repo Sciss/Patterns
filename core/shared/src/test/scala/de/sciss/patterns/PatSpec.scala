@@ -1,6 +1,7 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.Plain
+import de.sciss.patterns.graph.Pat
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -8,6 +9,8 @@ trait PatSpec extends AnyFlatSpec with Matchers {
   type S = Plain
 
   implicit val ctx: Context[Plain] = Context()
+
+  def any2stringadd: Any = ()
 
   def work: String = "produce the expected output"
 

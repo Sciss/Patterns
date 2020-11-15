@@ -15,7 +15,7 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.{Exec, Ident, Var}
-import de.sciss.patterns.graph.LoopWithIndex
+import de.sciss.patterns.graph.{LoopWithIndex, Pat}
 import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.annotation.tailrec

@@ -3,8 +3,7 @@ package de.sciss.patterns
 import de.sciss.file._
 import de.sciss.lucre.Durable
 import de.sciss.lucre.store.BerkeleyDB
-import de.sciss.patterns.lucre.Pattern
-import de.sciss.synth.proc.SoundProcesses
+import de.sciss.synth.proc.{Pattern, SoundProcesses}
 import org.scalatest.Outcome
 import org.scalatest.flatspec.FixtureAnyFlatSpec
 

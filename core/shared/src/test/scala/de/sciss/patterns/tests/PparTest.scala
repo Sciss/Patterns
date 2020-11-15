@@ -1,8 +1,9 @@
 package de.sciss.patterns.tests
 
 import de.sciss.lucre.Plain
-import de.sciss.patterns.graph.{Bind, Par}
-import de.sciss.patterns.{Context, Pat}
+import de.sciss.patterns.PatImport._
+import de.sciss.patterns.graph.{Bind, Par, Pat}
+import de.sciss.patterns.Context
 
 object PparTest extends App {
   implicit val ctx: Context[Plain] = Context()

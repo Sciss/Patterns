@@ -1,5 +1,8 @@
 package de.sciss.patterns
 
+import de.sciss.patterns.PatImport._
+import de.sciss.patterns.graph.Pat
+
 class FoldLeftSpec extends PatSpec {
   "FoldLeft" should work in {
     val in1   = List(1, 4, 7, 10, 13)

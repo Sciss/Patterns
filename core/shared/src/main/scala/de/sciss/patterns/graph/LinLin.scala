@@ -17,7 +17,7 @@ import de.sciss.lucre.Adjunct.{NumFrac, Widen2}
 import de.sciss.lucre.{Adjunct, ProductWithAdjuncts}
 import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.LinLinImpl
-import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
+import de.sciss.patterns.{Context, Stream, Transform}
 
 final case class LinLin[A1, A2, A](in: Pat[A1], inLo: Pat[A1], inHi: Pat[A1],
                                    outLo: Pat[A2], outHi: Pat[A2])

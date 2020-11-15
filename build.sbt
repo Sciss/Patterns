@@ -5,6 +5,7 @@ lazy val mimaVersion        = "1.1.0"
 
 val deps = new {
   val core = new {
+    val log                 = "0.1.1"
     val lucre               = "4.2.0-SNAPSHOT"
     val numbers             = "0.2.1"
     val optional            = "1.0.1"
@@ -94,6 +95,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform).in(file("core"))
   .settings(
     name := s"$baseName-core",
     libraryDependencies ++= Seq(
+      "de.sciss" %%% "log"                          % deps.core.log,
       "de.sciss" %%% "numbers"                      % deps.core.numbers,
       "de.sciss" %%% "optional"                     % deps.core.optional,
       "de.sciss" %%% "serial"                       % deps.core.serial,

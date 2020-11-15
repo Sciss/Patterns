@@ -1,6 +1,6 @@
 package de.sciss.patterns
 
-import de.sciss.patterns.graph.Constant
+import de.sciss.patterns.graph.{Constant, Pat}
 import org.scalatest.matchers.should.Matchers
 
 class EventSerializationSpec extends DurableSpec with Matchers {

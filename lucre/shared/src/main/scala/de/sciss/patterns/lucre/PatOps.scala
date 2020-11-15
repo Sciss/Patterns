@@ -14,6 +14,8 @@
 package de.sciss.patterns
 package lucre
 
+import de.sciss.patterns.graph.Pat
+
 final class AudioCueOps(private val x: Pat[graph.AudioCue]) extends AnyVal {
   def numFrames   : Pat[Long  ] = graph.AudioCue.NumFrames  (x)
   def sampleRate  : Pat[Double] = graph.AudioCue.SampleRate (x)

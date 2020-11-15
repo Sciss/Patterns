@@ -14,6 +14,7 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.Adjunct.{Eq, Num, NumBool, NumDouble, NumFrac, NumInt, Ord, ScalarOrd, ToNum, Widen, Widen2, WidenToDouble}
+import de.sciss.patterns.PatImport._
 import de.sciss.patterns.graph.{BinaryOp => BinOp, UnaryOp => UnOp, _}
 
 /** `PatOps` are operations for patterns (`Pat`). Instead of having these operations directly defined

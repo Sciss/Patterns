@@ -15,7 +15,7 @@ package de.sciss.patterns.graph
 
 import de.sciss.lucre.Exec
 import de.sciss.patterns.stream.SlidingImpl
-import de.sciss.patterns.{Context, Pat, Pattern, Stream, Transform}
+import de.sciss.patterns.{Context, Stream, Transform}
 
 final case class Sliding[A](in: Pat[A], size: Pat[Int], step: Pat[Int]) extends Pattern[Pat[A]] { pat =>
 

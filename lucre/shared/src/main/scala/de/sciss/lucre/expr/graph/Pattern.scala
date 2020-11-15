@@ -21,9 +21,10 @@ import de.sciss.lucre.expr.impl.{IActionImpl, ITriggerConsumer}
 import de.sciss.lucre.expr.{CellView, Context, IAction, IControl}
 import de.sciss.lucre.impl.{IChangeEventImpl, IChangeGeneratorEvent}
 import de.sciss.model.Change
-import de.sciss.patterns.lucre.{Context => LContext, Pattern => LPattern}
+import de.sciss.patterns.lucre.{Context => LContext}
 import de.sciss.patterns.{Stream => PStream}
 import de.sciss.serial.{DataInput, TFormat}
+import de.sciss.synth.proc
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.concurrent.stm.Ref
@@ -37,12 +38,12 @@ object Pattern {
   def init(): Unit = _init
 
   private final class CellViewImpl[T <: Txn[T]](h: Source[T, LObj[T]], key: String)
-    extends ObjCellViewVarImpl[T, LPattern, Pattern](h, key) {
+    extends ObjCellViewVarImpl[T, proc.Pattern, Pattern](h, key) {
 
-    implicit def format: TFormat[T, Option[LPattern[T]]] =
+    implicit def format: TFormat[T, Option[proc.Pattern[T]]] =
       TFormat.option
 
-    protected def lower(peer: LPattern[T])(implicit tx: T): Pattern =
+    protected def lower(peer: proc.Pattern[T])(implicit tx: T): Pattern =
       wrap[T](peer)
   }
 
@@ -63,31 +64,31 @@ object Pattern {
         }
 
         protected def tryParseObj(obj: LObj[T])(implicit tx: T): Option[Pattern] = obj match {
-          case peer: LPattern[T]  => Some(wrap(peer))
+          case peer: proc.Pattern[T]  => Some(wrap(peer))
           case _                  => None
         }
       }
 
     def cellValue[T <: Txn[T]](obj: LObj[T], key: String)(implicit tx: T): Option[Pattern] =
-      obj.attr.$[LPattern](key).map(wrap(_))
+      obj.attr.$[proc.Pattern](key).map(wrap(_))
 
     def tryParseObj[T <: Txn[T]](obj: LObj[T])(implicit tx: T): Option[Pattern] = obj match {
-      case a: LPattern[T]   => Some(wrap(a))
+      case a: proc.Pattern[T]   => Some(wrap(a))
       case _                => None
     }
   }
 
   // used by Mellite (no transaction available)
-  private[lucre] def wrapH[T <: Txn[T]](peer: Source[T, LPattern[T]], system: Sys): Pattern =
+  private[lucre] def wrapH[T <: Txn[T]](peer: Source[T, proc.Pattern[T]], system: Sys): Pattern =
     new Impl[T](peer, system)
 
-  private[lucre] def wrap[T <: Txn[T]](peer: LPattern[T])(implicit tx: T): Pattern =
+  private[lucre] def wrap[T <: Txn[T]](peer: proc.Pattern[T])(implicit tx: T): Pattern =
     new Impl[T](tx.newHandle(peer), tx.system)
 
-  private final class Impl[T <: Txn[T]](in: Source[T, LPattern[T]], system: Sys)
-    extends ObjImplBase[T, LPattern](in, system) with Pattern {
+  private final class Impl[T <: Txn[T]](in: Source[T, proc.Pattern[T]], system: Sys)
+    extends ObjImplBase[T, proc.Pattern](in, system) with Pattern {
 
-    override type Peer[~ <: Txn[~]] = LPattern[~]
+    override type Peer[~ <: Txn[~]] = proc.Pattern[~]
   }
 
   private[lucre] object Empty extends Pattern {
@@ -100,7 +101,7 @@ object Pattern {
     protected def empty: Pattern = Empty
 
     protected def make()(implicit tx: T): Pattern = {
-      val peer = LPattern[T]()
+      val peer = proc.Pattern[T]()
       new Impl(tx.newHandle(peer), tx.system)
     }
   }
@@ -146,7 +147,7 @@ object Pattern {
         (st, ctx)
       }
 
-    private def mkPatCtx(lPat: LPattern[T])(implicit tx: T): CtxI =
+    private def mkPatCtx(lPat: proc.Pattern[T])(implicit tx: T): CtxI =
       LContext.dual[T, I](lPat)
 
     private[lucre] def pullChange(pull: IPull[T])(implicit tx: T, phase: IPull.Phase): Pattern = {
@@ -388,5 +389,5 @@ object Pattern {
   }
 }
 trait Pattern extends Obj {
-  type Peer[~ <: Txn[~]] = LPattern[~]
+  type Peer[~ <: Txn[~]] = proc.Pattern[~]
 }

@@ -15,7 +15,7 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.{Exec, Ident, Var}
-import de.sciss.patterns.graph.Flatten
+import de.sciss.patterns.graph.{Flatten, Pat}
 import de.sciss.serial.{DataInput, DataOutput}
 
 import scala.annotation.tailrec

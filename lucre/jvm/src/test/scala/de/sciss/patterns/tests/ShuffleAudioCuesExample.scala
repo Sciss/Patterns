@@ -4,12 +4,11 @@ import de.sciss.audiofile.AudioFile
 import de.sciss.file._
 import de.sciss.lucre.synth.Txn
 import de.sciss.lucre.{Cursor, StringObj, Folder => LFolder}
-import de.sciss.patterns.graph.Ops._
+import de.sciss.patterns.lucre.PatImport._
 import de.sciss.patterns.graph._
-import de.sciss.patterns.lucre.Pattern
 import de.sciss.patterns.{Event, Graph}
 import de.sciss.synth.SynthGraph
-import de.sciss.synth.proc.{AuralContext, ObjKeys, Transport, AudioCue => PAudioCue, Proc => PProc}
+import de.sciss.synth.proc.{AuralContext, ObjKeys, Pattern, Transport, AudioCue => PAudioCue, Proc => PProc}
 
 object ShuffleAudioCuesExample extends AuralTestLike.Factory {
   def main(args: Array[String]): Unit = init(args)

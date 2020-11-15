@@ -17,7 +17,7 @@ package stream
 import de.sciss.lucre.Adjunct
 import de.sciss.lucre.Adjunct.Widen2
 import de.sciss.lucre.Exec
-import de.sciss.patterns.graph.BinaryOp
+import de.sciss.patterns.graph.{BinaryOp, Pat}
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
 

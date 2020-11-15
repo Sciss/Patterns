@@ -15,7 +15,7 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.{Exec, Ident, Var}
-import de.sciss.patterns.graph.Apply
+import de.sciss.patterns.graph.{Apply, Pat}
 import de.sciss.serial.{DataInput, DataOutput}
 
 object ApplyImpl extends StreamFactory {

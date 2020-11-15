@@ -1,8 +1,9 @@
 package de.sciss.patterns.tests
 
 import de.sciss.lucre.Plain
+import de.sciss.patterns.PatImport._
 import de.sciss.patterns.graph._
-import de.sciss.patterns.{Context, Graph, Pat}
+import de.sciss.patterns.{Context, Graph}
 
 object ForComprehensionTest extends App {
   val b1 = Graph {

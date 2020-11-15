@@ -11,12 +11,15 @@
  *  contact@sciss.de
  */
 
-package de.sciss.patterns
+package de.sciss.patterns.graph
 
 import de.sciss.lucre.Exec
-import de.sciss.patterns.graph.{Constant, LoopWithIndex, PatSeq}
+import de.sciss.patterns.PatImport._
 import de.sciss.patterns.impl.PatElem
-import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
+import de.sciss.patterns.{Context, Graph, PatNestedOps, PatOps, PatTuple2Ops, Stream, Transform}
+import de.sciss.serial.{ConstFormat, DataInput, DataOutput}
+
+import scala.language.implicitConversions
 
 object Pat {
 //  def Int    (elems: scala.Int*    ): Pat[Int]      = apply[Int    ](elems: _*)
@@ -43,6 +46,12 @@ object Pat {
     // XXX TODO --- introduce an optimised version of this
     Constant(Pat(0)).take(n).foldLeft(in)((y, _) => fun(y))
   }
+
+  implicit def patOps      [A]    (p: Pat[A]     ): PatOps      [A]     = new PatOps(p)
+  implicit def patNestedOps[A]    (p: Pat[Pat[A]]): PatNestedOps[A]     = new PatNestedOps(p)
+  implicit def patTuple2Ops[A, B] (p: Pat[(A, B)]): PatTuple2Ops[A, B]  = new PatTuple2Ops(p)
+
+  // ---- serialization ----
 
   def read[A](in: DataInput): Pat[A] = format[A].read(in)
 

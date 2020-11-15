@@ -16,6 +16,8 @@ package stream
 
 import de.sciss.lucre.{Exec, Ident, Var}
 import de.sciss.serial.{DataInput, DataOutput}
+import de.sciss.patterns.Log.{stream => logStream}
+import de.sciss.patterns.graph.Pat
 
 object MapItStream extends StreamFactory {
 
@@ -105,14 +107,14 @@ object MapItStream extends StreamFactory {
       valid()   = 0x03 // hasIn and _hasNext will be valid
       val ohn   = outerStream.hasNext
       // $COVERAGE-OFF$
-      logStream(s"$simpleString.advance(): outerStream.hasNext = $ohn")
+      logStream.debug(s"$simpleString.advance(): outerStream.hasNext = $ohn")
       // $COVERAGE-ON$
       if (ohn) {
         val inPat     = outerStream.next()
         val inValue   = inPat.expand
         val ihn       = inValue.hasNext
         // $COVERAGE-OFF$
-        logStream(s"$simpleString.advance(): inValue.hasNext = $ihn")
+        logStream.debug(s"$simpleString.advance(): inValue.hasNext = $ihn")
         // $COVERAGE-ON$
         inStream()    = inValue
         hasIn()       = true
@@ -150,7 +152,7 @@ object MapItStream extends StreamFactory {
       if ((v0 & 0x03) == 0x03) {
         val hi = hasIn()
         // $COVERAGE-OFF$
-        logStream(s"$simpleString.reset(); hasIn = $hi")
+        logStream.debug(s"$simpleString.reset(); hasIn = $hi")
         // $COVERAGE-ON$
         if (hi) {
           val inValue = inStream()
@@ -171,7 +173,7 @@ object MapItStream extends StreamFactory {
       val res     = in.next()
       _hasNext()  = in.hasNext
       // $COVERAGE-OFF$
-      logStream(s"$simpleString.next() = $res; hasNext = ${in.hasNext}")
+      logStream.debug(s"$simpleString.next() = $res; hasNext = ${in.hasNext}")
       // $COVERAGE-ON$
       res
     }

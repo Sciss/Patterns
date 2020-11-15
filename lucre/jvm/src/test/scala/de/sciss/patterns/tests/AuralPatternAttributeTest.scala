@@ -2,10 +2,10 @@ package de.sciss.patterns.tests
 
 import de.sciss.lucre.Cursor
 import de.sciss.lucre.synth.Txn
+import de.sciss.patterns.PatImport._
 import de.sciss.patterns.Graph
-import de.sciss.patterns.lucre.Pattern
 import de.sciss.synth
-import de.sciss.synth.proc.AuralContext
+import de.sciss.synth.proc.{AuralContext, Pattern}
 
 object AuralPatternAttributeTest extends AuralTestLike.Factory {
   def main(args: Array[String]): Unit = init(args)

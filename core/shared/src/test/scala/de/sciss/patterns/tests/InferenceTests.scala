@@ -1,6 +1,7 @@
 package de.sciss.patterns.tests
 
-import de.sciss.patterns.{Pat, graph}
+import de.sciss.patterns.PatImport._
+import de.sciss.patterns.graph
 
 trait InferenceTests {
   import graph._

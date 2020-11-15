@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.Exec
+import de.sciss.patterns.PatImport._
 import de.sciss.patterns.stream.PollImpl
 
 /** A pattern that prints snapshots of its input to the console.

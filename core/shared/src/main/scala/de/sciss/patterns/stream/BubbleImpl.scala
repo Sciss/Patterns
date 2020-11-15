@@ -15,7 +15,7 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.Exec
-import de.sciss.patterns.graph.Bubble
+import de.sciss.patterns.graph.{Bubble, Pat}
 import de.sciss.serial.{DataInput, DataOutput}
 
 object BubbleImpl extends StreamFactory {

@@ -1,6 +1,7 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.Plain
+import de.sciss.patterns.PatImport._
 
 class MCESpec extends PatSpec {
   import graph._

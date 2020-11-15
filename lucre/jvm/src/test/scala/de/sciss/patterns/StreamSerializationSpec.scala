@@ -2,11 +2,15 @@ package de.sciss.patterns
 
 import de.sciss.lucre.Adjunct.WidenToDouble
 import de.sciss.lucre.Plain
+import de.sciss.patterns.PatImport._
+import de.sciss.patterns.graph.Pat
 import de.sciss.patterns.lucre.{Context => LContext}
 import de.sciss.patterns.{Context => PContext, Stream => PStream}
 import org.scalatest.matchers.should.Matchers
 
 class StreamSerializationSpec extends DurableSpec with Matchers {
+  def any2stringadd: Any = ()
+
   def verify[A](thunk: => Pat[A])(implicit sys: S): Unit = {
     val p = Graph(thunk)
     verifyGraph(p)

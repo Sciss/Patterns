@@ -1,6 +1,7 @@
 package de.sciss.patterns.lucre
 
-import de.sciss.patterns.{Graph, Pat}
+import de.sciss.patterns.Graph
+import de.sciss.patterns.PatImport._
 import de.sciss.patterns.graph._
 
 class PatternsSpec extends PatSpec {

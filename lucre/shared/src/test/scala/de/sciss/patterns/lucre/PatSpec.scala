@@ -2,7 +2,8 @@ package de.sciss.patterns.lucre
 
 import de.sciss.lucre.InMemory
 import de.sciss.patterns
-import de.sciss.patterns.{Pat, Stream => PStream}
+import de.sciss.patterns.graph.Pat
+import de.sciss.patterns.{Stream => PStream}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

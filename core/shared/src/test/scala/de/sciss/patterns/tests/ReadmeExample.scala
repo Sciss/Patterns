@@ -1,5 +1,7 @@
 package de.sciss.patterns.tests
 
+import de.sciss.patterns.PatImport._
+
 object ReadmeExample {
   def main(args: Array[String]): Unit = new ReadmeExample
 }

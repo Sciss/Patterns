@@ -1,5 +1,5 @@
 /*
- *  Transform.scala
+ *  Log.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2020 Hanns Holger Rutz. All rights reserved.
@@ -13,12 +13,8 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.Exec
-import de.sciss.patterns.graph.Pat
+import de.sciss.log.Logger
 
-trait Transform {
-  final def apply[T <: Exec[T], A](in: Pat[A])(implicit ctx: Context[T], tx: T): Pat[A] =
-    applyOne(in).transform(this)
-
-  protected def applyOne[A](in: Pat[A]): Pat[A]
+object Log {
+  final val stream: Logger = new Logger("pattern")
 }

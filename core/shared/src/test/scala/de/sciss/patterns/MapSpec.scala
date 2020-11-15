@@ -1,5 +1,8 @@
 package de.sciss.patterns
 
+import de.sciss.patterns.PatImport._
+import de.sciss.patterns.graph.Pat
+
 class MapSpec extends PatSpec {
   "Map" should work in {
     val pat1 = Graph {

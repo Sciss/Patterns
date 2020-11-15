@@ -15,8 +15,9 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.Exec
-import de.sciss.patterns.graph.FlatMap
+import de.sciss.patterns.graph.{FlatMap, Pat}
 import de.sciss.serial.{DataInput, DataOutput}
+import de.sciss.patterns.Log.{stream => logStream}
 
 object FlatMapImpl extends StreamFactory {
   final val typeId = 0x464D6170 // "FMap"
@@ -119,7 +120,7 @@ object FlatMapImpl extends StreamFactory {
 
     final def reset()(implicit tx: T): Unit = {
       // $COVERAGE-OFF$
-      logStream("FlatMap.iterator.reset()")
+      logStream.debug("FlatMap.iterator.reset()")
       // $COVERAGE-ON$
       mapItStreams /* ctx.getStreams(ref) */.foreach {
         case m: AdvanceItStream[T, _] => m.resetOuter()
@@ -137,7 +138,7 @@ object FlatMapImpl extends StreamFactory {
 
     private def advance()(implicit ctx: Context[T], tx: T): Unit = {
       // $COVERAGE-OFF$
-      logStream("FlatMap.iterator.advance()")
+      logStream.debug("FlatMap.iterator.advance()")
       // $COVERAGE-ON$
       mapItStreams /* ctx.getStreams(ref) */.foreach {
         case m: AdvanceItStream[T, _] => m.advance()
@@ -150,7 +151,7 @@ object FlatMapImpl extends StreamFactory {
         if (!hasNextI) Stream.exhausted()
         val res = innerStream.next()
         // $COVERAGE-OFF$
-        logStream(s"FlatMap.iterator.next() = $res; innerStream.hasNext = ${innerStream.hasNext}; itStream.hasNext = ${itStream.hasNext}")
+        logStream.debug(s"FlatMap.iterator.next() = $res; innerStream.hasNext = ${innerStream.hasNext}; itStream.hasNext = ${itStream.hasNext}")
         // $COVERAGE-ON$
         if (!innerStream.hasNext && itStream.hasNext) advance()
         res

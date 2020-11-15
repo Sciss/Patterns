@@ -15,7 +15,7 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.{Exec, Ident, Var}
-import de.sciss.patterns.graph.Sliding
+import de.sciss.patterns.graph.{Pat, Sliding}
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
 

@@ -19,6 +19,7 @@ import de.sciss.lucre.Adjunct.Widen2
 import de.sciss.lucre.Exec
 import de.sciss.patterns.graph.Cat
 import de.sciss.serial.{DataInput, DataOutput}
+import de.sciss.patterns.Log.{stream => logStream}
 
 object CatImpl extends StreamFactory {
   final val typeId = 0x43617420 // "Cat "
@@ -87,7 +88,7 @@ object CatImpl extends StreamFactory {
         widen.widen2(bVal)
       }
       // $COVERAGE-OFF$
-      logStream(s"Cat.iterator.next(); ai.hasNext = $ahn; res = $res") // ${stream.hashCode().toHexString}
+      logStream.debug(s"Cat.iterator.next(); ai.hasNext = $ahn; res = $res") // ${stream.hashCode().toHexString}
       // $COVERAGE-ON$
       res
     }

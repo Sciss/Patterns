@@ -1,5 +1,5 @@
 /*
- *  Ops.scala
+ *  PatImport.scala
  *  (Patterns)
  *
  *  Copyright (c) 2017-2020 Hanns Holger Rutz. All rights reserved.
@@ -11,14 +11,16 @@
  *  contact@sciss.de
  */
 
-package de.sciss.patterns.graph
+package de.sciss.patterns.lucre
 
-import de.sciss.patterns.{Pat, graph}
-import de.sciss.patterns.lucre.{AudioCueOps, FolderOps}
+import de.sciss.patterns.graph.{Attribute, Pat}
+import de.sciss.patterns
+import de.sciss.patterns.graph
 
 import scala.language.implicitConversions
 
-object Ops {
+object PatImport extends PatImport
+trait PatImport extends patterns.PatImport {
   implicit def audioCueOps[A](p: Pat      [graph.AudioCue]): AudioCueOps  = new AudioCueOps (p)
   implicit def folderOps  [A](p: Attribute[graph.Folder  ]): FolderOps    = new FolderOps   (p)
 

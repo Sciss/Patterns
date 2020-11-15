@@ -11,19 +11,20 @@
  *  contact@sciss.de
  */
 
-package de.sciss.patterns.lucre
+package de.sciss.synth.proc
 
 import de.sciss.lucre.Event.Targets
 import de.sciss.lucre.impl.{DummyEvent, ExprTypeImpl}
 import de.sciss.lucre.{Copy, Elem, Event, EventLike, Expr, Ident, Txn, expr, synth, Obj => LObj, Var => LVar}
 import de.sciss.model.Change
 import de.sciss.patterns
-import de.sciss.patterns.{Graph, Pat, stream, Stream => PStream}
+import de.sciss.patterns.graph.Pat
+import de.sciss.patterns.lucre.{AuralPatternAttribute, AuralPatternObj, Stream}
+import de.sciss.patterns.{Graph, stream, Stream => PStream}
 import de.sciss.serial.{ConstFormat, DataInput, DataOutput}
 import de.sciss.synth.proc
 import de.sciss.synth.proc.Code.{Example, Import}
 import de.sciss.synth.proc.impl.{BasicAuralRunnerImpl, CodeImpl}
-import de.sciss.synth.proc.{Runner, Universe}
 
 import scala.collection.immutable.{IndexedSeq => Vec, Seq => ISeq}
 import scala.concurrent.Future
@@ -130,9 +131,9 @@ object Pattern extends ExprTypeImpl[Pat[_], Pattern] with Runner.Factory {
         Import("de.sciss.numbers.Implicits", All),
         Import("de.sciss.kollflitz.Ops", All),
         Import("de.sciss.lucre", Name("Adjunct") :: Nil),
-        Import("de.sciss.patterns", All),
+        Import("de.sciss.patterns", List(Name("Event"), Name("Scale"), Name("Tuning"))),
         Import("de.sciss.patterns.graph", All),
-        Import("de.sciss.patterns.graph.Ops", All)
+        Import("de.sciss.patterns.lucre.PatImport", All)
       ))
       //      proc.Code.registerImports(proc.Code.Action.id, Vec(
       //        "de.sciss.patterns.lucre.Pattern"

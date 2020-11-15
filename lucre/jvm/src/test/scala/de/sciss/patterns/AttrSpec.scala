@@ -1,8 +1,9 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.{InMemory, IntObj, StringObj, Folder => LFolder}
-import de.sciss.patterns.graph.Ops._
-import de.sciss.patterns.lucre.{Context => LContext, Pattern}
+import de.sciss.patterns.lucre.PatImport._
+import de.sciss.patterns.lucre.{Context => LContext}
+import de.sciss.synth.proc.Pattern
 import org.scalatest.matchers.should.Matchers
 
 class AttrSpec extends DurableSpec with Matchers {

@@ -15,7 +15,7 @@ package de.sciss.patterns.lucre
 
 import de.sciss.lucre.{Obj, Publisher, Ref, Txn, expr, synth}
 import de.sciss.patterns
-import de.sciss.patterns.Pat
+import de.sciss.patterns.graph.Pat
 import de.sciss.patterns.lucre.impl.{StreamImpl => Impl}
 import de.sciss.serial.{DataInput, TFormat}
 import de.sciss.synth.proc.impl.BasicAuralRunnerImpl

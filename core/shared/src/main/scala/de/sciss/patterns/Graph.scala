@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.patterns.graph.It
+import de.sciss.patterns.graph.{It, Pat}
 
 object Graph {
   trait Builder {

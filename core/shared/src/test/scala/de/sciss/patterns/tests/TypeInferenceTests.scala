@@ -1,8 +1,8 @@
 package de.sciss.patterns.tests
 
 import de.sciss.lucre.Adjunct.{Num, Widen, Widen2}
-import de.sciss.patterns.Pat
-import de.sciss.patterns.graph._
+import de.sciss.patterns.PatImport._
+import de.sciss.patterns.graph.{Pat, _}
 
 trait TypeInferenceTests {
   implicitly[Widen2[Int, Double, Double]]

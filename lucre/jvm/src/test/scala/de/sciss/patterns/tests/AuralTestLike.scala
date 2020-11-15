@@ -4,9 +4,8 @@ import de.sciss.log.Level
 import de.sciss.lucre.store.BerkeleyDB
 import de.sciss.lucre.synth.{Server, Txn}
 import de.sciss.lucre.{Cursor, DoubleObj}
-import de.sciss.patterns.lucre.Pattern
 import de.sciss.synth.SynthGraph
-import de.sciss.synth.proc.{AuralContext, AuralObj, Confluent, Durable, Proc, SoundProcesses, TimeRef, Timeline, Universe}
+import de.sciss.synth.proc.{AuralContext, AuralObj, Confluent, Durable, Pattern, Proc, SoundProcesses, TimeRef, Timeline, Universe}
 import de.sciss.synth.proc.SoundProcesses.{logAural, logTransport}
 
 import scala.concurrent.stm.Txn

@@ -15,8 +15,9 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.{Exec, Ident, RefSet, Var}
-import de.sciss.patterns.graph.MapWithIndex
+import de.sciss.patterns.graph.{MapWithIndex, Pat}
 import de.sciss.serial.{DataInput, DataOutput}
+import de.sciss.patterns.Log.{stream => logStream}
 
 object MapWithIndexImpl extends StreamFactory {
   final val typeId = 0x4D617049 // "MapI"
@@ -191,7 +192,7 @@ object MapWithIndexImpl extends StreamFactory {
 
     private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
       // $COVERAGE-OFF$
-      logStream("MapWithIndex.iterator.validate()")
+      logStream.debug("MapWithIndex.iterator.validate()")
       // $COVERAGE-ON$
       buildNext()
     }

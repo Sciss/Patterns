@@ -14,8 +14,9 @@
 package de.sciss.patterns.lucre
 
 import de.sciss.lucre.Txn
-import de.sciss.patterns.Pat
+import de.sciss.patterns.graph.Pat
 import de.sciss.patterns.lucre.impl.Macros
+import de.sciss.synth.proc.Pattern
 
 import scala.language.experimental.macros
 

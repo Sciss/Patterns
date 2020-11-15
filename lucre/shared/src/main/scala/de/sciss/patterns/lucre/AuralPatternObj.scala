@@ -21,7 +21,7 @@ import de.sciss.patterns
 import de.sciss.patterns.lucre.impl.AuralStreamLikeObj
 import de.sciss.span.SpanLike
 import de.sciss.synth.UGenSource.Vec
-import de.sciss.synth.proc.{AuralContext, AuralObj, Runner}
+import de.sciss.synth.proc.{AuralContext, AuralObj, Pattern, Runner}
 
 object AuralPatternObj extends AuralObj.Factory {
   def tpe: LObj.Type = Pattern

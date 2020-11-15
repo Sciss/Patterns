@@ -19,7 +19,7 @@ import de.sciss.lucre.{Disposable, Obj, Source, Txn => LTxn}
 import de.sciss.patterns
 import de.sciss.patterns.lucre.impl.AuralStreamLikeAttribute
 import de.sciss.patterns.lucre.impl.AuralStreamLikeAttribute.View
-import de.sciss.synth.proc.{AuralAttribute, AuralContext}
+import de.sciss.synth.proc.{AuralAttribute, AuralContext, Pattern}
 
 /*
   XXX TODO: some DRY with AuralGraphemeBase

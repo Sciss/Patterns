@@ -14,7 +14,8 @@
 package de.sciss.patterns
 
 import de.sciss.lucre.{Exec, Plain, RandomObj}
-import de.sciss.patterns.graph.It
+import de.sciss.patterns.graph.{It, Pat}
+import de.sciss.patterns.Log.{stream => logStream}
 import de.sciss.patterns.impl.StreamFormat
 import de.sciss.patterns.stream.{ItStream, ItStreamSource}
 import de.sciss.serial.TFormat
@@ -207,12 +208,12 @@ private[patterns] abstract class ContextLike[T <: Exec[T]](tx0: T) extends Conte
     val source              = sources.head
     val res0: Stream[T, _]  = source.mkItStream()(this, tx)
     val res                 = res0.asInstanceOf[Stream[T, A]]
-    logStream(s"Context.mkItStream($token) = $res")
+    logStream.debug(s"Context.mkItStream($token) = $res")
     res
   }
 
   def registerItStream[A](it: ItStream[T, A])(implicit tx: T): Unit = {
-    logStream(s"Context.registerItStream($it)")
+    logStream.debug(s"Context.registerItStream($it)")
     val token               = it.token
     val sources             = tokenMap.get(token).get
     val source: ItStreamSource[T, _] = sources.head

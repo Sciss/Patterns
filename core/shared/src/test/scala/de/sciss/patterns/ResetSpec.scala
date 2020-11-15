@@ -1,5 +1,8 @@
 package de.sciss.patterns
 
+import de.sciss.patterns.PatImport._
+import de.sciss.patterns.graph.Pat
+
 class ResetSpec extends PatSpec {
   "Map reset" should work in {
     val pat = Graph {

@@ -15,7 +15,7 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.{Exec, Ident, Var}
-import de.sciss.patterns.graph.Grouped
+import de.sciss.patterns.graph.{Grouped, Pat}
 import de.sciss.serial.{DataInput, DataOutput}
 
 object GroupedImpl extends StreamFactory {

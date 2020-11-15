@@ -15,8 +15,9 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.{Exec, Ident, Var}
-import de.sciss.patterns.graph.{FoldLeft, It}
+import de.sciss.patterns.graph.{FoldLeft, It, Pat}
 import de.sciss.serial.{DataInput, DataOutput}
+import de.sciss.patterns.Log.{stream => logStream}
 
 object FoldLeftImpl extends StreamFactory {
   final val typeId = 0x466F6C4C // "FolL"
@@ -94,7 +95,7 @@ object FoldLeftImpl extends StreamFactory {
     private def validate()(implicit ctx: Context[T], tx: T): Unit =
       if (!valid()) {
         valid()      = true
-        logStream("FoldLeft.iterator.validate()")
+        logStream.debug("FoldLeft.iterator.validate()")
         val _outer        = outerStream.toVector
         val innerRewrite  = _outer.foldLeft(z) { (y: Pat[A], x: Pat[B]) =>
           val t = new Transform {
@@ -126,7 +127,7 @@ object FoldLeftImpl extends StreamFactory {
       if (!hasNext) Stream.exhausted()
       val s = result()
       val res = s.next()
-      logStream(s"FoldLeft.iterator.next() = $res")
+      logStream.debug(s"FoldLeft.iterator.next() = $res")
       res
     }
   }

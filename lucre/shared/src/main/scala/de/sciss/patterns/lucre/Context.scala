@@ -15,9 +15,10 @@ package de.sciss.patterns.lucre
 
 import de.sciss.lucre.{Disposable, Ident, Random, RandomObj, Source, Txn, Var, Obj => LObj}
 import de.sciss.patterns
-import de.sciss.patterns.graph.It
-import de.sciss.patterns.{ContextLike, Obj, Pat}
+import de.sciss.patterns.graph.{It, Pat}
+import de.sciss.patterns.{ContextLike, Obj}
 import de.sciss.serial.{DataInput, DataOutput, Writable}
+import de.sciss.synth.proc.Pattern
 
 import scala.concurrent.stm.TxnLocal
 

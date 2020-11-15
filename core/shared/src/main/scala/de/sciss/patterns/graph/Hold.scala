@@ -15,6 +15,7 @@ package de.sciss.patterns
 package graph
 
 import de.sciss.lucre.Exec
+import de.sciss.patterns.PatImport._
 import de.sciss.patterns.stream.HoldImpl
 
 /** A pattern that holds (and repeats) input values whenever `hold` is true.

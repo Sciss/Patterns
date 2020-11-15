@@ -15,8 +15,9 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.{Exec, Ident, Var}
-import de.sciss.patterns.graph.PatMap
+import de.sciss.patterns.graph.{Pat, PatMap}
 import de.sciss.serial.{DataInput, DataOutput}
+import de.sciss.patterns.Log.{stream => logStream}
 
 object PatMapImpl extends StreamFactory {
   final val typeId = 0x4D617020 // "Map "
@@ -163,7 +164,7 @@ object PatMapImpl extends StreamFactory {
       mapItStreams.add(stream)
 
     private def validate()(implicit ctx: Context[T], tx: T): Unit = if (!valid.swap(true)) {
-      logStream("PatMap.iterator.validate()")
+      logStream.debug("PatMap.iterator.validate()")
       buildNext()
     }
 

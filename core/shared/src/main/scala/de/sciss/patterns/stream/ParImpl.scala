@@ -16,7 +16,7 @@ package stream
 
 import de.sciss.lucre.data.SkipList
 import de.sciss.lucre.{Exec, Ident, Var}
-import de.sciss.patterns.graph.Par
+import de.sciss.patterns.graph.{Par, Pat}
 import de.sciss.patterns.impl.TimeRef
 import de.sciss.serial.{DataInput, DataOutput}
 

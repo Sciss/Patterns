@@ -15,7 +15,7 @@ package de.sciss.patterns
 package stream
 
 import de.sciss.lucre.Exec
-import de.sciss.patterns.graph.UnaryOp
+import de.sciss.patterns.graph.{Pat, UnaryOp}
 import de.sciss.patterns.impl.PatElem
 import de.sciss.serial.{DataInput, DataOutput}
 

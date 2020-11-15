@@ -1,5 +1,8 @@
 package de.sciss.patterns
 
+import de.sciss.patterns.PatImport._
+import de.sciss.patterns.graph.Pat
+
 class MapWithIndexSpec extends PatSpec {
   "MapWithIndex" should work in {
     // it must be possible to ignore the input argument
