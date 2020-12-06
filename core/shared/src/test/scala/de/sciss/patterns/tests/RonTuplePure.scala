@@ -52,7 +52,7 @@ object RonTuplePure {
     println(s"toList   took ${t3-t2}ms")
 //    println(s"NUM STREAMS = ${Stream.COUNT}")
 //    println(s"NUM PATS    = ${Pat   .COUNT}")
-    xs.foreach { elem0: Event =>
+    xs.foreach { (elem0: Event) =>
       val elem  = elem0 +
         (Event.keyDetunedFreq -> Event.detunedFreq(elem0)) +
         (Event.keySustain     -> Event.sustain    (elem0)) +

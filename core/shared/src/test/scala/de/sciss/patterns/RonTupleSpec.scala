@@ -37,7 +37,7 @@ class RonTupleSpec extends PatSpec {
     }
 
   def extract_Pat[A: ScalarEq](s: Pat[A], t: Pat[A]): Pat[Pat[Int]] =
-    t.bubble.map { tj: Pat[A] =>
+    t.bubble.map { (tj: Pat[A]) =>
       val same      = s sig_== Hold(tj)
       val indices   = s.indices
       Gate(indices, same)

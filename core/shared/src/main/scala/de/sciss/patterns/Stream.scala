@@ -13,7 +13,7 @@
 
 package de.sciss.patterns
 
-import de.sciss.lucre.{Disposable, Exec, Plain, Var}
+import de.sciss.lucre.{Disposable, Exec, Ident, Plain, Var}
 import de.sciss.patterns.impl.StreamFormat
 import de.sciss.patterns.stream.StreamFactory
 import de.sciss.serial.{DataInput, DataOutput, TFormat, Writable, Writer}
@@ -62,7 +62,7 @@ object Stream {
         out.asInstanceOf[Stream[Out, A]]
       }
 
-      def copyVar[A](id: Out#Id, in: Var[In, Stream[In, A]]): Var[Out, Stream[Out, A]] = {
+      def copyVar[A](id: Ident[Out], in: Var[In, Stream[In, A]]): Var[Out, Stream[Out, A]] = {
         val inV   = in()
         val outV  = apply(inV)
         id.newVar(outV)
@@ -74,7 +74,7 @@ object Stream {
 
     def apply[A](in: Stream[In, A]): Stream[Out, A]
 
-    def copyVar[A](id: Out#Id, in: Var[In, Stream[In, A]]): Var[Out, Stream[Out, A]]
+    def copyVar[A](id: Ident[Out], in: Var[In, Stream[In, A]]): Var[Out, Stream[Out, A]]
   }
 }
 abstract class Stream[T <: Exec[T], +A] extends Writable with Disposable[T] { outer =>

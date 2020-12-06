@@ -43,7 +43,7 @@ object Context {
 
   def readPersistent[T <: Txn[T]](in: DataInput)(implicit tx: T): Persistent[T] = {
     val id      = tx.readId(in)
-    val cookie  = in.readShort()
+    val cookie  = in.readShort().toInt
     require (cookie == COOKIE, s"Unexpected cookie (found ${cookie.toHexString} not ${COOKIE.toHexString})")
     val seedRnd = RandomObj.read[T](in)
     val tokenId = id.readIntVar(in)

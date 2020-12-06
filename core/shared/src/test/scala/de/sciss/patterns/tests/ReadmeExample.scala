@@ -6,6 +6,7 @@ object ReadmeExample {
   def main(args: Array[String]): Unit = new ReadmeExample
 }
 class ReadmeExample {
+  import de.sciss.lucre.Plain
   import de.sciss.patterns._
   import graph._
 
@@ -15,7 +16,7 @@ class ReadmeExample {
     }
   }
 
-  implicit val ctx = Context()
+  implicit val ctx: Context[Plain] = Context()
   println(g.expand.toList)
   // e.g. List(45, 42, 43, 41,   88, 85, 88, 91,   19, 21, 21, 23)
 }

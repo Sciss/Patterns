@@ -1,35 +1,39 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "1.2.0"
-lazy val mimaVersion        = "1.2.0"
+lazy val projectVersion     = "1.3.0-SNAPSHOT"
+lazy val mimaVersion        = "1.3.0"
 
 val deps = new {
   val core = new {
     val log                 = "0.1.1"
-    val lucre               = "4.2.0"
+    val lucre               = "4.3.0-SNAPSHOT"
     val numbers             = "0.2.1"
     val optional            = "1.0.1"
     val serial              = "2.0.0"
   }
   val lucre = new {
-    val soundProcesses      = "4.4.0"
+    val soundProcesses      = "4.5.0-SNAPSHOT"
   }
   val test = new {
     val kollFlitz           = "0.2.4"
-    val scalaCollider       = "2.4.0"
-    val scalaColliderSwing  = "2.4.0"
+    val scalaCollider       = "2.4.1"
+    val scalaColliderSwing  = "2.4.1"
     val scalaTest           = "3.2.3"
-    val ugens               = "1.20.0"
+    val ugens               = "1.20.1"
   }
 }
 
 lazy val commonJvmSettings = Seq(
-  crossScalaVersions  := Seq(/*"3.0.0-M1",*/ "2.13.4", "2.12.12"),
+  crossScalaVersions  := Seq("3.0.0-M2", "2.13.4", "2.12.12"),
 )
 
+// sonatype plugin requires that these are in global
+ThisBuild / version      := projectVersion
+ThisBuild / organization := "de.sciss"
+
 lazy val commonSettings = Seq(
-  version             := projectVersion,
-  organization        := "de.sciss",
+//  version             := projectVersion,
+//  organization        := "de.sciss",
   description         := "Translating SuperCollider's patterns to Scala",
   homepage            := Some(url(s"https://git.iem.at/sciss/$baseName")),
   scalaVersion        := "2.13.4",
@@ -39,6 +43,9 @@ lazy val commonSettings = Seq(
   ),
   scalacOptions in (Compile, compile) ++= {
     if (scala.util.Properties.isJavaAtLeast("9")) Seq("-release", "8") else Nil // JDK >8 breaks API; skip scala-doc
+  },
+  sources in (Compile, doc) := {
+    if (isDotty.value) Nil else (sources in (Compile, doc)).value // dottydoc is pretty much broken
   },
   updateOptions       := updateOptions.value.withLatestSnapshots(false),
   parallelExecution in Test := false,
@@ -58,30 +65,22 @@ lazy val root = project.in(file("."))
   )
 
 lazy val publishSettings = Seq(
-  // ---- publishing ----
   publishMavenStyle := true,
-  publishTo := {
-    Some(if (isSnapshot.value)
-      "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-    else
-      "Sonatype Releases"  at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-    )
-  },
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false },
-  pomExtra := { val n = baseName
-  <scm>
-    <url>git@git.iem.at:sciss/{n}.git</url>
-    <connection>scm:git:git@git.iem.at:sciss/{n}.git</connection>
-  </scm>
-    <developers>
-      <developer>
-        <id>sciss</id>
-        <name>Hanns Holger Rutz</name>
-        <url>http://www.sciss.de</url>
-      </developer>
-    </developers>
-  }
+  developers := List(
+    Developer(
+      id    = "sciss",
+      name  = "Hanns Holger Rutz",
+      email = "contact@sciss.de",
+      url   = url("https://www.sciss.de")
+    )
+  ),
+  scmInfo := {
+    val h = "git.iem.at"
+    val a = s"sciss/$baseName"
+    Some(ScmInfo(url(s"https://$h/$a"), s"scm:git@$h:$a.git"))
+  },
 )
 
 lazy val testSettings = Seq(
@@ -128,7 +127,7 @@ lazy val lucre = crossProject(JVMPlatform, JSPlatform).in(file("lucre"))
     name := s"$baseName-lucre",
     libraryDependencies ++= Seq(
       "de.sciss"        %%% "soundprocesses-core"     % deps.lucre.soundProcesses,
-      "org.scala-lang"  %   "scala-reflect"           % scalaVersion.value,
+//      "org.scala-lang"  %   "scala-reflect"           % scalaVersion.value,
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)
   )
@@ -149,5 +148,25 @@ lazy val macros = project.in(file("macros"))
     libraryDependencies ++= Seq(
       "de.sciss" %% "soundprocesses-compiler" % deps.lucre.soundProcesses
     ),
+    unmanagedSourceDirectories in Compile ++= {
+      val sourceDirPl = (sourceDirectory in Compile).value
+      val sv = CrossVersion.partialVersion(scalaVersion.value)
+      val (sub1, sub2) = sv match {
+        case Some((2, n)) if n >= 13  => ("scala-2.13+", "scala-2.14-")
+        case Some((3, _))             => ("scala-2.13+", "scala-2.14+")
+        case _                        => ("scala-2.13-", "scala-2.14-")
+      }
+      Seq(sourceDirPl / sub1, sourceDirPl / sub2)
+    },
+    unmanagedSourceDirectories in Test ++= {
+      val sourceDirPl = (sourceDirectory in Test).value
+      val sv = CrossVersion.partialVersion(scalaVersion.value)
+      val (sub1, sub2) = sv match {
+        case Some((2, n)) if n >= 13  => ("scala-2.13+", "scala-2.14-")
+        case Some((3, _))             => ("scala-2.13+", "scala-2.14+")
+        case _                        => ("scala-2.13-", "scala-2.14-")
+      }
+      Seq(sourceDirPl / sub1, sourceDirPl / sub2)
+    },
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-macros" % mimaVersion)
   )

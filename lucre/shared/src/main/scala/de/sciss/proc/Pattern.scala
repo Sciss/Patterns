@@ -150,21 +150,21 @@ object Pattern extends ExprTypeImpl[Pat[_], Pattern] with Runner.Factory {
 
     def tpe: proc.Code.Type = Code
 
+    private val resCl = classOf[Pat[Any]]
+
     def compileBody()(implicit compiler: proc.Code.Compiler): Future[Unit] = {
-      import scala.reflect.runtime.universe._
-      CodeImpl.compileBody[In, Out, Pat[Any], Code](this, typeTag[Pat[Any]])
+      CodeImpl.compileBody[In, Out, Pat[Any], Code](this, resCl)
     }
 
     def execute(in: In)(implicit compiler: proc.Code.Compiler): Out =
       Graph {
-        import scala.reflect.runtime.universe._
-        CodeImpl.compileThunk[Pat[Any]](this, typeTag[Pat[Any]], execute = true)
+        CodeImpl.compileThunk[Pat[Any]](this, resCl, execute = true)
       }
 
     def prelude : String =
-      """object Main {
-        |  def __result__ : de.sciss.patterns.graph.Pat[_] = {
-        |""".stripMargin
+      s"""object Main {
+         |  def __result__ : ${resCl.getName}[_] = {
+         |""".stripMargin
 
     def postlude: String = "\n  }\n}\n"
 

@@ -9,7 +9,7 @@ class FlatMapSpec extends PatSpec {
 
     val pat1 = Graph {
       val in = ArithmSeq(1, 2).take(10).grouped(2)
-      in.flatMap { x: Pat[Int] => x }
+      in.flatMap { (x: Pat[Int]) => x }
     }
 
     val plain1 = (1 to 9).scanLeft(1)((x, _) => x + 2).grouped(2).flatten.toList
@@ -19,7 +19,7 @@ class FlatMapSpec extends PatSpec {
 
     val pat2 = Graph {
       val in = ArithmSeq(1, 2).take(10).grouped(2)
-      in.flatMap { x: Pat[Int] => x ++ x }
+      in.flatMap { (x: Pat[Int]) => x ++ x }
     }
 
     val plain2 = (1 to 9).scanLeft(1)((x, _) => x + 2).grouped(2).flatMap(x => x ++ x).toList

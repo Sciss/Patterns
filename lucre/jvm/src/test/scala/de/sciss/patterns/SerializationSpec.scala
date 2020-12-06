@@ -12,7 +12,7 @@ class SerializationSpec extends DurableSpec with Matchers {
     val g = Graph[Int] {
       import graph._
       val in = Pat(1 to 4: _*).combinations(3)
-      val pat = in.map { in: Pat[Int] =>
+      val pat = in.map { (in: Pat[Int]) =>
         in.drop(1)
       }
       Flatten(pat)

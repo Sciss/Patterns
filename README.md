@@ -1,6 +1,6 @@
 # Patterns
 
-[![Build Status](https://travis-ci.org/Sciss/Patterns.svg?branch=main)](https://travis-ci.org/Sciss/Patterns)
+[![Build Status](https://github.com/Sciss/Patterns/workflows/Scala%20CI/badge.svg?branch=main)](https://github.com/Sciss/Patterns/actions?query=workflow%3A%22Scala+CI%22)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.sciss/patterns_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.sciss/patterns_2.13)
 
 ## statement
@@ -15,14 +15,14 @@ with absolutely no warranties. To contact the author, send an email to `contact 
 
 ## requirements / installation
 
-This project builds against Scala 2.13, 2.12 using [sbt](http://www.scala-sbt.org/) (last version to
-support Scala 2.11 was 0.13.0).
+This project builds with against Scala 2.12, 2.13, Dotty (JVM), and Scala 2.13 (JS). 
+The last version to support Scala 2.11 was 0.13.0.
 
 To link to it:
 
     libraryDependencies += "de.sciss" %% "patterns" % v
 
-The current version `v` is `"1.2.0"`.
+The current version `v` is `"1.3.0"`.
 
 There are two sub-modules which can be linked to separately:
 
@@ -43,6 +43,7 @@ Useful links:
 Example:
 
 ```scala
+import de.sciss.lucre.Plain
 import de.sciss.patterns._, graph._
 
 val g = Graph {
@@ -51,7 +52,7 @@ val g = Graph {
   }
 }
 
-implicit val ctx = Context()
+implicit val ctx: Context[Plain] = Context()
 println(g.expand.toList)
 // e.g. List(45, 42, 43, 41,   88, 85, 88, 91,   19, 21, 21, 23)
 ```

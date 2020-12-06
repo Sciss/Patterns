@@ -53,7 +53,7 @@ class PatternsSpec extends PatSpec {
   "Map" should work in {
     val pat = Graph {
       val in = Pat(1 to 4: _*).combinations(3)
-      in.map { in: Pat[Int] =>
+      in.map { (in: Pat[Int]) =>
         in.drop(1)
       }
     }

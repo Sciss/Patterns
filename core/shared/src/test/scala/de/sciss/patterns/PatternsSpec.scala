@@ -25,7 +25,7 @@ class PatternsSpec extends PatSpec {
     assert(values2.forall(x => x >= 2 && x <= 200 && (x % 2) == 0))
     // XXX TODO ok, this _could_ fail... We should probably set the RNG seed to ensure it doesn't
     assert(values2.grouped(10).toList.combinations(2).exists {
-      case _a :: _b => _a != _b
+      case _a :: _b :: Nil => _a != _b
       case _ => false
     })
   }

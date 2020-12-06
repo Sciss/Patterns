@@ -7,5 +7,5 @@ then
    exit 1
 fi
 
-sbt +coreJS/publishSigned +coreJVM/publishSigned +lucreJS/publishSigned +lucreJVM/publishSigned +macros/publishSigned
+sbt "; + coreJS/publishSigned ; + coreJVM/publishSigned ; + lucreJS/publishSigned ; + lucreJVM/publishSigned ; + macros/publishSigned ; sonatypeBundleRelease"
 
