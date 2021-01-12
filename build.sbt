@@ -1,18 +1,18 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "1.3.0"
-lazy val mimaVersion        = "1.3.0"
+lazy val projectVersion     = "1.4.0-SNAPSHOT"
+lazy val mimaVersion        = "1.4.0"
 
 val deps = new {
   val core = new {
     val log                 = "0.1.1"
-    val lucre               = "4.3.0"
+    val lucre               = "4.4.0-SNAPSHOT"
     val numbers             = "0.2.1"
     val optional            = "1.0.1"
-    val serial              = "2.0.0"
+    val serial              = "2.0.1-SNAPSHOT"
   }
   val lucre = new {
-    val soundProcesses      = "4.5.0"
+    val soundProcesses      = "4.7.0-SNAPSHOT"
   }
   val test = new {
     val kollFlitz           = "0.2.4"
@@ -38,9 +38,10 @@ lazy val commonSettings = Seq(
   homepage            := Some(url(s"https://git.iem.at/sciss/$baseName")),
   scalaVersion        := "2.13.4",
   licenses            := Seq(agpl),
-  scalacOptions      ++= Seq(
-    "-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xlint", "-Xsource:2.13"
-  ),
+  scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8"),
+  scalacOptions ++= {
+    if (isDotty.value) Nil else Seq("-Xlint", "-Xsource:2.13")
+  },
   scalacOptions in (Compile, compile) ++= {
     if (scala.util.Properties.isJavaAtLeast("9")) Seq("-release", "8") else Nil // JDK >8 breaks API; skip scala-doc
   },
