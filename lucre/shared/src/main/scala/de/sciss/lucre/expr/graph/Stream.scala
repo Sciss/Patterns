@@ -15,6 +15,7 @@ package de.sciss.lucre.expr.graph
 
 import de.sciss.lucre.Adjunct.FromAny
 import de.sciss.lucre.Txn.peer
+import de.sciss.lucre.expr.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.expr.graph.impl.{AbstractCtxCellView, ExpandedObjMakeImpl, ObjCellViewVarImpl, ObjImplBase}
 import de.sciss.lucre.expr.impl.{IActionImpl, ITriggerConsumer}
 import de.sciss.lucre.expr.{CellView, Context, IAction}
@@ -28,8 +29,13 @@ import de.sciss.serial.{DataInput, TFormat}
 import scala.collection.immutable.{Seq => ISeq}
 import scala.concurrent.stm.Ref
 
-object Stream {
+object Stream extends ProductReader[Ex[Stream]] {
   def apply(): Ex[Stream] with Obj.Make = Apply()
+
+  override def read(in: RefMapIn, key: String, arity: Int, adj: Int): Ex[Stream] = {
+    require (arity == 0 && adj == 0)
+    Stream()
+  }
 
   private lazy val _init: Unit =
     Adjunct.addFactory(Bridge)
@@ -157,7 +163,7 @@ object Stream {
 
     private def make()(implicit tx: T): E = {
       val st  = in.value
-      val opt = st.peer.flatMap { obj =>
+      val opt = st.peer[T].flatMap { obj =>
         val p = obj.peer()
         if (!p.hasNext) None else {
           val any = p.next()
@@ -221,7 +227,7 @@ object Stream {
       val b   = ISeq.newBuilder[A]
       b.sizeHint(nV)
       val st  = in.value
-      st.peer.foreach { obj =>
+      st.peer[T].foreach { obj =>
         val p = obj.peer()
         var i = 0
         while (i < nV && p.hasNext) {
@@ -243,10 +249,17 @@ object Stream {
 
     def executeAction()(implicit tx: T): Unit = {
       val st = in.value
-      st.peer.foreach(_.peer().reset())
+      st.peer[T].foreach(_.peer().reset())
     }
   }
 
+  object Reset extends ProductReader[Reset] {
+    override def read(in: RefMapIn, key: String, arity: Int, adj: Int): Reset = {
+      require (arity == 1 && adj == 0)
+      val _in = in.readEx[Stream]()
+      new Reset(_in)
+    }
+  }
   final case class Reset(in: Ex[Stream])
     extends Act {
 
@@ -258,6 +271,14 @@ object Stream {
       new ResetExpanded[T](in.expand[T])
   }
 
+  object NextOption extends ProductReader[NextOption[_]] {
+    override def read(in: RefMapIn, key: String, arity: Int, adj: Int): NextOption[_] = {
+      require (arity == 1 && adj == 1)
+      val _in = in.readEx[Stream]()
+      val _from: FromAny[Any] = in.readAdjunct()
+      new NextOption[Any](_in)(_from)
+    }
+  }
   final case class NextOption[A](in: Ex[Stream])(implicit from: FromAny[A])
     extends Ex[Option[A]] with Act with ProductWithAdjuncts {
 
@@ -273,6 +294,15 @@ object Stream {
     }
   }
 
+  object Next extends ProductReader[Next[_]] {
+    override def read(in: RefMapIn, key: String, arity: Int, adj: Int): Next[_] = {
+      require (arity == 2 && adj == 1)
+      val _in       = in.readEx[Stream]()
+      val _default  = in.readEx[Any]()
+      val _from: FromAny[Any] = in.readAdjunct()
+      new Next[Any](_in, _default)(_from)
+    }
+  }
   final case class Next[A](in: Ex[Stream], default: Ex[A])(implicit from: FromAny[A])
     extends Ex[A] with Act with ProductWithAdjuncts {
 
@@ -288,6 +318,15 @@ object Stream {
     }
   }
 
+  object Take extends ProductReader[Take[_]] {
+    override def read(in: RefMapIn, key: String, arity: Int, adj: Int): Take[_] = {
+      require (arity == 2 && adj == 1)
+      val _in = in.readEx[Stream]()
+      val _n  = in.readEx[Int]()
+      val _from: FromAny[Any] = in.readAdjunct()
+      new Take[Any](_in, _n)(_from)
+    }
+  }
   final case class Take[A](in: Ex[Stream], n: Ex[Int])(implicit from: FromAny[A])
     extends Ex[Seq[A]] with Act with ProductWithAdjuncts {
 

@@ -43,7 +43,7 @@ lazy val commonSettings = Seq(
     if (isDotty.value) Nil else Seq("-Xlint", "-Xsource:2.13")
   },
   scalacOptions in (Compile, compile) ++= {
-    if (scala.util.Properties.isJavaAtLeast("9")) Seq("-release", "8") else Nil // JDK >8 breaks API; skip scala-doc
+    if (!isDotty.value && scala.util.Properties.isJavaAtLeast("9")) Seq("-release", "8") else Nil // JDK >8 breaks API; skip scala-doc
   },
   sources in (Compile, doc) := {
     if (isDotty.value) Nil else (sources in (Compile, doc)).value // dottydoc is pretty much broken

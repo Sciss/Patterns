@@ -15,22 +15,28 @@ package de.sciss.lucre.expr.graph
 
 import de.sciss.lucre.Adjunct.FromAny
 import de.sciss.lucre.Txn.peer
-import de.sciss.lucre.{Adjunct, Caching, IChangeEvent, IExpr, IPull, IPush, ITargets, ProductWithAdjuncts, Source, Sys, Txn, Obj => LObj}
+import de.sciss.lucre.expr.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.expr.graph.impl.{AbstractCtxCellView, ExpandedObjMakeImpl, ObjCellViewVarImpl, ObjImplBase}
 import de.sciss.lucre.expr.impl.{IActionImpl, ITriggerConsumer}
 import de.sciss.lucre.expr.{CellView, Context, IAction, IControl}
 import de.sciss.lucre.impl.{IChangeEventImpl, IChangeGeneratorEvent}
+import de.sciss.lucre.{Adjunct, Caching, IChangeEvent, IExpr, IPull, IPush, ITargets, ProductWithAdjuncts, Source, Sys, Txn, Obj => LObj}
 import de.sciss.model.Change
 import de.sciss.patterns.lucre.{Context => LContext}
 import de.sciss.patterns.{Stream => PStream}
-import de.sciss.serial.{DataInput, TFormat}
 import de.sciss.proc
+import de.sciss.serial.{DataInput, TFormat}
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.concurrent.stm.Ref
 
-object Pattern {
+object Pattern extends ProductReader[Ex[Pattern]] {
   def apply(): Ex[Pattern] with Obj.Make = Apply()
+
+  override def read(in: RefMapIn, key: String, arity: Int, adj: Int): Ex[Pattern] = {
+    require (arity == 0 && adj == 0)
+    Pattern()
+  }
 
   private lazy val _init: Unit =
     Adjunct.addFactory(Bridge)
@@ -306,6 +312,13 @@ object Pattern {
       in.reset()
   }
 
+  object Reset extends ProductReader[Reset] {
+    override def read(in: RefMapIn, key: String, arity: Int, adj: Int): Reset = {
+      require (arity == 1 && adj == 0)
+      val _in = in.readProductT[ToStream]()
+      new Reset(_in)
+    }
+  }
   final case class Reset(in: ToStream)
     extends Act {
 
@@ -317,6 +330,14 @@ object Pattern {
       new ResetExpanded[T](in.expand[T])
   }
 
+  object NextOption extends ProductReader[NextOption[_]] {
+    override def read(in: RefMapIn, key: String, arity: Int, adj: Int): NextOption[_] = {
+      require (arity == 1 && adj == 1)
+      val _in = in.readProductT[ToStream]()
+      val _from: FromAny[Any] = in.readAdjunct()
+      new NextOption[Any](_in)(_from)
+    }
+  }
   final case class NextOption[A](in: ToStream)(implicit from: FromAny[A])
     extends Ex[Option[A]] with Act with ProductWithAdjuncts {
 
@@ -332,6 +353,15 @@ object Pattern {
     }
   }
 
+  object Next extends ProductReader[Next[_]] {
+    override def read(in: RefMapIn, key: String, arity: Int, adj: Int): Next[_] = {
+      require (arity == 2 && adj == 1)
+      val _in       = in.readProductT[ToStream]()
+      val _default  = in.readEx[Any]()
+      val _from: FromAny[Any] = in.readAdjunct()
+      new Next[Any](_in, _default)(_from)
+    }
+  }
   final case class Next[A](in: ToStream, default: Ex[A])(implicit from: FromAny[A])
     extends Ex[A] with Act with ProductWithAdjuncts {
 
@@ -347,6 +377,15 @@ object Pattern {
     }
   }
 
+  object Take extends ProductReader[Take[_]] {
+    override def read(in: RefMapIn, key: String, arity: Int, adj: Int): Take[_] = {
+      require (arity == 2 && adj == 1)
+      val _in = in.readProductT[ToStream]()
+      val _n  = in.readEx[Int]()
+      val _from: FromAny[Any] = in.readAdjunct()
+      new Take[Any](_in, _n)(_from)
+    }
+  }
   final case class Take[A](in: ToStream, n: Ex[Int])(implicit from: FromAny[A])
     extends Ex[Seq[A]] with Act with ProductWithAdjuncts {
 
@@ -362,7 +401,7 @@ object Pattern {
     }
   }
 
-  object ToStream {
+  object ToStream extends ProductReader[ToStream] {
     trait Repr[T <: Txn[T]] extends IControl[T] {
 //      private[lucre] def peer(implicit tx: T): PStream[S#I, Any]
 
@@ -370,6 +409,12 @@ object Pattern {
 
       def hasNext(implicit /*ctx: Context[T],*/ tx: T): Boolean
       def next ()(implicit /*ctx: Context[T],*/ tx: T): Any
+    }
+
+    override def read(in: RefMapIn, key: String, arity: Int, adj: Int): ToStream = {
+      require (arity == 1 && adj == 0)
+      val _pat = in.readEx[Pattern]()
+      new ToStream(_pat)
     }
   }
   final case class ToStream(pat: Ex[Pattern]) extends Control {

@@ -14,6 +14,7 @@
 package de.sciss.proc
 
 import de.sciss.lucre.Event.Targets
+import de.sciss.lucre.expr.ExElem
 import de.sciss.lucre.impl.{DummyEvent, ExprTypeImpl}
 import de.sciss.lucre.{Copy, Elem, Event, EventLike, Expr, Ident, Txn, expr, synth, Obj => LObj, Var => LVar}
 import de.sciss.model.Change
@@ -71,6 +72,14 @@ object Pattern extends ExprTypeImpl[Pat[_], Pattern] with Runner.Factory {
     PStream.addFactory(stream.AudioCueNumFramesImpl  )
     PStream.addFactory(stream.AudioCueSampleRateImpl )
     PStream.addFactory(stream.FolderCollectImpl      )
+
+    ExElem.addProductReaderSq({
+      import expr.graph.{Pattern => _Pattern, Stream => _Stream}
+      Seq(
+        _Pattern, _Pattern.Reset, _Pattern.NextOption, _Pattern.Next, _Pattern.Take, _Pattern.ToStream,
+        _Stream, _Stream.Reset, _Stream.NextOption, _Stream.Next, _Stream.Take,
+      )
+    })
   }
 
   protected def mkConst[T <: Txn[T]](id: Ident[T], value: A)(implicit tx: T): Const[T] =
