@@ -6,7 +6,7 @@ lazy val mimaVersion        = "1.4.0"
 val deps = new {
   val core = new {
     val log                 = "0.1.1"
-    val lucre               = "4.4.0"
+    val lucre               = "4.4.1-SNAPSHOT"
     val numbers             = "0.2.1"
     val optional            = "1.0.1"
     val serial              = "2.0.1"
@@ -16,16 +16,15 @@ val deps = new {
   }
   val test = new {
     val kollFlitz           = "0.2.4"
-    val scalaCollider       = "2.5.0"
-    val scalaColliderSwing  = "2.5.0"
+    val scalaCollider       = "2.6.1"
+    val scalaColliderSwing  = "2.6.1"
     val scalaTest           = "3.2.3"
-    val ugens               = "1.20.1"
+    val ugens               = "1.21.0"
   }
 }
 
 lazy val commonJvmSettings = Seq(
-  // dotty started crashing SP
-  crossScalaVersions  := Seq(/* "3.0.0-M2", */ "2.13.4", "2.12.12"),
+  crossScalaVersions  := Seq("3.0.0-M3", "2.13.4", "2.12.12"),
 )
 
 // sonatype plugin requires that these are in global

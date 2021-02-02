@@ -48,7 +48,7 @@ class EventStreamPlayerTest[T <: Txn[T]](implicit cursor: Cursor[T])
     }
 
     cursor.step { implicit tx =>
-      val t = Transport[T](context)
+      val t = Transport[T](context.universe)
       val patObj = patH()
       t.addObject(patObj)
       t.play()
