@@ -14,7 +14,7 @@
 package de.sciss.lucre.expr.graph
 
 import de.sciss.lucre.Adjunct.FromAny
-import de.sciss.lucre.Txn.peer
+import de.sciss.lucre.Txn.{peer => txPeer}
 import de.sciss.lucre.expr.ExElem.{ProductReader, RefMapIn}
 import de.sciss.lucre.expr.graph.impl.{AbstractCtxCellView, ExpandedObjMakeImpl, ObjCellViewVarImpl, ObjImplBase}
 import de.sciss.lucre.expr.impl.{IActionImpl, ITriggerConsumer}
@@ -97,7 +97,7 @@ object Stream extends ProductReader[Ex[Stream]] {
   }
 
   private[lucre] object Empty extends Stream {
-    private[lucre] def peer[T <: Txn[T]](implicit tx: T): Option[Peer[T]] = None
+    def peer[T <: Txn[T]](implicit tx: T): Option[Peer[T]] = None
   }
 
   private final class ApplyExpanded[T <: Txn[T]](implicit targets: ITargets[T])
