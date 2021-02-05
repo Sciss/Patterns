@@ -6,7 +6,7 @@ lazy val mimaVersion        = "1.4.0"
 val deps = new {
   val core = new {
     val log                 = "0.1.1"
-    val lucre               = "4.4.1-SNAPSHOT"
+    val lucre               = "4.4.1"
     val numbers             = "0.2.1"
     val optional            = "1.0.1"
     val serial              = "2.0.1"
@@ -19,12 +19,12 @@ val deps = new {
     val scalaCollider       = "2.6.1"
     val scalaColliderSwing  = "2.6.1"
     val scalaTest           = "3.2.3"
-    val ugens               = "1.21.0"
+    val ugens               = "1.21.1"
   }
 }
 
 lazy val commonJvmSettings = Seq(
-  crossScalaVersions  := Seq("3.0.0-M3", "2.13.4", "2.12.12"),
+  crossScalaVersions  := Seq("3.0.0-M3", "2.13.4", "2.12.13"),
 )
 
 // sonatype plugin requires that these are in global
