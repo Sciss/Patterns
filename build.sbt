@@ -1,30 +1,30 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "1.4.0"
+lazy val projectVersion     = "1.4.1-SNAPSHOT"
 lazy val mimaVersion        = "1.4.0"
 
 val deps = new {
   val core = new {
     val log                 = "0.1.1"
-    val lucre               = "4.4.1"
+    val lucre               = "4.4.3"
     val numbers             = "0.2.1"
     val optional            = "1.0.1"
     val serial              = "2.0.1"
   }
   val lucre = new {
-    val soundProcesses      = "4.7.0"
+    val soundProcesses      = "4.7.1"
   }
   val test = new {
     val kollFlitz           = "0.2.4"
-    val scalaCollider       = "2.6.1"
-    val scalaColliderSwing  = "2.6.1"
-    val scalaTest           = "3.2.3"
+    val scalaCollider       = "2.6.2"
+    val scalaColliderSwing  = "2.6.2"
+    val scalaTest           = "3.2.5"
     val ugens               = "1.21.1"
   }
 }
 
 lazy val commonJvmSettings = Seq(
-  crossScalaVersions  := Seq("3.0.0-M3", "2.13.4", "2.12.13"),
+  crossScalaVersions  := Seq("3.0.0-RC1", "2.13.5", "2.12.13"),
 )
 
 // sonatype plugin requires that these are in global
@@ -36,7 +36,7 @@ lazy val commonSettings = Seq(
 //  organization        := "de.sciss",
   description         := "Translating SuperCollider's patterns to Scala",
   homepage            := Some(url(s"https://git.iem.at/sciss/$baseName")),
-  scalaVersion        := "2.13.4",
+  scalaVersion        := "2.13.5",
   licenses            := Seq(agpl),
   scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8"),
   scalacOptions ++= {

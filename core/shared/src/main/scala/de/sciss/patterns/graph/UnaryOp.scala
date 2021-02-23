@@ -21,9 +21,12 @@ import de.sciss.patterns.stream.UnaryOpImpl
 import de.sciss.serial.{DataInput, DataOutput}
 
 object UnaryOp {
+//  object Op {
+//    type Stated[A1, A2, S[~ <: Exec[~]]] = Op[A1, A2] { type State[T <: Exec[T]] = S[T] }
+//  }
   sealed abstract class Op[A1, A2] extends ProductWithAdjuncts {
     type State[T <: Exec[T]]
-    
+
     def readState   [T <: Exec[T]](in: DataInput)(implicit tx: T): State[T]
     def writeState  [T <: Exec[T]](s: State[T], out: DataOutput): Unit
     def disposeState[T <: Exec[T]](s: State[T])(implicit tx: T): Unit
