@@ -11,7 +11,7 @@ streams are stateful iterators, here implemented with an optional transactional 
 
 This project is (C)opyright 2017&ndash;2021 by Hanns Holger Rutz. All rights reserved. This project is released under 
 the [GNU Affero General Public License](https://git.iem.at/sciss/Patterns/raw/main/LICENSE) v3+ and comes 
-with absolutely no warranties. To contact the author, send an email to `contact at sciss.de`
+with absolutely no warranties. To contact the author, send an e-mail to `contact at sciss.de`.
 
 ## requirements / installation
 
