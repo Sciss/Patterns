@@ -1,56 +1,55 @@
 lazy val baseName           = "Patterns"
 lazy val baseNameL          = baseName.toLowerCase
-lazy val projectVersion     = "1.4.1"
+lazy val projectVersion     = "1.4.2"
 lazy val mimaVersion        = "1.4.0"
 
 val deps = new {
   val core = new {
     val log                 = "0.1.1"
-    val lucre               = "4.4.3"
+    val lucre               = "4.4.5"
     val numbers             = "0.2.1"
     val optional            = "1.0.1"
     val serial              = "2.0.1"
   }
   val lucre = new {
-    val soundProcesses      = "4.7.1"
+    val soundProcesses      = "4.7.7"
   }
   val test = new {
     val kollFlitz           = "0.2.4"
-    val scalaCollider       = "2.6.2"
-    val scalaColliderSwing  = "2.6.2"
-    val scalaTest           = "3.2.5"
+    val scalaCollider       = "2.6.4"
+    val scalaColliderSwing  = "2.6.4"
+    val scalaTest           = "3.2.9"
     val ugens               = "1.21.1"
   }
 }
 
 lazy val commonJvmSettings = Seq(
-  crossScalaVersions  := Seq("3.0.0-RC1", "2.13.5", "2.12.13"),
+  crossScalaVersions := Seq("3.0.0", "2.13.6", "2.12.14"),
 )
 
-// sonatype plugin requires that these are in global
-ThisBuild / version      := projectVersion
-ThisBuild / organization := "de.sciss"
+ThisBuild / version       := projectVersion
+ThisBuild / organization  := "de.sciss"
+ThisBuild / versionScheme := Some("pvp")
 
 lazy val commonSettings = Seq(
-//  version             := projectVersion,
-//  organization        := "de.sciss",
   description         := "Translating SuperCollider's patterns to Scala",
-  homepage            := Some(url(s"https://git.iem.at/sciss/$baseName")),
-  scalaVersion        := "2.13.5",
+  homepage            := Some(url(s"https://github.com/Sciss/$baseName")),
+  scalaVersion        := "2.13.6",
   licenses            := Seq(agpl),
   scalacOptions      ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8"),
   scalacOptions ++= {
-    if (isDotty.value) Nil else Seq("-Xlint", "-Xsource:2.13")
+    /*if (isDotty.value) Nil else*/ Seq("-Xlint", "-Xsource:2.13")
   },
-  scalacOptions in (Compile, compile) ++= {
-    if (!isDotty.value && scala.util.Properties.isJavaAtLeast("9")) Seq("-release", "8") else Nil // JDK >8 breaks API; skip scala-doc
+  Compile / compile / scalacOptions ++= {
+    if (/*!isDotty.value &&*/ scala.util.Properties.isJavaAtLeast("9")) Seq("-release", "8") else Nil // JDK >8 breaks API; skip scala-doc
   },
-  sources in (Compile, doc) := {
-    if (isDotty.value) Nil else (sources in (Compile, doc)).value // dottydoc is pretty much broken
-  },
+//  Compile / doc / sources := {
+//    val isDotty = scalaVersion.value.startsWith("3.")
+//    if (isDotty) Nil else (Compile / doc / sources).value // dottydoc is pretty much broken
+//  },
   updateOptions       := updateOptions.value.withLatestSnapshots(false),
-  parallelExecution in Test := false,
-  concurrentRestrictions in Global ++= Seq(
+  Test / parallelExecution := false,
+  Global / concurrentRestrictions ++= Seq(
     Tags.limitAll(2), Tags.limit(Tags.Test, 1) // with cross-builds we otherwise get OutOfMemoryError
   ),
 ) ++ publishSettings
@@ -67,7 +66,7 @@ lazy val root = project.in(file("."))
 
 lazy val publishSettings = Seq(
   publishMavenStyle := true,
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   pomIncludeRepository := { _ => false },
   developers := List(
     Developer(
@@ -78,8 +77,8 @@ lazy val publishSettings = Seq(
     )
   ),
   scmInfo := {
-    val h = "git.iem.at"
-    val a = s"sciss/$baseName"
+    val h = "github.com"
+    val a = s"Sciss/$baseName"
     Some(ScmInfo(url(s"https://$h/$a"), s"scm:git@$h:$a.git"))
   },
 )
@@ -109,7 +108,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform).in(file("core"))
       "de.sciss" %%% "scalacolliderugens-plugins"   % deps.test.ugens               % Test,
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% baseNameL % mimaVersion),
-    mainClass in (Test, run) := Some("de.sciss.patterns.RonWithESP")
+    Test / run / mainClass := Some("de.sciss.patterns.RonWithESP")
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
@@ -149,8 +148,8 @@ lazy val macros = project.in(file("macros"))
     libraryDependencies ++= Seq(
       "de.sciss" %% "soundprocesses-compiler" % deps.lucre.soundProcesses
     ),
-    unmanagedSourceDirectories in Compile ++= {
-      val sourceDirPl = (sourceDirectory in Compile).value
+    Compile / unmanagedSourceDirectories ++= {
+      val sourceDirPl = (Compile / sourceDirectory).value
       val sv = CrossVersion.partialVersion(scalaVersion.value)
       val (sub1, sub2) = sv match {
         case Some((2, n)) if n >= 13  => ("scala-2.13+", "scala-2.14-")
@@ -159,8 +158,8 @@ lazy val macros = project.in(file("macros"))
       }
       Seq(sourceDirPl / sub1, sourceDirPl / sub2)
     },
-    unmanagedSourceDirectories in Test ++= {
-      val sourceDirPl = (sourceDirectory in Test).value
+    Test / unmanagedSourceDirectories ++= {
+      val sourceDirPl = (Test / sourceDirectory).value
       val sv = CrossVersion.partialVersion(scalaVersion.value)
       val (sub1, sub2) = sv match {
         case Some((2, n)) if n >= 13  => ("scala-2.13+", "scala-2.14-")

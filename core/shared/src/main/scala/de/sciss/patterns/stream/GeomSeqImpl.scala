@@ -81,6 +81,6 @@ object GeomSeqImpl extends StreamFactory {
 
     protected def typeId: Int = GeomSeqImpl.typeId
 
-    protected def op(a: A, b: A): A = num.plus(a, b)
+    protected def op(a: A, b: A): A = num.times(a, b)
   }
 }

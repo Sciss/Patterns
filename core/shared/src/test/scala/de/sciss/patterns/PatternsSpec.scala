@@ -3,6 +3,17 @@ package de.sciss.patterns
 import de.sciss.patterns.PatImport._
 import de.sciss.patterns.graph._
 
+object PatternsSpec {
+  object SeqOps { // Dotty problem -- move it here
+    implicit class Ops[A](xs: Seq[A]) {
+      // like Kollflitz' `differentiate`
+      def differentiate(implicit num: Numeric[A]): List[A] = {
+        import num._
+        xs.sliding(2).map { case Seq(_a, _b) => _b - _a }.toList
+      }
+    }
+  }
+}
 class PatternsSpec extends PatSpec {
   "A Series" should "produce the expected output for the 'pattern guide' examples" in {
     val pat1 = ArithmSeq(start = 0, step = 1)
@@ -64,13 +75,7 @@ class PatternsSpec extends PatSpec {
   }
 
   "Differentiate" should work in {
-    implicit class SeqOps[A](xs: Seq[A]) {
-      // like Kollflitz' `differentiate`
-      def differentiate(implicit num: Numeric[A]): List[A] = {
-        import num._
-        xs.sliding(2).map { case Seq(_a, _b) => _b - _a }.toList
-      }
-    }
+    import PatternsSpec.SeqOps._
 
     val s1 = List(5, 6, 2, 10, 8, 0)
     val p1: Pat[Int] = Pat(s1: _*)
